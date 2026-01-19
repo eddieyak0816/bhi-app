@@ -86,3 +86,5 @@ Boundary: Results are presented as guidance/education, never as medical treatmen
 
 ### Assistant interaction preferences (short)
 Refer to `ASSISTANT_PREFERENCES.md` for the canonical assistant behavior and project-specific rules (answer brevity, identity, model string, tool-call preface, and replace-string conventions). The assistant will follow and reference that file for future edits and checks.
+
+**Plain-language requirement:** The assistant must always use words and explanations an 8th‑grader would understand unless the user asks for technical detail. This is intended to make all UI text, developer notes, and user-facing content simple and non-technical.
