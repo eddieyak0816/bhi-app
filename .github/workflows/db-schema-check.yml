@@ -1,0 +1,65 @@
+name: DB schema safety check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  schema-check:
+    name: Validate DB schema
+    runs-on: ubuntu-latest
+    permissions: read-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure psql available
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y postgresql-client
+
+      - name: Fail early if DATABASE_URL missing
+        if: ${{ !secrets.DATABASE_URL }}
+        run: |
+          echo "ERROR: set repository secret DATABASE_URL to your Supabase/Postgres connection string" >&2
+          exit 1
+
+      - name: Run schema validator (quick checks)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -eo pipefail
+
+          # run high-confidence, fast checks and capture counts
+          echo "Running high-risk schema queries..."
+
+          cnt_numeric_outside_logic_rules=$(psql "$DATABASE_URL" -tAc "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='public' AND table_name <> 'logic_rules' AND data_type IN ('numeric','double precision','real','integer','smallint','bigint');")
+
+          cnt_userlinked_numeric=$(psql "$DATABASE_URL" -tAc "SELECT COUNT(DISTINCT c.table_name) FROM information_schema.columns c WHERE c.table_schema='public' GROUP BY c.table_name HAVING BOOL_OR(c.column_name ~* 'email|user|account|employ|member|person') AND BOOL_OR(c.data_type IN ('numeric','double precision','real','integer','smallint','bigint'));") || true
+
+          cnt_lab_named_columns=$(psql "$DATABASE_URL" -tAc "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='public' AND column_name ~* 'lab|test|result|measurement|value';")
+
+          echo "numeric-outside-logic_rules: ${cnt_numeric_outside_logic_rules:-0}"
+          echo "userlinked-numeric-tables: ${cnt_userlinked_numeric:-0}"
+          echo "lab-named-columns: ${cnt_lab_named_columns:-0}"
+
+          # if any checks found rows, dump full validator output for debugging and fail
+          if [ "${cnt_numeric_outside_logic_rules// /}" -ne 0 ] || [ "${cnt_userlinked_numeric// /}" -ne 0 ] || [ "${cnt_lab_named_columns// /}" -ne 0 ]; then
+            echo "Potentially sensitive schema detected — printing full validator output..." >&2
+            psql "$DATABASE_URL" -f scripts/validate_supabase_schema.sql || true
+            echo "Schema safety check failed." >&2
+            exit 1
+          fi
+
+          echo "No high-risk schema findings. Running full validator for visibility..."
+          psql "$DATABASE_URL" -f scripts/validate_supabase_schema.sql
+
+      - name: Upload validator output (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-validator-output
+          path: |
+            ./validator.out
