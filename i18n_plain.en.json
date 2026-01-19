@@ -1,0 +1,41 @@
+{
+  "welcome.title": "Welcome to Balanced Health",
+  "welcome.subtitle": "Short, trusted health info for employees. Not medical advice.",
+  "welcome.getStarted": "Get started",
+  "welcome.skip": "Skip intro",
+
+  "onboard.what.title": "What this app does",
+  "onboard.what.body": "Type a lab test and a number. We show short videos and easy articles that explain the result.",
+
+  "onboard.privacy.title": "Privacy",
+  "onboard.privacy.body": "Your numbers stay on your device. We do not save them.",
+
+  "onboard.how.title": "How to use",
+  "onboard.how.body": "Enter a test name (example: Vitamin D), type the number, then tap 'See resources.'",
+
+  "lab.label.testName": "Test name",
+  "lab.hint.testName": "e.g., Vitamin D, Glucose",
+  "lab.label.value": "Result number",
+  "lab.hint.value": "enter the number from your lab report (optional)",
+  "lab.button.submit": "See resources",
+  "lab.privacyNote": "You chose to enter this. It is not saved.",
+
+  "results.title": "Learning resources",
+  "results.subtitle": "These are educational—talk to your doctor for medical advice.",
+  "results.section.videos": "Short videos",
+  "results.section.articles": "Articles",
+  "results.section.experts": "Experts",
+  "results.empty": "No matches found. Try a different test name or number.",
+
+  "help.button": "Help",
+  "faq.isThisMedical.title": "Is this medical advice?",
+  "faq.isThisMedical.answer": "No. This is learning material only.",
+  "faq.doYouSave.title": "Do you save my numbers?",
+  "faq.doYouSave.answer": "No. Your numbers stay on your device unless you choose to save them.",
+  "faq.whoChecks.title": "Who checks the videos?",
+  "faq.whoChecks.answer": "Experts review everything before it’s shown.",
+
+  "buttons.close": "Close",
+  "buttons.back": "Back",
+  "buttons.finish": "All set"
+}
