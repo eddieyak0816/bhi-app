@@ -60,6 +60,44 @@ jobs:
           echo "No high-risk schema findings. Running full validator for visibility..."
           psql "$DATABASE_URL" -f scripts/validate_supabase_schema.sql
 
+      - name: Install app deps
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npm ci
+
+      - name: Build app
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npm run build
+
+      - name: Start preview server (background)
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          # start the Vite preview in background and wait for it to become available
+          npm run preview -- --port 5173 &
+          for i in $(seq 1 20); do
+            if curl -sSf http://127.0.0.1:5173/ > /dev/null; then
+              echo "preview up"
+              break
+            fi
+            echo "waiting for preview... ($i)"
+            sleep 1
+          done
+
+      - name: Run Playwright smoke tests
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npx playwright install --with-deps
+          npm run test:e2e
+
       - name: Upload validator output (artifact)
         if: always()
         uses: actions/upload-artifact@v4
