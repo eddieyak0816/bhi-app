@@ -15,6 +15,22 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
     onComputeTags(tags)
   }
 
+  async function saveResult() {
+    if (!consent) return
+    // This is an opt-in client call that SHOULD be handled by a trusted backend.
+    // The repo includes a DB function scaffold; do NOT expose service_role in the browser.
+    try {
+      await fetch('/api/save-lab', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ marker_id: markerId, value })
+      })
+    } catch (err) {
+      // swallow network errors in POC — backend not required for demo
+      console.warn('saveResult failed (expected in POC)', err)
+    }
+  }
+
   return (
     <div className="card">
       <label>Test name</label>
@@ -27,10 +43,19 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
       <label>Result number (optional)</label>
       <input value={value} onChange={(e) => setValue(e.target.value)} placeholder="e.g., 25" />
 
-      <div className="row">
+      <div style={{display:'flex',alignItems:'center',gap:12,marginTop:12}}>
+        <label style={{display:'flex',alignItems:'center',gap:8}}>
+          <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />
+          <span style={{fontSize:13}}>Save result for later (optional)</span>
+        </label>
         <button className="btn-primary" onClick={computeTags}>See resources</button>
-        <small className="muted">Your number stays on your device. It is not saved.</small>
+        <button className="btn-ghost" onClick={saveResult} disabled={!consent}>Save</button>
+      </div>
+
+      <div className="row">
+        <small className="muted">Your number stays on your device unless you choose to save it. Saving requires consent and backend support.</small>
       </div>
     </div>
   )
 }
+

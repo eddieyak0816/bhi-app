@@ -13,8 +13,9 @@ To load sample data into a Supabase project (optional)
 
 What I built (short)
 - React + Vite frontend (stateless lab input). 
-- Client-only tag mapping (no lab numbers saved).
+- Client-only tag mapping (no lab numbers saved by default).
 - Supabase wiring for live data (read-only in this flow).
+- Opt-in storage scaffold for user lab values (disabled by default; backend + RLS required to enable).
 - Playwright smoke test and CI schema validator (already added).
 
 What I need from you (short)

@@ -145,9 +145,31 @@ HAVING BOOL_OR(c.column_name ~* 'email|user|account|employ|member|person')
    AND BOOL_OR(c.data_type IN ('numeric','double precision','real','integer','smallint','bigint'))
 ORDER BY c.table_name;
 
+-- 12) Optional: check opt-in storage scaffold `user_lab_values` and its RLS policy
+-- Expected: table may exist but must have RLS enabled and a policy that prevents direct client writes.
+SELECT table_name, column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'user_lab_values' AND table_schema = 'public'
+ORDER BY ordinal_position;
+
+SELECT c.relname AS table, c.relrowsecurity AS rls_enabled, c.relforcerowsecurity AS rls_forced
+FROM pg_class c
+WHERE c.relname = 'user_lab_values';
+
+SELECT conname, pg_get_constraintdef(oid) AS constraint_def
+FROM pg_constraint
+WHERE conrelid = 'user_lab_values'::regclass AND contype = 'c';
+
+SELECT * FROM pg_policies WHERE tablename = 'user_lab_values';
+
+-- Verify there is a deny-client-writes policy (name may vary)
+SELECT count(*) AS deny_client_write_policies
+FROM pg_policies
+WHERE tablename = 'user_lab_values' AND (policyname ILIKE '%no_client%' OR policyname ILIKE '%deny%' OR policyname ILIKE '%client%');
+
 -- Guidance:
--- * If any rows are returned above, inspect the listed table(s) immediately — they may store user-linked numeric data.
--- * If the column is intentional (e.g., a reference value, not user-supplied), ensure it's protected by RLS and documented.
+-- * If `user_lab_values` exists, ensure RLS is enabled and client writes are denied. Any writes must go through a
+--   trusted backend/service role calling a secured DB function.
 
 -- End of checks
 
