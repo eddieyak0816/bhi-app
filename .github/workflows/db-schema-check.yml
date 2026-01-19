@@ -21,10 +21,14 @@ jobs:
           sudo apt-get install -y postgresql-client
 
       - name: Fail early if DATABASE_URL missing
-        if: ${{ secrets.DATABASE_URL == '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          echo "ERROR: set repository secret DATABASE_URL to your Supabase/Postgres connection string" >&2
-          exit 1
+          # avoid using secrets in the workflow-expression; check at runtime instead
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: set repository secret DATABASE_URL to your Supabase/Postgres connection string" >&2
+            exit 1
+          fi
 
       - name: Run schema validator (quick checks)
         env:
