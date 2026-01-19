@@ -24,4 +24,9 @@ What I need from you (short)
 
 Next (I recommend)
 - Provide `DATABASE_URL` as a GitHub secret so CI can run the DB validator.
+- To enable opt-in storage: add these secrets to GitHub (do NOT paste them here):
+  - `BACKEND_API_KEY` (short secret for the frontend to call the server in dev)
+  - `SUPABASE_SERVICE_ROLE` (server-only; never expose to browser)
+- Run the backend locally for testing: `BACKEND_API_KEY=foo SUPABASE_SERVICE_ROLE=<service_role> VITE_SUPABASE_URL=<url> npm run dev:server`
+
 - Tell me if you want me to deploy a demo site (I can set that up).

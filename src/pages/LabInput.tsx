@@ -18,12 +18,14 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
   async function saveResult() {
     if (!consent) return
     // This is an opt-in client call that SHOULD be handled by a trusted backend.
-    // The repo includes a DB function scaffold; do NOT expose service_role in the browser.
+    // The backend requires a short-lived key header (x-backend-api-key) when enabled.
     try {
       await fetch('/api/save-lab', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ marker_id: markerId, value })
+        // NOTE: do NOT hard-code BACKEND_API_KEY into the shipped client.
+        // For local testing you can set it in the browser devtools when running a local backend.
+        body: JSON.stringify({ user_id: 'demo-user-1', marker_id: markerId, value })
       })
     } catch (err) {
       // swallow network errors in POC — backend not required for demo
