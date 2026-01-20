@@ -8,6 +8,8 @@ export default function Admin() {
   const [title, setTitle] = useState('')
   const [type, setType] = useState('video')
   const [tags, setTags] = useState('')
+  const [showAudit, setShowAudit] = useState(false)
+  const [auditRows, setAuditRows] = useState<Array<any>>([])
   const DEV_BACKEND_KEY = (import.meta.env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || ''
 
@@ -23,6 +25,19 @@ export default function Admin() {
       setResources(body.resources || [])
     } catch (err) {
       console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function loadAudit() {
+    setLoading(true)
+    try {
+      const res = await fetch(apiUrl('/api/admin/audit'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
+      const body = await res.json()
+      setAuditRows(body || [])
+    } catch (err) {
+      console.error('loadAudit', err)
     } finally {
       setLoading(false)
     }
@@ -79,24 +94,62 @@ export default function Admin() {
         <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
       </div>
 
-      <div>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
         <strong>Resources</strong>
-        {loading ? <div>Loading…</div> : (
-          <ul className="resources-list">
-            {resources.map(r => (
-              <li key={r.id} style={{display:'flex',justifyContent:'space-between',gap:12}}>
-                <div>
-                  <strong>{r.title}</strong> <span className="small muted">{r.type}</span>
-                  <div className="small muted">{(r.tags || []).join(', ')}</div>
-                </div>
-                <div>
-                  <button className="btn-ghost" onClick={() => remove(r.id)}>Delete</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div style={{display:'flex',gap:8}}>
+          <button className="btn-ghost" onClick={() => { setShowAudit(s => !s); if (!showAudit) loadAudit() }}>{showAudit ? 'Show Resources' : 'Show Audit'}</button>
+          {showAudit && (
+            <button className="btn-ghost" onClick={() => {
+              const csv = ['id,action,target_table,target_id,created_at,details']
+                .concat(auditRows.map(r => `${r.id},${r.action},${r.target_table},${r.target_id || ''},${r.created_at},"${JSON.stringify(r.details).replace(/"/g,'""')}"`))
+                .join('\n')
+              const blob = new Blob([csv], { type: 'text/csv' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a'); a.href = url; a.download = 'admin-audit.csv'; document.body.appendChild(a); a.click(); a.remove();
+            }}>Export CSV</button>
+          )}
+        </div>
       </div>
+
+      {showAudit ? (
+        <div>
+          {loading ? <div>Loading…</div> : (
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead>
+                <tr><th>when</th><th>action</th><th>target</th><th>details</th></tr>
+              </thead>
+              <tbody>
+                {auditRows.map(a => (
+                  <tr key={a.id} style={{borderTop:'1px solid #eee'}}>
+                    <td className="small muted">{new Date(a.created_at).toLocaleString()}</td>
+                    <td>{a.action}</td>
+                    <td className="small muted">{a.target_table} {a.target_id || ''}</td>
+                    <td className="small muted" style={{maxWidth:360,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{JSON.stringify(a.details)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      ) : (
+        <div>
+          {loading ? <div>Loading…</div> : (
+            <ul className="resources-list">
+              {resources.map(r => (
+                <li key={r.id} data-id={r.id} style={{display:'flex',justifyContent:'space-between',gap:12}}>
+                  <div>
+                    <strong>{r.title}</strong> <span className="small muted">{r.type}</span>
+                    <div className="small muted">{(r.tags || []).join(', ')}</div>
+                  </div>
+                  <div>
+                    <button className="btn-ghost" onClick={() => remove(r.id)}>Delete</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   )
 }
