@@ -64,6 +64,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # avoid Playwright browser downloads during CI builds where browsers are unnecessary
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
         run: |
           npm ci
 
@@ -71,6 +73,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
         run: |
           npm run build
 

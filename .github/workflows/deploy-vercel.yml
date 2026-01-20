@@ -19,9 +19,14 @@ jobs:
           exit 78
 
       - name: Install deps
+        env:
+          # prevent Playwright from downloading browsers during remote build (use CI target tests separately)
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
         run: npm ci
 
       - name: Build
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
         run: npm run build
 
       - name: Deploy to Vercel (prod)

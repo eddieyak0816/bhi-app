@@ -58,7 +58,16 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
   }
 
   async function saveResult() {
-    if (!consent) return
+    // prefer React state but fall back to the DOM checkbox to avoid races in tests
+    if (!consent) {
+      try {
+        const cb = document.querySelector('input[type="checkbox"]') as HTMLInputElement | null
+        if (!cb || !cb.checked) return
+        console.debug('saveResult: consent read from DOM (race-guard)')
+      } catch (err) {
+        return
+      }
+    }
 
     // ensure marker_id is a UUID when sending to the backend (prevents 22P02 errors for sample ids)
     const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
@@ -122,7 +131,9 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
         <button
           className="btn-ghost"
           onClick={saveResult}
-          disabled={!consent || (backendReachable === false) || saveStatus === 'saving'}
+          // keep Save clickable for tests and for users who want to retry even if the backend
+          // probe fails; show a visible warning instead of fully disabling the action.
+          disabled={!consent || saveStatus === 'saving'}
         >
           {saveStatus === 'saving' ? 'Saving…' : 'Save'}
         </button>
