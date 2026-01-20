@@ -9,11 +9,16 @@ export default function Admin() {
   const [type, setType] = useState('video')
   const [tags, setTags] = useState('')
   const DEV_BACKEND_KEY = (import.meta.env.VITE_BACKEND_API_KEY as string) || ''
+  const DEV_BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || ''
+
+  function apiUrl(path: string) {
+    return DEV_BACKEND_URL ? `${DEV_BACKEND_URL.replace(/\/$/, '')}${path}` : path
+  }
 
   async function load() {
     setLoading(true)
     try {
-      const res = await fetch('/api/admin/content', { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
+      const res = await fetch(apiUrl('/api/admin/content'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
       const body = await res.json()
       setResources(body.resources || [])
     } catch (err) {
@@ -28,8 +33,11 @@ export default function Admin() {
   async function create() {
     const payload = { type, title, description: null, tags: tags.split(',').map(s => s.trim()).filter(Boolean) }
     try {
-      const res = await fetch('/api/admin/resources', { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify(payload) })
-      if (!res.ok) throw new Error('create failed')
+      const res = await fetch(apiUrl('/api/admin/resources'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify(payload) })
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        throw new Error(`create failed: ${res.status} ${txt}`)
+      }
       setTitle('')
       setTags('')
       await load()
@@ -43,8 +51,11 @@ export default function Admin() {
     if (!id) return
     if (!confirm('Delete this resource?')) return
     try {
-      const res = await fetch(`/api/admin/resources/${id}`, { method: 'DELETE', headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
-      if (!res.ok) throw new Error('delete failed')
+      const res = await fetch(apiUrl(`/api/admin/resources/${id}`), { method: 'DELETE', headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        throw new Error(`delete failed: ${res.status} ${txt}`)
+      }
       await load()
     } catch (err) {
       console.error(err)

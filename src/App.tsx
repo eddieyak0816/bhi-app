@@ -18,6 +18,7 @@ export default function App() {
   const [supabase] = useState<SupabaseClient | null>(() => createOptionalSupabase())
   const [data, setData] = useState<SampleData | null>(null)
   const [dataSource, setDataSource] = useState<'supabase' | 'sample' | 'none'>('none')
+  const [showAdmin, setShowAdmin] = useState(false)
   const [showOnboard, setShowOnboard] = useState(true)
   const [tags, setTags] = useState<string[]>([])
 

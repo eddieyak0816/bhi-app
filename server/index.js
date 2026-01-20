@@ -146,7 +146,19 @@ app.post('/api/admin/resources', async (req, res) => {
       console.error('admin-insert-resource-error', error);
       return res.status(500).json({ error: 'db_error', detail: error });
     }
-    return res.status(200).json({ id: Array.isArray(data) ? data[0].id : data });
+    const returnedId = Array.isArray(data) ? data[0].id : data
+    console.info('admin-insert-resource', { id: returnedId, type, title })
+
+    try {
+      // log admin action via DB function
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'create_resource', p_target_table: 'resources', p_target_id: returnedId, p_details: { type, title } });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+      else console.info('admin-audit-logged', { id: returnedId })
+    } catch (err) {
+      console.warn('admin-audit-exception', err)
+    }
+
+    return res.status(200).json({ id: returnedId });
   } catch (err) {
     console.error('admin-insert-error', err);
     return res.status(500).json({ error: 'server_error' });
@@ -166,9 +178,37 @@ app.delete('/api/admin/resources/:id', async (req, res) => {
       console.error('admin-delete-error', error);
       return res.status(500).json({ error: 'db_error', detail: error });
     }
+
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'delete_resource', p_target_table: 'resources', p_target_id: id, p_details: '{}' });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+      else console.info('admin-audit-logged-delete', { id })
+    } catch (err) {
+      console.warn('admin-audit-exception', err)
+    }
+
     return res.status(200).json({ deleted: id });
   } catch (err) {
     console.error('admin-delete-server-error', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Admin-only audit listing (server-only; requires BACKEND_API_KEY)
+app.get('/api/admin/audit', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('admin_audit').select('id,admin_text,action,target_table,target_id,details,created_at').order('created_at', { ascending: false }).limit(50);
+    if (error) {
+      console.error('admin-audit-list-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(200).json(data || []);
+  } catch (err) {
+    console.error('admin-audit-server-error', err);
     return res.status(500).json({ error: 'server_error' });
   }
 });
