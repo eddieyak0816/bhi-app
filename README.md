@@ -29,4 +29,6 @@ Next (I recommend)
   - `SUPABASE_SERVICE_ROLE` (server-only; never expose to browser)
 - Run the backend locally for testing: `BACKEND_API_KEY=foo SUPABASE_SERVICE_ROLE=<service_role> VITE_SUPABASE_URL=<url> npm run dev:server`
 
+- Dev-only: to inspect recent opt-in saves locally, set `ENABLE_DEV_ENDPOINT=true` in `.env.server` and restart the backend; then call `GET /api/dev/user-lab-values` with the header `x-backend-api-key: foo`.
+
 - Tell me if you want me to deploy a demo site (I can set that up).

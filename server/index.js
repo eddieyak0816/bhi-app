@@ -73,5 +73,46 @@ app.post('/api/save-lab', async (req, res) => {
   }
 });
 
+// DEV-ONLY: list recent opt-in saves for local debugging. Must be explicitly enabled.
+app.get('/api/dev/user-lab-values', async (req, res) => {
+  // never enable in production
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_ENDPOINT !== 'true') {
+    return res.status(404).json({ error: 'not_found' });
+  }
+
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('user_lab_values')
+      .select('id,user_id,marker_id,reported_value,created_at')
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) {
+      console.error('dev-list-db-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+
+    const showUserId = process.env.ENABLE_DEV_USER_ID === 'true';
+    const out = (data || []).map(r => ({
+      id: r.id,
+      user_id: showUserId ? r.user_id : '[redacted]',
+      marker_id: r.marker_id,
+      reported_value: r.reported_value,
+      created_at: r.created_at
+    }));
+
+    console.info('GET /api/dev/user-lab-values', { count: out.length, showUserId });
+    return res.status(200).json(out);
+  } catch (err) {
+    console.error('dev-list-error', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));
