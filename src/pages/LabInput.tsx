@@ -20,6 +20,33 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
     }
   })
 
+  const [backendReachable, setBackendReachable] = useState<boolean | null>(null)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
+
+  // Quick health check for local dev backend so the UI can show helpful feedback
+  React.useEffect(() => {
+    let mounted = true
+    async function probe() {
+      if (!DEV_BACKEND_URL) {
+        if (mounted) setBackendReachable(null)
+        return
+      }
+      const url = `${DEV_BACKEND_URL.replace(/\/$/, '')}/api/health`
+      try {
+        const res = await fetch(url, { method: 'GET' })
+        if (!mounted) return
+        setBackendReachable(res.ok)
+        console.debug('backend health probe', { url, ok: res.ok, status: res.status })
+      } catch (err) {
+        if (!mounted) return
+        setBackendReachable(false)
+        console.debug('backend health probe failed', err)
+      }
+    }
+    probe()
+    return () => { mounted = false }
+  }, [DEV_BACKEND_URL])
+
   function computeTags() {
     const num = parseFloat(value)
     if (Number.isNaN(num)) return onComputeTags([])
@@ -33,6 +60,15 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
   async function saveResult() {
     if (!consent) return
 
+    // ensure marker_id is a UUID when sending to the backend (prevents 22P02 errors for sample ids)
+    const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+    const sampleUuid = '11111111-1111-4111-8111-111111111111'
+    const safeMarkerId = isUuid(markerId) ? markerId : sampleUuid
+
+    const payload = { user_id: sessionUserId, marker_id: safeMarkerId, value }
+    setSaveStatus('saving')
+    console.debug('saveResult called', { payload, DEV_BACKEND_URL, DEV_BACKEND_KEY, substituted: safeMarkerId !== markerId })
+
     try {
       const headers: Record<string, string> = { 'content-type': 'application/json' }
       // For local dev testing only: include a short-lived backend key when provided via VITE_BACKEND_API_KEY
@@ -41,13 +77,27 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
       }
 
       const url = DEV_BACKEND_URL ? `${DEV_BACKEND_URL.replace(/\/$/, '')}/api/save-lab` : '/api/save-lab'
-      await fetch(url, {
+      const res = await fetch(url, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ user_id: sessionUserId, marker_id: markerId, value })
+        body: JSON.stringify(payload)
       })
+
+      let body = null
+      try { body = await res.json() } catch (err) { /* ignore parse errors */ }
+      console.debug('saveResult response', { status: res.status, ok: res.ok, body })
+
+      if (!res.ok) {
+        setSaveStatus('error')
+        return
+      }
+
+      setSaveStatus('success')
+      // keep UI message for a moment
+      setTimeout(() => setSaveStatus('idle'), 1500)
     } catch (err) {
-      console.warn('saveResult failed (expected in POC)', err)
+      console.warn('saveResult failed', err)
+      setSaveStatus('error')
     }
   }
 
@@ -69,11 +119,29 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
           <span style={{fontSize:13}}>Save result for later (optional)</span>
         </label>
         <button className="btn-primary" onClick={computeTags}>See resources</button>
-        <button className="btn-ghost" onClick={saveResult} disabled={!consent}>Save</button>
+        <button
+          className="btn-ghost"
+          onClick={saveResult}
+          disabled={!consent || (backendReachable === false) || saveStatus === 'saving'}
+        >
+          {saveStatus === 'saving' ? 'Saving…' : 'Save'}
+        </button>
       </div>
 
-      <div className="row">
+      <div className="row" style={{marginTop:8}}>
         <small className="muted">Your number stays on your device unless you choose to save it. Saving requires consent and backend support.</small>
+      </div>
+
+      <div className="row" style={{marginTop:8}}>
+        {backendReachable === false && (
+          <div style={{color:'#b45309'}}><strong>Backend unavailable — save disabled locally.</strong></div>
+        )}
+        {saveStatus === 'success' && (
+          <div style={{color:'#065f46'}}><strong>Saved (demo).</strong></div>
+        )}
+        {saveStatus === 'error' && (
+          <div style={{color:'#991b1b'}}><strong>Save failed — check server logs or API key.</strong></div>
+        )}
       </div>
     </div>
   )

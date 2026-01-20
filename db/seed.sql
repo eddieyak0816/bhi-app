@@ -4,7 +4,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- lab_markers
 INSERT INTO lab_markers (id, name, unit)
 VALUES
-  ('marker-vitd', 'Vitamin D', 'ng/mL')
+  ('11111111-1111-4111-8111-111111111111', 'Vitamin D', 'ng/mL')
 ON CONFLICT (id) DO NOTHING;
 
 -- logic_rules

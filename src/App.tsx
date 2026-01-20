@@ -16,25 +16,49 @@ function createOptionalSupabase() {
 export default function App() {
   const [supabase] = useState<SupabaseClient | null>(() => createOptionalSupabase())
   const [data, setData] = useState<SampleData | null>(null)
+  const [dataSource, setDataSource] = useState<'supabase' | 'sample' | 'none'>('none')
   const [showOnboard, setShowOnboard] = useState(true)
   const [tags, setTags] = useState<string[]>([])
 
   useEffect(() => {
     let mounted = true
     async function init() {
+      // Prefer Supabase when configured, but be explicit about what we received so debugging is easy
       if (supabase) {
         try {
-          const { data: lm } = await supabase.from('lab_markers').select('id,name,unit')
-          const { data: lr } = await supabase.from('logic_rules').select('marker_id,min_value,max_value,tag_to_apply')
-          const { data: r } = await supabase.from('resources').select('type,title,description,link_url,tags')
+          const [{ data: lm, error: lmErr }, { data: lr, error: lrErr }, { data: r, error: rErr }] = await Promise.all([
+            supabase.from('lab_markers').select('id,name,unit'),
+            supabase.from('logic_rules').select('marker_id,min_value,max_value,tag_to_apply'),
+            supabase.from('resources').select('type,title,description,link_url,tags')
+          ])
+
+          // Log detailed results for debugging (visible in DevTools)
+          console.debug('Supabase query results', {
+            lab_markers_count: (lm || []).length,
+            logic_rules_count: (lr || []).length,
+            resources_count: (r || []).length,
+            errors: { lmErr, lrErr, rErr }
+          })
+
           if (!mounted) return
-          setData({ lab_markers: lm || [], logic_rules: lr || [], resources: r || [] })
-          return
+
+          // If queries returned usable rows, use them; otherwise fall back to sample data
+          const hasRows = (lm && lm.length > 0) || (lr && lr.length > 0) || (r && r.length > 0)
+          if (hasRows && !lmErr && !lrErr && !rErr) {
+            setData({ lab_markers: lm || [], logic_rules: lr || [], resources: r || [] })
+            setDataSource('supabase')
+            return
+          }
+
+          console.warn('Supabase connected but returned no rows or errors — falling back to sample data', { lmErr, lrErr, rErr })
         } catch (err) {
-          console.warn('Supabase read failed, falling back to sample data', err)
+          console.warn('Supabase read failed (exception), falling back to sample data', err)
         }
       }
+
+      // fallback
       setData(loadSampleData())
+      setDataSource('sample')
     }
     init()
     return () => { mounted = false }
@@ -49,7 +73,10 @@ export default function App() {
       ) : (
         <>
           <header className="header">
-            <h1>Balanced Health</h1>
+            <div style={{display:'flex',alignItems:'baseline',gap:12}}>
+              <h1 style={{margin:0}}>Balanced Health</h1>
+              <div className="muted small" style={{fontSize:12}}>{dataSource === 'supabase' ? 'Connected to Supabase' : dataSource === 'sample' ? 'Using sample data' : 'Data: not loaded'}</div>
+            </div>
             <p className="subtitle">Short, trusted health info — not medical advice.</p>
           </header>
 

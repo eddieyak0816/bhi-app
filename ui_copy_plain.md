@@ -43,3 +43,5 @@ Buttons & microcopy
 - Finish onboarding: All set
 
 Tone: friendly, short, and clear. Use simple words and short sentences.
+
+Assistant interaction: when users ask the assistant for help in the app, prefer single-step guidance — one command or one specific next action. Keep UI messages succinct and action-oriented.

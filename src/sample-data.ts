@@ -4,7 +4,7 @@ export type Resource = { type: string; title: string; description?: string; link
 export type SampleData = { lab_markers: LabMarker[]; logic_rules: LogicRule[]; resources: Resource[] }
 
 export function loadSampleData(): SampleData {
-  const vitDId = 'marker-vitd'
+  const vitDId = '11111111-1111-4111-8111-111111111111'
   return {
     lab_markers: [
       { id: vitDId, name: 'Vitamin D', unit: 'ng/mL' },

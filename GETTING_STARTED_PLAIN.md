@@ -15,3 +15,5 @@ Want to check or demo the app? Do one of these:
 - I can add the automatic safety check for you. To turn it on I need a safe link to the database (you can add it as a secret in GitHub or ask me to guide you).
 
 If anything is confusing, tell me which sentence or word you don’t understand and I will make it simpler.
+
+Note on interacting with the assistant: reply to the assistant with one-step requests. The assistant will reply with a single command or a single short question — keep responses one action at a time.
