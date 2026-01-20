@@ -8,6 +8,17 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
 
   const DEV_BACKEND_KEY = (import.meta.env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || ''
+  const [sessionUserId] = useState<string>(() => {
+    try {
+      const existing = localStorage.getItem('bhi_demo_user_id')
+      if (existing) return existing
+      const id = (crypto && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : '00000000-0000-0000-0000-000000000000'
+      localStorage.setItem('bhi_demo_user_id', id)
+      return id
+    } catch (err) {
+      return '00000000-0000-0000-0000-000000000000'
+    }
+  })
 
   function computeTags() {
     const num = parseFloat(value)
@@ -33,7 +44,7 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
       await fetch(url, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ user_id: 'demo-user-1', marker_id: markerId, value })
+        body: JSON.stringify({ user_id: sessionUserId, marker_id: markerId, value })
       })
     } catch (err) {
       console.warn('saveResult failed (expected in POC)', err)

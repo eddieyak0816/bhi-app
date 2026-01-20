@@ -1,3 +1,10 @@
+// Load server env from .env.server when present (safe local dev)
+try {
+  require('dotenv').config({ path: '.env.server' });
+} catch (err) {
+  // dotenv not installed or file missing; proceed with process.env
+}
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -31,7 +38,8 @@ app.post('/api/save-lab', async (req, res) => {
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     // call the secure DB function created in the scaffold
-    const { data, error } = await sb.rpc('app.insert_user_lab_value', { p_user_id: user_id, p_marker_id: marker_id, p_reported_value: value });
+    // Call the public RPC function created in the DB (PostgREST/Supabase expects the function name without schema)
+    const { data, error } = await sb.rpc('insert_user_lab_value', { p_user_id: user_id, p_marker_id: marker_id, p_reported_value: value });
     if (error) {
       console.error('supabase rpc error', error);
       return res.status(500).json({ error: 'db_error', detail: error });
