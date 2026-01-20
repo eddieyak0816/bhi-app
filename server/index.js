@@ -114,5 +114,64 @@ app.get('/api/dev/user-lab-values', async (req, res) => {
   }
 });
 
+// ADMIN: content management endpoints (server-only, protected by BACKEND_API_KEY)
+app.get('/api/admin/content', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const [{ data: lab_markers }, { data: logic_rules }, { data: resources }] = await Promise.all([
+      sb.from('lab_markers').select('*'),
+      sb.from('logic_rules').select('*'),
+      sb.from('resources').select('*')
+    ]);
+    return res.status(200).json({ lab_markers: lab_markers || [], logic_rules: logic_rules || [], resources: resources || [] });
+  } catch (err) {
+    console.error('admin-content-error', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.post('/api/admin/resources', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const { type, title, description, tags } = req.body || {};
+  if (!type || !title || !Array.isArray(tags)) return res.status(400).json({ error: 'missing-params' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('resources').insert([{ type, title, description: description || null, tags }]).select('id');
+    if (error) {
+      console.error('admin-insert-resource-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(200).json({ id: Array.isArray(data) ? data[0].id : data });
+  } catch (err) {
+    console.error('admin-insert-error', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.delete('/api/admin/resources/:id', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'missing-id' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('resources').delete().eq('id', id);
+    if (error) {
+      console.error('admin-delete-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(200).json({ deleted: id });
+  } catch (err) {
+    console.error('admin-delete-server-error', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));

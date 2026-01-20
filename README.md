@@ -12,8 +12,7 @@ Non-developer demo (quick)
 - No setup: open the public demo URL (ask me for it) or run locally with sample data:
   - Command: `npm ci && npm run dev` → open `http://localhost:3000`
   - Click `Enter lab`, choose **Vitamin D**, enter `25`, then `See resources`.
-  - To save a demo result: check **Save result for later** and click **Save** (consent required).
-- Safety: your numbers stay on your device unless you explicitly save them; saved demo rows are opt-in and can be cleared.
+  - To save a demo result: check **Save result for later** and click **Save** (consent required).- Admin (dev): click **Admin** in the header to manage content (requires `BACKEND_API_KEY` in `.env.local` for server calls). You can create and delete `resources` from this UI.- Safety: your numbers stay on your device unless you explicitly save them; saved demo rows are opt-in and can be cleared.
 
 To load sample data into a Supabase project (optional)
 - Set `DATABASE_URL` then run: `npm run seed:db`

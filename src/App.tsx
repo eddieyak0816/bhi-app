@@ -3,6 +3,7 @@ import { SupabaseClient, createClient } from '@supabase/supabase-js'
 import Onboarding from './pages/Onboarding'
 import LabInput from './pages/LabInput'
 import Results from './pages/Results'
+import Admin from './pages/Admin'
 import { loadSampleData, SampleData } from './sample-data'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
@@ -77,17 +78,27 @@ export default function App() {
               <h1 style={{margin:0}}>Balanced Health</h1>
               <div className="muted small" style={{fontSize:12}}>{dataSource === 'supabase' ? 'Connected to Supabase' : dataSource === 'sample' ? 'Using sample data' : 'Data: not loaded'}</div>
             </div>
-            <p className="subtitle">Short, trusted health info — not medical advice.</p>
+
+            <div style={{display:'flex',gap:12,alignItems:'center',marginTop:8}}>
+              <p className="subtitle" style={{margin:0}}>Short, trusted health info — not medical advice.</p>
+              <button className="btn-ghost" onClick={() => setShowAdmin(s => !s)}>{showAdmin ? 'Close Admin' : 'Admin'}</button>
+            </div>
           </header>
 
           <main>
-            <LabInput
-              labMarkers={data.lab_markers}
-              logicRules={data.logic_rules}
-              onComputeTags={(t) => setTags(t)}
-            />
+            {showAdmin ? (
+              <Admin />
+            ) : (
+              <>
+                <LabInput
+                  labMarkers={data.lab_markers}
+                  logicRules={data.logic_rules}
+                  onComputeTags={(t) => setTags(t)}
+                />
 
-            <Results resources={data.resources} tags={tags} dataSource={dataSource} />
+                <Results resources={data.resources} tags={tags} dataSource={dataSource} />
+              </>
+            )}
           </main>
         </>
       )}
