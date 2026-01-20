@@ -87,7 +87,7 @@ export default function App() {
               onComputeTags={(t) => setTags(t)}
             />
 
-            <Results resources={data.resources} tags={tags} />
+            <Results resources={data.resources} tags={tags} dataSource={dataSource} />
           </main>
         </>
       )}

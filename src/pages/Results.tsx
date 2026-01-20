@@ -1,7 +1,7 @@
 import React from 'react'
 import type { Resource } from '../sample-data'
 
-export default function Results({ resources, tags }: { resources: Resource[]; tags: string[] }) {
+export default function Results({ resources, tags, dataSource }: { resources: Resource[]; tags: string[]; dataSource?: 'supabase'|'sample'|'none' }) {
   if (!tags || tags.length === 0) return (
     <div className="card small">
       <h3>Learning resources</h3>
@@ -15,6 +15,13 @@ export default function Results({ resources, tags }: { resources: Resource[]; ta
     <div className="card">
       <h3>Learning resources</h3>
       <p className="muted">These are educational — talk to your doctor for medical advice.</p>
+
+      {dataSource === 'supabase' && resources.length === 0 && (
+        <div style={{background:'#fff7ed',border:'1px solid #fcd34d',padding:12,borderRadius:6,marginBottom:12}}>
+          <strong>Connected to Supabase — no demo content found.</strong>
+          <div style={{marginTop:6}}>Tip: run the project seed or switch to sample data to see the demo content.</div>
+        </div>
+      )}
 
       {hits.length === 0 ? (
         <p>No matches found. Try a different test name or number.</p>
