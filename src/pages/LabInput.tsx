@@ -4,6 +4,10 @@ import type { LabMarker, LogicRule } from '../sample-data'
 export default function LabInput({ labMarkers, logicRules, onComputeTags }: { labMarkers: LabMarker[]; logicRules: LogicRule[]; onComputeTags: (tags: string[]) => void }) {
   const [markerId, setMarkerId] = useState<string>(labMarkers[0]?.id || '')
   const [value, setValue] = useState<string>('')
+  const [consent, setConsent] = useState<boolean>(false)
+
+  const DEV_BACKEND_KEY = (import.meta.env.VITE_BACKEND_API_KEY as string) || ''
+  const DEV_BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || ''
 
   function computeTags() {
     const num = parseFloat(value)
@@ -17,18 +21,21 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
 
   async function saveResult() {
     if (!consent) return
-    // This is an opt-in client call that SHOULD be handled by a trusted backend.
-    // The backend requires a short-lived key header (x-backend-api-key) when enabled.
+
     try {
-      await fetch('/api/save-lab', {
+      const headers: Record<string, string> = { 'content-type': 'application/json' }
+      // For local dev testing only: include a short-lived backend key when provided via VITE_BACKEND_API_KEY
+      if (DEV_BACKEND_KEY) {
+        headers['x-backend-api-key'] = DEV_BACKEND_KEY
+      }
+
+      const url = DEV_BACKEND_URL ? `${DEV_BACKEND_URL.replace(/\/$/, '')}/api/save-lab` : '/api/save-lab'
+      await fetch(url, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        // NOTE: do NOT hard-code BACKEND_API_KEY into the shipped client.
-        // For local testing you can set it in the browser devtools when running a local backend.
+        headers,
         body: JSON.stringify({ user_id: 'demo-user-1', marker_id: markerId, value })
       })
     } catch (err) {
-      // swallow network errors in POC — backend not required for demo
       console.warn('saveResult failed (expected in POC)', err)
     }
   }
