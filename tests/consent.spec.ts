@@ -17,6 +17,6 @@ test('calls save endpoint when consent given and Save clicked', async ({ page })
 
   let saw = false
   await page.route('**/api/save-lab', route => { saw = true; route.fulfill({ status: 200, body: 'ok' }) })
-  await page.click('text=Save')
+  await page.click('button:has-text("Save")')
   expect(saw).toBeTruthy();
 });
