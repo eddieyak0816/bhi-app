@@ -9,7 +9,12 @@ export default function Results({ resources, tags, dataSource }: { resources: Re
     </div>
   )
 
-  const hits = resources.filter(r => r.tags && r.tags.some(t => tags.includes(t)))
+  const normalize = (s: any) => (s || '').toString().trim().toLowerCase()
+  const selected = new Set((tags || []).map(t => normalize(t)))
+  const hits = resources.filter(r => {
+    const rTags = Array.isArray(r.tags) ? r.tags : (typeof r.tags === 'string' ? r.tags.replace(/^[{]|[}]$/g,'').split(',') : [])
+    return rTags.some((t: any) => selected.has(normalize(t)))
+  })
 
   return (
     <div className="card">

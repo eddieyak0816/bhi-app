@@ -19,3 +19,7 @@ VALUES
   ('video', 'Understanding Low Vit D', 'Short video about Vitamin D', ARRAY['Low_D']),
   ('doctor', 'Dr. Jane Smith', 'Expert overview', ARRAY['Low_D'])
 ON CONFLICT DO NOTHING;
+
+-- tags (persistent catalog used by the Admin tag-manager)
+INSERT INTO tags (name) VALUES ('Low_D') ON CONFLICT (name) DO NOTHING;
+INSERT INTO tags (name) VALUES ('Normal_D') ON CONFLICT (name) DO NOTHING;

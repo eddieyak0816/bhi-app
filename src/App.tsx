@@ -47,7 +47,15 @@ export default function App() {
           // If queries returned usable rows, use them; otherwise fall back to sample data
           const hasRows = (lm && lm.length > 0) || (lr && lr.length > 0) || (r && r.length > 0)
           if (hasRows && !lmErr && !lrErr && !rErr) {
-            setData({ lab_markers: lm || [], logic_rules: lr || [], resources: r || [] })
+            const normalizeTags = (t: any): string[] => {
+              if (!t) return []
+              if (Array.isArray(t)) return t.map(String).map(s => s.trim())
+              // Postgres text[] sometimes arrives as a string like '{a,b}' — handle that
+              if (typeof t === 'string') return t.replace(/^[{]|[}]$/g, '').split(',').map(s => s.trim()).filter(Boolean)
+              return []
+            }
+            const normalizedResources = (r || []).map((res: any) => ({ ...res, tags: normalizeTags(res.tags) }))
+            setData({ lab_markers: lm || [], logic_rules: lr || [], resources: normalizedResources })
             setDataSource('supabase')
             return
           }

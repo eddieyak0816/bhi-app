@@ -5,9 +5,9 @@
 SELECT table_name
 FROM information_schema.tables
 WHERE table_schema = 'public'
-  AND table_name IN ('lab_markers','logic_rules','resources');
+  AND table_name IN ('lab_markers','logic_rules','resources','tags');
 
--- Expected: 3 rows (one per table)
+-- Expected: 4 rows (one per table)
 
 -- 2) Check columns & types for each table
 SELECT column_name, data_type, is_nullable, column_default
