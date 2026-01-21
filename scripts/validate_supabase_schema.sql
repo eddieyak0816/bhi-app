@@ -52,6 +52,11 @@ JOIN information_schema.constraint_column_usage ccu
 WHERE kcu.table_name = 'logic_rules'
   AND kcu.column_name = 'marker_id';
 
+-- Optional: logic_rules may have an `id` primary key in newer schemas (helps admin CRUD).
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'logic_rules' AND column_name = 'id';
+
 -- 4) Check for gen_random_uuid() default on lab_markers.id
 SELECT column_name, column_default
 FROM information_schema.columns

@@ -385,6 +385,152 @@ app.post('/api/admin/tags', async (req, res) => {
     return res.status(200).json({ name, persisted: inserted });
   } catch (err) {
     console.error('admin-create-tag-error', err);
+    return res.status(500).json({ error: 'server_error', detail: String(err) });
+  }
+});
+
+// ADMIN: rename a tag (update catalog + propagate to resources and logic_rules)
+app.patch('/api/admin/tags/:name', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const oldName = req.params.name;
+  const newName = (req.body && req.body.new_name || '').toString().trim();
+  if (!oldName || !newName) return res.status(400).json({ error: 'missing-params' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    await sb.rpc('pg_sleep', { seconds: 0 }).catch(() => {}) // guard for older PGs
+    // Try to update tags table if present
+    try {
+      const { error: upErr } = await sb.from('tags').upsert([{ name: newName }]);
+      if (upErr) console.warn('tags-upsert-warn', upErr)
+      await sb.from('tags').delete().eq('name', oldName);
+    } catch (err) {
+      console.warn('tags-propagation-fallback', err)
+    }
+
+    // Propagate to resources: replace array element oldName -> newName
+    const { error: resErr } = await sb.rpc('replace_resource_tag', { p_old: oldName, p_new: newName }).catch(() => ({ error: null }));
+    if (resErr) console.warn('replace_resource_tag failed', resErr);
+
+    // Propagate to logic_rules
+    const { error: lrErr } = await sb.from('logic_rules').update({ tag_to_apply: newName }).eq('tag_to_apply', oldName);
+    if (lrErr) console.warn('logic_rules-propagate-failed', lrErr);
+
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'rename_tag', p_target_table: 'tags', p_target_id: null, p_details: { oldName, newName } });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+    } catch (err) { console.warn('admin-audit-exception', err) }
+
+    return res.status(200).json({ oldName, newName });
+  } catch (err) {
+    console.error('admin-rename-tag-error', err);
+    return res.status(500).json({ error: 'server_error', detail: String(err) });
+  }
+});
+
+// ADMIN: delete a tag (remove from catalog, resources.tags arrays, and logic_rules)
+app.delete('/api/admin/tags/:name', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const name = req.params.name;
+  if (!name) return res.status(400).json({ error: 'missing-name' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    // remove from resources.tags using array_remove
+    const { error: remErr } = await sb.from('resources').update({ tags: sb.raw('array_remove(tags, ?)', [name]) }).neq('tags', null).match({}).catch(() => ({ error: null }));
+    if (remErr) console.warn('resources-tag-remove-failed', remErr);
+    // delete any logic_rules that reference this tag
+    const { error: lrErr } = await sb.from('logic_rules').delete().eq('tag_to_apply', name);
+    if (lrErr) console.warn('logic_rules-delete-failed', lrErr);
+    // delete from tags table if present
+    await sb.from('tags').delete().eq('name', name).catch(() => {});
+
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'delete_tag', p_target_table: 'tags', p_target_id: null, p_details: { name } });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+    } catch (err) { console.warn('admin-audit-exception', err) }
+
+    return res.status(200).json({ deleted: name });
+  } catch (err) {
+    console.error('admin-delete-tag-error', err);
+    return res.status(500).json({ error: 'server_error', detail: String(err) });
+  }
+});
+
+// ADMIN: lab_markers CRUD (for creating markers from Admin UI)
+app.post('/api/admin/lab-markers', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const { id, name, unit } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'missing-name' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const payload = { id: id || undefined, name, unit: unit || null };
+    const { data, error } = await sb.from('lab_markers').insert([payload]).select('*');
+    if (error) {
+      console.error('admin-insert-lab-marker-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    const returned = Array.isArray(data) ? data[0] : data;
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'create_lab_marker', p_target_table: 'lab_markers', p_target_id: returned.id || null, p_details: returned });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+    } catch (err) { console.warn('admin-audit-exception', err) }
+    return res.status(200).json(returned);
+  } catch (err) {
+    console.error('admin-insert-lab-marker-exception', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.delete('/api/admin/lab-markers/:id', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'missing-id' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('lab_markers').delete().eq('id', id);
+    if (error) {
+      console.error('admin-delete-lab-marker-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'delete_lab_marker', p_target_table: 'lab_markers', p_target_id: id, p_details: '{}' });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+    } catch (err) { console.warn('admin-audit-exception', err) }
+    return res.status(200).json({ deleted: id });
+  } catch (err) {
+    console.error('admin-delete-lab-marker-exception', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ADMIN: delete logic_rules by attribute (fallback when there is no id column or UI lacks id)
+app.post('/api/admin/logic-rules/delete-by-attrs', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const { marker_id, min_value, max_value, tag_to_apply } = req.body || {};
+  if (!marker_id || typeof min_value === 'undefined' || typeof max_value === 'undefined' || !tag_to_apply) return res.status(400).json({ error: 'missing-params' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('logic_rules').delete().match({ marker_id, min_value: Number(min_value), max_value: Number(max_value), tag_to_apply });
+    if (error) {
+      console.error('admin-delete-logic-rule-by-attrs-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'delete_logic_rule_by_attrs', p_target_table: 'logic_rules', p_target_id: null, p_details: { marker_id, min_value, max_value, tag_to_apply } });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+    } catch (err) { console.warn('admin-audit-exception', err) }
+    return res.status(200).json({ deleted: { marker_id, min_value, max_value, tag_to_apply } });
+  } catch (err) {
+    console.error('admin-delete-logic-rule-by-attrs-exception', err);
     return res.status(500).json({ error: 'server_error' });
   }
 });

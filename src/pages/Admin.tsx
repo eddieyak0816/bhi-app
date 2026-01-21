@@ -18,12 +18,24 @@ export default function Admin() {
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null)
   const [ruleForm, setRuleForm] = useState<{ marker_id?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
+  // inline marker-creation state
+  const [markerCreationVisible, setMarkerCreationVisible] = useState(false)
+  const [markerName, setMarkerName] = useState('')
+  const [markerUnit, setMarkerUnit] = useState('')
+
   const [showAudit, setShowAudit] = useState(false)
   const [auditRows, setAuditRows] = useState<Array<any>>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [selectAll, setSelectAll] = useState(false)
   const DEV_BACKEND_KEY = (import.meta.env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || ''
+  // session override for dev convenience (not persisted)
+  const [devKeyOverride, setDevKeyOverride] = useState<string | null>(null)
+  function effectiveDevKey() { return devKeyOverride || DEV_BACKEND_KEY }
+
+  // helper to format helpful messages when server returns 403
+  function backendKeyGuidance() {
+    return DEV_BACKEND_URL ? `Set VITE_BACKEND_API_KEY in your .env.server (example: VITE_BACKEND_API_KEY=foo) or use the session dev key.` : 'Backend URL not set (VITE_BACKEND_URL)'}
 
   function toggleSelect(id: string) {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -59,16 +71,36 @@ export default function Admin() {
   function apiUrl(path: string) {
     return DEV_BACKEND_URL ? `${DEV_BACKEND_URL.replace(/\/$/, '')}${path}` : path
   }
+  function authHeaders() {
+    const k = effectiveDevKey()
+    return k ? { 'x-backend-api-key': k } : {}
+  }
+  async function fetchJson(input: string, init: RequestInit = {}) {
+    const headers = { ...(init.headers || {}), ...(authHeaders()) }
+    const res = await fetch(apiUrl(input), { ...init, headers })
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      const err = new Error(`${res.status} ${body}`)
+      ;(err as any).status = res.status
+      ;(err as any).body = body
+      throw err
+    }
+    return res.json().catch(() => null)
+  }
 
   async function load() {
     setLoading(true)
     try {
-      const res = await fetch(apiUrl('/api/admin/content'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
-      const body = await res.json()
+      try {
+      const body = await fetchJson('/api/admin/content')
       // ensure caller gets normalized shapes (resources already normalized upstream)
-      setResources(body.resources || [])
-      setLogicRules(body.logic_rules || [])
-      setLabMarkers(body.lab_markers || [])
+      setResources((body && body.resources) || [])
+      setLogicRules((body && body.logic_rules) || [])
+      setLabMarkers((body && body.lab_markers) || [])
+    } catch (err) {
+      console.error('load admin content failed', err)
+      alert('Failed to load admin content — ' + ((err as any)?.message || 'check server logs'))
+    }
     } catch (err) {
       console.error(err)
     } finally {
@@ -153,16 +185,45 @@ export default function Admin() {
       alert('Save rule failed (check server logs)')
     }
   }
-  async function deleteRule(id?: string) {
-    if (!id) return
+  async function deleteRule(idOrRule?: string | any) {
+    // idOrRule can be an id string OR the rule object (fallback for schemas without id)
+    const isObj = typeof idOrRule === 'object' && idOrRule !== null
+    const id = isObj ? idOrRule.id : idOrRule
+    if (!id && !isObj) return
     if (!confirm('Delete this criterion?')) return
+
     try {
-      const res = await fetch(apiUrl(`/api/admin/logic-rules/${id}`), { method: 'DELETE', headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
-      if (!res.ok) throw new Error('deleteRule failed: ' + res.status)
+      let res
+      if (id) {
+        res = await fetch(apiUrl(`/api/admin/logic-rules/${id}`), { method: 'DELETE', headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
+        // if server responds 400/404 because id column doesn't exist or row not found, fall through to attr-delete
+        if (res && res.ok) {
+          await load();
+          return
+        }
+      }
+
+      // fallback: delete by attributes (marker_id + min + max + tag)
+      const rule = isObj ? idOrRule : null
+      const marker_id = rule ? rule.marker_id : undefined
+      const min_value = rule ? rule.min_value : undefined
+      const max_value = rule ? rule.max_value : undefined
+      const tag_to_apply = rule ? rule.tag_to_apply : undefined
+      if (!marker_id || typeof min_value === 'undefined' || typeof max_value === 'undefined' || !tag_to_apply) {
+        const txt = await (res ? res.text().catch(() => '') : '')
+        throw new Error(`deleteRule: missing identifiers (${txt})`)
+      }
+
+      const resp = await fetch(apiUrl('/api/admin/logic-rules/delete-by-attrs'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify({ marker_id, min_value, max_value, tag_to_apply }) })
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => resp.status)
+        throw new Error('delete-by-attrs failed: ' + txt)
+      }
+
       await load()
     } catch (err) {
       console.error('deleteRule', err)
-      alert('Delete rule failed')
+      alert('Delete rule failed — ' + ((err as any) && (err as any).message ? (err as any).message : 'check server logs'))
     }
   }
 
@@ -206,7 +267,14 @@ export default function Admin() {
   return (
     <div className="card">
       <h3>Admin — Content manager (dev)</h3>
-      <p className="muted">Server-only actions require a backend key in dev.</p>
+      <div style={{display:'flex',gap:12,alignItems:'center'}}>
+        <p className="muted" style={{margin:0}}>Server-only actions require a backend key in dev.</p>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <button className="btn-ghost" onClick={() => setDevKeyOverride('foo')}>Use dev key (foo)</button>
+          <button className="btn-ghost" onClick={() => { const k = prompt('Enter a temporary backend key (session only)'); if (k) setDevKeyOverride(k) }}>Set session key</button>
+          {effectiveDevKey() ? <div className="small muted">Using key: <strong>{effectiveDevKey() === 'foo' ? 'foo (session)' : 'session-set'}</strong></div> : <div className="small muted">No backend key set</div>}
+        </div>
+      </div>
 
       <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:12}}>
         <select value={type} onChange={e => setType(e.target.value)}>
@@ -233,7 +301,7 @@ export default function Admin() {
           </div>
 
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <div style={{background:'#fff',border:'1px solid #eee',padding:8,borderRadius:6,maxHeight:160,overflow:'auto'}}>
+            <div style={{background:'#fff',border:'1px solid #eee',padding:8,borderRadius:6,maxHeight:260,overflow:'auto'}}>
               {tagInput.trim() === '' ? (
                 <div className="small muted">Available tags: {(allowedTags || []).slice(0,8).join(', ')}</div>
               ) : (
@@ -249,6 +317,47 @@ export default function Admin() {
                   )}
                 </div>
               )}
+
+              {/* Tag management (CRUD) */}
+              <div style={{marginTop:12,borderTop:'1px solid #f3f4f6',paddingTop:12}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div className="small muted">Manage tags</div>
+                  <div className="small muted">(rename / delete)</div>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:8}}>
+                  {(allowedTags || []).map(t => (
+                    <div key={t} style={{display:'flex',alignItems:'center',gap:8,justifyContent:'space-between'}}>
+                      <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                        <div style={{minWidth:160}}>{t}</div>
+                        <button className="btn-ghost" onClick={async () => {
+                          const newName = prompt('Rename tag', t)
+                          if (!newName || newName.trim() === '' || newName.trim() === t) return
+                          try {
+                            const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: newName.trim() }) })
+                            if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                            await loadTags()
+                            await load()
+                          } catch (err) {
+                            alert('Rename failed — ' + ((err as any)?.message || 'check server logs'))
+                          }
+                        }}>Rename</button>
+                        <button className="btn-ghost" onClick={async () => {
+                          if (!confirm(`Delete tag ${t}? This will remove it from resources and delete any criteria referencing it.`)) return
+                          try {
+                            const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'DELETE', headers: authHeaders() })
+                            if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                            await loadTags()
+                            await load()
+                          } catch (err) {
+                            alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
+                          }
+                        }}>Delete</button>
+                      </div>
+                      <div className="small muted">&nbsp;</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             <div style={{display:'flex',gap:8}}>
               <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
@@ -257,22 +366,7 @@ export default function Admin() {
         </div>
       </div>
 
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
-        <strong>Resources</strong>
-        <div style={{display:'flex',gap:8}}>
-          <button className="btn-ghost" onClick={() => { setShowAudit(s => !s); if (!showAudit) loadAudit() }}>{showAudit ? 'Show Resources' : 'Show Audit'}</button>
-          {showAudit && (
-            <button className="btn-ghost" onClick={() => {
-              const csv = ['id,action,target_table,target_id,created_at,details']
-                .concat(auditRows.map(r => `${r.id},${r.action},${r.target_table},${r.target_id || ''},${r.created_at},"${JSON.stringify(r.details).replace(/"/g,'""')}"`))
-                .join('\n')
-              const blob = new Blob([csv], { type: 'text/csv' })
-              const url = URL.createObjectURL(blob)
-              const a = document.createElement('a'); a.href = url; a.download = 'admin-audit.csv'; document.body.appendChild(a); a.click(); a.remove();
-            }}>Export CSV</button>
-          )}
-        </div>
-      </div>
+      <div style={{height:12}} />
 
       {showAudit ? (
         <div>
@@ -312,7 +406,7 @@ export default function Admin() {
               <div style={{marginBottom:18}}>
                 <h4 style={{margin:0}}>Criteria (logic rules)</h4>
                 <div style={{marginTop:8,border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
-                  <table style={{width:'100%',borderCollapse:'collapse'}}>
+                  <table data-testid="criteria-table" style={{width:'100%',borderCollapse:'collapse'}}>
                     <thead style={{background:'#fafafa'}}>
                       <tr>
                         <th style={{textAlign:'left',padding:8}}>Marker</th>
@@ -338,12 +432,37 @@ export default function Admin() {
                       {/* inline add / edit form */}
                       <tr style={{background:'#fff'}}>
                         <td style={{padding:8}}>
-                          <select value={ruleForm.marker_id || (labMarkers[0] && labMarkers[0].id) || ''} onChange={e => setRuleForm(f => ({ ...f, marker_id: e.target.value }))}>
-                            {(labMarkers || []).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                          </select>
+                          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                            <select value={ruleForm.marker_id || (labMarkers[0] && labMarkers[0].id) || ''} onChange={e => setRuleForm(f => ({ ...f, marker_id: e.target.value }))}>
+                              {(labMarkers || []).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                            </select>
+                            <button className="btn-ghost" onClick={() => setMarkerCreationVisible(v => !v)} title="Add marker">+ Marker</button>
+                          </div>
+                          {markerCreationVisible && (
+                            <div style={{marginTop:8,display:'flex',gap:8,alignItems:'center'}}>
+                              <input placeholder="Marker name" value={markerName} onChange={e => setMarkerName(e.target.value)} style={{minWidth:160}} />
+                              <input placeholder="unit (optional)" value={markerUnit} onChange={e => setMarkerUnit(e.target.value)} style={{width:120}} />
+                              <button className="btn-primary" onClick={async () => {
+                                if (!markerName.trim()) return alert('Name required')
+                                try {
+                                  const res = await fetch(apiUrl('/api/admin/lab-markers'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify({ name: markerName.trim(), unit: markerUnit.trim() }) })
+                                  if (!res.ok) throw new Error('create marker failed')
+                                  const body = await res.json()
+                                  await load()
+                                  setRuleForm(f => ({ ...f, marker_id: body.id }))
+                                  setMarkerCreationVisible(false)
+                                  setMarkerName('')
+                                  setMarkerUnit('')
+                                } catch (err) {
+                                  console.error('createMarker', err)
+                                  alert('Create marker failed (check server logs)')
+                                }
+                              }}>Add</button>
+                            </div>
+                          )}
                         </td>
-                        <td style={{padding:8}}><input value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
-                        <td style={{padding:8}}><input value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
+                        <td style={{padding:8}}><input aria-label="min_value" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
+                        <td style={{padding:8}}><input aria-label="max_value" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
                         <td style={{padding:8}}>
                           <select value={ruleForm.tag_to_apply || ''} onChange={e => setRuleForm(f => ({ ...f, tag_to_apply: e.target.value }))}>
                             <option value="">(choose tag)</option>
@@ -363,6 +482,32 @@ export default function Admin() {
                       </tr>
                     </tbody>
                   </table>
+                </div>
+              </div>
+
+              {/* --- Resources controls (moved below Criteria) --- */}
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'8px 0'}}>
+                <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                  <strong>Resources</strong>
+                  <button className="btn-ghost" onClick={() => { setShowAudit(s => !s); if (!showAudit) loadAudit() }}>{showAudit ? 'Show Resources' : 'Show Audit'}</button>
+                  {showAudit && (
+                    <button className="btn-ghost" onClick={() => {
+                      const csv = ['id,action,target_table,target_id,created_at,details']
+                        .concat(auditRows.map(r => `${r.id},${r.action},${r.target_table},${r.target_id || ''},${r.created_at},"${JSON.stringify(r.details).replace(/"/g,'""')}"`))
+                        .join('\n')
+                      const blob = new Blob([csv], { type: 'text/csv' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a'); a.href = url; a.download = 'admin-audit.csv'; document.body.appendChild(a); a.click(); a.remove();
+                    }}>Export CSV</button>
+                  )}
+                </div>
+
+                <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                  <label style={{display:'flex',alignItems:'center',gap:8}}>
+                    <input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.currentTarget.checked)} />
+                    <span className="small muted">Select all</span>
+                  </label>
+                  <button className="btn-danger" onClick={bulkDelete} disabled={selectedIds.length === 0}>Delete selected</button>
                 </div>
               </div>
 
