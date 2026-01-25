@@ -112,48 +112,54 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
 
   return (
     <div className="card">
-      <label>Test name</label>
+      <h3 style={{marginBottom:20}}>Enter Lab Results</h3>
+
+      <label>Lab Test Name</label>
       <select value={markerId} onChange={(e) => setMarkerId(e.target.value)}>
         {labMarkers.map(m => (
           <option key={m.id} value={m.id}>{m.name}</option>
         ))}
       </select>
 
-      <label>Result number (optional)</label>
+      <label>Test Result Value (optional)</label>
       <input value={value} onChange={(e) => setValue(e.target.value)} placeholder="e.g., 25" />
 
-      <div style={{display:'flex',alignItems:'center',gap:12,marginTop:12}}>
-        <label style={{display:'flex',alignItems:'center',gap:8}}>
-          <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />
-          <span style={{fontSize:13}}>Save result for later (optional)</span>
-        </label>
-        <button className="btn-primary" onClick={computeTags}>See resources</button>
+      <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:12,marginTop:24}}>
+        <button className="btn-primary" onClick={computeTags}>View Resources</button>
         <button
           className="btn-ghost"
           onClick={saveResult}
-          // keep Save clickable for tests and for users who want to retry even if the backend
-          // probe fails; show a visible warning instead of fully disabling the action.
           disabled={!consent || saveStatus === 'saving'}
         >
-          {saveStatus === 'saving' ? 'Saving…' : 'Save'}
+          {saveStatus === 'saving' ? 'Saving…' : 'Save Result'}
         </button>
+        <label style={{display:'flex',alignItems:'center',gap:8,margin:0,fontWeight:500,cursor:'pointer'}}>
+          <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />
+          <span style={{fontSize:14,color:'var(--text-secondary)'}}>Save for later reference</span>
+        </label>
       </div>
 
-      <div className="row" style={{marginTop:8}}>
-        <small className="muted">Your number stays on your device unless you choose to save it. Saving requires consent and backend support.</small>
+      <div style={{marginTop:16,padding:12,background:'#F8F9FC',borderRadius:6,borderLeft:'3px solid var(--primary-blue)'}}>
+        <small className="muted">
+          <strong style={{color:'var(--text-primary)'}}>Privacy Notice:</strong> Your test values remain on your device unless you opt to save them. Saving requires consent and backend support.
+        </small>
       </div>
 
-      <div className="row" style={{marginTop:8}}>
-        {backendReachable === false && (
-          <div style={{color:'#b45309'}}><strong>Backend unavailable — save disabled locally.</strong></div>
-        )}
-        {saveStatus === 'success' && (
-          <div style={{color:'#065f46'}}><strong>Saved (demo).</strong></div>
-        )}
-        {saveStatus === 'error' && (
-          <div style={{color:'#991b1b'}}><strong>Save failed — check server logs or API key.</strong></div>
-        )}
-      </div>
+      {backendReachable === false && (
+        <div style={{marginTop:12,padding:12,background:'#FFF7ED',border:'1px solid var(--warning)',borderRadius:6,color:'var(--warning)'}}>
+          <strong>Backend unavailable</strong> — save feature is currently disabled.
+        </div>
+      )}
+      {saveStatus === 'success' && (
+        <div style={{marginTop:12,padding:12,background:'#ECFDF5',border:'1px solid var(--success)',borderRadius:6,color:'var(--success)'}}>
+          <strong>✓ Saved successfully</strong>
+        </div>
+      )}
+      {saveStatus === 'error' && (
+        <div style={{marginTop:12,padding:12,background:'#FEF2F2',border:'1px solid var(--error)',borderRadius:6,color:'var(--error)'}}>
+          <strong>Save failed</strong> — please check server logs or API key.
+        </div>
+      )}
     </div>
   )
 }

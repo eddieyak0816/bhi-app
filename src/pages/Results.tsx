@@ -18,27 +18,37 @@ export default function Results({ resources, tags, dataSource }: { resources: Re
 
   return (
     <div className="card">
-      <h3>Learning resources</h3>
-      <p className="muted">These are educational — talk to your doctor for medical advice.</p>
+      <h3>Educational Resources</h3>
+      <p className="muted" style={{marginTop:8,marginBottom:16}}>
+        The following resources are for educational purposes only. Please consult your healthcare provider for medical advice.
+      </p>
 
       {dataSource === 'supabase' && resources.length === 0 && (
-        <div style={{background:'#fff7ed',border:'1px solid #fcd34d',padding:12,borderRadius:6,marginBottom:12}}>
-          <strong>Connected to Supabase — no demo content found.</strong>
-          <div style={{marginTop:6}}>Tip: run the project seed or switch to sample data to see the demo content.</div>
+        <div style={{background:'#fff7ed',border:'1px solid #fcd34d',padding:16,borderRadius:6,marginBottom:16}}>
+          <strong>Connected to database — no demo content found.</strong>
+          <div style={{marginTop:6,fontSize:14}}>Tip: run the project seed or switch to sample data to see the demo content.</div>
         </div>
       )}
 
       {hits.length === 0 ? (
-        <p>No matches found. Try a different test name or number.</p>
+        <div style={{padding:24,textAlign:'center',background:'#F8F9FC',borderRadius:6,marginTop:16}}>
+          <p style={{margin:0,color:'var(--text-secondary)'}}>No resources match your current lab values. Try entering a different test or value.</p>
+        </div>
       ) : (
-        <ul className="resources-list">
-          {hits.map((r, i) => (
-            <li key={i} className="resource">
-              <strong>{r.title}</strong>
-              <div className="small muted">{r.type}</div>
-            </li>
-          ))}
-        </ul>
+        <>
+          <div style={{fontSize:14,fontWeight:600,color:'var(--text-secondary)',marginBottom:12}}>
+            {hits.length} {hits.length === 1 ? 'resource' : 'resources'} found
+          </div>
+          <ul className="resources-list">
+            {hits.map((r, i) => (
+              <li key={i} className="resource">
+                <strong>{r.title}</strong>
+                <div className="small muted" style={{textTransform:'capitalize',marginTop:4}}>{r.type}</div>
+                {r.description && <div className="small" style={{marginTop:8,color:'var(--text-secondary)'}}>{r.description}</div>}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   )

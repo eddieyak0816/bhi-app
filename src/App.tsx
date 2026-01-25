@@ -83,14 +83,17 @@ export default function App() {
       ) : (
         <>
           <header className="header">
-            <div style={{display:'flex',alignItems:'baseline',gap:12}}>
-              <h1 style={{margin:0}}>Balanced Health</h1>
-              <div className="muted small" style={{fontSize:12}}>{dataSource === 'supabase' ? 'Connected to Supabase' : dataSource === 'sample' ? 'Using sample data' : 'Data: not loaded'}</div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div>
+                <h1>Balanced Health Institute</h1>
+                <p className="subtitle">Evidence-based health education for informed decisions</p>
+              </div>
+              <button className="btn-ghost" onClick={() => setShowAdmin(s => !s)} style={{marginTop:4}}>
+                {showAdmin ? 'Close Admin' : 'Admin'}
+              </button>
             </div>
-
-            <div style={{display:'flex',gap:12,alignItems:'center',marginTop:8}}>
-              <p className="subtitle" style={{margin:0}}>Short, trusted health info — not medical advice.</p>
-              <button className="btn-ghost" onClick={() => setShowAdmin(s => !s)}>{showAdmin ? 'Close Admin' : 'Admin'}</button>
+            <div className="muted small" style={{marginTop:12}}>
+              {dataSource === 'supabase' ? '● Connected to database' : dataSource === 'sample' ? '● Using sample data' : 'Data: not loaded'}
             </div>
           </header>
 
