@@ -153,6 +153,27 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     const k = effectiveDevKey()
     return k ? { 'x-backend-api-key': k } : {}
   }
+  function getTagUsageCount(tagName: string) {
+    let count = 0
+    // Count in resources
+    resources.forEach(r => {
+      if (Array.isArray(r.tags) && r.tags.includes(tagName)) count++
+    })
+    // Count in logic rules
+    logicRules.forEach(lr => {
+      if (lr.tag_to_apply === tagName) count++
+    })
+    return count
+  }
+  function getTagColor(tagName: string) {
+    const colors = ['#EF4444', '#F97316', '#EAB308', '#22C55E', '#06B6D4', '#3B82F6', '#8B5CF6', '#EC4899']
+    let hash = 0
+    for (let i = 0; i < tagName.length; i++) {
+      hash = ((hash << 5) - hash) + tagName.charCodeAt(i)
+      hash = hash & hash
+    }
+    return colors[Math.abs(hash) % colors.length]
+  }
   async function fetchJson(input: string, init: RequestInit = {}) {
     const headers = { ...(init.headers || {}), ...(authHeaders()) }
     const res = await fetch(apiUrl(input), { ...init, headers })
@@ -949,7 +970,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                 <button className="btn-ghost" onClick={async () => {
                                   try {
                                     const markerId = labMarkers.find(m => m.name === editData.markerName)?.id || editData.marker_id
-                                    const res = await fetch(apiUrl(`/api/admin/logic-rules/${l.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ marker_id: markerId, min_value: Number(editData.min_value), max_value: Number(editData.max_value), tag_to_apply: editData.tag_to_apply || null }) })
+                                    const res = await fetch(apiUrl(`/api/admin/logic-rules/${l.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ marker_id: markerId, min_value: Number(editData.min_value), max_value: Number(editData.max_value), tag_to_apply: editData.tag_to_apply || null, operator: editData.operator || 'between' }) })
                                     if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                                     await load()
                                     setEditingId(null)
@@ -965,7 +986,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               <td style={{padding:8}}>{(labMarkers.find(m => m.id === l.marker_id) || {}).name || l.marker_id}</td>
                               <td style={{padding:8,textAlign:'left'}}>{l.min_value}</td>
                               <td style={{padding:8,textAlign:'left'}}>{l.max_value}</td>
-                              <td style={{padding:8}}>between</td>
+                              <td style={{padding:8}}>{l.operator || 'between'}</td>
                               <td style={{padding:8}}>{l.tag_to_apply}</td>
                               <td style={{padding:8,textAlign:'right'}}>
                                 <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
@@ -1359,65 +1380,78 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </div>
               </div>
 
-              {/* Tags table */}
-              <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead style={{background:'#fafafa'}}>
-                    <tr>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:sortColumn==='name'?'#1F2937':'#666'}} onClick={() => handleSort('name')}>Tag Name{getSortIndicator('name')}</th>
-                      <th style={{padding:8,textAlign:'right'}}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(sortColumn ? sortData(allowedTags
-                      .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
-                      .map(name => ({name})), 'name').map(obj => obj.name) : allowedTags
-                      .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))).map(t => (
-                      <tr key={t} style={{borderTop:'1px solid #f3f4f6'}}>
-                        {editingId === `tag-${t}` ? (
-                          <>
-                            <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
-                            <td style={{padding:8,textAlign:'right',display:'flex',gap:4,justifyContent:'flex-end'}}>
-                              <button className="btn-ghost" onClick={async () => {
-                                try {
-                                  const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name.trim() }) })
-                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                                  await loadTags()
-                                  await load()
-                                  setEditingId(null)
-                                } catch (err) {
-                                  alert('Save tag failed — ' + ((err as any)?.message || 'check server logs'))
-                                }
-                              }} style={{color:'#16a34a'}}>✓</button>
-                              <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td style={{padding:8}}><strong>{t}</strong></td>
-                            <td style={{padding:8,textAlign:'right',display:'flex',gap:4,justifyContent:'flex-end'}}>
-                              <button className="btn-ghost" onClick={() => {
-                                setEditingId(`tag-${t}`)
-                                setEditData({name: t})
-                              }}>✎</button>
-                              <button className="btn-ghost" onClick={async () => {
-                                if (!confirm(`Delete tag "${t}"? This will remove it from resources and delete any criteria referencing it.`)) return
-                                try {
-                                  const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'DELETE', headers: authHeaders() })
-                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                                  await loadTags()
-                                  await load()
-                                } catch (err) {
-                                  alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
-                                }
-                              }} style={{color:'#dc2626'}}>✕</button>
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Tags Grid */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:12}}>
+                {(sortColumn ? sortData(allowedTags
+                  .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
+                  .map(name => ({name})), 'name').map(obj => obj.name) : allowedTags
+                  .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))).map(t => {
+                  const usageCount = getTagUsageCount(t)
+                  const tagColor = getTagColor(t)
+                  return (
+                    <div key={t} style={{
+                      background:'white',
+                      border: editingId === `tag-${t}` ? `2px solid ${tagColor}` : `1px solid #e5e7eb`,
+                      borderRadius:8,
+                      padding:16,
+                      boxShadow:'0 1px 2px rgba(0,0,0,0.05)',
+                      transition:'all 0.2s'
+                    }}>
+                      {editingId === `tag-${t}` ? (
+                        <>
+                          <input 
+                            type="text" 
+                            value={editData.name || ''} 
+                            onChange={e => setEditData({...editData, name: e.target.value})}
+                            autoFocus
+                            style={{width:'100%',padding:'8px 8px',border:'1px solid #ddd',borderRadius:4,marginBottom:12,fontWeight:500}}
+                          />
+                          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                            <button className="btn-ghost" onClick={async () => {
+                              try {
+                                const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name.trim() }) })
+                                if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                await loadTags()
+                                await load()
+                                setEditingId(null)
+                              } catch (err) {
+                                alert('Save tag failed — ' + ((err as any)?.message || 'check server logs'))
+                              }
+                            }} style={{color:'#16a34a',fontSize:16}}>✓</button>
+                            <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626',fontSize:16}}>⊘</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                            <div style={{width:12,height:12,borderRadius:'50%',background:tagColor}}></div>
+                            <strong style={{fontSize:16,flex:1}}>{t}</strong>
+                          </div>
+                          <div style={{fontSize:12,color:'#666',marginBottom:12}}>
+                            Used in <span style={{fontWeight:600,color:'#1F2937'}}>{usageCount}</span> {usageCount === 1 ? 'place' : 'places'}
+                          </div>
+                          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                            <button className="btn-ghost" onClick={() => {
+                              setEditingId(`tag-${t}`)
+                              setEditData({name: t})
+                            }} style={{fontSize:14}}>✎ Edit</button>
+                            <button className="btn-ghost" onClick={async () => {
+                              if (!confirm(`Delete tag "${t}"? This will remove it from resources and delete any criteria referencing it.`)) return
+                              try {
+                                const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'DELETE', headers: authHeaders() })
+                                if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                await loadTags()
+                                await load()
+                              } catch (err) {
+                                alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
+                              }
+                            }} style={{color:'#dc2626',fontSize:14}}>✕ Delete</button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

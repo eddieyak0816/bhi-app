@@ -299,7 +299,7 @@ app.patch('/api/admin/logic-rules/:id', async (req, res) => {
   const incomingKey = req.header('x-backend-api-key') || '';
   if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
   const id = req.params.id;
-  const { marker_id, min_value, max_value, tag_to_apply } = req.body || {};
+  const { marker_id, min_value, max_value, tag_to_apply, operator } = req.body || {};
   if (!id) return res.status(400).json({ error: 'missing-id' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
@@ -308,6 +308,7 @@ app.patch('/api/admin/logic-rules/:id', async (req, res) => {
     if (typeof min_value !== 'undefined') updates.min_value = Number(min_value);
     if (typeof max_value !== 'undefined') updates.max_value = Number(max_value);
     if (typeof tag_to_apply !== 'undefined') updates.tag_to_apply = tag_to_apply;
+    if (operator) updates.operator = operator;
     const { data, error } = await sb.from('logic_rules').update(updates).eq('id', id).select('id,marker_id,min_value,max_value,tag_to_apply');
     if (error) {
       console.error('admin-update-logic-rule-error', error);
