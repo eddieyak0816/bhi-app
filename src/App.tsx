@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { SupabaseClient, createClient } from '@supabase/supabase-js'
+import { ThemeProvider } from './context/ThemeContext'
+import { ResultsProvider } from './context/ResultsContext'
+import { EvaluationProvider } from './context/EvaluationContext'
+import { Layout } from './components/Layout'
 import Onboarding from './pages/Onboarding'
 import LabInput from './pages/LabInput'
 import Results from './pages/Results'
 import Admin from './pages/Admin'
+import Dashboard from './pages/Dashboard'
+import Resources from './pages/ResourcesPage'
+import Labs from './pages/LabsPage'
+import Profile from './pages/ProfilePage'
 import { loadSampleData, SampleData } from './sample-data'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
@@ -14,11 +22,11 @@ function createOptionalSupabase() {
   return createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 }
 
-export default function App() {
+function AppContent() {
   const [supabase] = useState<SupabaseClient | null>(() => createOptionalSupabase())
   const [data, setData] = useState<SampleData | null>(null)
   const [dataSource, setDataSource] = useState<'supabase' | 'sample' | 'none'>('none')
-  const [showAdmin, setShowAdmin] = useState(false)
+  const [currentPage, setCurrentPage] = useState<string>('home')
   const [showOnboard, setShowOnboard] = useState(true)
   const [tags, setTags] = useState<string[]>([])
   const [refreshKey, setRefreshKey] = useState(0)
@@ -77,44 +85,37 @@ export default function App() {
 
   if (!data) return <div className="center">Loading…</div>
 
+  if (showOnboard) {
+    return <Onboarding onClose={() => setShowOnboard(false)} />
+  }
+
+  const handleNavigate = (page: string) => {
+    if (page === 'admin') {
+      setCurrentPage('home')
+    } else {
+      setCurrentPage(page)
+    }
+  }
+
   return (
-    <div className="app-container">
-      {showOnboard ? (
-        <Onboarding onClose={() => setShowOnboard(false)} />
-      ) : (
-        <>
-          <header className="header">
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-              <div>
-                <h1>Balanced Health Institute</h1>
-                <p className="subtitle">Evidence-based health education for informed decisions</p>
-              </div>
-              <button className="btn-ghost" onClick={() => setShowAdmin(s => !s)} style={{marginTop:4}}>
-                {showAdmin ? 'Close Admin' : 'Admin'}
-              </button>
-            </div>
-            <div className="muted small" style={{marginTop:12}}>
-              {dataSource === 'supabase' ? '● Connected to database' : dataSource === 'sample' ? '● Using sample data' : 'Data: not loaded'}
-            </div>
-          </header>
+    <Layout currentPage={currentPage} onNavigate={handleNavigate}>
+      {currentPage === 'home' && <Dashboard recentResources={data.resources.slice(0, 3)} bookmarkedCount={2} />}
+      {currentPage === 'resources' && <Resources resources={data.resources.map((r, i) => ({ id: String(i), ...r, bookmarked: i % 3 === 0 }))} />}
+      {currentPage === 'labs' && <Labs />}
+      {currentPage === 'profile' && <Profile userEmail="user@example.com" userName="John Doe" />}
+      {currentPage === 'admin' && <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} />}
+    </Layout>
+  )
+}
 
-          <main>
-            {showAdmin ? (
-              <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} />
-            ) : (
-              <>
-                <LabInput
-                  labMarkers={data.lab_markers}
-                  logicRules={data.logic_rules}
-                  onComputeTags={(t) => setTags(t)}
-                />
-
-                <Results resources={data.resources} tags={tags} dataSource={dataSource} />
-              </>
-            )}
-          </main>
-        </>
-      )}
-    </div>
+export default function App() {
+  return (
+    <ThemeProvider>
+      <ResultsProvider>
+        <EvaluationProvider>
+          <AppContent />
+        </EvaluationProvider>
+      </ResultsProvider>
+    </ThemeProvider>
   )
 }

@@ -46,8 +46,12 @@ body {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(26, 31, 54, 0.08);
   margin-bottom: 32px;
-  border: 1px solid #ffffff;
+  border: 1.5px solid #d0d0d0;
   border-left: 4px solid var(--primary-blue);
+}
+
+body.dark-mode .header {
+  border-color: #ffffff;
 }
 
 .header h1 {
@@ -69,14 +73,14 @@ body {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(26, 31, 54, 0.08);
   margin-bottom: 24px;
-  border: 1px solid #ffffff;
+  border: 1.5px solid #d0d0d0;
   border-left: 4px solid var(--primary-blue);
 }
 
 body.dark-mode .card {
-  border-top: 1px solid #ffffff;
-  border-right: 1px solid #ffffff;
-  border-bottom: 1px solid #ffffff;
+  border-top: 1.5px solid #ffffff;
+  border-right: 1.5px solid #ffffff;
+  border-bottom: 1.5px solid #ffffff;
   border-left: 4px solid var(--primary-blue);
 }
 

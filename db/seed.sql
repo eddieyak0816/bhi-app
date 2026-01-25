@@ -21,8 +21,16 @@ ON CONFLICT DO NOTHING;
 -- resources
 INSERT INTO resources (type, title, description, tags)
 VALUES
-  ('video', 'Understanding Low Vit D', 'Short video about Vitamin D', ARRAY['Low_D']),
-  ('doctor', 'Dr. Jane Smith', 'Expert overview', ARRAY['Low_D'])
+  ('video', 'Understanding Low Vit D', 'Short video about Vitamin D deficiency and its effects', ARRAY['Low_D']),
+  ('article', 'Vitamin D Foods Guide', 'Complete guide to foods rich in vitamin D', ARRAY['Low_D']),
+  ('doctor', 'Dr. Jane Smith', 'Expert overview of vitamin D supplementation', ARRAY['Low_D']),
+  ('article', 'Blood Glucose Management', 'Tips and strategies for maintaining healthy blood glucose levels', ARRAY['High_Glucose']),
+  ('video', 'Cholesterol Explained', 'Understanding your cholesterol numbers and what they mean', ARRAY['High_Cholesterol']),
+  ('article', 'Heart Health Basics', 'Foundation of cardiovascular health and prevention', ARRAY['High_Cholesterol']),
+  ('doctor', 'Dr. Robert Johnson', 'Cardiologist specializing in cholesterol management', ARRAY['High_Cholesterol']),
+  ('video', 'Energy Levels & Sleep', 'How to improve energy naturally through sleep and nutrition', ARRAY['Low_Energy']),
+  ('article', 'Nutrition for Energy', 'Balanced meals to maintain stable energy throughout the day', ARRAY['Low_Energy']),
+  ('video', 'Weight Management Tips', 'Evidence-based strategies for sustainable weight loss', ARRAY['Weight_Management'])
 ON CONFLICT DO NOTHING;
 
 -- tags (persistent catalog used by the Admin tag-manager)
