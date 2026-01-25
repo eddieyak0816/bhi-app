@@ -38,15 +38,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // sorting state
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
-  // Lab Markers filter state
-  const [filterMarkerKeyword, setFilterMarkerKeyword] = useState('')
-  // Criteria filter state
-  const [filterCriteriaMarkers, setFilterCriteriaMarkers] = useState<string[]>([])
-  const [filterCriteriaTags, setFilterCriteriaTags] = useState<string[]>([])
-  // Audit Log filter state
-  const [filterAuditAction, setFilterAuditAction] = useState('')
-  const [filterAuditTable, setFilterAuditTable] = useState('')
-  const [filterAuditKeyword, setFilterAuditKeyword] = useState('')
+  // criteria filter state
+  const [filterCriteriaMarker, setFilterCriteriaMarker] = useState<string>('')
+  const [filterCriteriaTag, setFilterCriteriaTag] = useState<string>('')
+  const [filterCriteriaValueType, setFilterCriteriaValueType] = useState<'min' | 'max' | ''>('')
+  const [filterCriteriaOperator, setFilterCriteriaOperator] = useState<'<' | '>' | '=' | '<=' | '>=' | ''>('')
+  const [filterCriteriaValue, setFilterCriteriaValue] = useState<string>('')
   const DEV_BACKEND_KEY = (import.meta.env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || ''
   // session override for dev convenience (not persisted)
@@ -115,26 +112,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   function getSortIndicator(column: string) {
     if (sortColumn !== column) return ' ⬍'
     return sortDirection === 'asc' ? ' ▲' : ' ▼'
-  }
-
-  // Filter helpers for Criteria tab
-  function getUniqueCriteriaMarkers() {
-    const markerIds = new Set(logicRules.map(r => r.marker_id))
-    return Array.from(markerIds).sort()
-  }
-  function getUniqueCriteriaTags() {
-    const tags = new Set(logicRules.map(r => r.tag_to_apply))
-    return Array.from(tags).filter(Boolean).sort()
-  }
-
-  // Filter helpers for Audit Log tab
-  function getUniqueAuditActions() {
-    const actions = new Set(auditRows.map(r => r.action))
-    return Array.from(actions).sort()
-  }
-  function getUniqueAuditTables() {
-    const tables = new Set(auditRows.map(r => r.target_table))
-    return Array.from(tables).filter(Boolean).sort()
   }
 
   async function bulkDelete() {
@@ -397,78 +374,26 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       {activeTab === 'audit' ? (
         <div>
           {loading ? <div>Loading…</div> : (
-            <>
-              {/* Filter section */}
-              <div style={{marginBottom:16,padding:12,background:'#f9fafb',borderRadius:6,border:'1px solid #e5e7eb'}}>
-                <div style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
-                  <div>
-                    <label style={{fontSize:12,fontWeight:500,color:'#666',display:'block',marginBottom:4}}>Filter by Action</label>
-                    <select value={filterAuditAction} onChange={(e) => setFilterAuditAction(e.target.value)} style={{padding:6,borderRadius:4,border:'1px solid #ddd',fontSize:14}}>
-                      <option value="">(all)</option>
-                      {getUniqueAuditActions().map(action => <option key={action} value={action}>{action}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{fontSize:12,fontWeight:500,color:'#666',display:'block',marginBottom:4}}>Filter by Table</label>
-                    <select value={filterAuditTable} onChange={(e) => setFilterAuditTable(e.target.value)} style={{padding:6,borderRadius:4,border:'1px solid #ddd',fontSize:14}}>
-                      <option value="">(all)</option>
-                      {getUniqueAuditTables().map(table => <option key={table} value={table}>{table}</option>)}
-                    </select>
-                  </div>
-                  <div style={{flex:'1 1 200px'}}>
-                    <label style={{fontSize:12,fontWeight:500,color:'#666',display:'block',marginBottom:4}}>Search Details</label>
-                    <input
-                      placeholder="Keyword..."
-                      value={filterAuditKeyword}
-                      onChange={e => setFilterAuditKeyword(e.target.value)}
-                      style={{width:'100%',padding:6,borderRadius:4,border:'1px solid #ddd',fontSize:14}}
-                    />
-                  </div>
-                  {(filterAuditAction || filterAuditTable || filterAuditKeyword) && (
-                    <button onClick={() => { setFilterAuditAction(''); setFilterAuditTable(''); setFilterAuditKeyword('') }} style={{padding:'6px 12px',fontSize:13,background:'#f3f4f6',border:'1px solid #d1d5db',borderRadius:4,cursor:'pointer'}}>Clear Filters</button>
-                  )}
-                  <div style={{marginLeft:'auto',fontSize:12,color:'#666'}}>Results: {(() => {
-                    const filtered = auditRows.filter(a => {
-                      if (filterAuditAction && a.action !== filterAuditAction) return false
-                      if (filterAuditTable && a.target_table !== filterAuditTable) return false
-                      if (filterAuditKeyword && !JSON.stringify(a.details).toLowerCase().includes(filterAuditKeyword.toLowerCase())) return false
-                      return true
-                    })
-                    return filtered.length
-                  })()}</div>
-                </div>
-              </div>
-              <table style={{width:'100%',borderCollapse:'collapse'}}>
-                <thead>
-                  <tr>
-                    <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='created_at'?'#1F2937':'#666'}} onClick={() => handleSort('created_at')}>when{getSortIndicator('created_at')}</th>
-                    <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='action'?'#1F2937':'#666'}} onClick={() => handleSort('action')}>action{getSortIndicator('action')}</th>
-                    <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='target_table'?'#1F2937':'#666'}} onClick={() => handleSort('target_table')}>target{getSortIndicator('target_table')}</th>
-                    <th>details</th>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead>
+                <tr>
+                  <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='created_at'?'#1F2937':'#666'}} onClick={() => handleSort('created_at')}>when{getSortIndicator('created_at')}</th>
+                  <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='action'?'#1F2937':'#666'}} onClick={() => handleSort('action')}>action{getSortIndicator('action')}</th>
+                  <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='target_table'?'#1F2937':'#666'}} onClick={() => handleSort('target_table')}>target{getSortIndicator('target_table')}</th>
+                  <th>details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(sortColumn ? sortData(auditRows, sortColumn) : auditRows).map(a => (
+                  <tr key={a.id} style={{borderTop:'1px solid #eee'}}>
+                    <td className="small muted">{new Date(a.created_at).toLocaleString()}</td>
+                    <td>{a.action}</td>
+                    <td className="small muted">{a.target_table} {a.target_id || ''}</td>
+                    <td className="small muted" style={{maxWidth:360,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{JSON.stringify(a.details)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {(sortColumn ? sortData(auditRows.filter(a => {
-                    if (filterAuditAction && a.action !== filterAuditAction) return false
-                    if (filterAuditTable && a.target_table !== filterAuditTable) return false
-                    if (filterAuditKeyword && !JSON.stringify(a.details).toLowerCase().includes(filterAuditKeyword.toLowerCase())) return false
-                    return true
-                  }), sortColumn) : auditRows.filter(a => {
-                    if (filterAuditAction && a.action !== filterAuditAction) return false
-                    if (filterAuditTable && a.target_table !== filterAuditTable) return false
-                    if (filterAuditKeyword && !JSON.stringify(a.details).toLowerCase().includes(filterAuditKeyword.toLowerCase())) return false
-                    return true
-                  })).map(a => (
-                    <tr key={a.id} style={{borderTop:'1px solid #eee'}}>
-                      <td className="small muted">{new Date(a.created_at).toLocaleString()}</td>
-                      <td>{a.action}</td>
-                      <td className="small muted">{a.target_table} {a.target_id || ''}</td>
-                      <td className="small muted" style={{maxWidth:360,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{JSON.stringify(a.details)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       ) : null}
@@ -689,96 +614,200 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
           {loading ? <div>Loading…</div> : (
             <div>
               <h4 style={{marginBottom:16}}>Criteria</h4>
-              {/* Filter section */}
-              <div style={{marginBottom:16,padding:12,background:'#f9fafb',borderRadius:6,border:'1px solid #e5e7eb'}}>
-                <div style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
+              
+              {/* Criteria Filters */}
+              <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:6,padding:12,marginBottom:16}}>
+                <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
-                    <label style={{fontSize:12,fontWeight:500,color:'#666',display:'block',marginBottom:4}}>Filter by Marker</label>
-                    <select value={filterCriteriaMarkers[0] || ''} onChange={(e) => setFilterCriteriaMarkers(e.target.value ? [e.target.value] : [])} style={{padding:6,borderRadius:4,border:'1px solid #ddd',fontSize:14}}>
-                      <option value="">(all)</option>
-                      {getUniqueCriteriaMarkers().map(mid => <option key={mid} value={mid}>{(labMarkers.find(m => m.id === mid) || {}).name || mid}</option>)}
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Marker</label>
+                    <select
+                      value={filterCriteriaMarker}
+                      onChange={e => setFilterCriteriaMarker(e.target.value)}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                    >
+                      <option value="">(All Markers)</option>
+                      {Array.from(new Set(logicRules
+                        .map(l => l.marker_id)))
+                        .map(markerId => labMarkers.find(m => m.id === markerId))
+                        .filter(m => m)
+                        .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''))
+                        .map(m => <option key={m?.id} value={m?.id || ''}>{m?.name}</option>)
+                      }
                     </select>
                   </div>
                   <div>
-                    <label style={{fontSize:12,fontWeight:500,color:'#666',display:'block',marginBottom:4}}>Filter by Tag</label>
-                    <select value={filterCriteriaTags[0] || ''} onChange={(e) => setFilterCriteriaTags(e.target.value ? [e.target.value] : [])} style={{padding:6,borderRadius:4,border:'1px solid #ddd',fontSize:14}}>
-                      <option value="">(all)</option>
-                      {getUniqueCriteriaTags().map(tag => <option key={tag} value={tag}>{tag}</option>)}
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Type</label>
+                    <select
+                      value={filterCriteriaValueType}
+                      onChange={e => setFilterCriteriaValueType(e.target.value as 'min' | 'max' | '')}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                    >
+                      <option value="">Min or Max</option>
+                      <option value="min">Min</option>
+                      <option value="max">Max</option>
                     </select>
                   </div>
-                  {(filterCriteriaMarkers.length > 0 || filterCriteriaTags.length > 0) && (
-                    <button onClick={() => { setFilterCriteriaMarkers([]); setFilterCriteriaTags([]) }} style={{padding:'6px 12px',fontSize:13,background:'#f3f4f6',border:'1px solid #d1d5db',borderRadius:4,cursor:'pointer'}}>Clear Filters</button>
-                  )}
-                  <div style={{marginLeft:'auto',fontSize:12,color:'#666'}}>Results: {(() => {
-                    const filtered = logicRules.filter(l => {
-                      if (filterCriteriaMarkers.length > 0 && !filterCriteriaMarkers.includes(l.marker_id)) return false
-                      if (filterCriteriaTags.length > 0 && !filterCriteriaTags.includes(l.tag_to_apply)) return false
-                      return true
-                    })
-                    return filtered.length
-                  })()}</div>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Operator</label>
+                    <select
+                      value={filterCriteriaOperator}
+                      onChange={e => setFilterCriteriaOperator(e.target.value as '<' | '>' | '=' | '<=' | '>=' | '')}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                    >
+                      <option value="">Any</option>
+                      <option value="<">&lt;</option>
+                      <option value=">">&gt;</option>
+                      <option value="=">=</option>
+                      <option value="<=">&lt;=</option>
+                      <option value=">=">&gt;=</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Value</label>
+                    <input
+                      type="number"
+                      placeholder="Value..."
+                      value={filterCriteriaValue}
+                      onChange={e => setFilterCriteriaValue(e.target.value)}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                    />
+                  </div>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Tag</label>
+                    <select
+                      value={filterCriteriaTag}
+                      onChange={e => setFilterCriteriaTag(e.target.value)}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                    >
+                      <option value="">(All Tags)</option>
+                      {Array.from(new Set(logicRules
+                        .filter(l => 
+                          (!filterCriteriaMarker || l.marker_id === filterCriteriaMarker)
+                        )
+                        .map(l => l.tag_to_apply)))
+                        .sort((a, b) => a.localeCompare(b))
+                        .map(tag => <option key={tag} value={tag}>{tag}</option>)
+                      }
+                    </select>
+                  </div>
+                  <button 
+                    className="btn-ghost" 
+                    onClick={() => {
+                      setFilterCriteriaMarker('')
+                      setFilterCriteriaValueType('')
+                      setFilterCriteriaOperator('')
+                      setFilterCriteriaValue('')
+                      setFilterCriteriaTag('')
+                    }}
+                    style={{opacity: (filterCriteriaMarker || filterCriteriaValueType || filterCriteriaOperator || filterCriteriaValue || filterCriteriaTag) ? 1 : 0.5,cursor: (filterCriteriaMarker || filterCriteriaValueType || filterCriteriaOperator || filterCriteriaValue || filterCriteriaTag) ? 'pointer' : 'default'}}
+                  >
+                    Clear
+                  </button>
                 </div>
+                {(filterCriteriaMarker || filterCriteriaValueType || filterCriteriaOperator || filterCriteriaValue || filterCriteriaTag) && (
+                  <div style={{fontSize:12,marginTop:8,color:'#666'}}>
+                    Showing {logicRules
+                      .filter(l => {
+                        if (filterCriteriaMarker && l.marker_id !== filterCriteriaMarker) return false
+                        if (filterCriteriaTag && l.tag_to_apply !== filterCriteriaTag) return false
+                        if (filterCriteriaValueType && filterCriteriaOperator && filterCriteriaValue) {
+                          const val = parseFloat(filterCriteriaValue)
+                          const fieldValue = filterCriteriaValueType === 'min' ? l.min_value : l.max_value
+                          if (filterCriteriaOperator === '<' && !(fieldValue < val)) return false
+                          if (filterCriteriaOperator === '>' && !(fieldValue > val)) return false
+                          if (filterCriteriaOperator === '=' && !(fieldValue === val)) return false
+                          if (filterCriteriaOperator === '<=' && !(fieldValue <= val)) return false
+                          if (filterCriteriaOperator === '>=' && !(fieldValue >= val)) return false
+                        }
+                        return true
+                      })
+                      .length
+                    } of {logicRules.length} criteria
+                  </div>
+                )}
               </div>
-              <div style={{marginBottom:18,border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
-                <table data-testid="criteria-table" style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead style={{background:'#fafafa'}}>
-                    <tr>
-                      <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='marker_id'?'#1F2937':'#666'}} onClick={() => handleSort('marker_id')}>Marker{getSortIndicator('marker_id')}</th>
-                      <th style={{textAlign:'right',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='min_value'?'#1F2937':'#666'}} onClick={() => handleSort('min_value')}>Min{getSortIndicator('min_value')}</th>
-                      <th style={{textAlign:'right',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='max_value'?'#1F2937':'#666'}} onClick={() => handleSort('max_value')}>Max{getSortIndicator('max_value')}</th>
-                      <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='tag_to_apply'?'#1F2937':'#666'}} onClick={() => handleSort('tag_to_apply')}>Tag{getSortIndicator('tag_to_apply')}</th>
-                      <th style={{textAlign:'right',padding:8}}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(sortColumn ? sortData(logicRules.filter(l => {
-                      if (filterCriteriaMarkers.length > 0 && !filterCriteriaMarkers.includes(l.marker_id)) return false
-                      if (filterCriteriaTags.length > 0 && !filterCriteriaTags.includes(l.tag_to_apply)) return false
-                      return true
-                    }), sortColumn) : logicRules.filter(l => {
-                      if (filterCriteriaMarkers.length > 0 && !filterCriteriaMarkers.includes(l.marker_id)) return false
-                      if (filterCriteriaTags.length > 0 && !filterCriteriaTags.includes(l.tag_to_apply)) return false
-                      return true
-                    })).map(l => (
-                      <tr key={l.id} data-id={l.id} style={{borderTop:'1px solid #f3f4f6'}}>
-                        <td style={{padding:8}}>{(labMarkers.find(m => m.id === l.marker_id) || {}).name || l.marker_id}</td>
-                        <td style={{padding:8,textAlign:'right'}}>{l.min_value}</td>
-                        <td style={{padding:8,textAlign:'right'}}>{l.max_value}</td>
-                        <td style={{padding:8}}>{l.tag_to_apply}</td>
+
+              <div style={{marginBottom:18}}>
+                <div style={{marginTop:8,border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
+                  <table data-testid="criteria-table" style={{width:'100%',borderCollapse:'collapse'}}>
+                    <thead style={{background:'#fafafa'}}>
+                      <tr>
+                        <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='marker_id'?'#1F2937':'#666'}} onClick={() => handleSort('marker_id')}>Marker{getSortIndicator('marker_id')}</th>
+                        <th style={{textAlign:'right',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='min_value'?'#1F2937':'#666'}} onClick={() => handleSort('min_value')}>Min{getSortIndicator('min_value')}</th>
+                        <th style={{textAlign:'right',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='max_value'?'#1F2937':'#666'}} onClick={() => handleSort('max_value')}>Max{getSortIndicator('max_value')}</th>
+                        <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='tag_to_apply'?'#1F2937':'#666'}} onClick={() => handleSort('tag_to_apply')}>Tag{getSortIndicator('tag_to_apply')}</th>
+                        <th style={{textAlign:'right',padding:8}}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(sortColumn ? sortData(logicRules
+                        .filter(l => {
+                          if (filterCriteriaMarker && l.marker_id !== filterCriteriaMarker) return false
+                          if (filterCriteriaTag && l.tag_to_apply !== filterCriteriaTag) return false
+                          if (filterCriteriaValueType && filterCriteriaOperator && filterCriteriaValue) {
+                            const val = parseFloat(filterCriteriaValue)
+                            const fieldValue = filterCriteriaValueType === 'min' ? l.min_value : l.max_value
+                            if (filterCriteriaOperator === '<' && !(fieldValue < val)) return false
+                            if (filterCriteriaOperator === '>' && !(fieldValue > val)) return false
+                            if (filterCriteriaOperator === '=' && !(fieldValue === val)) return false
+                            if (filterCriteriaOperator === '<=' && !(fieldValue <= val)) return false
+                            if (filterCriteriaOperator === '>=' && !(fieldValue >= val)) return false
+                          }
+                          return true
+                        }), sortColumn) : logicRules
+                        .filter(l => {
+                          if (filterCriteriaMarker && l.marker_id !== filterCriteriaMarker) return false
+                          if (filterCriteriaTag && l.tag_to_apply !== filterCriteriaTag) return false
+                          if (filterCriteriaValueType && filterCriteriaOperator && filterCriteriaValue) {
+                            const val = parseFloat(filterCriteriaValue)
+                            const fieldValue = filterCriteriaValueType === 'min' ? l.min_value : l.max_value
+                            if (filterCriteriaOperator === '<' && !(fieldValue < val)) return false
+                            if (filterCriteriaOperator === '>' && !(fieldValue > val)) return false
+                            if (filterCriteriaOperator === '=' && !(fieldValue === val)) return false
+                            if (filterCriteriaOperator === '<=' && !(fieldValue <= val)) return false
+                            if (filterCriteriaOperator === '>=' && !(fieldValue >= val)) return false
+                          }
+                          return true
+                        })).map(l => (
+                        <tr key={l.id} data-id={l.id} style={{borderTop:'1px solid #f3f4f6'}}>
+                          <td style={{padding:8}}>{(labMarkers.find(m => m.id === l.marker_id) || {}).name || l.marker_id}</td>
+                          <td style={{padding:8,textAlign:'right'}}>{l.min_value}</td>
+                          <td style={{padding:8,textAlign:'right'}}>{l.max_value}</td>
+                          <td style={{padding:8}}>{l.tag_to_apply}</td>
+                          <td style={{padding:8,textAlign:'right'}}>
+                            <button className="btn-ghost" onClick={() => startEditRule(l)}>Edit</button>
+                            <button className="btn-ghost" onClick={() => deleteRule(l.id)}>Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                      {/* inline add / edit form */}
+                      <tr style={{background:'#fff'}}>
+                        <td style={{padding:8}}>
+                          <select value={ruleForm.marker_id || (labMarkers[0] && labMarkers[0].id) || ''} onChange={e => setRuleForm(f => ({ ...f, marker_id: e.target.value }))}>
+                            {(labMarkers || []).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          </select>
+                        </td>
+                        <td style={{padding:8}}><input aria-label="min_value" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
+                        <td style={{padding:8}}><input aria-label="max_value" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
+                        <td style={{padding:8}}>
+                          <select value={ruleForm.tag_to_apply || ''} onChange={e => setRuleForm(f => ({ ...f, tag_to_apply: e.target.value }))}>
+                            <option value="">(choose tag)</option>
+                            {(allowedTags || []).map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </td>
                         <td style={{padding:8,textAlign:'right'}}>
-                          <button className="btn-ghost" onClick={() => startEditRule(l)}>Edit</button>
-                          <button className="btn-ghost" onClick={() => deleteRule(l.id)}>Delete</button>
+                          {editingRuleId ? (
+                            <>
+                              <button className="btn-ghost" onClick={saveRule}>Save</button>
+                              <button className="btn-ghost" onClick={cancelEditRule}>Cancel</button>
+                            </>
+                          ) : (
+                            <button className="btn-primary" onClick={saveRule}>Add</button>
+                          )}
                         </td>
                       </tr>
-                    ))}
-                    {/* inline add / edit form */}
-                    <tr style={{background:'#fff'}}>
-                      <td style={{padding:8}}>
-                        <select value={ruleForm.marker_id || (labMarkers[0] && labMarkers[0].id) || ''} onChange={e => setRuleForm(f => ({ ...f, marker_id: e.target.value }))}>
-                          {(labMarkers || []).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                        </select>
-                      </td>
-                      <td style={{padding:8}}><input aria-label="min_value" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
-                      <td style={{padding:8}}><input aria-label="max_value" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
-                      <td style={{padding:8}}>
-                        <select value={ruleForm.tag_to_apply || ''} onChange={e => setRuleForm(f => ({ ...f, tag_to_apply: e.target.value }))}>
-                          <option value="">(choose tag)</option>
-                          {(allowedTags || []).map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                      </td>
-                      <td style={{padding:8,textAlign:'right'}}>
-                        {editingRuleId ? (
-                          <>
-                            <button className="btn-ghost" onClick={saveRule}>Save</button>
-                            <button className="btn-ghost" onClick={cancelEditRule}>Cancel</button>
-                          </>
-                        ) : (
-                          <button className="btn-primary" onClick={saveRule}>Add</button>
-                        )}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -879,31 +908,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </div>
               </div>
 
-              {/* Filter section */}
-              <div style={{marginBottom:16,padding:12,background:'#f9fafb',borderRadius:6,border:'1px solid #e5e7eb'}}>
-                <div style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
-                  <div style={{flex:'1 1 200px'}}>
-                    <label style={{fontSize:12,fontWeight:500,color:'#666',display:'block',marginBottom:4}}>Search by Name</label>
-                    <input
-                      placeholder="Keyword..."
-                      value={filterMarkerKeyword}
-                      onChange={e => setFilterMarkerKeyword(e.target.value)}
-                      style={{width:'100%',padding:6,borderRadius:4,border:'1px solid #ddd',fontSize:14}}
-                    />
-                  </div>
-                  {filterMarkerKeyword && (
-                    <button onClick={() => setFilterMarkerKeyword('')} style={{padding:'6px 12px',fontSize:13,background:'#f3f4f6',border:'1px solid #d1d5db',borderRadius:4,cursor:'pointer'}}>Clear</button>
-                  )}
-                  <div style={{marginLeft:'auto',fontSize:12,color:'#666'}}>Results: {(() => {
-                    const filtered = labMarkers.filter(m => {
-                      if (filterMarkerKeyword && !m.name.toLowerCase().includes(filterMarkerKeyword.toLowerCase())) return false
-                      return true
-                    })
-                    return filtered.length
-                  })()}</div>
-                </div>
-              </div>
-
               {/* Markers table */}
               <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
@@ -915,13 +919,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </tr>
                   </thead>
                   <tbody>
-                    {(sortColumn ? sortData(labMarkers.filter(m => {
-                      if (filterMarkerKeyword && !m.name.toLowerCase().includes(filterMarkerKeyword.toLowerCase())) return false
-                      return true
-                    }), sortColumn) : labMarkers.filter(m => {
-                      if (filterMarkerKeyword && !m.name.toLowerCase().includes(filterMarkerKeyword.toLowerCase())) return false
-                      return true
-                    })).map(m => (
+                    {(sortColumn ? sortData(labMarkers, sortColumn) : labMarkers).map(m => (
                       <tr key={m.id} style={{borderTop:'1px solid #f3f4f6'}}>
                         <td style={{padding:8}}><strong>{m.name}</strong></td>
                         <td style={{padding:8}} className="small muted">{m.unit || '—'}</td>
