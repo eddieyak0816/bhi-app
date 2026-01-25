@@ -16,7 +16,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [labMarkers, setLabMarkers] = useState<Array<any>>([])
   const [logicRules, setLogicRules] = useState<Array<any>>([])
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null)
-  const [ruleForm, setRuleForm] = useState<{ marker_id?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
+  const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
   // inline marker-creation state
   const [markerCreationVisible, setMarkerCreationVisible] = useState(false)
@@ -44,6 +44,16 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [filterCriteriaValueType, setFilterCriteriaValueType] = useState<'min' | 'max' | ''>('')
   const [filterCriteriaOperator, setFilterCriteriaOperator] = useState<'<' | '>' | '=' | '<=' | '>=' | ''>('')
   const [filterCriteriaValue, setFilterCriteriaValue] = useState<string>('')
+  // lab markers filter state
+  const [filterLabMarkerName, setFilterLabMarkerName] = useState<string>('')
+  const [filterLabMarkerUnit, setFilterLabMarkerUnit] = useState<string>('')
+  // resource types filter state
+  const [filterResourceTypeName, setFilterResourceTypeName] = useState<string>('')
+  // tags filter state
+  const [filterTagName, setFilterTagName] = useState<string>('')
+  // editing state
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editData, setEditData] = useState<any>({})
   const DEV_BACKEND_KEY = (import.meta.env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || ''
   // session override for dev convenience (not persisted)
@@ -236,15 +246,18 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // --- logic_rules (criteria) CRUD helpers ---
   function startEditRule(rule: any) {
     setEditingRuleId(rule.id || null)
-    setRuleForm({ marker_id: rule.marker_id, min_value: String(rule.min_value), max_value: String(rule.max_value), tag_to_apply: rule.tag_to_apply })
+    const markerName = labMarkers.find(m => m.id === rule.marker_id)?.name || ''
+    setRuleForm({ markerName, min_value: String(rule.min_value), max_value: String(rule.max_value), tag_to_apply: rule.tag_to_apply })
   }
   function cancelEditRule() {
     setEditingRuleId(null)
     setRuleForm({})
   }
   async function saveRule() {
+    const markerID = labMarkers.find(m => m.name === ruleForm.markerName)?.id
+    if (!markerID) return alert('Invalid marker selected')
     const payload: any = {
-      marker_id: ruleForm.marker_id,
+      marker_id: markerID,
       min_value: Number(ruleForm.min_value),
       max_value: Number(ruleForm.max_value),
       tag_to_apply: ruleForm.tag_to_apply
@@ -439,25 +452,54 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   <div style={{marginTop:12}}>
                     <div style={{marginBottom:12}}>
                       <div className="small muted" style={{marginBottom:8}}>Tags:</div>
-                      <div style={{background:'#fff',border:'1px solid #eee',padding:12,borderRadius:6,maxHeight:240,overflow:'auto'}}>
-                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                          {(allowedTags || []).map(t => (
-                            <label key={t} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:14}}>
-                              <input
-                                type="checkbox"
-                                checked={selectedTags.includes(t)}
-                                onChange={e => {
-                                  if (e.currentTarget.checked) {
-                                    setSelectedTags(s => [...s, t])
-                                  } else {
-                                    setSelectedTags(s => s.filter(x => x !== t))
-                                  }
-                                }}
-                              />
+                      <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                          {selectedTags.map(t => (
+                            <div key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 8px',background:'#2563eb',color:'#fff',borderRadius:4,fontSize:12}}>
                               <span>{t}</span>
-                            </label>
+                              <button onClick={() => setSelectedTags(s => s.filter(x => x !== t))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                            </div>
                           ))}
                         </div>
+                        <input
+                          type="text"
+                          placeholder="Type or select a tag..."
+                          list="add-tags-list"
+                          style={{width:'100%',padding:'6px 8px',border:'1px solid #ddd',borderRadius:4,fontSize:14}}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              const val = (e.currentTarget as HTMLInputElement).value.trim()
+                              if (val && !selectedTags.includes(val) && allowedTags.includes(val)) {
+                                setSelectedTags(s => [...s, val])
+                                e.currentTarget.value = ''
+                              }
+                            }
+                          }}
+                          onChange={(e) => {
+                            const val = e.currentTarget.value.trim()
+                            if (val && !selectedTags.includes(val) && e.currentTarget.list) {
+                              const datalist = document.getElementById('add-tags-list') as HTMLDataListElement
+                              const options = Array.from(datalist?.options || []).map(o => o.value)
+                              if (options.includes(val)) {
+                                const inputs = e.currentTarget.parentElement?.querySelectorAll('input[list="add-tags-list"]')
+                                if (inputs && inputs[0] === e.currentTarget) {
+                                  // Allow typing without auto-selecting
+                                }
+                              }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const val = e.currentTarget.value.trim()
+                            if (val && !selectedTags.includes(val) && allowedTags.includes(val)) {
+                              setSelectedTags(s => [...s, val])
+                              e.currentTarget.value = ''
+                            }
+                          }}
+                        />
+                        <datalist id="add-tags-list">
+                          {(allowedTags || []).filter(t => !selectedTags.includes(t)).map(t => <option key={t} value={t} />)}
+                        </datalist>
                       </div>
                     </div>
                   </div>
@@ -476,8 +518,21 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       placeholder="Search titles..."
                       value={filterKeyword}
                       onChange={e => setFilterKeyword(e.target.value)}
+                      list="resource-titles-list"
                       style={{width:'100%',padding:8,border:'1px solid #ddd',borderRadius:4,fontSize:14}}
                     />
+                    <datalist id="resource-titles-list">
+                      {Array.from(new Set(
+                        resources
+                          .filter(r => {
+                            if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                            if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                            return true
+                          })
+                          .map(r => r.title)
+                          .filter(t => !filterKeyword || t.toLowerCase().includes(filterKeyword.toLowerCase()))
+                      )).sort().map(title => <option key={title} value={title} />)}
+                    </datalist>
                   </div>
                   <div style={{flex:'1 1 150px'}}>
                     <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:'#666'}}>Type</label>
@@ -595,8 +650,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               const newTitle = prompt('Edit title', r.title)
                               if (!newTitle || newTitle.trim() === '' || newTitle === r.title) return
                               alert('Edit resource feature coming soon')
-                            }}>Edit</button>
-                            <button className="btn-ghost" onClick={() => remove(r.id)}>Delete</button>
+                            }}>✎</button>
+                            <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626'}}>✕</button>
                           </td>
                         </tr>
                       ))}
@@ -615,25 +670,73 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             <div>
               <h4 style={{marginBottom:16}}>Criteria</h4>
               
-              {/* Criteria Filters */}
+              {/* Add new criteria form */}
+              <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
+                <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Marker</label>
+                    <input
+                      type="text"
+                      placeholder="Add marker..."
+                      list="add-criteria-markers-list"
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                      value={ruleForm.markerName || ''}
+                      onChange={e => setRuleForm(f => ({ ...f, markerName: e.target.value }))}
+                    />
+                    <datalist id="add-criteria-markers-list">
+                      {labMarkers.map(m => <option key={m.id} value={m.name} />)}
+                    </datalist>
+                  </div>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Min</label>
+                    <input type="number" placeholder="Min" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}} />
+                  </div>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Max</label>
+                    <input type="number" placeholder="Max" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}} />
+                  </div>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Tag</label>
+                    <input
+                      type="text"
+                      placeholder="Add tag..."
+                      list="add-criteria-tags-list"
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                      value={ruleForm.tag_to_apply || ''}
+                      onChange={e => setRuleForm(f => ({ ...f, tag_to_apply: e.target.value }))}
+                    />
+                    <datalist id="add-criteria-tags-list">
+                      {allowedTags.map(t => <option key={t} value={t} />)}
+                    </datalist>
+                  </div>
+                  <button className="btn-primary" onClick={saveRule}>Add Criteria</button>
+                </div>
+              </div>
+              
               <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:6,padding:12,marginBottom:16}}>
                 <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Marker</label>
-                    <select
+                    <input
+                      type="text"
+                      placeholder="(All Markers)"
                       value={filterCriteriaMarker}
                       onChange={e => setFilterCriteriaMarker(e.target.value)}
+                      list="criteria-markers-list"
                       style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
-                    >
-                      <option value="">(All Markers)</option>
+                    />
+                    <datalist id="criteria-markers-list">
                       {Array.from(new Set(logicRules
+                        .filter(l => 
+                          (!filterCriteriaTag || l.tag_to_apply === filterCriteriaTag)
+                        )
                         .map(l => l.marker_id)))
                         .map(markerId => labMarkers.find(m => m.id === markerId))
-                        .filter(m => m)
+                        .filter(m => m && (!filterCriteriaMarker || m.name.toLowerCase().includes(filterCriteriaMarker.toLowerCase())))
                         .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''))
-                        .map(m => <option key={m?.id} value={m?.id || ''}>{m?.name}</option>)
+                        .map(m => <option key={m?.id} value={m?.name || ''} />)
                       }
-                    </select>
+                    </datalist>
                   </div>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Type</label>
@@ -674,21 +777,30 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </div>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Tag</label>
-                    <select
+                    <input
+                      type="text"
+                      placeholder="(All Tags)"
                       value={filterCriteriaTag}
                       onChange={e => setFilterCriteriaTag(e.target.value)}
+                      list="criteria-tags-list"
                       style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
-                    >
-                      <option value="">(All Tags)</option>
+                    />
+                    <datalist id="criteria-tags-list">
                       {Array.from(new Set(logicRules
-                        .filter(l => 
-                          (!filterCriteriaMarker || l.marker_id === filterCriteriaMarker)
-                        )
-                        .map(l => l.tag_to_apply)))
+                        .filter(l => {
+                          if (filterCriteriaMarker) {
+                            const markerId = labMarkers.find(m => m.name === filterCriteriaMarker)?.id
+                            if (!markerId || l.marker_id !== markerId) return false
+                          }
+                          return true
+                        })
+                        .map(l => l.tag_to_apply)
+                        .filter(t => !filterCriteriaTag || t.toLowerCase().includes(filterCriteriaTag.toLowerCase()))
+                      ))
                         .sort((a, b) => a.localeCompare(b))
-                        .map(tag => <option key={tag} value={tag}>{tag}</option>)
+                        .map(tag => <option key={tag} value={tag} />)
                       }
-                    </select>
+                    </datalist>
                   </div>
                   <button 
                     className="btn-ghost" 
@@ -708,7 +820,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   <div style={{fontSize:12,marginTop:8,color:'#666'}}>
                     Showing {logicRules
                       .filter(l => {
-                        if (filterCriteriaMarker && l.marker_id !== filterCriteriaMarker) return false
+                        const markerId = filterCriteriaMarker ? labMarkers.find(m => m.name === filterCriteriaMarker)?.id : null
+                        if (filterCriteriaMarker && (!markerId || l.marker_id !== markerId)) return false
                         if (filterCriteriaTag && l.tag_to_apply !== filterCriteriaTag) return false
                         if (filterCriteriaValueType && filterCriteriaOperator && filterCriteriaValue) {
                           const val = parseFloat(filterCriteriaValue)
@@ -733,8 +846,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     <thead style={{background:'#fafafa'}}>
                       <tr>
                         <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='marker_id'?'#1F2937':'#666'}} onClick={() => handleSort('marker_id')}>Marker{getSortIndicator('marker_id')}</th>
-                        <th style={{textAlign:'right',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='min_value'?'#1F2937':'#666'}} onClick={() => handleSort('min_value')}>Min{getSortIndicator('min_value')}</th>
-                        <th style={{textAlign:'right',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='max_value'?'#1F2937':'#666'}} onClick={() => handleSort('max_value')}>Max{getSortIndicator('max_value')}</th>
+                        <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='min_value'?'#1F2937':'#666'}} onClick={() => handleSort('min_value')}>Min{getSortIndicator('min_value')}</th>
+                        <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='max_value'?'#1F2937':'#666'}} onClick={() => handleSort('max_value')}>Max{getSortIndicator('max_value')}</th>
                         <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='tag_to_apply'?'#1F2937':'#666'}} onClick={() => handleSort('tag_to_apply')}>Tag{getSortIndicator('tag_to_apply')}</th>
                         <th style={{textAlign:'right',padding:8}}>Actions</th>
                       </tr>
@@ -742,7 +855,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     <tbody>
                       {(sortColumn ? sortData(logicRules
                         .filter(l => {
-                          if (filterCriteriaMarker && l.marker_id !== filterCriteriaMarker) return false
+                          const markerId = filterCriteriaMarker ? labMarkers.find(m => m.name === filterCriteriaMarker)?.id : null
+                          if (filterCriteriaMarker && (!markerId || l.marker_id !== markerId)) return false
                           if (filterCriteriaTag && l.tag_to_apply !== filterCriteriaTag) return false
                           if (filterCriteriaValueType && filterCriteriaOperator && filterCriteriaValue) {
                             const val = parseFloat(filterCriteriaValue)
@@ -756,7 +870,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           return true
                         }), sortColumn) : logicRules
                         .filter(l => {
-                          if (filterCriteriaMarker && l.marker_id !== filterCriteriaMarker) return false
+                          const markerId = filterCriteriaMarker ? labMarkers.find(m => m.name === filterCriteriaMarker)?.id : null
+                          if (filterCriteriaMarker && (!markerId || l.marker_id !== markerId)) return false
                           if (filterCriteriaTag && l.tag_to_apply !== filterCriteriaTag) return false
                           if (filterCriteriaValueType && filterCriteriaOperator && filterCriteriaValue) {
                             const val = parseFloat(filterCriteriaValue)
@@ -770,42 +885,76 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           return true
                         })).map(l => (
                         <tr key={l.id} data-id={l.id} style={{borderTop:'1px solid #f3f4f6'}}>
-                          <td style={{padding:8}}>{(labMarkers.find(m => m.id === l.marker_id) || {}).name || l.marker_id}</td>
-                          <td style={{padding:8,textAlign:'right'}}>{l.min_value}</td>
-                          <td style={{padding:8,textAlign:'right'}}>{l.max_value}</td>
-                          <td style={{padding:8}}>{l.tag_to_apply}</td>
-                          <td style={{padding:8,textAlign:'right'}}>
-                            <button className="btn-ghost" onClick={() => startEditRule(l)}>Edit</button>
-                            <button className="btn-ghost" onClick={() => deleteRule(l.id)}>Delete</button>
-                          </td>
-                        </tr>
-                      ))}
-                      {/* inline add / edit form */}
-                      <tr style={{background:'#fff'}}>
-                        <td style={{padding:8}}>
-                          <select value={ruleForm.marker_id || (labMarkers[0] && labMarkers[0].id) || ''} onChange={e => setRuleForm(f => ({ ...f, marker_id: e.target.value }))}>
-                            {(labMarkers || []).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                          </select>
-                        </td>
-                        <td style={{padding:8}}><input aria-label="min_value" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
-                        <td style={{padding:8}}><input aria-label="max_value" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
-                        <td style={{padding:8}}>
-                          <select value={ruleForm.tag_to_apply || ''} onChange={e => setRuleForm(f => ({ ...f, tag_to_apply: e.target.value }))}>
-                            <option value="">(choose tag)</option>
-                            {(allowedTags || []).map(t => <option key={t} value={t}>{t}</option>)}
-                          </select>
-                        </td>
-                        <td style={{padding:8,textAlign:'right'}}>
-                          {editingRuleId ? (
+                          {editingId === l.id ? (
                             <>
-                              <button className="btn-ghost" onClick={saveRule}>Save</button>
-                              <button className="btn-ghost" onClick={cancelEditRule}>Cancel</button>
+                              <td style={{padding:8}}>
+                                <input
+                                  type="text"
+                                  placeholder="Marker"
+                                  value={editData.markerName || ''}
+                                  onChange={e => setEditData({...editData, markerName: e.target.value})}
+                                  list="edit-criteria-markers-list"
+                                  style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}}
+                                />
+                                <datalist id="edit-criteria-markers-list">
+                                  {labMarkers.map(m => <option key={m.id} value={m.name} />)}
+                                </datalist>
+                              </td>
+                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.min_value || ''} onChange={e => setEditData({...editData, min_value: e.target.value})} style={{width:'60px',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
+                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.max_value || ''} onChange={e => setEditData({...editData, max_value: e.target.value})} style={{width:'60px',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
+                              <td style={{padding:8}}>
+                                <input
+                                  type="text"
+                                  placeholder="Tag"
+                                  value={editData.tag_to_apply || ''}
+                                  onChange={e => setEditData({...editData, tag_to_apply: e.target.value})}
+                                  list="edit-criteria-tags-list"
+                                  style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}}
+                                />
+                                <datalist id="edit-criteria-tags-list">
+                                  {allowedTags.map(t => <option key={t} value={t} />)}
+                                </datalist>
+                              </td>
+                              <td style={{padding:8,textAlign:'right'}}>
+                                <button className="btn-ghost" onClick={async () => {
+                                  try {
+                                    const markerId = labMarkers.find(m => m.name === editData.markerName)?.id || editData.marker_id
+                                    const res = await fetch(apiUrl(`/api/admin/logic-rules/${l.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ marker_id: markerId, min_value: Number(editData.min_value), max_value: Number(editData.max_value), tag_to_apply: editData.tag_to_apply }) })
+                                    if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                    await load()
+                                    setEditingId(null)
+                                  } catch (err) {
+                                    alert('Save criteria failed — ' + ((err as any)?.message || 'check server logs'))
+                                  }
+                                }} style={{color:'#16a34a'}}>✓</button>
+                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                              </td>
                             </>
                           ) : (
-                            <button className="btn-primary" onClick={saveRule}>Add</button>
+                            <>
+                              <td style={{padding:8}}>{(labMarkers.find(m => m.id === l.marker_id) || {}).name || l.marker_id}</td>
+                              <td style={{padding:8,textAlign:'left'}}>{l.min_value}</td>
+                              <td style={{padding:8,textAlign:'left'}}>{l.max_value}</td>
+                              <td style={{padding:8}}>{l.tag_to_apply}</td>
+                              <td style={{padding:8,textAlign:'right'}}>
+                                <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                                  <button className="btn-ghost" onClick={() => {
+                                    setEditingId(l.id)
+                                    setEditData({
+                                      marker_id: l.marker_id,
+                                      markerName: (labMarkers.find(m => m.id === l.marker_id) || {}).name || '',
+                                      min_value: String(l.min_value),
+                                    max_value: String(l.max_value),
+                                    tag_to_apply: l.tag_to_apply
+                                  })
+                                }}>✎</button>
+                                <button className="btn-ghost" onClick={() => deleteRule(l.id)} style={{color:'#dc2626'}}>✕</button>
+                                </div>
+                              </td>
+                            </>
                           )}
-                        </td>
-                      </tr>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -825,7 +974,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               {/* Type creation form */}
               <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
                 <div style={{display:'flex',gap:12,alignItems:'center'}}>
-                  <input placeholder="Type name (e.g., article, book, podcast)" value={newTypeName} onChange={e => setNewTypeName(e.target.value)} style={{minWidth:200}} />
+                  <input 
+                    placeholder="Resource Type (e.g., article, book, podcast)" 
+                    value={newTypeName} 
+                    onChange={e => setNewTypeName(e.target.value)}
+                    style={{minWidth:200}} 
+                  />
                   <button className="btn-primary" onClick={async () => {
                     if (!newTypeName.trim()) return alert('Type name required')
                     try {
@@ -840,36 +994,87 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </div>
               </div>
 
+              {/* Resource Types Search Filter */}
+              <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:6,padding:12,marginBottom:16}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:10,alignItems:'end'}}>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Search Resource Types</label>
+                    <input
+                      type="text"
+                      placeholder="Type name..."
+                      value={filterResourceTypeName}
+                      onChange={e => setFilterResourceTypeName(e.target.value)}
+                      list="search-resource-types-list"
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                    />
+                    <datalist id="search-resource-types-list">
+                      {Array.from(new Set(resourceTypes.filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))).sort().map(t => <option key={t} value={t} />)}
+                    </datalist>
+                  </div>
+                  <button 
+                    className="btn-ghost" 
+                    onClick={() => setFilterResourceTypeName('')}
+                    style={{opacity: filterResourceTypeName ? 1 : 0.5,cursor: filterResourceTypeName ? 'pointer' : 'default'}}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
               {/* Types table */}
               <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
                   <thead style={{background:'#fafafa'}}>
                     <tr>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:sortColumn==='name'?'#1F2937':'#666'}} onClick={() => handleSort('name')}>Type Name{getSortIndicator('name')}</th>
+                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:sortColumn==='name'?'#1F2937':'#666'}} onClick={() => handleSort('name')}>Resource Type{getSortIndicator('name')}</th>
                       <th style={{padding:8,textAlign:'right'}}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(sortColumn ? sortData(resourceTypes.map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes).map(rt => (
+                    {(sortColumn ? sortData(resourceTypes
+                      .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
+                      .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
+                      .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))
+                      .map(rt => (
                       <tr key={rt} style={{borderTop:'1px solid #f3f4f6'}}>
-                        <td style={{padding:8}}><strong>{rt}</strong></td>
-                        <td style={{padding:8,textAlign:'right'}}>
-                          <button className="btn-ghost" onClick={async () => {
-                            const newName = prompt('Edit type name', rt)
-                            if (!newName || newName.trim() === '' || newName.trim() === rt) return
-                            alert('Edit type feature coming soon')
-                          }}>Edit</button>
-                          <button className="btn-ghost" onClick={async () => {
-                            if (!confirm(`Delete type "${rt}"?`)) return
-                            try {
-                              const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'DELETE', headers: authHeaders() })
-                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                              await loadResourceTypes()
-                            } catch (err) {
-                              alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
-                            }
-                          }}>Delete</button>
-                        </td>
+                        {editingId === `type-${rt}` ? (
+                          <>
+                            <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
+                            <td style={{padding:8,textAlign:'right'}}>
+                              <button className="btn-ghost" onClick={async () => {
+                                try {
+                                  const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name }) })
+                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                  await loadResourceTypes()
+                                  setEditingId(null)
+                                } catch (err) {
+                                  alert('Save type failed — ' + ((err as any)?.message || 'check server logs'))
+                                }
+                              }} style={{color:'#16a34a'}}>✓</button>
+                              <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td style={{padding:8}}><strong>{rt}</strong></td>
+                            <td style={{padding:8,textAlign:'right'}}>
+                              <button className="btn-ghost" onClick={() => {
+                                setEditingId(`type-${rt}`)
+                                setEditData({name: rt})
+                              }}>✎</button>
+                              <button className="btn-ghost" onClick={async () => {
+                                if (!confirm(`Delete type "${rt}"?`)) return
+                                try {
+                                  const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'DELETE', headers: authHeaders() })
+                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                  await loadResourceTypes()
+                                } catch (err) {
+                                  alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
+                                }
+                              }} style={{color:'#dc2626'}}>✕</button>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -908,6 +1113,74 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </div>
               </div>
 
+              {/* Lab Markers Filters */}
+              <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:6,padding:12,marginBottom:16}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'end'}}>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Marker Name</label>
+                    <input
+                      type="text"
+                      placeholder="(All Names)"
+                      value={filterLabMarkerName}
+                      onChange={e => setFilterLabMarkerName(e.target.value)}
+                      list="lab-marker-names-list"
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                    />
+                    <datalist id="lab-marker-names-list">
+                      {Array.from(new Set(labMarkers
+                        .filter(m => 
+                          (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                        )
+                        .map(m => m.name)
+                        .filter(n => !filterLabMarkerName || n.toLowerCase().includes(filterLabMarkerName.toLowerCase()))
+                      ))
+                        .sort((a, b) => a.localeCompare(b))
+                        .map(name => <option key={name} value={name} />)
+                      }
+                    </datalist>
+                  </div>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Unit</label>
+                    <select
+                      value={filterLabMarkerUnit}
+                      onChange={e => setFilterLabMarkerUnit(e.target.value)}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                    >
+                      <option value="">(All Units)</option>
+                      {Array.from(new Set(labMarkers
+                        .filter(m => 
+                          (!filterLabMarkerName || m.name === filterLabMarkerName)
+                        )
+                        .map(m => m.unit).filter(u => u)))
+                        .sort((a, b) => (a || '').localeCompare(b || ''))
+                        .map(unit => <option key={unit} value={unit || ''}>{unit}</option>)
+                      }
+                    </select>
+                  </div>
+                  <button 
+                    className="btn-ghost" 
+                    onClick={() => {
+                      setFilterLabMarkerName('')
+                      setFilterLabMarkerUnit('')
+                    }}
+                    style={{opacity: (filterLabMarkerName || filterLabMarkerUnit) ? 1 : 0.5,cursor: (filterLabMarkerName || filterLabMarkerUnit) ? 'pointer' : 'default'}}
+                  >
+                    Clear
+                  </button>
+                </div>
+                {(filterLabMarkerName || filterLabMarkerUnit) && (
+                  <div style={{fontSize:12,marginTop:8,color:'#666'}}>
+                    Showing {labMarkers
+                      .filter(m => 
+                        (!filterLabMarkerName || m.name === filterLabMarkerName)
+                        && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                      )
+                      .length
+                    } of {labMarkers.length} markers
+                  </div>
+                )}
+              </div>
+
               {/* Markers table */}
               <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
@@ -919,34 +1192,63 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </tr>
                   </thead>
                   <tbody>
-                    {(sortColumn ? sortData(labMarkers, sortColumn) : labMarkers).map(m => (
+                    {(sortColumn ? sortData(labMarkers
+                      .filter(m => 
+                        (!filterLabMarkerName || m.name === filterLabMarkerName)
+                        && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                      ), sortColumn) : labMarkers
+                      .filter(m => 
+                        (!filterLabMarkerName || m.name === filterLabMarkerName)
+                        && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                      )).map(m => (
                       <tr key={m.id} style={{borderTop:'1px solid #f3f4f6'}}>
-                        <td style={{padding:8}}><strong>{m.name}</strong></td>
-                        <td style={{padding:8}} className="small muted">{m.unit || '—'}</td>
-                        <td style={{padding:8,textAlign:'right'}}>
-                          <button className="btn-ghost" onClick={async () => {
-                            const newName = prompt('Edit name', m.name)
-                            if (!newName || newName.trim() === '' || newName.trim() === m.name) return
-                            alert('Edit marker feature coming soon')
-                          }}>Edit</button>
-                          <button className="btn-ghost" onClick={async () => {
-                            if (!confirm(`Delete marker "${m.name}"?`)) return
-                            try {
-                              const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'DELETE', headers: authHeaders() })
-                              if (!res.ok) {
-                                const errText = await res.text().catch(() => '')
-                                const errObj = errText ? JSON.parse(errText).detail : {}
-                                if (errObj.code === '23503') {
-                                  throw new Error(`This marker is being used in criteria. Delete the criteria first, then delete the marker.`)
+                        {editingId === m.id ? (
+                          <>
+                            <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
+                            <td style={{padding:8}}><input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
+                            <td style={{padding:8,textAlign:'right'}}>
+                              <button className="btn-ghost" onClick={async () => {
+                                try {
+                                  const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit }) })
+                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                  await load()
+                                  setEditingId(null)
+                                } catch (err) {
+                                  alert('Save marker failed — ' + ((err as any)?.message || 'check server logs'))
                                 }
-                                throw new Error(errText || String(res.status))
-                              }
-                              await load()
-                            } catch (err) {
-                              alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
-                            }
-                          }}>Delete</button>
-                        </td>
+                              }} style={{color:'#16a34a'}}>✓</button>
+                              <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td style={{padding:8}}><strong>{m.name}</strong></td>
+                            <td style={{padding:8}} className="small muted">{m.unit || '—'}</td>
+                            <td style={{padding:8,textAlign:'right'}}>
+                              <button className="btn-ghost" onClick={() => {
+                                setEditingId(m.id)
+                                setEditData({name: m.name, unit: m.unit})
+                              }}>✎</button>
+                              <button className="btn-ghost" onClick={async () => {
+                                if (!confirm(`Delete marker "${m.name}"?`)) return
+                                try {
+                                  const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'DELETE', headers: authHeaders() })
+                                  if (!res.ok) {
+                                    const errText = await res.text().catch(() => '')
+                                    const errObj = errText ? JSON.parse(errText).detail : {}
+                                    if (errObj.code === '23503') {
+                                      throw new Error(`This marker is being used in criteria. Delete the criteria first, then delete the marker.`)
+                                    }
+                                    throw new Error(errText || String(res.status))
+                                  }
+                                  await load()
+                                } catch (err) {
+                                  alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
+                                }
+                              }} style={{color:'#dc2626'}}>✕</button>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -990,6 +1292,33 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </div>
               </div>
 
+              {/* Tags Search Filter */}
+              <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:6,padding:12,marginBottom:16}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:10,alignItems:'end'}}>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Search Tags</label>
+                    <input
+                      type="text"
+                      placeholder="Tag name..."
+                      value={filterTagName}
+                      onChange={e => setFilterTagName(e.target.value)}
+                      list="search-tags-list"
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}}
+                    />
+                    <datalist id="search-tags-list">
+                      {Array.from(new Set(allowedTags.filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase())))).sort().map(t => <option key={t} value={t} />)}
+                    </datalist>
+                  </div>
+                  <button 
+                    className="btn-ghost" 
+                    onClick={() => setFilterTagName('')}
+                    style={{opacity: filterTagName ? 1 : 0.5,cursor: filterTagName ? 'pointer' : 'default'}}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
               {/* Tags table */}
               <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
@@ -1000,34 +1329,51 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </tr>
                   </thead>
                   <tbody>
-                    {(sortColumn ? sortData(allowedTags.map(name => ({name})), 'name').map(obj => obj.name) : allowedTags).map(t => (
+                    {(sortColumn ? sortData(allowedTags
+                      .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
+                      .map(name => ({name})), 'name').map(obj => obj.name) : allowedTags
+                      .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))).map(t => (
                       <tr key={t} style={{borderTop:'1px solid #f3f4f6'}}>
-                        <td style={{padding:8}}><strong>{t}</strong></td>
-                        <td style={{padding:8,textAlign:'right',display:'flex',gap:8,justifyContent:'flex-end'}}>
-                          <button className="btn-ghost" onClick={async () => {
-                            const newName = prompt('Edit tag name', t)
-                            if (!newName || newName.trim() === '' || newName.trim() === t) return
-                            try {
-                              const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: newName.trim() }) })
-                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                              await loadTags()
-                              await load()
-                            } catch (err) {
-                              alert('Edit tag failed — ' + ((err as any)?.message || 'check server logs'))
-                            }
-                          }}>Edit</button>
-                          <button className="btn-ghost" onClick={async () => {
-                            if (!confirm(`Delete tag "${t}"? This will remove it from resources and delete any criteria referencing it.`)) return
-                            try {
-                              const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'DELETE', headers: authHeaders() })
-                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                              await loadTags()
-                              await load()
-                            } catch (err) {
-                              alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
-                            }
-                          }}>Delete</button>
-                        </td>
+                        {editingId === `tag-${t}` ? (
+                          <>
+                            <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
+                            <td style={{padding:8,textAlign:'right',display:'flex',gap:8,justifyContent:'flex-end'}}>
+                              <button className="btn-ghost" onClick={async () => {
+                                try {
+                                  const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name.trim() }) })
+                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                  await loadTags()
+                                  await load()
+                                  setEditingId(null)
+                                } catch (err) {
+                                  alert('Save tag failed — ' + ((err as any)?.message || 'check server logs'))
+                                }
+                              }} style={{color:'#16a34a'}}>✓</button>
+                              <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td style={{padding:8}}><strong>{t}</strong></td>
+                            <td style={{padding:8,textAlign:'right',display:'flex',gap:8,justifyContent:'flex-end'}}>
+                              <button className="btn-ghost" onClick={() => {
+                                setEditingId(`tag-${t}`)
+                                setEditData({name: t})
+                              }}>✎</button>
+                              <button className="btn-ghost" onClick={async () => {
+                                if (!confirm(`Delete tag "${t}"? This will remove it from resources and delete any criteria referencing it.`)) return
+                                try {
+                                  const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'DELETE', headers: authHeaders() })
+                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                  await loadTags()
+                                  await load()
+                                } catch (err) {
+                                  alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
+                                }
+                              }} style={{color:'#dc2626'}}>✕</button>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>
