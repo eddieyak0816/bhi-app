@@ -21,6 +21,7 @@ export default function App() {
   const [showAdmin, setShowAdmin] = useState(false)
   const [showOnboard, setShowOnboard] = useState(true)
   const [tags, setTags] = useState<string[]>([])
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     let mounted = true
@@ -72,7 +73,7 @@ export default function App() {
     }
     init()
     return () => { mounted = false }
-  }, [supabase])
+  }, [supabase, refreshKey])
 
   if (!data) return <div className="center">Loading…</div>
 
@@ -99,7 +100,7 @@ export default function App() {
 
           <main>
             {showAdmin ? (
-              <Admin />
+              <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} />
             ) : (
               <>
                 <LabInput

@@ -9,6 +9,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { createClient } = require('@supabase/supabase-js');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 app.use(cors());
@@ -439,8 +440,11 @@ app.delete('/api/admin/tags/:name', async (req, res) => {
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     // remove from resources.tags using array_remove
-    const { error: remErr } = await sb.from('resources').update({ tags: sb.raw('array_remove(tags, ?)', [name]) }).neq('tags', null).match({}).catch(() => ({ error: null }));
-    if (remErr) console.warn('resources-tag-remove-failed', remErr);
+    const { error: remErr } = await sb.rpc('array_remove_from_resources', { p_tag_name: name }).catch(() => ({ error: null }));
+    if (remErr) {
+      // Fallback: if RPC doesn't exist, just proceed (tags can be removed manually)
+      console.warn('resources-tag-remove-failed', remErr);
+    }
     // delete any logic_rules that reference this tag
     const { error: lrErr } = await sb.from('logic_rules').delete().eq('tag_to_apply', name);
     if (lrErr) console.warn('logic_rules-delete-failed', lrErr);
@@ -459,6 +463,65 @@ app.delete('/api/admin/tags/:name', async (req, res) => {
   }
 });
 
+// ADMIN: resource_types CRUD
+app.get('/api/admin/resource-types', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('resource_types').select('name').order('name');
+    if (error) {
+      console.error('admin-get-resource-types-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(200).json(data || []);
+  } catch (err) {
+    console.error('admin-get-resource-types-exception', err);
+    return res.status(500).json({ error: 'server_error', detail: String(err) });
+  }
+});
+
+app.post('/api/admin/resource-types', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const { name } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'missing-name' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('resource_types').insert([{ name: name.trim() }]).select('*');
+    if (error) {
+      console.error('admin-insert-resource-type-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(201).json(data?.[0] || { name: name.trim() });
+  } catch (err) {
+    console.error('admin-insert-resource-type-exception', err);
+    return res.status(500).json({ error: 'server_error', detail: String(err) });
+  }
+});
+
+app.delete('/api/admin/resource-types/:name', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const name = req.params.name;
+  if (!name) return res.status(400).json({ error: 'missing-name' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('resource_types').delete().eq('name', name);
+    if (error) {
+      console.error('admin-delete-resource-type-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(200).json({ deleted: name });
+  } catch (err) {
+    console.error('admin-delete-resource-type-exception', err);
+    return res.status(500).json({ error: 'server_error', detail: String(err) });
+  }
+});
+
 // ADMIN: lab_markers CRUD (for creating markers from Admin UI)
 app.post('/api/admin/lab-markers', async (req, res) => {
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
@@ -468,7 +531,7 @@ app.post('/api/admin/lab-markers', async (req, res) => {
   if (!name) return res.status(400).json({ error: 'missing-name' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const payload = { id: id || undefined, name, unit: unit || null };
+    const payload = { id: id || uuidv4(), name, unit: unit || null };
     const { data, error } = await sb.from('lab_markers').insert([payload]).select('*');
     if (error) {
       console.error('admin-insert-lab-marker-error', error);

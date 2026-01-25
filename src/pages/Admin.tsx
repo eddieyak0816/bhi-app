@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[] }
 
-export default function Admin() {
+export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () => void }) {
   const [resources, setResources] = useState<Resource[]>([])
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
@@ -23,7 +23,13 @@ export default function Admin() {
   const [markerName, setMarkerName] = useState('')
   const [markerUnit, setMarkerUnit] = useState('')
 
-  const [activeTab, setActiveTab] = useState<'resources' | 'markers' | 'tags' | 'criteria' | 'audit'>('resources')
+  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'criteria' | 'audit'>('resources')
+  const [resourceTypes, setResourceTypes] = useState<string[]>([])
+  const [newTypeName, setNewTypeName] = useState('')
+  const [createResourceOpen, setCreateResourceOpen] = useState(false)
+  const [filterKeyword, setFilterKeyword] = useState('')
+  const [filterTypes, setFilterTypes] = useState<string[]>([])
+  const [filterTags, setFilterTags] = useState<string[]>([])
   const [auditRows, setAuditRows] = useState<Array<any>>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [selectAll, setSelectAll] = useState(false)
@@ -143,6 +149,18 @@ export default function Admin() {
     }
   }
 
+  // load resource types
+  async function loadResourceTypes() {
+    try {
+      const res = await fetch(apiUrl('/api/admin/resource-types'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
+      if (!res.ok) return
+      const body = await res.json()
+      setResourceTypes(Array.isArray(body) ? body.map((t: any) => t.name || t) : [])
+    } catch (err) {
+      console.error('loadResourceTypes', err)
+    }
+  }
+
   async function addTag(name: string) {
     const clean = (name || '').toString().trim()
     if (!clean) return null
@@ -237,7 +255,7 @@ export default function Admin() {
     }
   }
 
-  useEffect(() => { load(); loadTags() }, [])
+  useEffect(() => { load(); loadTags(); loadResourceTypes() }, [])
 
   async function create() {
     const payload = { type, title, description: null, tags: selectedTags.map(s => s.trim()).filter(Boolean) }
@@ -252,6 +270,7 @@ export default function Admin() {
       setTagInput('')
       await load()
       await loadTags()
+      onResourcesChanged?.()
     } catch (err) {
       console.error(err)
       alert('Create failed (check server logs)')
@@ -293,6 +312,7 @@ export default function Admin() {
       {/* Tab Navigation */}
       <div className="tabs">
         <button className={`tab ${activeTab === 'resources' ? 'active' : ''}`} onClick={() => setActiveTab('resources')}>Resources</button>
+        <button className={`tab ${activeTab === 'types' ? 'active' : ''}`} onClick={() => setActiveTab('types')}>Resource Types</button>
         <button className={`tab ${activeTab === 'markers' ? 'active' : ''}`} onClick={() => setActiveTab('markers')}>Lab Markers</button>
         <button className={`tab ${activeTab === 'tags' ? 'active' : ''}`} onClick={() => setActiveTab('tags')}>Tags</button>
         <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')}>Criteria</button>
@@ -326,61 +346,151 @@ export default function Admin() {
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <h4 style={{marginBottom:16}}>Create New Resource</h4>
+              {/* Create New Resource Accordion */}
+              <button
+                onClick={() => setCreateResourceOpen(!createResourceOpen)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  marginBottom: 16,
+                  fontSize: 16,
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  color: '#1F2937'
+                }}
+              >
+                <span>{createResourceOpen ? '▼' : '▶'}</span>
+                <span>Create New Resource</span>
+              </button>
 
-              {/* Resource creation form */}
-              <div style={{marginBottom:24,padding:16,background:'#F8F9FC',borderRadius:6}}>
-                <div style={{display:'flex',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}>
-                  <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                    <select value={type} onChange={e => setType(e.target.value)}>
-                      <option value="video">video</option>
-                      <option value="doctor">doctor</option>
-                      <option value="article">article</option>
-                    </select>
-                    <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{minWidth:240}} />
-                    <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
+              {/* Resource creation form (collapsed by default) */}
+              {createResourceOpen && (
+                <div style={{marginBottom:24,padding:16,background:'#F8F9FC',borderRadius:6}}>
+                  <div style={{display:'flex',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}>
+                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                      <select value={type} onChange={e => setType(e.target.value)}>
+                        {resourceTypes.map(rt => <option key={rt} value={rt}>{rt}</option>)}
+                      </select>
+                      <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{minWidth:240}} />
+                      <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
+                    </div>
+                  </div>
+                  <div style={{marginTop:12}}>
+                    <div style={{marginBottom:12}}>
+                      <div className="small muted" style={{marginBottom:8}}>Tags:</div>
+                      <div style={{background:'#fff',border:'1px solid #eee',padding:12,borderRadius:6,maxHeight:240,overflow:'auto'}}>
+                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                          {(allowedTags || []).map(t => (
+                            <label key={t} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:14}}>
+                              <input
+                                type="checkbox"
+                                checked={selectedTags.includes(t)}
+                                onChange={e => {
+                                  if (e.currentTarget.checked) {
+                                    setSelectedTags(s => [...s, t])
+                                  } else {
+                                    setSelectedTags(s => s.filter(x => x !== t))
+                                  }
+                                }}
+                              />
+                              <span>{t}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div style={{marginTop:12}}>
-                  <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:8}}>
-                    <span className="small muted">Tags:</span>
-                    {selectedTags.map(t => (
-                      <div key={t} style={{background:'#eef2ff',padding:'4px 8px',borderRadius:999,display:'inline-flex',gap:8,alignItems:'center'}}>
-                        <span style={{fontSize:13}}>{t}</span>
-                        <button aria-label={`remove-${t}`} className="btn-ghost" onClick={() => setSelectedTags(prev => prev.filter(x => x !== t))}>×</button>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{display:'flex',gap:8,alignItems:'flex-start'}}>
-                    <div style={{background:'#fff',border:'1px solid #eee',padding:8,borderRadius:6,maxHeight:200,overflow:'auto',minWidth:240}}>
-                      {tagInput.trim() === '' ? (
-                        <div className="small muted">Available tags: {(allowedTags || []).slice(0,8).join(', ')}</div>
-                      ) : (
-                        <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                          {(allowedTags || []).filter(a => a.toLowerCase().includes(tagInput.toLowerCase()) && !selectedTags.includes(a)).slice(0,10).map(a => (
-                            <button key={a} className="btn-ghost" onClick={() => { setSelectedTags(s => s.includes(a) ? s : [...s, a]); setTagInput('') }}>{a}</button>
-                          ))}
-                          {!allowedTags.map(x => x.toLowerCase()).includes(tagInput.trim().toLowerCase()) && tagInput.trim() !== '' && (
-                            <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                              <div className="small muted">No exact match</div>
-                              <button className="btn-ghost" onClick={() => { addTag(tagInput.trim()); setTagInput('') }}>+ Add tag</button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+              )}
+
+              <h4 style={{marginBottom:16}}>Resources</h4>
+
+              {/* Filtering section */}
+              <div style={{marginBottom:16,padding:12,background:'#F8F9FC',borderRadius:6}}>
+                <div style={{display:'flex',gap:12,flexWrap:'wrap',alignItems:'flex-end'}}>
+                  <div style={{flex:'1 1 200px'}}>
+                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:'#666'}}>Keyword Search</label>
                     <input
-                      placeholder="Tag"
-                      value={tagInput}
-                      onChange={e => setTagInput(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const match = allowedTags.find(a => a.toLowerCase() === tagInput.trim().toLowerCase()); if (match) setSelectedTags(s => s.includes(match) ? s : [...s, match]); else addTag(tagInput.trim()); setTagInput('') } }}
-                      style={{minWidth:120,border:'1px solid #e5e7eb',padding:6,borderRadius:6}}
+                      type="text"
+                      placeholder="Search titles..."
+                      value={filterKeyword}
+                      onChange={e => setFilterKeyword(e.target.value)}
+                      style={{width:'100%',padding:8,border:'1px solid #ddd',borderRadius:4,fontSize:14}}
                     />
                   </div>
+                  <div style={{flex:'1 1 150px'}}>
+                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:'#666'}}>Type</label>
+                    <select
+                      multiple
+                      value={filterTypes}
+                      onChange={e => setFilterTypes(Array.from(e.currentTarget.selectedOptions, o => o.value))}
+                      style={{width:'100%',padding:8,border:'1px solid #ddd',borderRadius:4,fontSize:14,minHeight:36,maxHeight:100,overflowY:'auto'}}
+                    >
+                      {Array.from(new Set(
+                        resources
+                          .filter(r => {
+                            if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                            if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                            return true
+                          })
+                          .map(r => r.type)
+                      )).sort().map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div style={{flex:'1 1 150px'}}>
+                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:'#666'}}>Tags</label>
+                    <select
+                      multiple
+                      value={filterTags}
+                      onChange={e => setFilterTags(Array.from(e.currentTarget.selectedOptions, o => o.value))}
+                      style={{width:'100%',padding:8,border:'1px solid #ddd',borderRadius:4,fontSize:14,minHeight:36,maxHeight:100,overflowY:'auto'}}
+                    >
+                      {Array.from(new Set(
+                        resources
+                          .filter(r => {
+                            if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                            if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                            return true
+                          })
+                          .flatMap(r => r.tags || [])
+                      )).sort().map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0) && (
+                    <button
+                      onClick={() => {
+                        setFilterKeyword('')
+                        setFilterTypes([])
+                        setFilterTags([])
+                        setSelectedIds([])
+                        setSelectAll(false)
+                      }}
+                      style={{padding:'8px 12px',background:'#E0E7FF',color:'#6366F1',border:'none',borderRadius:4,cursor:'pointer',fontSize:13,fontWeight:600}}
+                    >
+                      Clear Filters
+                    </button>
+                  )}
                 </div>
               </div>
 
-              <h4 style={{marginBottom:16}}>Resources</h4>
+              {/* Filter results summary */}
+              {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0) && (
+                <div style={{marginBottom:12,fontSize:13,color:'#666'}}>
+                  {(() => {
+                    const filtered = resources.filter(r => {
+                      if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                      if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                      if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                      return true
+                    })
+                    return `Showing ${filtered.length} of ${resources.length} resources`
+                  })()}
+                </div>
+              )}
 
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
                 <label style={{display:'flex',alignItems:'center',gap:8}}>
@@ -403,17 +513,24 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody>
-                    {resources.map(r => (
-                      <tr key={r.id} data-id={r.id} style={{borderTop:'1px solid #f3f4f6'}}>
-                        <td style={{padding:8}}><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
-                        <td style={{padding:8}}><strong>{r.title}</strong></td>
-                        <td style={{padding:8}} className="small muted">{r.type}</td>
-                        <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
-                        <td style={{padding:8,textAlign:'right'}}>
-                          <button className="btn-ghost" onClick={() => remove(r.id)}>Delete</button>
-                        </td>
-                      </tr>
-                    ))}
+                    {resources
+                      .filter(r => {
+                        if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                        if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                        if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                        return true
+                      })
+                      .map(r => (
+                        <tr key={r.id} data-id={r.id} style={{borderTop:'1px solid #f3f4f6'}}>
+                          <td style={{padding:8}}><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
+                          <td style={{padding:8}}><strong>{r.title}</strong></td>
+                          <td style={{padding:8}} className="small muted">{r.type}</td>
+                          <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
+                          <td style={{padding:8,textAlign:'right'}}>
+                            <button className="btn-ghost" onClick={() => remove(r.id)}>Delete</button>
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -491,6 +608,66 @@ export default function Admin() {
         </div>
       )}
 
+      {/* Resource Types Tab */}
+      {activeTab === 'types' && (
+        <div>
+          {loading ? <div>Loading…</div> : (
+            <div>
+              <h4 style={{marginBottom:16}}>Resource Types</h4>
+
+              {/* Type creation form */}
+              <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
+                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                  <input placeholder="Type name (e.g., article, book, podcast)" value={newTypeName} onChange={e => setNewTypeName(e.target.value)} style={{minWidth:200}} />
+                  <button className="btn-primary" onClick={async () => {
+                    if (!newTypeName.trim()) return alert('Type name required')
+                    try {
+                      const res = await fetch(apiUrl('/api/admin/resource-types'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify({ name: newTypeName.trim() }) })
+                      if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                      await loadResourceTypes()
+                      setNewTypeName('')
+                    } catch (err) {
+                      alert('Create type failed — ' + ((err as any)?.message || 'check server logs'))
+                    }
+                  }}>Add Type</button>
+                </div>
+              </div>
+
+              {/* Types table */}
+              <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse'}}>
+                  <thead style={{background:'#fafafa'}}>
+                    <tr>
+                      <th style={{padding:8,textAlign:'left'}}>Type Name</th>
+                      <th style={{padding:8,textAlign:'right'}}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resourceTypes.map(rt => (
+                      <tr key={rt} style={{borderTop:'1px solid #f3f4f6'}}>
+                        <td style={{padding:8}}><strong>{rt}</strong></td>
+                        <td style={{padding:8,textAlign:'right'}}>
+                          <button className="btn-ghost" onClick={async () => {
+                            if (!confirm(`Delete type "${rt}"?`)) return
+                            try {
+                              const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'DELETE', headers: authHeaders() })
+                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                              await loadResourceTypes()
+                            } catch (err) {
+                              alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
+                          }}>Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Lab Markers Tab */}
       {activeTab === 'markers' && (
         <div>
@@ -539,7 +716,14 @@ export default function Admin() {
                             if (!confirm(`Delete marker "${m.name}"?`)) return
                             try {
                               const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'DELETE', headers: authHeaders() })
-                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                              if (!res.ok) {
+                                const errText = await res.text().catch(() => '')
+                                const errObj = errText ? JSON.parse(errText).detail : {}
+                                if (errObj.code === '23503') {
+                                  throw new Error(`This marker is being used in criteria. Delete the criteria first, then delete the marker.`)
+                                }
+                                throw new Error(errText || String(res.status))
+                              }
                               await load()
                             } catch (err) {
                               alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))

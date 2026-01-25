@@ -1,6 +1,11 @@
 -- seed.sql: sample data for local/dev Supabase
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- resource_types
+INSERT INTO resource_types (name) VALUES ('video') ON CONFLICT (name) DO NOTHING;
+INSERT INTO resource_types (name) VALUES ('doctor') ON CONFLICT (name) DO NOTHING;
+INSERT INTO resource_types (name) VALUES ('article') ON CONFLICT (name) DO NOTHING;
+
 -- lab_markers
 INSERT INTO lab_markers (id, name, unit)
 VALUES
