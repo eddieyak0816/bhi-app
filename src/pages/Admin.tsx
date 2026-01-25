@@ -24,6 +24,20 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [markerUnit, setMarkerUnit] = useState('')
 
   const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'criteria' | 'audit'>('resources')
+  // dark mode state
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('bhi-dark-mode')
+    return saved ? JSON.parse(saved) : false
+  })
+  // View mode per tab (card or table)
+  const [viewMode, setViewMode] = useState<Record<string, 'card' | 'table'>>({
+    resources: 'card',
+    types: 'card',
+    markers: 'card',
+    tags: 'card',
+    criteria: 'table',
+    audit: 'table'
+  })
   const [resourceTypes, setResourceTypes] = useState<string[]>([])
   const [newTypeName, setNewTypeName] = useState('')
   const [createResourceOpen, setCreateResourceOpen] = useState(false)
@@ -51,6 +65,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [filterResourceTypeName, setFilterResourceTypeName] = useState<string>('')
   // tags filter state
   const [filterTagName, setFilterTagName] = useState<string>('')
+  // audit log filter state
+  const [filterAuditAction, setFilterAuditAction] = useState<string>('')
+  const [filterAuditTable, setFilterAuditTable] = useState<string>('')
   // editing state
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editData, setEditData] = useState<any>({})
@@ -59,6 +76,46 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // session override for dev convenience (not persisted)
   const [devKeyOverride, setDevKeyOverride] = useState<string | null>(null)
   function effectiveDevKey() { return devKeyOverride || DEV_BACKEND_KEY }
+
+  // Theme colors
+  const theme = {
+    bg: darkMode ? '#252525' : '#ffffff',
+    bgSecondary: darkMode ? '#252525' : '#f9fafb',
+    bgTertiary: darkMode ? '#252525' : '#F8F9FC',
+    text: darkMode ? '#e0e0e0' : '#1F2937',
+    textMuted: darkMode ? '#aaa' : '#666',
+    border: darkMode ? '#555' : '#e5e7eb',
+    borderLight: darkMode ? '#444' : '#eee',
+    card: darkMode ? '#252525' : 'white'
+  }
+
+  // Common inline styles using theme
+  const styles = {
+    input: {width:'100%' as const,padding:'6px 8px',border:'1px solid ' + theme.border,borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text},
+    inputSmall: {padding:'4px 6px',border:'1px solid ' + theme.border,borderRadius:4,background:theme.bgSecondary,color:theme.text},
+    select: {width:'100%' as const,padding:'6px 8px',border:'1px solid ' + theme.border,borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text},
+    selectSmall: {padding:'4px 6px',border:'1px solid ' + theme.border,borderRadius:4,background:theme.bgSecondary,color:theme.text},
+    table: {width:'100%' as const,borderCollapse:'collapse' as const,color:theme.text},
+    tableHeader: {background:theme.bgSecondary,borderBottom:'1px solid ' + theme.border},
+    tableRow: {borderTop:'1px solid ' + theme.borderLight},
+    filterBox: {background:theme.bgSecondary,border:'1px solid ' + theme.border,borderRadius:6,padding:12,marginBottom:16}
+  }
+
+  useEffect(() => {
+    localStorage.setItem('bhi-dark-mode', JSON.stringify(darkMode))
+  }, [darkMode])
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.style.backgroundColor = '#252525'
+      document.body.style.color = '#e0e0e0'
+      document.body.classList.add('dark-mode')
+    } else {
+      document.body.style.backgroundColor = '#ffffff'
+      document.body.style.color = '#000000'
+      document.body.classList.remove('dark-mode')
+    }
+  }, [darkMode])
 
   // helper to format helpful messages when server returns 403
   function backendKeyGuidance() {
@@ -173,6 +230,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       hash = hash & hash
     }
     return colors[Math.abs(hash) % colors.length]
+  }
+  function toggleViewMode(tab: string) {
+    setViewMode(prev => ({
+      ...prev,
+      [tab]: prev[tab] === 'card' ? 'table' : 'card'
+    }))
   }
   async function fetchJson(input: string, init: RequestInit = {}) {
     const headers = { ...(init.headers || {}), ...(authHeaders()) }
@@ -380,14 +443,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   }
 
   return (
-    <div className="card">
-      <h3>Admin — Content manager (dev)</h3>
+    <div className="card" style={{background:theme.bg,color:theme.text}}>
+      <h3 style={{color:theme.text}}>Admin — Content manager (dev)</h3>
       <div style={{display:'flex',gap:12,alignItems:'center'}}>
-        <p className="muted" style={{margin:0}}>Server-only actions require a backend key in dev.</p>
+        <p className="muted" style={{margin:0,color:theme.textMuted}}>Server-only actions require a backend key in dev.</p>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <button className="btn-ghost" onClick={() => setDevKeyOverride('foo')}>Use dev key (foo)</button>
-          <button className="btn-ghost" onClick={() => { const k = prompt('Enter a temporary backend key (session only)'); if (k) setDevKeyOverride(k) }}>Set session key</button>
-          {effectiveDevKey() ? <div className="small muted">Using key: <strong>{effectiveDevKey() === 'foo' ? 'foo (session)' : 'session-set'}</strong></div> : <div className="small muted">No backend key set</div>}
+          <button className="btn-ghost" onClick={() => setDevKeyOverride('foo')} style={{color:theme.text,border:'1px solid ' + theme.border}}>Use dev key (foo)</button>
+          <button className="btn-ghost" onClick={() => { const k = prompt('Enter a temporary backend key (session only)'); if (k) setDevKeyOverride(k) }} style={{color:theme.text,border:'1px solid ' + theme.border}}>Set session key</button>
+          {effectiveDevKey() ? <div className="small" style={{color:theme.textMuted}}>Using key: <strong style={{color:theme.text}}>{effectiveDevKey() === 'foo' ? 'foo (session)' : 'session-set'}</strong></div> : <div className="small" style={{color:theme.textMuted}}>No backend key set</div>}
         </div>
       </div>
 
@@ -396,38 +459,89 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       <div style={{height:12}} />
 
       {/* Tab Navigation */}
-      <div className="tabs">
-        <button className={`tab ${activeTab === 'resources' ? 'active' : ''}`} onClick={() => setActiveTab('resources')}>Resources</button>
-        <button className={`tab ${activeTab === 'types' ? 'active' : ''}`} onClick={() => setActiveTab('types')}>Resource Types</button>
-        <button className={`tab ${activeTab === 'markers' ? 'active' : ''}`} onClick={() => setActiveTab('markers')}>Lab Markers</button>
-        <button className={`tab ${activeTab === 'tags' ? 'active' : ''}`} onClick={() => setActiveTab('tags')}>Tags</button>
-        <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')}>Criteria</button>
-        <button className={`tab ${activeTab === 'audit' ? 'active' : ''}`} onClick={() => { setActiveTab('audit'); loadAudit() }}>Audit Log</button>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div className="tabs">
+          <button className={`tab ${activeTab === 'resources' ? 'active' : ''}`} onClick={() => setActiveTab('resources')} style={{color:theme.text}}>Resources</button>
+          <button className={`tab ${activeTab === 'types' ? 'active' : ''}`} onClick={() => setActiveTab('types')} style={{color:theme.text}}>Resource Types</button>
+          <button className={`tab ${activeTab === 'markers' ? 'active' : ''}`} onClick={() => setActiveTab('markers')} style={{color:theme.text}}>Lab Markers</button>
+          <button className={`tab ${activeTab === 'tags' ? 'active' : ''}`} onClick={() => setActiveTab('tags')} style={{color:theme.text}}>Tags</button>
+          <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')} style={{color:theme.text}}>Criteria</button>
+        </div>
+        <button onClick={() => setDarkMode(!darkMode)} title={darkMode ? 'Light mode' : 'Dark mode'} style={{background:theme.bgSecondary,border:'1px solid ' + theme.border,borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{darkMode ? '☀️' : '🌙'}</button>
       </div>
 
+      {/* Audit Log hidden in main UI - gated behind secret access */}
       {activeTab === 'audit' ? (
         <div>
           {loading ? <div>Loading…</div> : (
-            <table style={{width:'100%',borderCollapse:'collapse'}}>
-              <thead>
-                <tr>
-                  <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='created_at'?'#1F2937':'#666'}} onClick={() => handleSort('created_at')}>when{getSortIndicator('created_at')}</th>
-                  <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='action'?'#1F2937':'#666'}} onClick={() => handleSort('action')}>action{getSortIndicator('action')}</th>
-                  <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='target_table'?'#1F2937':'#666'}} onClick={() => handleSort('target_table')}>target{getSortIndicator('target_table')}</th>
-                  <th>details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(sortColumn ? sortData(auditRows, sortColumn) : auditRows).map(a => (
-                  <tr key={a.id} style={{borderTop:'1px solid #eee'}}>
-                    <td className="small muted">{new Date(a.created_at).toLocaleString()}</td>
-                    <td>{a.action}</td>
-                    <td className="small muted">{a.target_table} {a.target_id || ''}</td>
-                    <td className="small muted" style={{maxWidth:360,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{JSON.stringify(a.details)}</td>
+            <div>
+              <h4 style={{marginBottom:16}}>Audit Log</h4>
+
+              {/* Audit Filters */}
+              <div style={{background:theme.bgSecondary,border:'1px solid ' + theme.border,borderRadius:6,padding:12,marginBottom:16}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'end'}}>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.textMuted}}>Action</label>
+                    <select
+                      value={filterAuditAction}
+                      onChange={e => setFilterAuditAction(e.target.value)}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid ' + theme.border,borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                    >
+                      <option value="">(All Actions)</option>
+                      {Array.from(new Set(auditRows.map(a => a.action))).sort().map(action => (
+                        <option key={action} value={action}>{action}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.textMuted}}>Table</label>
+                    <select
+                      value={filterAuditTable}
+                      onChange={e => setFilterAuditTable(e.target.value)}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid ' + theme.border,borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                    >
+                      <option value="">(All Tables)</option>
+                      {Array.from(new Set(auditRows.map(a => a.target_table))).sort().map(table => (
+                        <option key={table} value={table}>{table}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button 
+                    className="btn-ghost" 
+                    onClick={() => {
+                      setFilterAuditAction('')
+                      setFilterAuditTable('')
+                    }}
+                    style={{opacity: (filterAuditAction || filterAuditTable) ? 1 : 0.5,cursor: (filterAuditAction || filterAuditTable) ? 'pointer' : 'default',color:theme.text}}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              <table style={{width:'100%',borderCollapse:'collapse',color:theme.text}}>
+                <thead>
+                  <tr style={{background:theme.bgSecondary,borderBottom:'1px solid ' + theme.border}}>
+                    <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='created_at'?theme.text:theme.textMuted,padding:'8px'}} onClick={() => handleSort('created_at')}>when{getSortIndicator('created_at')}</th>
+                    <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='action'?theme.text:theme.textMuted,padding:'8px'}} onClick={() => handleSort('action')}>action{getSortIndicator('action')}</th>
+                    <th style={{cursor:'pointer',userSelect:'none',color:sortColumn==='target_table'?theme.text:theme.textMuted,padding:'8px'}} onClick={() => handleSort('target_table')}>target{getSortIndicator('target_table')}</th>
+                    <th style={{padding:'8px'}}>details</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(sortColumn ? sortData(auditRows
+                    .filter(a => (!filterAuditAction || a.action === filterAuditAction) && (!filterAuditTable || a.target_table === filterAuditTable)), sortColumn) : auditRows
+                    .filter(a => (!filterAuditAction || a.action === filterAuditAction) && (!filterAuditTable || a.target_table === filterAuditTable))).map(a => (
+                    <tr key={a.id} style={{borderTop:'1px solid ' + theme.borderLight}}>
+                      <td className="small" style={{color:theme.textMuted,padding:'8px'}}>{new Date(a.created_at).toLocaleString()}</td>
+                      <td style={{padding:'8px'}}>{a.action}</td>
+                      <td className="small" style={{color:theme.textMuted,padding:'8px'}}>{a.target_table} {a.target_id || ''}</td>
+                      <td className="small" style={{color:theme.textMuted,padding:'8px',maxWidth:360,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{JSON.stringify(a.details)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       ) : null}
@@ -437,6 +551,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                <h4 style={{margin:0}}>Resources</h4>
+                <button 
+                  onClick={() => toggleViewMode('resources')}
+                  style={{background:'#f3f4f6',border:'1px solid #d1d5db',borderRadius:4,padding:'6px 12px',cursor:'pointer',fontSize:13,fontWeight:500}}
+                >
+                  {viewMode.resources === 'card' ? '📋 Table' : '🗂️ Cards'}
+                </button>
+              </div>
               {/* Create New Resource Accordion */}
               <button
                 onClick={() => setCreateResourceOpen(!createResourceOpen)}
@@ -486,7 +609,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           type="text"
                           placeholder="Type or select a tag..."
                           list="add-tags-list"
-                          style={{width:'100%',padding:'6px 8px',border:'1px solid #ddd',borderRadius:4,fontSize:14}}
+                          style={{width:'100%',padding:'6px 8px',border:'1px solid ' + theme.border,borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault()
@@ -633,7 +756,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 <button className="btn-danger" onClick={bulkDelete} disabled={selectedIds.length === 0}>Delete selected ({selectedIds.length})</button>
               </div>
 
-              {/* Resources table */}
+              {/* Resources table/cards */}
+              {viewMode.resources === 'table' ? (
               <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
                   <thead style={{background:'#fafafa'}}>
@@ -705,6 +829,60 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </tbody>
                 </table>
               </div>
+              ) : (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:16}}>
+                {(sortColumn ? sortData(resources
+                  .filter(r => {
+                    if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                    if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                    if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                    return true
+                  }), sortColumn) : resources
+                  .filter(r => {
+                    if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                    if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                    if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                    return true
+                  })
+                ).map(r => (
+                  <div key={r.id} style={{background:'white',border:'1px solid #e5e7eb',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                    {editingId === r.id ? (
+                      <>
+                        <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus style={{width:'100%',padding:'8px',border:'1px solid #ddd',borderRadius:4,marginBottom:12,fontWeight:600,fontSize:14}} />
+                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                          <button className="btn-ghost" onClick={async () => {
+                            try {
+                              const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title }) })
+                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                              await load()
+                              setEditingId(null)
+                            } catch (err) {
+                              alert('Save resource failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
+                          }} style={{color:'#16a34a',fontSize:14}}>✓</button>
+                          <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626',fontSize:14}}>⊘</button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h5 style={{margin:'0 0 8px 0',fontSize:16,fontWeight:600}}>{r.title}</h5>
+                        <div style={{fontSize:12,color:'#666',marginBottom:8}}>
+                          <div><strong>Type:</strong> {r.type}</div>
+                          {r.tags && r.tags.length > 0 && <div><strong>Tags:</strong> {r.tags.join(', ')}</div>}
+                        </div>
+                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                          <button className="btn-ghost" onClick={() => {
+                            setEditingId(r.id)
+                            setEditData({title: r.title})
+                          }} style={{fontSize:13}}>✎ Edit</button>
+                          <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              )}
             </div>
           )}
         </div>
@@ -1022,7 +1200,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <h4 style={{marginBottom:16}}>Resource Types</h4>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                <h4 style={{margin:0}}>Resource Types</h4>
+                <button 
+                  onClick={() => toggleViewMode('types')}
+                  style={{background:'#f3f4f6',border:'1px solid #d1d5db',borderRadius:4,padding:'6px 12px',cursor:'pointer',fontSize:13,fontWeight:500}}
+                >
+                  {viewMode.types === 'card' ? '📋 Table' : '🗂️ Cards'}
+                </button>
+              </div>
 
               {/* Type creation form */}
               <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
@@ -1074,7 +1260,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </div>
               </div>
 
-              {/* Types table */}
+              {/* Types table/cards */}
+              {viewMode.types === 'table' ? (
               <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
                   <thead style={{background:'#fafafa'}}>
@@ -1137,6 +1324,52 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </tbody>
                 </table>
               </div>
+              ) : (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:12}}>
+                {(sortColumn ? sortData(resourceTypes
+                  .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
+                  .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
+                  .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))).map(rt => (
+                  <div key={rt} style={{background:'white',border:'1px solid #e5e7eb',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                    {editingId === `type-${rt}` ? (
+                      <>
+                        <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={{width:'100%',padding:'8px',border:'1px solid #ddd',borderRadius:4,marginBottom:12,fontWeight:600}} />
+                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                          <button className="btn-ghost" onClick={async () => {
+                            try {
+                              const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name }) })
+                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                              await loadResourceTypes()
+                              setEditingId(null)
+                            } catch (err) {
+                              alert('Save type failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
+                          }} style={{color:'#16a34a',fontSize:14}}>✓</button>
+                          <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626',fontSize:14}}>⊘</button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h5 style={{margin:'0 0 12px 0',fontSize:16,fontWeight:600}}>{rt}</h5>
+                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                          <button className="btn-ghost" onClick={() => {setEditingId(`type-${rt}`); setEditData({name: rt})}} style={{fontSize:13}}>✎ Edit</button>
+                          <button className="btn-ghost" onClick={async () => {
+                            if (!confirm(`Delete type "${rt}"?`)) return
+                            try {
+                              const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'DELETE', headers: authHeaders() })
+                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                              await loadResourceTypes()
+                            } catch (err) {
+                              alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
+                          }} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              )}
             </div>
           )}
         </div>
@@ -1147,7 +1380,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <h4 style={{marginBottom:16}}>Lab Markers</h4>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                <h4 style={{margin:0}}>Lab Markers</h4>
+                <button onClick={() => toggleViewMode('markers')} className="btn-outline" style={{fontSize:12}}>{viewMode.markers === 'table' ? '🗂️ Cards' : '📋 Table'}</button>
+              </div>
 
               {/* Marker creation form */}
               <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
@@ -1239,6 +1475,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
 
               {/* Markers table */}
+              {viewMode.markers === 'table' ? (
               <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
                   <thead style={{background:'#fafafa'}}>
@@ -1315,6 +1552,63 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </tbody>
                 </table>
               </div>
+              ) : (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:12}}>
+                {labMarkers
+                  .filter(m => 
+                    (!filterLabMarkerName || m.name === filterLabMarkerName)
+                    && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                  )
+                  .map(m => (
+                  <div key={m.id} style={{background:'white',border:'1px solid #e5e7eb',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                    {editingId === m.id ? (
+                      <>
+                        <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={{width:'100%',padding:'8px',border:'1px solid #ddd',borderRadius:4,marginBottom:8,fontWeight:600}} />
+                        <input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} placeholder="Unit" style={{width:'100%',padding:'8px',border:'1px solid #ddd',borderRadius:4,marginBottom:12,fontSize:12}} />
+                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                          <button className="btn-ghost" onClick={async () => {
+                            try {
+                              const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit }) })
+                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                              await load()
+                              setEditingId(null)
+                            } catch (err) {
+                              alert('Save marker failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
+                          }} style={{color:'#16a34a',fontSize:14}}>✓</button>
+                          <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626',fontSize:14}}>⊘</button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h5 style={{margin:'0 0 4px 0',fontSize:16,fontWeight:600}}>{m.name}</h5>
+                        {m.unit && <p style={{margin:'0 0 12px 0',fontSize:12,color:'#666'}}>Unit: {m.unit}</p>}
+                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                          <button className="btn-ghost" onClick={() => {setEditingId(m.id); setEditData({name: m.name, unit: m.unit})}} style={{fontSize:13}}>✎ Edit</button>
+                          <button className="btn-ghost" onClick={async () => {
+                            if (!confirm(`Delete marker "${m.name}"?`)) return
+                            try {
+                              const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'DELETE', headers: authHeaders() })
+                              if (!res.ok) {
+                                const errText = await res.text().catch(() => '')
+                                const errObj = errText ? JSON.parse(errText).detail : {}
+                                if (errObj.code === '23503') {
+                                  throw new Error(`This marker is being used in criteria. Delete the criteria first, then delete the marker.`)
+                                }
+                                throw new Error(errText || String(res.status))
+                              }
+                              await load()
+                            } catch (err) {
+                              alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
+                          }} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              )}
             </div>
           )}
         </div>
@@ -1325,7 +1619,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <h4 style={{marginBottom:16}}>Tags</h4>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+                <h4 style={{margin:0}}>Tags</h4>
+                <button onClick={() => toggleViewMode('tags')} className="btn-outline" style={{fontSize:12}}>{viewMode.tags === 'table' ? '🗂️ Cards' : '📋 Table'}</button>
+              </div>
 
               {/* Tag creation form */}
               <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
@@ -1381,6 +1678,48 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
 
               {/* Tags Grid */}
+              {viewMode.tags === 'table' ? (
+              <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse'}}>
+                  <thead>
+                    <tr style={{background:'#f9fafb',borderBottom:'1px solid #e5e7eb'}}>
+                      <th style={{padding:12,textAlign:'left',fontWeight:600}}>Tag Name</th>
+                      <th style={{padding:12,textAlign:'left',fontWeight:600}}>Usage</th>
+                      <th style={{padding:12,textAlign:'right',fontWeight:600}}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(sortColumn ? sortData(allowedTags
+                      .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
+                      .map(name => ({name})), 'name').map(obj => obj.name) : allowedTags
+                      .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))).map(t => {
+                      const usageCount = getTagUsageCount(t)
+                      return (
+                        <tr key={t} style={{borderBottom:'1px solid #eee'}}>
+                          <td style={{padding:12,fontWeight:500}}>{t}</td>
+                          <td style={{padding:12,fontSize:12,color:'#666'}}>Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
+                          <td style={{padding:12,textAlign:'right'}}>
+                            <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                              <button className="btn-ghost" onClick={() => {setEditingId(`tag-${t}`); setEditData({name: t})}} style={{fontSize:13}}>✎ Edit</button>
+                              <button className="btn-ghost" onClick={async () => {
+                                if (!confirm(`Delete tag "${t}"?`)) return
+                                try {
+                                  const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'DELETE', headers: authHeaders() })
+                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                  await load()
+                                } catch (err) {
+                                  alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
+                                }
+                              }} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              ) : (
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:12}}>
                 {(sortColumn ? sortData(allowedTags
                   .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
@@ -1453,6 +1792,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   )
                 })}
               </div>
+              )}
             </div>
           )}
         </div>

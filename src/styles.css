@@ -12,6 +12,15 @@
   --warning: #B45309;
 }
 
+/* Dark mode colors */
+body.dark-mode {
+  --bg: #252525;
+  --card: #252525;
+  --text-primary: #e0e0e0;
+  --text-secondary: #aaa;
+  --border: #555;
+}
+
 * {
   box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -22,6 +31,7 @@ body {
   background: var(--bg);
   color: var(--text-primary);
   line-height: 1.6;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .app-container {
@@ -59,6 +69,14 @@ body {
   box-shadow: 0 2px 8px rgba(26, 31, 54, 0.08);
   margin-bottom: 24px;
   border: 1px solid var(--border);
+  border-left: 4px solid var(--primary-blue);
+}
+
+body.dark-mode .card {
+  border-top: 1px solid #555;
+  border-right: 1px solid #555;
+  border-bottom: 1px solid #555;
+  border-left: 4px solid var(--primary-blue);
 }
 
 .card h2, .card h3 {
@@ -159,6 +177,52 @@ body {
 
 .small {
   font-size: 13px;
+}
+
+/* Form elements - light mode */
+input,
+select,
+textarea {
+  background: #ffffff;
+  color: #1a1a1a;
+  border: 1px solid #d1d5db;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #999;
+}
+
+/* Form elements - dark mode */
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+  background: #252525;
+  color: #e0e0e0;
+  border: 1px solid #555;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #aaa;
+}
+
+body.dark-mode option {
+  background: #252525;
+  color: #e0e0e0;
+}
+
+body.dark-mode table {
+  color: #e0e0e0;
+}
+
+body.dark-mode table thead {
+  background: #252525;
+  border: 1px solid #555;
+}
+
+body.dark-mode table tbody tr {
+  border: 1px solid #555;
 }
 
 .resources-list {
