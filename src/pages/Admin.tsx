@@ -648,7 +648,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               )}
 
               {/* Filtering section */}
-              <div style={{marginTop:-16,marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6}}>
+              <div style={{marginTop:-48,marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6}}>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'start'}}>
                   <div>
                     <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:theme.text}}>Keyword Search</label>
