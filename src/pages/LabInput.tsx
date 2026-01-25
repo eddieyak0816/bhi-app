@@ -141,7 +141,7 @@ export default function LabInput({ labMarkers, logicRules, onComputeTags }: { la
 
       <div style={{marginTop:16,padding:12,background:'#F8F9FC',borderRadius:6,borderLeft:'3px solid var(--primary-blue)'}}>
         <small className="muted">
-          <strong style={{color:'var(--text-primary)'}}>Privacy Notice:</strong> Your test values remain on your device unless you opt to save them. Saving requires consent and backend support.
+          <strong style={{color:'var(--text-primary)'}}>Privacy Notice:</strong> We don't save or store your test results unless you tell us to. You have full control.
         </small>
       </div>
 
