@@ -642,17 +642,43 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       .map(r => (
                         <tr key={r.id} data-id={r.id} style={{borderTop:'1px solid #f3f4f6'}}>
                           <td style={{padding:8}}><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
-                          <td style={{padding:8}}><strong>{r.title}</strong></td>
-                          <td style={{padding:8}} className="small muted">{r.type}</td>
-                          <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
-                          <td style={{padding:8,textAlign:'right'}}>
-                            <button className="btn-ghost" onClick={() => {
-                              const newTitle = prompt('Edit title', r.title)
-                              if (!newTitle || newTitle.trim() === '' || newTitle === r.title) return
-                              alert('Edit resource feature coming soon')
-                            }}>✎</button>
-                            <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626'}}>✕</button>
-                          </td>
+                          {editingId === r.id ? (
+                            <>
+                              <td style={{padding:8}}><input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
+                              <td style={{padding:8}} className="small muted">{r.type}</td>
+                              <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
+                              <td style={{padding:8,textAlign:'right'}}>
+                                <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                                  <button className="btn-ghost" onClick={async () => {
+                                    try {
+                                      const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title }) })
+                                      if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                      await load()
+                                      setEditingId(null)
+                                    } catch (err) {
+                                      alert('Save resource failed — ' + ((err as any)?.message || 'check server logs'))
+                                    }
+                                  }} style={{color:'#16a34a'}}>✓</button>
+                                  <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                                </div>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td style={{padding:8}}><strong>{r.title}</strong></td>
+                              <td style={{padding:8}} className="small muted">{r.type}</td>
+                              <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
+                              <td style={{padding:8,textAlign:'right'}}>
+                                <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                                  <button className="btn-ghost" onClick={() => {
+                                    setEditingId(r.id)
+                                    setEditData({title: r.title})
+                                  }}>✎</button>
+                                  <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626'}}>✕</button>
+                                </div>
+                              </td>
+                            </>
+                          )}
                         </tr>
                       ))}
                   </tbody>
@@ -848,6 +874,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='marker_id'?'#1F2937':'#666'}} onClick={() => handleSort('marker_id')}>Marker{getSortIndicator('marker_id')}</th>
                         <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='min_value'?'#1F2937':'#666'}} onClick={() => handleSort('min_value')}>Min{getSortIndicator('min_value')}</th>
                         <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='max_value'?'#1F2937':'#666'}} onClick={() => handleSort('max_value')}>Max{getSortIndicator('max_value')}</th>
+                        <th style={{textAlign:'left',padding:8}}>Operator</th>
                         <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='tag_to_apply'?'#1F2937':'#666'}} onClick={() => handleSort('tag_to_apply')}>Tag{getSortIndicator('tag_to_apply')}</th>
                         <th style={{textAlign:'right',padding:8}}>Actions</th>
                       </tr>
@@ -900,26 +927,29 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   {labMarkers.map(m => <option key={m.id} value={m.name} />)}
                                 </datalist>
                               </td>
-                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.min_value || ''} onChange={e => setEditData({...editData, min_value: e.target.value})} style={{width:'60px',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
-                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.max_value || ''} onChange={e => setEditData({...editData, max_value: e.target.value})} style={{width:'60px',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
+                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.min_value || ''} onChange={e => setEditData({...editData, min_value: e.target.value})} style={{width:'80px',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
+                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.max_value || ''} onChange={e => setEditData({...editData, max_value: e.target.value})} style={{width:'80px',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
                               <td style={{padding:8}}>
-                                <input
-                                  type="text"
-                                  placeholder="Tag"
-                                  value={editData.tag_to_apply || ''}
-                                  onChange={e => setEditData({...editData, tag_to_apply: e.target.value})}
-                                  list="edit-criteria-tags-list"
-                                  style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}}
-                                />
-                                <datalist id="edit-criteria-tags-list">
-                                  {allowedTags.map(t => <option key={t} value={t} />)}
-                                </datalist>
+                                <select value={editData.operator || 'between'} onChange={e => setEditData({...editData, operator: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}}>
+                                  <option value="between">between</option>
+                                  <option value="<">&lt;</option>
+                                  <option value=">">&gt;</option>
+                                  <option value="=">=</option>
+                                  <option value="<=">&lt;=</option>
+                                  <option value=">=">&gt;=</option>
+                                </select>
+                              </td>
+                              <td style={{padding:8}}>
+                                <select value={editData.tag_to_apply || ''} onChange={e => setEditData({...editData, tag_to_apply: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}}>
+                                  <option value="">(none)</option>
+                                  {allowedTags.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
                               </td>
                               <td style={{padding:8,textAlign:'right'}}>
                                 <button className="btn-ghost" onClick={async () => {
                                   try {
                                     const markerId = labMarkers.find(m => m.name === editData.markerName)?.id || editData.marker_id
-                                    const res = await fetch(apiUrl(`/api/admin/logic-rules/${l.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ marker_id: markerId, min_value: Number(editData.min_value), max_value: Number(editData.max_value), tag_to_apply: editData.tag_to_apply }) })
+                                    const res = await fetch(apiUrl(`/api/admin/logic-rules/${l.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ marker_id: markerId, min_value: Number(editData.min_value), max_value: Number(editData.max_value), tag_to_apply: editData.tag_to_apply || null }) })
                                     if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                                     await load()
                                     setEditingId(null)
@@ -935,6 +965,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               <td style={{padding:8}}>{(labMarkers.find(m => m.id === l.marker_id) || {}).name || l.marker_id}</td>
                               <td style={{padding:8,textAlign:'left'}}>{l.min_value}</td>
                               <td style={{padding:8,textAlign:'left'}}>{l.max_value}</td>
+                              <td style={{padding:8}}>between</td>
                               <td style={{padding:8}}>{l.tag_to_apply}</td>
                               <td style={{padding:8,textAlign:'right'}}>
                                 <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
@@ -944,11 +975,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                       marker_id: l.marker_id,
                                       markerName: (labMarkers.find(m => m.id === l.marker_id) || {}).name || '',
                                       min_value: String(l.min_value),
-                                    max_value: String(l.max_value),
-                                    tag_to_apply: l.tag_to_apply
-                                  })
-                                }}>✎</button>
-                                <button className="btn-ghost" onClick={() => deleteRule(l.id)} style={{color:'#dc2626'}}>✕</button>
+                                      max_value: String(l.max_value),
+                                      operator: 'between',
+                                      tag_to_apply: l.tag_to_apply
+                                    })
+                                  }}>✎</button>
+                                  <button className="btn-ghost" onClick={() => deleteRule(l.id)} style={{color:'#dc2626'}}>✕</button>
                                 </div>
                               </td>
                             </>
@@ -964,7 +996,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         </div>
       )}
 
-      {/* Resource Types Tab */}
+      {/* Types Tab */}
       {activeTab === 'types' && (
         <div>
           {loading ? <div>Loading…</div> : (
@@ -1041,37 +1073,41 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <>
                             <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
                             <td style={{padding:8,textAlign:'right'}}>
-                              <button className="btn-ghost" onClick={async () => {
-                                try {
-                                  const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name }) })
-                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                                  await loadResourceTypes()
-                                  setEditingId(null)
-                                } catch (err) {
-                                  alert('Save type failed — ' + ((err as any)?.message || 'check server logs'))
-                                }
-                              }} style={{color:'#16a34a'}}>✓</button>
-                              <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                              <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                                <button className="btn-ghost" onClick={async () => {
+                                  try {
+                                    const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name }) })
+                                    if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                    await loadResourceTypes()
+                                    setEditingId(null)
+                                  } catch (err) {
+                                    alert('Save type failed — ' + ((err as any)?.message || 'check server logs'))
+                                  }
+                                }} style={{color:'#16a34a'}}>✓</button>
+                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                              </div>
                             </td>
                           </>
                         ) : (
                           <>
                             <td style={{padding:8}}><strong>{rt}</strong></td>
                             <td style={{padding:8,textAlign:'right'}}>
-                              <button className="btn-ghost" onClick={() => {
-                                setEditingId(`type-${rt}`)
-                                setEditData({name: rt})
-                              }}>✎</button>
-                              <button className="btn-ghost" onClick={async () => {
-                                if (!confirm(`Delete type "${rt}"?`)) return
-                                try {
-                                  const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'DELETE', headers: authHeaders() })
-                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                                  await loadResourceTypes()
-                                } catch (err) {
-                                  alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
-                                }
-                              }} style={{color:'#dc2626'}}>✕</button>
+                              <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                                <button className="btn-ghost" onClick={() => {
+                                  setEditingId(`type-${rt}`)
+                                  setEditData({name: rt})
+                                }}>✎</button>
+                                <button className="btn-ghost" onClick={async () => {
+                                  if (!confirm(`Delete type "${rt}"?`)) return
+                                  try {
+                                    const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'DELETE', headers: authHeaders() })
+                                    if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                    await loadResourceTypes()
+                                  } catch (err) {
+                                    alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
+                                  }
+                                }} style={{color:'#dc2626'}}>✕</button>
+                              </div>
                             </td>
                           </>
                         )}
@@ -1207,17 +1243,19 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
                             <td style={{padding:8}}><input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
                             <td style={{padding:8,textAlign:'right'}}>
-                              <button className="btn-ghost" onClick={async () => {
-                                try {
-                                  const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit }) })
-                                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                                  await load()
-                                  setEditingId(null)
-                                } catch (err) {
-                                  alert('Save marker failed — ' + ((err as any)?.message || 'check server logs'))
-                                }
-                              }} style={{color:'#16a34a'}}>✓</button>
-                              <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                              <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                                <button className="btn-ghost" onClick={async () => {
+                                  try {
+                                    const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit }) })
+                                    if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                    await load()
+                                    setEditingId(null)
+                                  } catch (err) {
+                                    alert('Save marker failed — ' + ((err as any)?.message || 'check server logs'))
+                                  }
+                                }} style={{color:'#16a34a'}}>✓</button>
+                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                              </div>
                             </td>
                           </>
                         ) : (
@@ -1225,27 +1263,29 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             <td style={{padding:8}}><strong>{m.name}</strong></td>
                             <td style={{padding:8}} className="small muted">{m.unit || '—'}</td>
                             <td style={{padding:8,textAlign:'right'}}>
-                              <button className="btn-ghost" onClick={() => {
-                                setEditingId(m.id)
-                                setEditData({name: m.name, unit: m.unit})
-                              }}>✎</button>
-                              <button className="btn-ghost" onClick={async () => {
-                                if (!confirm(`Delete marker "${m.name}"?`)) return
-                                try {
-                                  const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'DELETE', headers: authHeaders() })
-                                  if (!res.ok) {
-                                    const errText = await res.text().catch(() => '')
-                                    const errObj = errText ? JSON.parse(errText).detail : {}
-                                    if (errObj.code === '23503') {
-                                      throw new Error(`This marker is being used in criteria. Delete the criteria first, then delete the marker.`)
+                              <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                                <button className="btn-ghost" onClick={() => {
+                                  setEditingId(m.id)
+                                  setEditData({name: m.name, unit: m.unit})
+                                }}>✎</button>
+                                <button className="btn-ghost" onClick={async () => {
+                                  if (!confirm(`Delete marker "${m.name}"?`)) return
+                                  try {
+                                    const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'DELETE', headers: authHeaders() })
+                                    if (!res.ok) {
+                                      const errText = await res.text().catch(() => '')
+                                      const errObj = errText ? JSON.parse(errText).detail : {}
+                                      if (errObj.code === '23503') {
+                                        throw new Error(`This marker is being used in criteria. Delete the criteria first, then delete the marker.`)
+                                      }
+                                      throw new Error(errText || String(res.status))
                                     }
-                                    throw new Error(errText || String(res.status))
+                                    await load()
+                                  } catch (err) {
+                                    alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
-                                  await load()
-                                } catch (err) {
-                                  alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
-                                }
-                              }} style={{color:'#dc2626'}}>✕</button>
+                                }} style={{color:'#dc2626'}}>✕</button>
+                              </div>
                             </td>
                           </>
                         )}
@@ -1337,7 +1377,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         {editingId === `tag-${t}` ? (
                           <>
                             <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ddd',borderRadius:4}} /></td>
-                            <td style={{padding:8,textAlign:'right',display:'flex',gap:8,justifyContent:'flex-end'}}>
+                            <td style={{padding:8,textAlign:'right',display:'flex',gap:4,justifyContent:'flex-end'}}>
                               <button className="btn-ghost" onClick={async () => {
                                 try {
                                   const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name.trim() }) })
@@ -1355,7 +1395,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         ) : (
                           <>
                             <td style={{padding:8}}><strong>{t}</strong></td>
-                            <td style={{padding:8,textAlign:'right',display:'flex',gap:8,justifyContent:'flex-end'}}>
+                            <td style={{padding:8,textAlign:'right',display:'flex',gap:4,justifyContent:'flex-end'}}>
                               <button className="btn-ghost" onClick={() => {
                                 setEditingId(`tag-${t}`)
                                 setEditData({name: t})

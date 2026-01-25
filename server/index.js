@@ -225,6 +225,46 @@ app.post('/api/admin/resources/bulk-delete', async (req, res) => {
   }
 });
 
+// ADMIN: Update resource
+app.patch('/api/admin/resources/:id', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'missing-id' });
+  
+  const { title, description, type, tags } = req.body || {};
+  const updateData = {};
+  if (title !== undefined) updateData.title = title;
+  if (description !== undefined) updateData.description = description;
+  if (type !== undefined) updateData.type = type;
+  if (tags !== undefined) updateData.tags = tags;
+  
+  if (Object.keys(updateData).length === 0) return res.status(400).json({ error: 'no-fields-to-update' });
+  
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('resources').update(updateData).eq('id', id);
+    if (error) {
+      console.error('admin-update-resource-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'update_resource', p_target_table: 'resources', p_target_id: id, p_details: updateData });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+      else console.info('admin-audit-logged-update-resource', { id })
+    } catch (err) {
+      console.warn('admin-audit-exception', err)
+    }
+
+    return res.status(200).json({ updated: id, ...updateData });
+  } catch (err) {
+    console.error('admin-update-resource-server-error', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // --- Logic-rules (criteria) CRUD for Admin UI ---
 // Create
 app.post('/api/admin/logic-rules', async (req, res) => {
@@ -411,8 +451,12 @@ app.patch('/api/admin/tags/:name', async (req, res) => {
     }
 
     // Propagate to resources: replace array element oldName -> newName
-    const { error: resErr } = await sb.rpc('replace_resource_tag', { p_old: oldName, p_new: newName }).catch(() => ({ error: null }));
-    if (resErr) console.warn('replace_resource_tag failed', resErr);
+    try {
+      const { error: resErr } = await sb.rpc('replace_resource_tag', { p_old: oldName, p_new: newName });
+      if (resErr) console.warn('replace_resource_tag failed', resErr);
+    } catch (err) {
+      console.warn('replace_resource_tag exception', err);
+    }
 
     // Propagate to logic_rules
     const { error: lrErr } = await sb.from('logic_rules').update({ tag_to_apply: newName }).eq('tag_to_apply', oldName);
@@ -426,6 +470,74 @@ app.patch('/api/admin/tags/:name', async (req, res) => {
     return res.status(200).json({ oldName, newName });
   } catch (err) {
     console.error('admin-rename-tag-error', err);
+    return res.status(500).json({ error: 'server_error', detail: String(err) });
+  }
+});
+
+// ADMIN: update resource-type name
+app.patch('/api/admin/resource-types/:name', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const oldName = decodeURIComponent(req.params.name);
+  const newName = (req.body && req.body.new_name || '').toString().trim();
+  if (!oldName || !newName) return res.status(400).json({ error: 'missing-params' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    // Update resource_types table
+    const { error: upErr } = await sb.from('resource_types').update({ name: newName }).eq('name', oldName);
+    if (upErr) {
+      console.error('resource-type-update-error', upErr);
+      return res.status(500).json({ error: 'db_error', detail: upErr });
+    }
+    // Propagate to resources.type field
+    const { error: resErr } = await sb.from('resources').update({ type: newName }).eq('type', oldName);
+    if (resErr) console.warn('resources-type-propagate-failed', resErr);
+    
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'update_resource_type', p_target_table: 'resource_types', p_target_id: null, p_details: { oldName, newName } });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr);
+    } catch (err) { console.warn('admin-audit-exception', err); }
+    
+    return res.status(200).json({ oldName, newName });
+  } catch (err) {
+    console.error('admin-update-resource-type-error', err);
+    return res.status(500).json({ error: 'server_error', detail: String(err) });
+  }
+});
+
+// ADMIN: update lab-marker name and unit
+app.patch('/api/admin/lab-markers/:id', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'missing-id' });
+  
+  const { name, unit } = req.body || {};
+  const updateData = {};
+  if (name !== undefined) updateData.name = name;
+  if (unit !== undefined) updateData.unit = unit;
+  
+  if (Object.keys(updateData).length === 0) return res.status(400).json({ error: 'no-fields-to-update' });
+  
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('lab_markers').update(updateData).eq('id', id);
+    if (error) {
+      console.error('lab-marker-update-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'update_lab_marker', p_target_table: 'lab_markers', p_target_id: id, p_details: updateData });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr);
+      else console.info('admin-audit-logged-update-lab-marker', { id });
+    } catch (err) { console.warn('admin-audit-exception', err); }
+    
+    return res.status(200).json({ updated: id, ...updateData });
+  } catch (err) {
+    console.error('admin-update-lab-marker-error', err);
     return res.status(500).json({ error: 'server_error', detail: String(err) });
   }
 });
