@@ -33,4 +33,6 @@ Operational notes for reviewers
 - This file is the single source of truth for assistant behavior in this repo.
 - To change assistant behaviour, update this file and notify maintainers by PR.
 
-Last-updated: 2026-01-19
+CI: GitHub Actions enforces presence of this file in PRs via `.github/workflows/assistant-preferences-check.yml`.
+
+Last-updated: 2026-01-25

@@ -72,15 +72,20 @@ Voluntary Interaction: All data entry by users remains voluntary and user-contro
 Boundary: Results are presented as guidance/education, never as medical treatment plans.
 
 6. Developer Launch Checklist
-[ ] Verify Tables: Ensure lab_markers, logic_rules, and resources exist in Supabase.
 
-[ ] Set Array Types: Ensure resources.tags is defined as text[] (text array).
+[x] Verify Tables: `lab_markers`, `logic_rules`, and `resources` exist in Supabase (seed available).
 
-[ ] Stateless Processing: Code the React input form to calculate tags without saving the numeric value to the DB.
+[x] Set Array Types: `resources.tags` defined as `text[]`.
 
-[ ] Branding Toggles: Implement the logic to filter resources by employer_id for custom content.
+[x] Stateless Processing: React input form computes tags client-side by default (no numeric values stored).
 
-[ ] RLS Activation: Enable Row-Level Security so Employer A cannot see Employer B’s data.
+[x] Branding Toggles: employer-scoped content support implemented (filter by `employer_id`).
+
+[ ] RLS Activation: Row-Level Security scaffolded; **not yet enabled** in staging/production. (requires backfill + policy tests)
+
+[ ] Hosted uploads: signed‑URL flow + preview UI (planned).
+
+[ ] CI: split Playwright E2E into a dedicated job and stabilise remote runs.
 
 ---
 
