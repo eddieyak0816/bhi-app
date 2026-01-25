@@ -432,15 +432,31 @@ app.post('/api/admin/tags', async (req, res) => {
 
 // ADMIN: rename a tag (update catalog + propagate to resources and logic_rules)
 app.patch('/api/admin/tags/:name', async (req, res) => {
+  console.log('PATCH /api/admin/tags/:name called');
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
   const incomingKey = req.header('x-backend-api-key') || '';
+  console.log('Auth check:', { hasKey: !!incomingKey, matches: incomingKey === BACKEND_API_KEY });
   if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
   const oldName = req.params.name;
   const newName = (req.body && req.body.new_name || '').toString().trim();
-  if (!oldName || !newName) return res.status(400).json({ error: 'missing-params' });
+  console.log('PATCH tags:', { oldName, newName, bodyReceived: !!req.body, bodyContent: req.body });
+  if (!oldName || !newName) {
+    console.log('Missing params - returning 400');
+    return res.status(400).json({ error: 'missing-params' });
+  }
+  // If no actual change, just return success
+  if (oldName === newName) {
+    console.log('No change - names are identical, returning success');
+    return res.status(200).json({ oldName, newName });
+  }
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    await sb.rpc('pg_sleep', { seconds: 0 }).catch(() => {}) // guard for older PGs
+    try {
+      await sb.rpc('pg_sleep', { seconds: 0 });
+    } catch (err) {
+      // guard for older PGs
+      console.warn('pg_sleep-not-available', err);
+    }
     // Try to update tags table if present
     try {
       const { error: upErr } = await sb.from('tags').upsert([{ name: newName }]);
@@ -552,16 +568,23 @@ app.delete('/api/admin/tags/:name', async (req, res) => {
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     // remove from resources.tags using array_remove
-    const { error: remErr } = await sb.rpc('array_remove_from_resources', { p_tag_name: name }).catch(() => ({ error: null }));
-    if (remErr) {
-      // Fallback: if RPC doesn't exist, just proceed (tags can be removed manually)
-      console.warn('resources-tag-remove-failed', remErr);
+    try {
+      const { error: remErr } = await sb.rpc('array_remove_from_resources', { p_tag_name: name });
+      if (remErr) {
+        console.warn('resources-tag-remove-failed', remErr);
+      }
+    } catch (err) {
+      console.warn('resources-tag-remove-exception', err);
     }
     // delete any logic_rules that reference this tag
     const { error: lrErr } = await sb.from('logic_rules').delete().eq('tag_to_apply', name);
     if (lrErr) console.warn('logic_rules-delete-failed', lrErr);
     // delete from tags table if present
-    await sb.from('tags').delete().eq('name', name).catch(() => {});
+    try {
+      await sb.from('tags').delete().eq('name', name);
+    } catch (err) {
+      console.warn('tags-delete-exception', err);
+    }
 
     try {
       const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'delete_tag', p_target_table: 'tags', p_target_id: null, p_details: { name } });
