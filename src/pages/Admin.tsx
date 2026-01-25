@@ -92,14 +92,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
   // Common inline styles using theme
   const styles = {
-    input: {width:'100%' as const,padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text},
-    inputSmall: {padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4,background:theme.bgSecondary,color:theme.text},
-    select: {width:'100%' as const,padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text},
-    selectSmall: {padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4,background:theme.bgSecondary,color:theme.text},
+    input: {width:'100%' as const,padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text},
+    inputSmall: {padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4,background:theme.bgSecondary,color:theme.text},
+    select: {width:'100%' as const,padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text},
+    selectSmall: {padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4,background:theme.bgSecondary,color:theme.text},
     table: {width:'100%' as const,borderCollapse:'collapse' as const,color:theme.text},
-    tableHeader: {background:'#666666',borderBottom:'2px solid #ffffff',color:'#ffffff',fontWeight:500},
-    tableRow: {background:theme.bg, borderTop:'2px solid #ffffff'},
-    filterBox: {background:theme.bgSecondary,border:'2px solid #ffffff',borderRadius:6,padding:12,marginBottom:16}
+    tableHeader: {background:'#3D7DCA',borderBottom:'1px solid #ffffff',color:'#ffffff',fontWeight:500},
+    tableRow: {background:theme.bg, borderTop:'1px solid #ffffff'},
+    filterBox: {background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:6,padding:12,marginBottom:16}
   }
 
   useEffect(() => {
@@ -449,8 +449,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       <div style={{display:'flex',gap:12,alignItems:'center'}}>
         <p className="muted" style={{margin:0,color:theme.textMuted}}>Server-only actions require a backend key in dev.</p>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <button className="btn-ghost" onClick={() => setDevKeyOverride('foo')} style={{color:theme.text,border:'2px solid #ffffff'}}>Use dev key (foo)</button>
-          <button className="btn-ghost" onClick={() => { const k = prompt('Enter a temporary backend key (session only)'); if (k) setDevKeyOverride(k) }} style={{color:theme.text,border:'2px solid #ffffff'}}>Set session key</button>
+          <button className="btn-ghost" onClick={() => setDevKeyOverride('foo')} style={{color:theme.text,border:'1px solid #ffffff'}}>Use dev key (foo)</button>
+          <button className="btn-ghost" onClick={() => { const k = prompt('Enter a temporary backend key (session only)'); if (k) setDevKeyOverride(k) }} style={{color:theme.text,border:'1px solid #ffffff'}}>Set session key</button>
           {effectiveDevKey() ? <div className="small" style={{color:theme.textMuted}}>Using key: <strong style={{color:theme.text}}>{effectiveDevKey() === 'foo' ? 'foo (session)' : 'session-set'}</strong></div> : <div className="small" style={{color:theme.textMuted}}>No backend key set</div>}
         </div>
       </div>
@@ -469,11 +469,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
           <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')} style={{color:theme.text}}>Criteria</button>
         </div>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          {activeTab === 'resources' && <button onClick={() => toggleViewMode('resources')} title={viewMode.resources === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'2px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.resources === 'card' ? '📋' : '🗂️'}</button>}
-          {activeTab === 'types' && <button onClick={() => toggleViewMode('types')} title={viewMode.types === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'2px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.types === 'card' ? '📋' : '🗂️'}</button>}
-          {activeTab === 'markers' && <button onClick={() => toggleViewMode('markers')} title={viewMode.markers === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'2px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.markers === 'table' ? '🗂️' : '📋'}</button>}
-          {activeTab === 'tags' && <button onClick={() => toggleViewMode('tags')} title={viewMode.tags === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'2px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.tags === 'table' ? '🗂️' : '📋'}</button>}
-          <button onClick={() => setDarkMode(!darkMode)} title={darkMode ? 'Light mode' : 'Dark mode'} style={{background:theme.bgSecondary,border:'2px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{darkMode ? '☀️' : '🌙'}</button>
+          {activeTab === 'resources' && <button onClick={() => toggleViewMode('resources')} title={viewMode.resources === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.resources === 'card' ? '📋' : '🗂️'}</button>}
+          {activeTab === 'types' && <button onClick={() => toggleViewMode('types')} title={viewMode.types === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.types === 'card' ? '📋' : '🗂️'}</button>}
+          {activeTab === 'markers' && <button onClick={() => toggleViewMode('markers')} title={viewMode.markers === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.markers === 'table' ? '🗂️' : '📋'}</button>}
+          {activeTab === 'tags' && <button onClick={() => toggleViewMode('tags')} title={viewMode.tags === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.tags === 'table' ? '🗂️' : '📋'}</button>}
+          <button onClick={() => setDarkMode(!darkMode)} title={darkMode ? 'Light mode' : 'Dark mode'} style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{darkMode ? '☀️' : '🌙'}</button>
         </div>
       </div>
 
@@ -482,17 +482,18 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <h4 style={{marginBottom:16}}>Audit Log</h4>
+              <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Audit Log</h3>
 
               {/* Audit Filters */}
-              <div style={{background:theme.bgSecondary,border:'2px solid #ffffff',borderRadius:6,padding:12,marginBottom:16}}>
+              <div style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:6,padding:12,marginBottom:16}}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Audit Log</h3>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.textMuted}}>Action</label>
                     <select
                       value={filterAuditAction}
                       onChange={e => setFilterAuditAction(e.target.value)}
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}}
                     >
                       <option value="">(All Actions)</option>
                       {Array.from(new Set(auditRows.map(a => a.action))).sort().map(action => (
@@ -505,7 +506,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     <select
                       value={filterAuditTable}
                       onChange={e => setFilterAuditTable(e.target.value)}
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}}
                     >
                       <option value="">(All Tables)</option>
                       {Array.from(new Set(auditRows.map(a => a.target_table))).sort().map(table => (
@@ -528,7 +529,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               <table style={{width:'100%',borderCollapse:'collapse',color:theme.text}}>
                 <thead>
-                  <tr style={{background:'#666666',borderBottom:'2px solid #ffffff'}}>
+                  <tr style={{background:'#3D7DCA',borderBottom:'1px solid #ffffff'}}>
                     <th style={{cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500,padding:'8px'}} onClick={() => handleSort('created_at')}>when{getSortIndicator('created_at')}</th>
                     <th style={{cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500,padding:'8px'}} onClick={() => handleSort('action')}>action{getSortIndicator('action')}</th>
                     <th style={{cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500,padding:'8px'}} onClick={() => handleSort('target_table')}>target{getSortIndicator('target_table')}</th>
@@ -539,7 +540,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   {(sortColumn ? sortData(auditRows
                     .filter(a => (!filterAuditAction || a.action === filterAuditAction) && (!filterAuditTable || a.target_table === filterAuditTable)), sortColumn) : auditRows
                     .filter(a => (!filterAuditAction || a.action === filterAuditAction) && (!filterAuditTable || a.target_table === filterAuditTable))).map(a => (
-                    <tr key={a.id} style={{borderTop:'2px solid #ffffff'}}>
+                    <tr key={a.id} style={{borderTop:'1px solid #ffffff'}}>
                       <td className="small" style={{color:theme.textMuted,padding:'8px'}}>{new Date(a.created_at).toLocaleString()}</td>
                       <td style={{padding:'8px'}}>{a.action}</td>
                       <td className="small" style={{color:theme.textMuted,padding:'8px'}}>{a.target_table} {a.target_id || ''}</td>
@@ -559,13 +560,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Create New Resource - Always Visible */}
-              <div style={{marginBottom:40,padding:16,background:theme.bgSecondary,borderRadius:6,border:'2px solid #ffffff'}}>
+              <div style={{marginBottom:40,padding:16,background:theme.bgSecondary,borderRadius:6,border:'1px solid #ffffff'}}>
                   <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Create New Resource</h3>
                   <div style={{display:'flex',gap:12,alignItems:'center'}}>
-                    <select value={type} onChange={e => setType(e.target.value)} style={{width:100,flexShrink:0,border:'2px solid #ffffff',borderRadius:4,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                    <select value={type} onChange={e => setType(e.target.value)} style={{width:100,flexShrink:0,border:'1px solid #ffffff',borderRadius:4,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
                       {resourceTypes.map(rt => <option key={rt} value={rt}>{rt}</option>)}
                     </select>
-                    <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{flex:1,minWidth:200,border:'2px solid #ffffff',borderRadius:4,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
+                    <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{flex:1,minWidth:200,border:'1px solid #ffffff',borderRadius:4,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
                     <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
                   </div>
                   <div style={{marginTop:12}}>
@@ -581,12 +582,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <div style={{position:'relative'}}>
                           <button 
                             onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
-                            style={{padding:'4px 12px',border:'2px solid #ffffff',borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                            style={{padding:'4px 12px',border:'1px solid #ffffff',borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
                           >
                             + Add Tag
                           </button>
                           {tagDropdownOpen && (
-                            <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:'2px solid #ffffff',borderRadius:4,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
+                            <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:'1px solid #ffffff',borderRadius:4,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
                               {(allowedTags || []).filter(t => !selectedTags.includes(t)).map(t => (
                                 <label key={t} style={{display:'block',padding:'8px 12px',cursor:'pointer',hover:{background:theme.bgSecondary},color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
                                   <input 
@@ -616,7 +617,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </div>
 
               {/* Filtering section */}
-              <div style={{marginTop:0,marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:'2px solid #ffffff'}}>
+              <div style={{marginTop:0,marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:'1px solid #ffffff'}}>
                 <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Resources</h3>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'start'}}>
                   <div>
@@ -627,7 +628,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       value={filterKeyword}
                       onChange={e => setFilterKeyword(e.target.value)}
                       list="resource-titles-list"
-                      style={{width:'100%',padding:8,border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:8,border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                     />
                     <datalist id="resource-titles-list">
                       {Array.from(new Set(
@@ -648,7 +649,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       multiple
                       value={filterTypes}
                       onChange={e => setFilterTypes(Array.from(e.currentTarget.selectedOptions, o => o.value))}
-                      style={{width:'100%',padding:8,border:'2px solid #ffffff',borderRadius:4,fontSize:14,minHeight:36,maxHeight:100,overflowY:'auto'}}
+                      style={{width:'100%',padding:8,border:'1px solid #ffffff',borderRadius:4,fontSize:14,minHeight:36,maxHeight:100,overflowY:'auto'}}
                     >
                       {Array.from(new Set(
                         resources
@@ -667,7 +668,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       multiple
                       value={filterTags}
                       onChange={e => setFilterTags(Array.from(e.currentTarget.selectedOptions, o => o.value))}
-                      style={{width:'100%',padding:8,border:'2px solid #ffffff',borderRadius:4,fontSize:14,minHeight:36,maxHeight:100,overflowY:'auto'}}
+                      style={{width:'100%',padding:8,border:'1px solid #ffffff',borderRadius:4,fontSize:14,minHeight:36,maxHeight:100,overflowY:'auto'}}
                     >
                       {Array.from(new Set(
                         resources
@@ -721,8 +722,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
 
               {/* Resources table/cards */}
+              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Resources</h3>
+                <button onClick={() => toggleViewMode('resources')} title={viewMode.resources === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.resources === 'card' ? '📋' : '🗂️'}</button>
+              </div>
+
               {viewMode.resources === 'table' ? (
-              <div style={{border:'2px solid #ffffff',borderRadius:6,overflow:'auto'}}>
+              <div style={{border:'1px solid #ffffff',borderRadius:6,overflow:'auto'}}>
                 <table style={styles.table}>
                   <thead style={styles.tableHeader}>
                     <tr>
@@ -753,7 +759,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:8}}><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
                           {editingId === r.id ? (
                             <>
-                              <td style={{padding:8}}><input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4}} /></td>
+                              <td style={{padding:8}}><input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4}} /></td>
                               <td style={{padding:8}} className="small muted">{r.type}</td>
                               <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
                               <td style={{padding:8,textAlign:'right'}}>
@@ -809,7 +815,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     return true
                   })
                 ).map(r => (
-                  <div key={r.id} style={{background:theme.bg,border:'2px solid #ffffff',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                  <div key={r.id} style={{background:theme.bg,border:'1px solid #ffffff',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
                     {editingId === r.id ? (
                       <>
                         <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus style={styles.input} />
@@ -859,15 +865,16 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             <div>
               
               {/* Add new criteria form */}
-              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6}}>
+              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:'1px solid #ffffff'}}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Criteria</h3>
                 <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Marker</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Marker</label>
                     <input
                       type="text"
                       placeholder="Add marker..."
                       list="add-criteria-markers-list"
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                       value={ruleForm.markerName || ''}
                       onChange={e => setRuleForm(f => ({ ...f, markerName: e.target.value }))}
                     />
@@ -876,20 +883,20 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </datalist>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Min</label>
-                    <input type="number" placeholder="Min" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}} />
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Min</label>
+                    <input type="number" placeholder="Min" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}} />
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Max</label>
-                    <input type="number" placeholder="Max" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}} />
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Max</label>
+                    <input type="number" placeholder="Max" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}} />
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Tag</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Tag</label>
                     <input
                       type="text"
                       placeholder="Add tag..."
                       list="add-criteria-tags-list"
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                       value={ruleForm.tag_to_apply || ''}
                       onChange={e => setRuleForm(f => ({ ...f, tag_to_apply: e.target.value }))}
                     />
@@ -902,6 +909,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
               
               <div style={styles.filterBox}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Criteria</h3>
                 <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Marker</label>
@@ -911,7 +919,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       value={filterCriteriaMarker}
                       onChange={e => setFilterCriteriaMarker(e.target.value)}
                       list="criteria-markers-list"
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                     />
                     <datalist id="criteria-markers-list">
                       {Array.from(new Set(logicRules
@@ -927,11 +935,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </datalist>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Type</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Type</label>
                     <select
                       value={filterCriteriaValueType}
                       onChange={e => setFilterCriteriaValueType(e.target.value as 'min' | 'max' | '')}
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                     >
                       <option value="">Min or Max</option>
                       <option value="min">Min</option>
@@ -939,11 +947,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </select>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Operator</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Operator</label>
                     <select
                       value={filterCriteriaOperator}
                       onChange={e => setFilterCriteriaOperator(e.target.value as '<' | '>' | '=' | '<=' | '>=' | '')}
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                     >
                       <option value="">Any</option>
                       <option value="<">&lt;</option>
@@ -954,24 +962,24 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </select>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Value</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Value</label>
                     <input
                       type="number"
                       placeholder="Value..."
                       value={filterCriteriaValue}
                       onChange={e => setFilterCriteriaValue(e.target.value)}
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                     />
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Tag</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Tag</label>
                     <input
                       type="text"
                       placeholder="(All Tags)"
                       value={filterCriteriaTag}
                       onChange={e => setFilterCriteriaTag(e.target.value)}
                       list="criteria-tags-list"
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                     />
                     <datalist id="criteria-tags-list">
                       {Array.from(new Set(logicRules
@@ -1031,7 +1039,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               <div style={{marginBottom:18}}>
                 <div style={{marginTop:8,border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
                   <table data-testid="criteria-table" style={{width:'100%',borderCollapse:'collapse'}}>
-                    <thead style={{background:'#666666',borderBottom:'2px solid #ffffff'}}>
+                    <thead style={{background:'#3D7DCA',borderBottom:'1px solid #ffffff'}}>
                       <tr>
                         <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('marker_id')}>Marker{getSortIndicator('marker_id')}</th>
                         <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('min_value')}>Min{getSortIndicator('min_value')}</th>
@@ -1073,7 +1081,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           }
                           return true
                         })).map(l => (
-                        <tr key={l.id} data-id={l.id} style={{borderTop:'2px solid #ffffff'}}>
+                        <tr key={l.id} data-id={l.id} style={{borderTop:'1px solid #ffffff'}}>
                           {editingId === l.id ? (
                             <>
                               <td style={{padding:8}}>
@@ -1083,16 +1091,16 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   value={editData.markerName || ''}
                                   onChange={e => setEditData({...editData, markerName: e.target.value})}
                                   list="edit-criteria-markers-list"
-                                  style={{width:'100%',padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4}}
+                                  style={{width:'100%',padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4}}
                                 />
                                 <datalist id="edit-criteria-markers-list">
                                   {labMarkers.map(m => <option key={m.id} value={m.name} />)}
                                 </datalist>
                               </td>
-                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.min_value || ''} onChange={e => setEditData({...editData, min_value: e.target.value})} style={{width:'80px',padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4}} /></td>
-                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.max_value || ''} onChange={e => setEditData({...editData, max_value: e.target.value})} style={{width:'80px',padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4}} /></td>
+                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.min_value || ''} onChange={e => setEditData({...editData, min_value: e.target.value})} style={{width:'80px',padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4}} /></td>
+                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.max_value || ''} onChange={e => setEditData({...editData, max_value: e.target.value})} style={{width:'80px',padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4}} /></td>
                               <td style={{padding:8}}>
-                                <select value={editData.operator || 'between'} onChange={e => setEditData({...editData, operator: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4}}>
+                                <select value={editData.operator || 'between'} onChange={e => setEditData({...editData, operator: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4}}>
                                   <option value="between">between</option>
                                   <option value="<">&lt;</option>
                                   <option value=">">&gt;</option>
@@ -1102,7 +1110,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                 </select>
                               </td>
                               <td style={{padding:8}}>
-                                <select value={editData.tag_to_apply || ''} onChange={e => setEditData({...editData, tag_to_apply: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4}}>
+                                <select value={editData.tag_to_apply || ''} onChange={e => setEditData({...editData, tag_to_apply: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4}}>
                                   <option value="">(none)</option>
                                   {allowedTags.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
@@ -1164,13 +1172,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Type creation form */}
-              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:'2px solid #ffffff'}}>
+              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:'1px solid #ffffff'}}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Resource Type</h3>
                 <div style={{display:'flex',gap:12,alignItems:'center'}}>
                   <input 
                     placeholder="Resource Type (e.g., article, book, podcast)" 
                     value={newTypeName} 
                     onChange={e => setNewTypeName(e.target.value)}
-                    style={{flex:1,padding:'8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}} 
+                    style={{flex:1,padding:'8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}} 
                   />
                   <button className="btn-primary" onClick={async () => {
                     if (!newTypeName.trim()) return alert('Type name required')
@@ -1188,6 +1197,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Resource Types Search Filter */}
               <div style={styles.filterBox}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Resource Types</h3>
                 <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Search Resource Types</label>
@@ -1197,7 +1207,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       value={filterResourceTypeName}
                       onChange={e => setFilterResourceTypeName(e.target.value)}
                       list="search-resource-types-list"
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                     />
                     <datalist id="search-resource-types-list">
                       {Array.from(new Set(resourceTypes.filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))).sort().map(t => <option key={t} value={t} />)}
@@ -1214,10 +1224,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
 
               {/* Types table/cards */}
+              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Resource Types</h3>
+                <button onClick={() => toggleViewMode('types')} title={viewMode.types === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.types === 'card' ? '📋' : '🗂️'}</button>
+              </div>
+
               {viewMode.types === 'table' ? (
-              <div style={{border:'2px solid #ffffff',borderRadius:6,overflow:'auto'}}>
+              <div style={{border:'1px solid #ffffff',borderRadius:6,overflow:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead style={{background:'#666666',borderBottom:'2px solid #ffffff'}}>
+                  <thead style={{background:'#3D7DCA',borderBottom:'1px solid #ffffff'}}>
                     <tr>
                       <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('name')}>Resource Type{getSortIndicator('name')}</th>
                       <th style={{padding:8,textAlign:'right',color:'#ffffff',fontWeight:500}}>Actions</th>
@@ -1229,10 +1244,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
                       .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))
                       .map(rt => (
-                      <tr key={rt} style={{borderTop:'2px solid #ffffff'}}>
+                      <tr key={rt} style={{borderTop:'1px solid #ffffff'}}>
                         {editingId === `type-${rt}` ? (
                           <>
-                            <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4}} /></td>
+                            <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4}} /></td>
                             <td style={{padding:8,textAlign:'right'}}>
                               <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
                                 <button className="btn-ghost" onClick={async () => {
@@ -1283,7 +1298,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
                   .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))).map(rt => (
-                  <div key={rt} style={{background:theme.bg,border:'2px solid #ffffff',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                  <div key={rt} style={{background:theme.bg,border:'1px solid #ffffff',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
                     {editingId === `type-${rt}` ? (
                       <>
                         <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={styles.input} />
@@ -1334,10 +1349,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Marker creation form */}
-              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:'2px solid #ffffff'}}>
+              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:'1px solid #ffffff'}}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Lab Marker</h3>
                 <div style={{display:'flex',gap:12,alignItems:'center'}}>
-                  <input placeholder="Marker name" value={markerName} onChange={e => setMarkerName(e.target.value)} style={{flex:1,padding:'8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}} />
-                  <input placeholder="Unit (optional)" value={markerUnit} onChange={e => setMarkerUnit(e.target.value)} style={{width:120,border:'2px solid #ffffff',borderRadius:4,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
+                  <input placeholder="Marker name" value={markerName} onChange={e => setMarkerName(e.target.value)} style={{flex:1,padding:'8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}} />
+                  <input placeholder="Unit (optional)" value={markerUnit} onChange={e => setMarkerUnit(e.target.value)} style={{width:120,border:'1px solid #ffffff',borderRadius:4,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
                   <button className="btn-primary" onClick={async () => {
                     if (!markerName.trim()) return alert('Name required')
                     try {
@@ -1356,6 +1372,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Lab Markers Filters */}
               <div style={styles.filterBox}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Lab Markers</h3>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Marker Name</label>
@@ -1365,7 +1382,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       value={filterLabMarkerName}
                       onChange={e => setFilterLabMarkerName(e.target.value)}
                       list="lab-marker-names-list"
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                     />
                     <datalist id="lab-marker-names-list">
                       {Array.from(new Set(labMarkers
@@ -1385,7 +1402,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     <select
                       value={filterLabMarkerUnit}
                       onChange={e => setFilterLabMarkerUnit(e.target.value)}
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                     >
                       <option value="">(All Units)</option>
                       {Array.from(new Set(labMarkers
@@ -1423,10 +1440,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
 
               {/* Markers table */}
+              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Lab Markers</h3>
+                <button onClick={() => toggleViewMode('markers')} title={viewMode.markers === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.markers === 'table' ? '🗂️' : '📋'}</button>
+              </div>
+
               {viewMode.markers === 'table' ? (
-              <div style={{border:'2px solid #ffffff',borderRadius:6,overflow:'auto'}}>
+              <div style={{border:'1px solid #ffffff',borderRadius:6,overflow:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead style={{background:'#666666',borderBottom:'2px solid #ffffff'}}>
+                  <thead style={{background:'#3D7DCA',borderBottom:'1px solid #ffffff'}}>
                     <tr>
                       <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('name')}>Name{getSortIndicator('name')}</th>
                       <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('unit')}>Unit{getSortIndicator('unit')}</th>
@@ -1443,11 +1465,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         (!filterLabMarkerName || m.name === filterLabMarkerName)
                         && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                       )).map(m => (
-                      <tr key={m.id} style={{borderTop:'2px solid #ffffff'}}>
+                      <tr key={m.id} style={{borderTop:'1px solid #ffffff'}}>
                         {editingId === m.id ? (
                           <>
-                            <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4}} /></td>
-                            <td style={{padding:8}}><input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'2px solid #ffffff',borderRadius:4}} /></td>
+                            <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4}} /></td>
+                            <td style={{padding:8}}><input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} style={{width:'100%',padding:'4px 6px',border:'1px solid #ffffff',borderRadius:4}} /></td>
                             <td style={{padding:8,textAlign:'right'}}>
                               <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
                                 <button className="btn-ghost" onClick={async () => {
@@ -1508,7 +1530,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                   )
                   .map(m => (
-                  <div key={m.id} style={{background:theme.bg,border:'2px solid #ffffff',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                  <div key={m.id} style={{background:theme.bg,border:'1px solid #ffffff',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
                     {editingId === m.id ? (
                       <>
                         <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={styles.input} />
@@ -1568,7 +1590,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Tag creation form */}
-              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:'2px solid #ffffff'}}>
+              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:'1px solid #ffffff'}}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Tag</h3>
                 <div style={{display:'flex',gap:12,alignItems:'center'}}>
                   <input
                     placeholder="Tag name"
@@ -1583,7 +1606,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         }
                       }
                     }}
-                    style={{flex:1,padding:'8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                    style={{flex:1,padding:'8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}}
                   />
                   <button className="btn-primary" onClick={async () => {
                     if (!tagInput.trim()) return
@@ -1595,6 +1618,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Tags Search Filter */}
               <div style={styles.filterBox}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Tags</h3>
                 <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Search Tags</label>
@@ -1604,7 +1628,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       value={filterTagName}
                       onChange={e => setFilterTagName(e.target.value)}
                       list="search-tags-list"
-                      style={{width:'100%',padding:'6px 8px',border:'2px solid #ffffff',borderRadius:4,fontSize:14}}
+                      style={{width:'100%',padding:'6px 8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14}}
                     />
                     <datalist id="search-tags-list">
                       {Array.from(new Set(allowedTags.filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase())))).sort().map(t => <option key={t} value={t} />)}
@@ -1621,8 +1645,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
 
               {/* Tags Grid */}
+              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Tags</h3>
+                <button onClick={() => toggleViewMode('tags')} title={viewMode.tags === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.tags === 'table' ? '🗂️' : '📋'}</button>
+              </div>
+
               {viewMode.tags === 'table' ? (
-              <div style={{border:'2px solid #ffffff',borderRadius:6,overflow:'auto'}}>
+              <div style={{border:'1px solid #ffffff',borderRadius:6,overflow:'auto'}}>
                 <table style={styles.table}>
                   <thead>
                     <tr style={styles.tableHeader}>
@@ -1673,7 +1702,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   return (
                     <div key={t} style={{
                       background:theme.bg,
-                      border: editingId === `tag-${t}` ? `2px solid ${tagColor}` : `2px solid #ffffff`,
+                      border: editingId === `tag-${t}` ? `2px solid ${tagColor}` : `1px solid #ffffff`,
                       borderRadius:8,
                       padding:16,
                       boxShadow:'0 1px 2px rgba(0,0,0,0.05)',
@@ -1686,7 +1715,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             value={editData.name || ''} 
                             onChange={e => setEditData({...editData, name: e.target.value})}
                             autoFocus
-                            style={{width:'100%',padding:'8px 8px',border:'2px solid #ffffff',borderRadius:4,marginBottom:12,fontWeight:500}}
+                            style={{width:'100%',padding:'8px 8px',border:'1px solid #ffffff',borderRadius:4,marginBottom:12,fontWeight:500}}
                           />
                           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
                             <button className="btn-ghost" onClick={async () => {
