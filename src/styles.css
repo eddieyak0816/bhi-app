@@ -46,6 +46,7 @@ body {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(26, 31, 54, 0.08);
   margin-bottom: 32px;
+  border: 1px solid var(--border);
   border-left: 4px solid var(--primary-blue);
 }
 

@@ -97,7 +97,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     selectSmall: {padding:'4px 6px',border:'1px solid ' + theme.border,borderRadius:4,background:theme.bgSecondary,color:theme.text},
     table: {width:'100%' as const,borderCollapse:'collapse' as const,color:theme.text},
     tableHeader: {background:theme.bgSecondary,borderBottom:'1px solid ' + theme.border},
-    tableRow: {borderTop:'1px solid ' + theme.borderLight},
+    tableRow: {background:theme.bg, borderTop:'1px solid ' + theme.borderLight},
     filterBox: {background:theme.bgSecondary,border:'1px solid ' + theme.border,borderRadius:6,padding:12,marginBottom:16}
   }
 
@@ -459,7 +459,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       <div style={{height:12}} />
 
       {/* Tab Navigation */}
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:8}}>
         <div className="tabs">
           <button className={`tab ${activeTab === 'resources' ? 'active' : ''}`} onClick={() => setActiveTab('resources')} style={{color:theme.text}}>Resources</button>
           <button className={`tab ${activeTab === 'types' ? 'active' : ''}`} onClick={() => setActiveTab('types')} style={{color:theme.text}}>Resource Types</button>
@@ -467,7 +467,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
           <button className={`tab ${activeTab === 'tags' ? 'active' : ''}`} onClick={() => setActiveTab('tags')} style={{color:theme.text}}>Tags</button>
           <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')} style={{color:theme.text}}>Criteria</button>
         </div>
-        <button onClick={() => setDarkMode(!darkMode)} title={darkMode ? 'Light mode' : 'Dark mode'} style={{background:theme.bgSecondary,border:'1px solid ' + theme.border,borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{darkMode ? '☀️' : '🌙'}</button>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          {activeTab === 'resources' && <button onClick={() => toggleViewMode('resources')} title={viewMode.resources === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid ' + theme.border,borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.resources === 'card' ? '📋' : '🗂️'}</button>}
+          {activeTab === 'types' && <button onClick={() => toggleViewMode('types')} title={viewMode.types === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid ' + theme.border,borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.types === 'card' ? '📋' : '🗂️'}</button>}
+          {activeTab === 'markers' && <button onClick={() => toggleViewMode('markers')} title={viewMode.markers === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid ' + theme.border,borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.markers === 'table' ? '🗂️' : '📋'}</button>}
+          {activeTab === 'tags' && <button onClick={() => toggleViewMode('tags')} title={viewMode.tags === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid ' + theme.border,borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.tags === 'table' ? '🗂️' : '📋'}</button>}
+          <button onClick={() => setDarkMode(!darkMode)} title={darkMode ? 'Light mode' : 'Dark mode'} style={{background:theme.bgSecondary,border:'1px solid ' + theme.border,borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{darkMode ? '☀️' : '🌙'}</button>
+        </div>
       </div>
 
       {/* Audit Log hidden in main UI - gated behind secret access */}
@@ -551,15 +557,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-                <h4 style={{margin:0}}>Resources</h4>
-                <button 
-                  onClick={() => toggleViewMode('resources')}
-                  style={{background:'#f3f4f6',border:'1px solid #d1d5db',borderRadius:4,padding:'6px 12px',cursor:'pointer',fontSize:13,fontWeight:500}}
-                >
-                  {viewMode.resources === 'card' ? '📋 Table' : '🗂️ Cards'}
-                </button>
-              </div>
               {/* Create New Resource Accordion */}
               <button
                 onClick={() => setCreateResourceOpen(!createResourceOpen)}
@@ -583,7 +580,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Resource creation form (collapsed by default) */}
               {createResourceOpen && (
-                <div style={{marginBottom:24,padding:16,background:'#F8F9FC',borderRadius:6}}>
+                <div style={{marginBottom:24,padding:16,background:theme.bgSecondary,borderRadius:6}}>
                   <div style={{display:'flex',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}>
                     <div style={{display:'flex',gap:8,alignItems:'center'}}>
                       <select value={type} onChange={e => setType(e.target.value)}>
@@ -650,13 +647,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </div>
               )}
 
-              <h4 style={{marginBottom:16}}>Resources</h4>
-
               {/* Filtering section */}
-              <div style={{marginBottom:16,padding:12,background:'#F8F9FC',borderRadius:6}}>
-                <div style={{display:'flex',gap:12,flexWrap:'wrap',alignItems:'flex-end'}}>
-                  <div style={{flex:'1 1 200px'}}>
-                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:'#666'}}>Keyword Search</label>
+              <div style={{marginTop:-16,marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'start'}}>
+                  <div>
+                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:theme.text}}>Keyword Search</label>
                     <input
                       type="text"
                       placeholder="Search titles..."
@@ -678,8 +673,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       )).sort().map(title => <option key={title} value={title} />)}
                     </datalist>
                   </div>
-                  <div style={{flex:'1 1 150px'}}>
-                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:'#666'}}>Type</label>
+                  <div>
+                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:theme.text}}>Type</label>
                     <select
                       multiple
                       value={filterTypes}
@@ -697,8 +692,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       )).sort().map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
-                  <div style={{flex:'1 1 150px'}}>
-                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:'#666'}}>Tags</label>
+                  <div>
+                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:theme.text}}>Tags</label>
                     <select
                       multiple
                       value={filterTags}
@@ -735,7 +730,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Filter results summary */}
               {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0) && (
-                <div style={{marginBottom:12,fontSize:13,color:'#666'}}>
+                <div style={{marginBottom:12,fontSize:13,color:theme.text}}>
                   {(() => {
                     const filtered = resources.filter(r => {
                       if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
@@ -758,14 +753,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Resources table/cards */}
               {viewMode.resources === 'table' ? (
-              <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead style={{background:'#fafafa'}}>
+              <div style={{border:'1px solid ' + theme.border,borderRadius:6,overflow:'auto'}}>
+                <table style={styles.table}>
+                  <thead style={styles.tableHeader}>
                     <tr>
                       <th style={{padding:8,textAlign:'left'}}><input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.currentTarget.checked)} /></th>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:sortColumn==='title'?'#1F2937':'#666'}} onClick={() => handleSort('title')}>Title{getSortIndicator('title')}</th>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:sortColumn==='type'?'#1F2937':'#666'}} onClick={() => handleSort('type')}>Type{getSortIndicator('type')}</th>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:sortColumn==='tags'?'#1F2937':'#666'}} onClick={() => handleSort('tags')}>Tags{getSortIndicator('tags')}</th>
+                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:sortColumn==='title'?theme.text:theme.textMuted}} onClick={() => handleSort('title')}>Title{getSortIndicator('title')}</th>
+                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:sortColumn==='type'?theme.text:theme.textMuted}} onClick={() => handleSort('type')}>Type{getSortIndicator('type')}</th>
+                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:sortColumn==='tags'?theme.text:theme.textMuted}} onClick={() => handleSort('tags')}>Tags{getSortIndicator('tags')}</th>
                       <th style={{padding:8,textAlign:'right'}}>Actions</th>
                     </tr>
                   </thead>
@@ -785,7 +780,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       })
                     )
                       .map(r => (
-                        <tr key={r.id} data-id={r.id} style={{borderTop:'1px solid #f3f4f6'}}>
+                        <tr key={r.id} data-id={r.id} style={styles.tableRow}>
                           <td style={{padding:8}}><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
                           {editingId === r.id ? (
                             <>
@@ -845,10 +840,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     return true
                   })
                 ).map(r => (
-                  <div key={r.id} style={{background:'white',border:'1px solid #e5e7eb',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                  <div key={r.id} style={{background:theme.bg,border:'1px solid ' + theme.border,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
                     {editingId === r.id ? (
                       <>
-                        <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus style={{width:'100%',padding:'8px',border:'1px solid #ddd',borderRadius:4,marginBottom:12,fontWeight:600,fontSize:14}} />
+                        <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus style={styles.input} />
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
                           <button className="btn-ghost" onClick={async () => {
                             try {
@@ -866,7 +861,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     ) : (
                       <>
                         <h5 style={{margin:'0 0 8px 0',fontSize:16,fontWeight:600}}>{r.title}</h5>
-                        <div style={{fontSize:12,color:'#666',marginBottom:8}}>
+                        <div style={{fontSize:12,color:theme.text,marginBottom:8}}>
                           <div><strong>Type:</strong> {r.type}</div>
                           {r.tags && r.tags.length > 0 && <div><strong>Tags:</strong> {r.tags.join(', ')}</div>}
                         </div>
@@ -893,10 +888,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <h4 style={{marginBottom:16}}>Criteria</h4>
               
               {/* Add new criteria form */}
-              <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
+              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6}}>
                 <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Marker</label>
@@ -913,11 +907,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </datalist>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Min</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Min</label>
                     <input type="number" placeholder="Min" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}} />
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Max</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Max</label>
                     <input type="number" placeholder="Max" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:'100%',padding:'6px 8px',border:'1px solid #d1d5db',borderRadius:4,fontSize:14}} />
                   </div>
                   <div>
@@ -938,7 +932,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </div>
               </div>
               
-              <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:6,padding:12,marginBottom:16}}>
+              <div style={styles.filterBox}>
                 <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Marker</label>
@@ -964,7 +958,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </datalist>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Type</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Type</label>
                     <select
                       value={filterCriteriaValueType}
                       onChange={e => setFilterCriteriaValueType(e.target.value as 'min' | 'max' | '')}
@@ -976,7 +970,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </select>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Operator</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Operator</label>
                     <select
                       value={filterCriteriaOperator}
                       onChange={e => setFilterCriteriaOperator(e.target.value as '<' | '>' | '=' | '<=' | '>=' | '')}
@@ -991,7 +985,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </select>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Value</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Value</label>
                     <input
                       type="number"
                       placeholder="Value..."
@@ -1001,7 +995,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     />
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Tag</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Tag</label>
                     <input
                       type="text"
                       placeholder="(All Tags)"
@@ -1042,7 +1036,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </button>
                 </div>
                 {(filterCriteriaMarker || filterCriteriaValueType || filterCriteriaOperator || filterCriteriaValue || filterCriteriaTag) && (
-                  <div style={{fontSize:12,marginTop:8,color:'#666'}}>
+                  <div style={{fontSize:12,marginTop:8,color:theme.text}}>
                     Showing {logicRules
                       .filter(l => {
                         const markerId = filterCriteriaMarker ? labMarkers.find(m => m.name === filterCriteriaMarker)?.id : null
@@ -1068,7 +1062,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               <div style={{marginBottom:18}}>
                 <div style={{marginTop:8,border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
                   <table data-testid="criteria-table" style={{width:'100%',borderCollapse:'collapse'}}>
-                    <thead style={{background:'#fafafa'}}>
+                    <thead style={{background:theme.bgSecondary}}>
                       <tr>
                         <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='marker_id'?'#1F2937':'#666'}} onClick={() => handleSort('marker_id')}>Marker{getSortIndicator('marker_id')}</th>
                         <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:sortColumn==='min_value'?'#1F2937':'#666'}} onClick={() => handleSort('min_value')}>Min{getSortIndicator('min_value')}</th>
@@ -1200,24 +1194,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-                <h4 style={{margin:0}}>Resource Types</h4>
-                <button 
-                  onClick={() => toggleViewMode('types')}
-                  style={{background:'#f3f4f6',border:'1px solid #d1d5db',borderRadius:4,padding:'6px 12px',cursor:'pointer',fontSize:13,fontWeight:500}}
-                >
-                  {viewMode.types === 'card' ? '📋 Table' : '🗂️ Cards'}
-                </button>
-              </div>
-
               {/* Type creation form */}
-              <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
+              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6}}>
                 <div style={{display:'flex',gap:12,alignItems:'center'}}>
                   <input 
                     placeholder="Resource Type (e.g., article, book, podcast)" 
                     value={newTypeName} 
                     onChange={e => setNewTypeName(e.target.value)}
-                    style={{minWidth:200}} 
+                    style={{flex:1,padding:'8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}} 
                   />
                   <button className="btn-primary" onClick={async () => {
                     if (!newTypeName.trim()) return alert('Type name required')
@@ -1234,10 +1218,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
 
               {/* Resource Types Search Filter */}
-              <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:6,padding:12,marginBottom:16}}>
+              <div style={styles.filterBox}>
                 <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:10,alignItems:'end'}}>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Search Resource Types</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Search Resource Types</label>
                     <input
                       type="text"
                       placeholder="Type name..."
@@ -1330,10 +1314,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
                   .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))).map(rt => (
-                  <div key={rt} style={{background:'white',border:'1px solid #e5e7eb',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                  <div key={rt} style={{background:theme.bg,border:'1px solid ' + theme.border,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
                     {editingId === `type-${rt}` ? (
                       <>
-                        <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={{width:'100%',padding:'8px',border:'1px solid #ddd',borderRadius:4,marginBottom:12,fontWeight:600}} />
+                        <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={styles.input} />
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
                           <button className="btn-ghost" onClick={async () => {
                             try {
@@ -1380,15 +1364,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-                <h4 style={{margin:0}}>Lab Markers</h4>
-                <button onClick={() => toggleViewMode('markers')} className="btn-outline" style={{fontSize:12}}>{viewMode.markers === 'table' ? '🗂️ Cards' : '📋 Table'}</button>
-              </div>
-
               {/* Marker creation form */}
-              <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
+              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6}}>
                 <div style={{display:'flex',gap:12,alignItems:'center'}}>
-                  <input placeholder="Marker name" value={markerName} onChange={e => setMarkerName(e.target.value)} style={{minWidth:200}} />
+                  <input placeholder="Marker name" value={markerName} onChange={e => setMarkerName(e.target.value)} style={{flex:1,padding:'8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}} />
                   <input placeholder="Unit (optional)" value={markerUnit} onChange={e => setMarkerUnit(e.target.value)} style={{width:120}} />
                   <button className="btn-primary" onClick={async () => {
                     if (!markerName.trim()) return alert('Name required')
@@ -1407,10 +1386,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
 
               {/* Lab Markers Filters */}
-              <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:6,padding:12,marginBottom:16}}>
+              <div style={styles.filterBox}>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Marker Name</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Marker Name</label>
                     <input
                       type="text"
                       placeholder="(All Names)"
@@ -1433,7 +1412,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </datalist>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Unit</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Unit</label>
                     <select
                       value={filterLabMarkerUnit}
                       onChange={e => setFilterLabMarkerUnit(e.target.value)}
@@ -1462,7 +1441,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </button>
                 </div>
                 {(filterLabMarkerName || filterLabMarkerUnit) && (
-                  <div style={{fontSize:12,marginTop:8,color:'#666'}}>
+                  <div style={{fontSize:12,marginTop:8,color:theme.text}}>
                     Showing {labMarkers
                       .filter(m => 
                         (!filterLabMarkerName || m.name === filterLabMarkerName)
@@ -1560,11 +1539,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                   )
                   .map(m => (
-                  <div key={m.id} style={{background:'white',border:'1px solid #e5e7eb',borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                  <div key={m.id} style={{background:theme.bg,border:'1px solid ' + theme.border,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
                     {editingId === m.id ? (
                       <>
-                        <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={{width:'100%',padding:'8px',border:'1px solid #ddd',borderRadius:4,marginBottom:8,fontWeight:600}} />
-                        <input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} placeholder="Unit" style={{width:'100%',padding:'8px',border:'1px solid #ddd',borderRadius:4,marginBottom:12,fontSize:12}} />
+                        <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={styles.input} />
+                        <input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} placeholder="Unit" style={styles.input} />
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
                           <button className="btn-ghost" onClick={async () => {
                             try {
@@ -1582,7 +1561,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     ) : (
                       <>
                         <h5 style={{margin:'0 0 4px 0',fontSize:16,fontWeight:600}}>{m.name}</h5>
-                        {m.unit && <p style={{margin:'0 0 12px 0',fontSize:12,color:'#666'}}>Unit: {m.unit}</p>}
+                        {m.unit && <p style={{margin:'0 0 12px 0',fontSize:12,color:theme.text}}>Unit: {m.unit}</p>}
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
                           <button className="btn-ghost" onClick={() => {setEditingId(m.id); setEditData({name: m.name, unit: m.unit})}} style={{fontSize:13}}>✎ Edit</button>
                           <button className="btn-ghost" onClick={async () => {
@@ -1619,13 +1598,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-                <h4 style={{margin:0}}>Tags</h4>
-                <button onClick={() => toggleViewMode('tags')} className="btn-outline" style={{fontSize:12}}>{viewMode.tags === 'table' ? '🗂️ Cards' : '📋 Table'}</button>
-              </div>
-
               {/* Tag creation form */}
-              <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
+              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6}}>
                 <div style={{display:'flex',gap:12,alignItems:'center'}}>
                   <input
                     placeholder="Tag name"
@@ -1640,7 +1614,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         }
                       }
                     }}
-                    style={{minWidth:200}}
+                    style={{flex:1,padding:'8px',border:'1px solid #ffffff',borderRadius:4,fontSize:14,background:theme.bgSecondary,color:theme.text}}
                   />
                   <button className="btn-primary" onClick={async () => {
                     if (!tagInput.trim()) return
@@ -1651,10 +1625,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
 
               {/* Tags Search Filter */}
-              <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:6,padding:12,marginBottom:16}}>
+              <div style={styles.filterBox}>
                 <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:10,alignItems:'end'}}>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Search Tags</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Search Tags</label>
                     <input
                       type="text"
                       placeholder="Tag name..."
@@ -1679,10 +1653,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Tags Grid */}
               {viewMode.tags === 'table' ? (
-              <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <div style={{border:'1px solid ' + theme.border,borderRadius:6,overflow:'auto'}}>
+                <table style={styles.table}>
                   <thead>
-                    <tr style={{background:'#f9fafb',borderBottom:'1px solid #e5e7eb'}}>
+                    <tr style={styles.tableHeader}>
                       <th style={{padding:12,textAlign:'left',fontWeight:600}}>Tag Name</th>
                       <th style={{padding:12,textAlign:'left',fontWeight:600}}>Usage</th>
                       <th style={{padding:12,textAlign:'right',fontWeight:600}}>Actions</th>
@@ -1695,9 +1669,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))).map(t => {
                       const usageCount = getTagUsageCount(t)
                       return (
-                        <tr key={t} style={{borderBottom:'1px solid #eee'}}>
+                        <tr key={t} style={styles.tableRow}>
                           <td style={{padding:12,fontWeight:500}}>{t}</td>
-                          <td style={{padding:12,fontSize:12,color:'#666'}}>Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
+                          <td style={{padding:12,fontSize:12,color:theme.textMuted}}>Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
                           <td style={{padding:12,textAlign:'right'}}>
                             <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
                               <button className="btn-ghost" onClick={() => {setEditingId(`tag-${t}`); setEditData({name: t})}} style={{fontSize:13}}>✎ Edit</button>
@@ -1729,8 +1703,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   const tagColor = getTagColor(t)
                   return (
                     <div key={t} style={{
-                      background:'white',
-                      border: editingId === `tag-${t}` ? `2px solid ${tagColor}` : `1px solid #e5e7eb`,
+                      background:theme.bg,
+                      border: editingId === `tag-${t}` ? `2px solid ${tagColor}` : `1px solid ${theme.border}`,
                       borderRadius:8,
                       padding:16,
                       boxShadow:'0 1px 2px rgba(0,0,0,0.05)',
