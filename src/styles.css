@@ -6,7 +6,7 @@
   --card: #FFFFFF;
   --text-primary: #1A1F36;
   --text-secondary: #697386;
-  --border: #D9DFE8;
+  --border: #999999;
   --success: #0A7D4A;
   --error: #C5281C;
   --warning: #B45309;
@@ -47,7 +47,7 @@ body {
   box-shadow: 0 2px 8px rgba(26, 31, 54, 0.08);
   margin-bottom: 32px;
   border: 1px solid var(--border);
-  border-left: 4px solid var(--primary-blue);
+  border-left: 3px solid var(--primary-blue);
 }
 
 .header h1 {
@@ -70,14 +70,14 @@ body {
   box-shadow: 0 2px 8px rgba(26, 31, 54, 0.08);
   margin-bottom: 24px;
   border: 1px solid var(--border);
-  border-left: 4px solid var(--primary-blue);
+  border-left: 3px solid var(--primary-blue);
 }
 
 body.dark-mode .card {
   border-top: 1px solid #555;
   border-right: 1px solid #555;
   border-bottom: 1px solid #555;
-  border-left: 4px solid var(--primary-blue);
+  border-left: 3px solid var(--primary-blue);
 }
 
 .card h2, .card h3 {
