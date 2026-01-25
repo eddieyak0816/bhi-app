@@ -23,10 +23,12 @@ export default function Admin() {
   const [markerName, setMarkerName] = useState('')
   const [markerUnit, setMarkerUnit] = useState('')
 
-  const [showAudit, setShowAudit] = useState(false)
+  const [activeTab, setActiveTab] = useState<'resources' | 'markers' | 'tags' | 'criteria' | 'audit'>('resources')
   const [auditRows, setAuditRows] = useState<Array<any>>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [selectAll, setSelectAll] = useState(false)
+  const [selectedTagNames, setSelectedTagNames] = useState<string[]>([])
+  const [selectAllTags, setSelectAllTags] = useState(false)
   const DEV_BACKEND_KEY = (import.meta.env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || ''
   // session override for dev convenience (not persisted)
@@ -44,6 +46,14 @@ export default function Admin() {
     setSelectAll(enabled)
     if (enabled) setSelectedIds(resources.map(r => r.id || '').filter(Boolean))
     else setSelectedIds([])
+  }
+  function toggleSelectTag(tagName: string) {
+    setSelectedTagNames(prev => prev.includes(tagName) ? prev.filter(x => x !== tagName) : [...prev, tagName])
+  }
+  function toggleSelectAllTags(enabled: boolean) {
+    setSelectAllTags(enabled)
+    if (enabled) setSelectedTagNames([...allowedTags])
+    else setSelectedTagNames([])
   }
 
   async function bulkDelete() {
@@ -276,99 +286,20 @@ export default function Admin() {
         </div>
       </div>
 
-      <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:12}}>
-        <select value={type} onChange={e => setType(e.target.value)}>
-          <option value="video">video</option>
-          <option value="doctor">doctor</option>
-          <option value="article">article</option>
-        </select>
-        <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
-        <div style={{display:'flex',flexDirection:'column',gap:6}}>
-          <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',minWidth:240}}>
-            {selectedTags.map(t => (
-              <div key={t} style={{background:'#eef2ff',padding:'4px 8px',borderRadius:999,display:'inline-flex',gap:8,alignItems:'center'}}>
-                <span style={{fontSize:13}}>{t}</span>
-                <button aria-label={`remove-${t}`} className="btn-ghost" onClick={() => setSelectedTags(prev => prev.filter(x => x !== t))}>×</button>
-              </div>
-            ))}
-            <input
-              placeholder="Tag"
-              value={tagInput}
-              onChange={e => setTagInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const match = allowedTags.find(a => a.toLowerCase() === tagInput.trim().toLowerCase()); if (match) setSelectedTags(s => s.includes(match) ? s : [...s, match]); else addTag(tagInput.trim()); setTagInput('') } }}
-              style={{minWidth:120,border:'1px solid #e5e7eb',padding:6,borderRadius:6}}
-            />
-          </div>
 
-          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            <div style={{background:'#fff',border:'1px solid #eee',padding:8,borderRadius:6,maxHeight:260,overflow:'auto'}}>
-              {tagInput.trim() === '' ? (
-                <div className="small muted">Available tags: {(allowedTags || []).slice(0,8).join(', ')}</div>
-              ) : (
-                <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                  {(allowedTags || []).filter(a => a.toLowerCase().includes(tagInput.toLowerCase()) && !selectedTags.includes(a)).slice(0,10).map(a => (
-                    <button key={a} className="btn-ghost" onClick={() => { setSelectedTags(s => s.includes(a) ? s : [...s, a]); setTagInput('') }}>{a}</button>
-                  ))}
-                  {!allowedTags.map(x => x.toLowerCase()).includes(tagInput.trim().toLowerCase()) && tagInput.trim() !== '' && (
-                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                      <div className="small muted">No exact match</div>
-                      <button className="btn-ghost" onClick={() => { addTag(tagInput.trim()); setTagInput('') }}>+ Add tag</button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Tag management (CRUD) */}
-              <div style={{marginTop:12,borderTop:'1px solid #f3f4f6',paddingTop:12}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div className="small muted">Manage tags</div>
-                  <div className="small muted">(rename / delete)</div>
-                </div>
-                <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:8}}>
-                  {(allowedTags || []).map(t => (
-                    <div key={t} style={{display:'flex',alignItems:'center',gap:8,justifyContent:'space-between'}}>
-                      <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                        <div style={{minWidth:160}}>{t}</div>
-                        <button className="btn-ghost" onClick={async () => {
-                          const newName = prompt('Rename tag', t)
-                          if (!newName || newName.trim() === '' || newName.trim() === t) return
-                          try {
-                            const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: newName.trim() }) })
-                            if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                            await loadTags()
-                            await load()
-                          } catch (err) {
-                            alert('Rename failed — ' + ((err as any)?.message || 'check server logs'))
-                          }
-                        }}>Rename</button>
-                        <button className="btn-ghost" onClick={async () => {
-                          if (!confirm(`Delete tag ${t}? This will remove it from resources and delete any criteria referencing it.`)) return
-                          try {
-                            const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'DELETE', headers: authHeaders() })
-                            if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                            await loadTags()
-                            await load()
-                          } catch (err) {
-                            alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
-                          }
-                        }}>Delete</button>
-                      </div>
-                      <div className="small muted">&nbsp;</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div style={{display:'flex',gap:8}}>
-              <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div style={{height:12}} />
 
-      {showAudit ? (
+      {/* Tab Navigation */}
+      <div className="tabs">
+        <button className={`tab ${activeTab === 'resources' ? 'active' : ''}`} onClick={() => setActiveTab('resources')}>Resources</button>
+        <button className={`tab ${activeTab === 'markers' ? 'active' : ''}`} onClick={() => setActiveTab('markers')}>Lab Markers</button>
+        <button className={`tab ${activeTab === 'tags' ? 'active' : ''}`} onClick={() => setActiveTab('tags')}>Tags</button>
+        <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')}>Criteria</button>
+        <button className={`tab ${activeTab === 'audit' ? 'active' : ''}`} onClick={() => { setActiveTab('audit'); loadAudit() }}>Audit Log</button>
+      </div>
+
+      {activeTab === 'audit' ? (
         <div>
           {loading ? <div>Loading…</div> : (
             <table style={{width:'100%',borderCollapse:'collapse'}}>
@@ -388,21 +319,117 @@ export default function Admin() {
             </table>
           )}
         </div>
-      ) : (
+      ) : null}
+
+      {/* Resources Tab */}
+      {activeTab === 'resources' && (
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+              <h4 style={{marginBottom:16}}>Create New Resource</h4>
+
+              {/* Resource creation form */}
+              <div style={{marginBottom:24,padding:16,background:'#F8F9FC',borderRadius:6}}>
+                <div style={{display:'flex',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}>
+                  <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                    <select value={type} onChange={e => setType(e.target.value)}>
+                      <option value="video">video</option>
+                      <option value="doctor">doctor</option>
+                      <option value="article">article</option>
+                    </select>
+                    <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{minWidth:240}} />
+                    <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
+                  </div>
+                </div>
+                <div style={{marginTop:12}}>
+                  <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:8}}>
+                    <span className="small muted">Tags:</span>
+                    {selectedTags.map(t => (
+                      <div key={t} style={{background:'#eef2ff',padding:'4px 8px',borderRadius:999,display:'inline-flex',gap:8,alignItems:'center'}}>
+                        <span style={{fontSize:13}}>{t}</span>
+                        <button aria-label={`remove-${t}`} className="btn-ghost" onClick={() => setSelectedTags(prev => prev.filter(x => x !== t))}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{display:'flex',gap:8,alignItems:'flex-start'}}>
+                    <div style={{background:'#fff',border:'1px solid #eee',padding:8,borderRadius:6,maxHeight:200,overflow:'auto',minWidth:240}}>
+                      {tagInput.trim() === '' ? (
+                        <div className="small muted">Available tags: {(allowedTags || []).slice(0,8).join(', ')}</div>
+                      ) : (
+                        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                          {(allowedTags || []).filter(a => a.toLowerCase().includes(tagInput.toLowerCase()) && !selectedTags.includes(a)).slice(0,10).map(a => (
+                            <button key={a} className="btn-ghost" onClick={() => { setSelectedTags(s => s.includes(a) ? s : [...s, a]); setTagInput('') }}>{a}</button>
+                          ))}
+                          {!allowedTags.map(x => x.toLowerCase()).includes(tagInput.trim().toLowerCase()) && tagInput.trim() !== '' && (
+                            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                              <div className="small muted">No exact match</div>
+                              <button className="btn-ghost" onClick={() => { addTag(tagInput.trim()); setTagInput('') }}>+ Add tag</button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      placeholder="Tag"
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const match = allowedTags.find(a => a.toLowerCase() === tagInput.trim().toLowerCase()); if (match) setSelectedTags(s => s.includes(match) ? s : [...s, match]); else addTag(tagInput.trim()); setTagInput('') } }}
+                      style={{minWidth:120,border:'1px solid #e5e7eb',padding:6,borderRadius:6}}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <h4 style={{marginBottom:16}}>Resources</h4>
+
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
                 <label style={{display:'flex',alignItems:'center',gap:8}}>
                   <input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.currentTarget.checked)} />
                   <span className="small muted">Select all</span>
                 </label>
-                <div style={{display:'flex',gap:8}}>
-                  <button className="btn-danger" onClick={bulkDelete} disabled={selectedIds.length === 0}>Delete selected</button>
-                </div>
+                <button className="btn-danger" onClick={bulkDelete} disabled={selectedIds.length === 0}>Delete selected ({selectedIds.length})</button>
               </div>
 
-              {/* --- Criteria / logic_rules table --- */}
+              {/* Resources table */}
+              <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse'}}>
+                  <thead style={{background:'#fafafa'}}>
+                    <tr>
+                      <th style={{padding:8,textAlign:'left'}}><input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.currentTarget.checked)} /></th>
+                      <th style={{padding:8,textAlign:'left'}}>Title</th>
+                      <th style={{padding:8,textAlign:'left'}}>Type</th>
+                      <th style={{padding:8,textAlign:'left'}}>Tags</th>
+                      <th style={{padding:8,textAlign:'right'}}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resources.map(r => (
+                      <tr key={r.id} data-id={r.id} style={{borderTop:'1px solid #f3f4f6'}}>
+                        <td style={{padding:8}}><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
+                        <td style={{padding:8}}><strong>{r.title}</strong></td>
+                        <td style={{padding:8}} className="small muted">{r.type}</td>
+                        <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
+                        <td style={{padding:8,textAlign:'right'}}>
+                          <button className="btn-ghost" onClick={() => remove(r.id)}>Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Criteria Tab */}
+      {activeTab === 'criteria' && (
+        <div>
+          {loading ? <div>Loading…</div> : (
+            <div>
+              <h4 style={{marginBottom:16}}>Criteria (logic_rules)</h4>
+
+              {/* Criteria / logic_rules table */}
               <div style={{marginBottom:18}}>
                 <h4 style={{margin:0}}>Criteria (logic rules)</h4>
                 <div style={{marginTop:8,border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
@@ -432,34 +459,9 @@ export default function Admin() {
                       {/* inline add / edit form */}
                       <tr style={{background:'#fff'}}>
                         <td style={{padding:8}}>
-                          <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                            <select value={ruleForm.marker_id || (labMarkers[0] && labMarkers[0].id) || ''} onChange={e => setRuleForm(f => ({ ...f, marker_id: e.target.value }))}>
-                              {(labMarkers || []).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                            </select>
-                            <button className="btn-ghost" onClick={() => setMarkerCreationVisible(v => !v)} title="Add marker">+ Marker</button>
-                          </div>
-                          {markerCreationVisible && (
-                            <div style={{marginTop:8,display:'flex',gap:8,alignItems:'center'}}>
-                              <input placeholder="Marker name" value={markerName} onChange={e => setMarkerName(e.target.value)} style={{minWidth:160}} />
-                              <input placeholder="unit (optional)" value={markerUnit} onChange={e => setMarkerUnit(e.target.value)} style={{width:120}} />
-                              <button className="btn-primary" onClick={async () => {
-                                if (!markerName.trim()) return alert('Name required')
-                                try {
-                                  const res = await fetch(apiUrl('/api/admin/lab-markers'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify({ name: markerName.trim(), unit: markerUnit.trim() }) })
-                                  if (!res.ok) throw new Error('create marker failed')
-                                  const body = await res.json()
-                                  await load()
-                                  setRuleForm(f => ({ ...f, marker_id: body.id }))
-                                  setMarkerCreationVisible(false)
-                                  setMarkerName('')
-                                  setMarkerUnit('')
-                                } catch (err) {
-                                  console.error('createMarker', err)
-                                  alert('Create marker failed (check server logs)')
-                                }
-                              }}>Add</button>
-                            </div>
-                          )}
+                          <select value={ruleForm.marker_id || (labMarkers[0] && labMarkers[0].id) || ''} onChange={e => setRuleForm(f => ({ ...f, marker_id: e.target.value }))}>
+                            {(labMarkers || []).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          </select>
                         </td>
                         <td style={{padding:8}}><input aria-label="min_value" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
                         <td style={{padding:8}}><input aria-label="max_value" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:80,textAlign:'right'}} /></td>
@@ -484,54 +486,146 @@ export default function Admin() {
                   </table>
                 </div>
               </div>
+            </div>
+          )}
+        </div>
+      )}
 
-              {/* --- Resources controls (moved below Criteria) --- */}
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',margin:'8px 0'}}>
-                <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                  <strong>Resources</strong>
-                  <button className="btn-ghost" onClick={() => { setShowAudit(s => !s); if (!showAudit) loadAudit() }}>{showAudit ? 'Show Resources' : 'Show Audit'}</button>
-                  {showAudit && (
-                    <button className="btn-ghost" onClick={() => {
-                      const csv = ['id,action,target_table,target_id,created_at,details']
-                        .concat(auditRows.map(r => `${r.id},${r.action},${r.target_table},${r.target_id || ''},${r.created_at},"${JSON.stringify(r.details).replace(/"/g,'""')}"`))
-                        .join('\n')
-                      const blob = new Blob([csv], { type: 'text/csv' })
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a'); a.href = url; a.download = 'admin-audit.csv'; document.body.appendChild(a); a.click(); a.remove();
-                    }}>Export CSV</button>
-                  )}
-                </div>
+      {/* Lab Markers Tab */}
+      {activeTab === 'markers' && (
+        <div>
+          {loading ? <div>Loading…</div> : (
+            <div>
+              <h4 style={{marginBottom:16}}>Lab Markers</h4>
 
-                <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                  <label style={{display:'flex',alignItems:'center',gap:8}}>
-                    <input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.currentTarget.checked)} />
-                    <span className="small muted">Select all</span>
-                  </label>
-                  <button className="btn-danger" onClick={bulkDelete} disabled={selectedIds.length === 0}>Delete selected</button>
+              {/* Marker creation form */}
+              <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
+                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                  <input placeholder="Marker name" value={markerName} onChange={e => setMarkerName(e.target.value)} style={{minWidth:200}} />
+                  <input placeholder="Unit (optional)" value={markerUnit} onChange={e => setMarkerUnit(e.target.value)} style={{width:120}} />
+                  <button className="btn-primary" onClick={async () => {
+                    if (!markerName.trim()) return alert('Name required')
+                    try {
+                      const res = await fetch(apiUrl('/api/admin/lab-markers'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify({ name: markerName.trim(), unit: markerUnit.trim() }) })
+                      if (!res.ok) throw new Error('create marker failed')
+                      await load()
+                      setMarkerName('')
+                      setMarkerUnit('')
+                    } catch (err) {
+                      console.error('createMarker', err)
+                      alert('Create marker failed (check server logs)')
+                    }
+                  }}>Add Marker</button>
                 </div>
               </div>
 
-              {/* --- Resources table (neatly aligned) --- */}
+              {/* Markers table */}
               <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
                 <table style={{width:'100%',borderCollapse:'collapse'}}>
                   <thead style={{background:'#fafafa'}}>
                     <tr>
-                      <th style={{padding:8,textAlign:'left'}}><input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.currentTarget.checked)} /></th>
-                      <th style={{padding:8,textAlign:'left'}}>Title</th>
-                      <th style={{padding:8,textAlign:'left'}}>Type</th>
-                      <th style={{padding:8,textAlign:'left'}}>Tags</th>
+                      <th style={{padding:8,textAlign:'left'}}>Name</th>
+                      <th style={{padding:8,textAlign:'left'}}>Unit</th>
                       <th style={{padding:8,textAlign:'right'}}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {resources.map(r => (
-                      <tr key={r.id} data-id={r.id} style={{borderTop:'1px solid #f3f4f6'}}>
-                        <td style={{padding:8}}><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
-                        <td style={{padding:8}}><strong>{r.title}</strong></td>
-                        <td style={{padding:8}} className="small muted">{r.type}</td>
-                        <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
+                    {labMarkers.map(m => (
+                      <tr key={m.id} style={{borderTop:'1px solid #f3f4f6'}}>
+                        <td style={{padding:8}}><strong>{m.name}</strong></td>
+                        <td style={{padding:8}} className="small muted">{m.unit || '—'}</td>
                         <td style={{padding:8,textAlign:'right'}}>
-                          <button className="btn-ghost" onClick={() => remove(r.id)}>Delete</button>
+                          <button className="btn-ghost" onClick={async () => {
+                            if (!confirm(`Delete marker "${m.name}"?`)) return
+                            try {
+                              const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'DELETE', headers: authHeaders() })
+                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                              await load()
+                            } catch (err) {
+                              alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
+                          }}>Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tags Tab */}
+      {activeTab === 'tags' && (
+        <div>
+          {loading ? <div>Loading…</div> : (
+            <div>
+              <h4 style={{marginBottom:16}}>Tags</h4>
+
+              {/* Tag creation form */}
+              <div style={{marginBottom:16,padding:16,background:'#F8F9FC',borderRadius:6}}>
+                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                  <input
+                    placeholder="Tag name"
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        if (tagInput.trim()) {
+                          addTag(tagInput.trim())
+                          setTagInput('')
+                        }
+                      }
+                    }}
+                    style={{minWidth:200}}
+                  />
+                  <button className="btn-primary" onClick={async () => {
+                    if (!tagInput.trim()) return
+                    await addTag(tagInput.trim())
+                    setTagInput('')
+                  }}>Add Tag</button>
+                </div>
+              </div>
+
+              {/* Tags table */}
+              <div style={{border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse'}}>
+                  <thead style={{background:'#fafafa'}}>
+                    <tr>
+                      <th style={{padding:8,textAlign:'left'}}>Tag Name</th>
+                      <th style={{padding:8,textAlign:'right'}}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allowedTags.map(t => (
+                      <tr key={t} style={{borderTop:'1px solid #f3f4f6'}}>
+                        <td style={{padding:8}}><strong>{t}</strong></td>
+                        <td style={{padding:8,textAlign:'right',display:'flex',gap:8,justifyContent:'flex-end'}}>
+                          <button className="btn-ghost" onClick={async () => {
+                            const newName = prompt('Rename tag', t)
+                            if (!newName || newName.trim() === '' || newName.trim() === t) return
+                            try {
+                              const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: newName.trim() }) })
+                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                              await loadTags()
+                              await load()
+                            } catch (err) {
+                              alert('Rename failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
+                          }}>Rename</button>
+                          <button className="btn-ghost" onClick={async () => {
+                            if (!confirm(`Delete tag "${t}"? This will remove it from resources and delete any criteria referencing it.`)) return
+                            try {
+                              const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'DELETE', headers: authHeaders() })
+                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                              await loadTags()
+                              await load()
+                            } catch (err) {
+                              alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
+                          }}>Delete</button>
                         </td>
                       </tr>
                     ))}

@@ -232,3 +232,32 @@ input[type="checkbox"] {
   cursor: pointer;
   accent-color: var(--primary-blue);
 }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  color: var(--primary-blue);
+}
+
+.tab.active {
+  color: var(--primary-blue);
+  border-bottom-color: var(--primary-blue);
+}
