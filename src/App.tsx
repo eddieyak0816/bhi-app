@@ -90,16 +90,12 @@ function AppContent() {
   }
 
   const handleNavigate = (page: string) => {
-    if (page === 'admin') {
-      setCurrentPage('home')
-    } else {
-      setCurrentPage(page)
-    }
+    setCurrentPage(page)
   }
 
   return (
     <Layout currentPage={currentPage} onNavigate={handleNavigate}>
-      {currentPage === 'home' && <Dashboard recentResources={data.resources.slice(0, 3)} bookmarkedCount={2} />}
+      {currentPage === 'home' && <Dashboard recentResources={data.resources.slice(0, 3)} bookmarkedCount={2} onNavigate={handleNavigate} />}
       {currentPage === 'resources' && <Resources resources={data.resources.map((r, i) => ({ id: String(i), ...r, bookmarked: i % 3 === 0 }))} />}
       {currentPage === 'labs' && <Labs />}
       {currentPage === 'profile' && <Profile userEmail="user@example.com" userName="John Doe" />}

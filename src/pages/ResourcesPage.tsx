@@ -88,129 +88,6 @@ export default function Resources() {
         <p style={{ color: theme.textMuted, margin: 0 }}>Explore health articles, guides, and recommendations</p>
       </div>
 
-      {/* Search and Filters */}
-      <div
-        style={{
-          background: theme.card,
-          border: `1.5px solid ${theme.borderColor}`,
-          borderRadius: 8,
-          padding: 16,
-          marginBottom: 24,
-        }}
-      >
-        <div style={{ marginBottom: 16 }}>
-          <input
-            type="text"
-            placeholder="Search resources..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: `1.5px solid ${theme.borderColor}`,
-              borderRadius: 6,
-              fontSize: 14,
-              background: theme.bg,
-              color: theme.text,
-            }}
-          />
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-          <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Type</label>
-            <select
-              value={filterType}
-              onChange={e => setFilterType(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 10px',
-                border: `1.5px solid ${theme.borderColor}`,
-                borderRadius: 6,
-                fontSize: 14,
-                background: theme.bg,
-                color: theme.text,
-              }}
-            >
-              <option value="">All Types</option>
-              {uniqueTypes.map(t => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Tag</label>
-            <select
-              value={filterTag}
-              onChange={e => setFilterTag(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 10px',
-                border: `1.5px solid ${theme.borderColor}`,
-                borderRadius: 6,
-                fontSize: 14,
-                background: theme.bg,
-                color: theme.text,
-              }}
-            >
-              <option value="">All Tags</option>
-              {uniqueTags.map(t => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* View Mode Toggle */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <p style={{ color: theme.textMuted, margin: 0 }}>
-          {filtered.length} resource{filtered.length !== 1 ? 's' : ''} found
-        </p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => setViewMode('grid')}
-            style={{
-              background: viewMode === 'grid' ? theme.blue : theme.card,
-              color: viewMode === 'grid' ? '#fff' : theme.text,
-              border: viewMode === 'grid' ? 'none' : `1.5px solid ${theme.borderColor}`,
-              borderRadius: 6,
-              padding: '8px 12px',
-              cursor: 'pointer',
-              fontSize: 14,
-            }}
-          >
-            📊 Grid
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            style={{
-              background: viewMode === 'list' ? theme.blue : theme.card,
-              color: viewMode === 'list' ? '#fff' : theme.text,
-              border: viewMode === 'list' ? 'none' : `1.5px solid ${theme.borderColor}`,
-              borderRadius: 6,
-              padding: '8px 12px',
-              cursor: 'pointer',
-              fontSize: 14,
-            }}
-          >
-            📋 List
-          </button>
-        </div>
-      </div>
-
-  return (
-    <div>
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Resources</h2>
-        <p style={{ color: theme.textMuted, margin: 0 }}>Explore health articles, guides, and recommendations</p>
-      </div>
-
       {error && (
         <div
           style={{
@@ -427,6 +304,27 @@ export default function Resources() {
                       >
                         {isBookmarked ? '⭐ Bookmarked' : '☆ Bookmark'}
                       </button>
+                      {resource.link_url && (
+                        <a
+                          href={resource.link_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            background: '#10b981',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 6,
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                            fontSize: 14,
+                            fontWeight: 600,
+                            textDecoration: 'none',
+                            textAlign: 'center',
+                          }}
+                        >
+                          Open →
+                        </a>
+                      )}
                       <button
                         onClick={() => setSelectedResource(resource)}
                         style={{
@@ -586,7 +484,6 @@ export default function Resources() {
           )}
         </>
       )}
-    </div>
     </div>
   )
 }

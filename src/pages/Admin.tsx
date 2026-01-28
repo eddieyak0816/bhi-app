@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 
-type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[] }
+type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; link_url?: string | null }
 
 export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () => void }) {
   const [resources, setResources] = useState<Resource[]>([])
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
+  const [linkUrl, setLinkUrl] = useState('')
+  const [linkProtocol, setLinkProtocol] = useState('https://')
   const [type, setType] = useState('video')
   // tag-manager state
   const [allowedTags, setAllowedTags] = useState<string[]>([])
@@ -23,7 +26,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [markerName, setMarkerName] = useState('')
   const [markerUnit, setMarkerUnit] = useState('')
 
-  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'criteria' | 'audit'>('resources')
+  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'criteria' | 'goals' | 'audit'>('resources')
   // dark mode state
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('bhi-dark-mode')
@@ -36,6 +39,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     markers: 'card',
     tags: 'card',
     criteria: 'table',
+    goals: 'card',
     audit: 'table'
   })
   const [resourceTypes, setResourceTypes] = useState<string[]>([])
@@ -72,8 +76,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // editing state
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editData, setEditData] = useState<any>({})
-  const DEV_BACKEND_KEY = (import.meta.env.VITE_BACKEND_API_KEY as string) || ''
-  const DEV_BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || ''
+  const [editingTagsDropdownOpen, setEditingTagsDropdownOpen] = useState(false)
+  const DEV_BACKEND_KEY = ((import.meta as any).env.VITE_BACKEND_API_KEY as string) || ''
+  const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   // session override for dev convenience (not persisted)
   const [devKeyOverride, setDevKeyOverride] = useState<string | null>(null)
   function effectiveDevKey() { return devKeyOverride || DEV_BACKEND_KEY }
@@ -208,9 +213,22 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   function apiUrl(path: string) {
     return DEV_BACKEND_URL ? `${DEV_BACKEND_URL.replace(/\/$/, '')}${path}` : path
   }
-  function authHeaders() {
+  function authHeaders(): Record<string, string> {
     const k = effectiveDevKey()
     return k ? { 'x-backend-api-key': k } : {}
+  }
+  function stripProtocol(url: string): string {
+    if (!url) return ''
+    return url.replace(/^https?:\/\//, '')
+  }
+  function buildFullUrl(protocol: string, url: string): string {
+    if (!url) return ''
+    const cleanUrl = stripProtocol(url)
+    return `${protocol}${cleanUrl}`
+  }
+  function getProtocol(url: string): string {
+    if (!url) return 'https://'
+    return url.startsWith('http://') ? 'http://' : 'https://'
   }
   function getTagUsageCount(tagName: string) {
     let count = 0
@@ -409,7 +427,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   useEffect(() => { load(); loadTags(); loadResourceTypes() }, [])
 
   async function create() {
-    const payload = { type, title, description: null, tags: selectedTags.map(s => s.trim()).filter(Boolean) }
+    const fullUrl = linkUrl ? buildFullUrl(linkProtocol, linkUrl) : null
+    const payload = { type, title, description: null, tags: selectedTags.map(s => s.trim()).filter(Boolean), link_url: fullUrl }
     try {
       const res = await fetch(apiUrl('/api/admin/resources'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify(payload) })
       if (!res.ok) {
@@ -417,6 +436,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         throw new Error(`create failed: ${res.status} ${txt}`)
       }
       setTitle('')
+      setLinkUrl('')
       setSelectedTags([])
       setTagInput('')
       await load()
@@ -467,6 +487,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
           <button className={`tab ${activeTab === 'types' ? 'active' : ''}`} onClick={() => setActiveTab('types')} style={{color:theme.text}}>Resource Types</button>
           <button className={`tab ${activeTab === 'markers' ? 'active' : ''}`} onClick={() => setActiveTab('markers')} style={{color:theme.text}}>Lab Markers</button>
           <button className={`tab ${activeTab === 'tags' ? 'active' : ''}`} onClick={() => setActiveTab('tags')} style={{color:theme.text}}>Tags</button>
+          <button className={`tab ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => setActiveTab('goals')} style={{color:theme.text}}>Health Goals</button>
           <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')} style={{color:theme.text}}>Criteria</button>
         </div>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
@@ -474,6 +495,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
           {activeTab === 'types' && <button onClick={() => toggleViewMode('types')} title={viewMode.types === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.types === 'card' ? '📋' : '🗂️'}</button>}
           {activeTab === 'markers' && <button onClick={() => toggleViewMode('markers')} title={viewMode.markers === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.markers === 'table' ? '🗂️' : '📋'}</button>}
           {activeTab === 'tags' && <button onClick={() => toggleViewMode('tags')} title={viewMode.tags === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.tags === 'table' ? '🗂️' : '📋'}</button>}
+          {activeTab === 'goals' && <button onClick={() => toggleViewMode('goals')} title={viewMode.goals === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.goals === 'card' ? '📋' : '🗂️'}</button>}
           <button onClick={() => setDarkMode(!darkMode)} title={darkMode ? 'Light mode' : 'Dark mode'} style={{background:theme.bgSecondary,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{darkMode ? '☀️' : '🌙'}</button>
         </div>
       </div>
@@ -568,6 +590,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       {resourceTypes.map(rt => <option key={rt} value={rt}>{rt}</option>)}
                     </select>
                     <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{flex:1,minWidth:200,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
+                    <div style={{display:'flex',gap:6,minWidth:300}}>
+                      <select value={linkProtocol} onChange={e => setLinkProtocol(e.target.value)} style={{width:100,flexShrink:0,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                        <option value="https://">https://</option>
+                        <option value="http://">http://</option>
+                      </select>
+                      <input placeholder="example.com" value={linkUrl} onChange={e => setLinkUrl(stripProtocol(e.target.value))} style={{flex:1,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
+                    </div>
                     <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
                   </div>
                   <div style={{marginTop:12}}>
@@ -589,8 +618,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           </button>
                           {tagDropdownOpen && (
                             <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
-                              {(allowedTags || []).filter(t => !selectedTags.includes(t)).map(t => (
-                                <label key={t} style={{display:'block',padding:'8px 12px',cursor:'pointer',hover:{background:theme.bgSecondary},color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
+                              {(allowedTags || []).filter((t: string) => !selectedTags.includes(t)).map((t: string) => (
+                                <label key={t} style={{display:'block',padding:'8px 12px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
                                   <input 
                                     type="checkbox" 
                                     checked={selectedTags.includes(t)}
@@ -760,22 +789,76 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:8}}><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
                           {editingId === r.id ? (
                             <>
-                              <td style={{padding:8}}><input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1.5px solid ${theme.borderColor}`,borderRadius:6}} /></td>
+                              <td style={{padding:8}}>
+                                <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                                  <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} placeholder="Title" style={{width:'100%',padding:'4px 6px',border:`1.5px solid ${theme.borderColor}`,borderRadius:6,fontSize:12}} />
+                                  <div style={{display:'flex',gap:4}}>
+                                    <select value={editData.link_protocol || 'https://'} onChange={e => setEditData({...editData, link_protocol: e.target.value})} style={{padding:'4px 6px',border:`1.5px solid ${theme.borderColor}`,borderRadius:6,fontSize:12,flex:'0 0 auto',minWidth:60}}>
+                                      <option value="https://">https://</option>
+                                      <option value="http://">http://</option>
+                                    </select>
+                                    <input type="text" value={editData.link_url || ''} onChange={e => setEditData({...editData, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" style={{flex:1,padding:'4px 6px',border:`1.5px solid ${theme.borderColor}`,borderRadius:6,fontSize:12}} />
+                                  </div>
+                                </div>
+                              </td>
                               <td style={{padding:8}} className="small muted">{r.type}</td>
-                              <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
+                              <td style={{padding:8}}>
+                                <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginBottom:8}}>
+                                  {(editData.tags || []).map((t: string) => (
+                                    <span key={t} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',background:'#2563eb',color:'#fff',borderRadius:12,fontSize:11,fontWeight:500}}>
+                                      {t}
+                                      <button onClick={() => setEditData({...editData, tags: (editData.tags || []).filter((x: string) => x !== t)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:12,lineHeight:1}}>✕</button>
+                                    </span>
+                                  ))}
+                                  <div style={{position:'relative'}}>
+                                    <button 
+                                      onClick={() => setEditingTagsDropdownOpen(!editingTagsDropdownOpen)}
+                                      style={{padding:'2px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:11,fontWeight:500}}
+                                    >
+                                      +
+                                    </button>
+                                    {editingTagsDropdownOpen && (
+                                      <div style={{position:'absolute',top:'100%',left:0,marginTop:2,background:theme.card,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:150,maxHeight:250,overflowY:'auto'}}>
+                                        {(allowedTags || []).filter((t: string) => !(editData.tags || []).includes(t)).map((t: string) => (
+                                          <label key={t} style={{display:'block',padding:'6px 10px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'1px solid ' + theme.borderLight,fontSize:12}}>
+                                            <input 
+                                              type="checkbox" 
+                                              checked={(editData.tags || []).includes(t)}
+                                              onChange={(e) => {
+                                                if (e.target.checked) {
+                                                  setEditData({...editData, tags: [...(editData.tags || []), t]})
+                                                } else {
+                                                  setEditData({...editData, tags: (editData.tags || []).filter((x: string) => x !== t)})
+                                                }
+                                              }}
+                                              style={{marginRight:6}}
+                                            />
+                                            {t}
+                                          </label>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
                               <td style={{padding:8,textAlign:'right'}}>
                                 <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
                                   <button className="btn-ghost" onClick={async () => {
                                     try {
-                                      const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title }) })
+                                      const fullUrl = editData.link_url ? buildFullUrl(editData.link_protocol || 'https://', editData.link_url) : null
+                                      const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title, tags: editData.tags || [], link_url: fullUrl }) })
                                       if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                                       await load()
                                       setEditingId(null)
+                                      setEditingTagsDropdownOpen(false)
                                     } catch (err) {
                                       alert('Save resource failed — ' + ((err as any)?.message || 'check server logs'))
                                     }
                                   }} style={{color:'#16a34a'}}>✓</button>
-                                  <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                                  <button className="btn-ghost" onClick={() => {
+                                    setEditingId(null)
+                                    setEditingTagsDropdownOpen(false)
+                                  }} style={{color:'#dc2626'}}>⊘</button>
                                 </div>
                               </td>
                             </>
@@ -787,8 +870,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               <td style={{padding:8,textAlign:'right'}}>
                                 <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
                                   <button className="btn-ghost" onClick={() => {
-                                    setEditingId(r.id)
-                                    setEditData({title: r.title})
+                                    if (r.id) {
+                                      setEditingId(r.id)
+                                      setEditData({title: r.title, tags: r.tags || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                    }
                                   }}>✎</button>
                                   <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626'}}>✕</button>
                                 </div>
@@ -819,19 +904,74 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   <div key={r.id} style={{background:theme.bg,border:`1.5px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
                     {editingId === r.id ? (
                       <>
-                        <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus style={styles.input} />
+                        <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus placeholder="Title" style={styles.input} />
+                        <div style={{display:'flex',gap:8,marginTop:8}}>
+                          <select value={editData.link_protocol || 'https://'} onChange={e => setEditData({...editData, link_protocol: e.target.value})} style={{padding:8,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',width:'auto',flexShrink:0}}>
+                            <option value="https://">https://</option>
+                            <option value="http://">http://</option>
+                          </select>
+                          <input type="text" value={editData.link_url || ''} onChange={e => setEditData({...editData, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" style={{padding:'6px 8px',border:`1.5px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,flex:1,minWidth:0}} />
+                        </div>
+                        <div style={{marginTop:12,marginBottom:12}}>
+                          <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Tags:</label>
+                          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:8}}>
+                            {(editData.tags || []).map((t: string) => (
+                              <div key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#2563eb',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                                <span>{t}</span>
+                                <button onClick={() => setEditData({...editData, tags: (editData.tags || []).filter((x: string) => x !== t)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                              </div>
+                            ))}
+                            <div style={{position:'relative'}}>
+                              <button 
+                                onClick={() => setEditingTagsDropdownOpen(!editingTagsDropdownOpen)}
+                                style={{padding:'4px 12px',border:`1.5px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                              >
+                                + Add Tag
+                              </button>
+                              {editingTagsDropdownOpen && (
+                                <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
+                                  {(allowedTags || []).filter((t: string) => !(editData.tags || []).includes(t)).map((t: string) => (
+                                    <label key={t} style={{display:'block',padding:'8px 12px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
+                                      <input 
+                                        type="checkbox" 
+                                        checked={(editData.tags || []).includes(t)}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setEditData({...editData, tags: [...(editData.tags || []), t]})
+                                          } else {
+                                            setEditData({...editData, tags: (editData.tags || []).filter((x: string) => x !== t)})
+                                          }
+                                        }}
+                                        style={{marginRight:8}}
+                                      />
+                                      {t}
+                                    </label>
+                                  ))}
+                                  {(allowedTags || []).filter(t => !(editData.tags || []).includes(t)).length === 0 && (
+                                    <div style={{padding:'12px',textAlign:'center',color:theme.textMuted,fontSize:12}}>No more tags available</div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
                           <button className="btn-ghost" onClick={async () => {
                             try {
-                              const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title }) })
+                              const fullUrl = editData.link_url ? buildFullUrl(editData.link_protocol || 'https://', editData.link_url) : null
+                              const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title, tags: editData.tags || [], link_url: fullUrl }) })
                               if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                               await load()
                               setEditingId(null)
+                              setEditingTagsDropdownOpen(false)
                             } catch (err) {
                               alert('Save resource failed — ' + ((err as any)?.message || 'check server logs'))
                             }
                           }} style={{color:'#16a34a',fontSize:14}}>✓</button>
-                          <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626',fontSize:14}}>⊘</button>
+                          <button className="btn-ghost" onClick={() => {
+                            setEditingId(null)
+                            setEditingTagsDropdownOpen(false)
+                          }} style={{color:'#dc2626',fontSize:14}}>⊘</button>
                         </div>
                       </>
                     ) : (
@@ -843,8 +983,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         </div>
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
                           <button className="btn-ghost" onClick={() => {
-                            setEditingId(r.id)
-                            setEditData({title: r.title})
+                            if (r.id) {
+                              setEditingId(r.id)
+                              setEditData({title: r.title, tags: r.tags || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                            }
                           }} style={{fontSize:13}}>✎ Edit</button>
                           <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
                         </div>
@@ -853,6 +995,73 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </div>
                 ))}
               </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Health Goals Tab */}
+      {activeTab === 'goals' && (
+        <div>
+          {loading ? <div>Loading…</div> : (
+            <div>
+              {/* Goal creation form */}
+              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1.5px solid ${theme.borderColor}`}}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Health Goal</h3>
+                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                  <input
+                    placeholder="Goal name (e.g., Weight Management)"
+                    value={newTypeName}
+                    onChange={e => setNewTypeName(e.target.value)}
+                    style={{flex:1,padding:'8px',border:`1.5px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                  />
+                  <button className="btn-primary" onClick={async () => {
+                    if (!newTypeName.trim()) return alert('Goal name required')
+                    try {
+                      const res = await supabase.from('health_goals').insert({ name: newTypeName.trim(), description: '' })
+                      if (res.error) throw res.error
+                      setNewTypeName('')
+                      // Refresh data - you might need to add a loadHealthGoals function
+                    } catch (err) {
+                      alert('Create goal failed — ' + ((err as any)?.message || 'check server logs'))
+                    }
+                  }}>Add Goal</button>
+                </div>
+              </div>
+
+              {/* Health Goals Grid */}
+              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Health Goals</h3>
+                <button onClick={() => toggleViewMode('goals')} title={viewMode.goals === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1.5px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.goals === 'card' ? '📋' : '🗂️'}</button>
+              </div>
+
+              {viewMode.goals === 'table' ? (
+                <div style={{border:`1.5px solid ${theme.borderColor}`,borderRadius:6,overflow:'auto'}}>
+                  <table style={styles.table}>
+                    <thead>
+                      <tr style={styles.tableHeader}>
+                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Goal Name</th>
+                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Description</th>
+                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Status</th>
+                        <th style={{padding:12,textAlign:'right',fontWeight:600,color:'#ffffff'}}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* You'll need to fetch and display health goals here */}
+                      <tr>
+                        <td colSpan={4} style={{padding:20,textAlign:'center',color:theme.textMuted}}>Health goals management coming soon...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
+                  {/* You'll need to fetch and display health goals here */}
+                  <div style={{background:theme.bg,border:`1.5px solid ${theme.borderColor}`,borderRadius:8,padding:16,textAlign:'center',color:theme.textMuted}}>
+                    Health goals management coming soon...
+                  </div>
+                </div>
               )}
             </div>
           )}

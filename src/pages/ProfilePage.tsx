@@ -1,9 +1,17 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
+import { supabase } from '../lib/supabase'
 
 interface ProfilePageProps {
   userEmail?: string
   userName?: string
+}
+
+interface HealthGoal {
+  id: string
+  name: string
+  description?: string
+  is_active: boolean
 }
 
 export default function Profile({ userEmail = 'user@example.com', userName = 'User' }: ProfilePageProps) {
@@ -13,13 +21,38 @@ export default function Profile({ userEmail = 'user@example.com', userName = 'Us
     email: userEmail,
     age: '',
     healthGoals: ['Weight Management', 'Energy Levels'],
-    preferredResourceTypes: ['Articles', 'Videos'],
+    preferredResourceTypes: ['video', 'article'],
     notificationsEnabled: true,
     emailUpdates: false,
   })
 
-  const resourceTypes = ['Articles', 'Videos', 'Podcasts', 'Infographics', 'Research Papers']
-  const allGoals = ['Weight Management', 'Energy Levels', 'Blood Sugar Control', 'Heart Health', 'Inflammation', 'Other']
+  const [healthGoals, setHealthGoals] = useState<HealthGoal[]>([])
+  const [resourceTypes, setResourceTypes] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Load health goals and resource types from Supabase
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        setLoading(true)
+        const [goalsResponse, typesResponse] = await Promise.all([
+          supabase.from('health_goals').select('*').eq('is_active', true).order('name'),
+          supabase.from('resource_types').select('name').eq('is_active', true).order('name')
+        ])
+
+        if (goalsResponse.error) throw goalsResponse.error
+        if (typesResponse.error) throw typesResponse.error
+
+        setHealthGoals(goalsResponse.data || [])
+        setResourceTypes((typesResponse.data || []).map(t => t.name))
+      } catch (err) {
+        console.error('Failed to load options:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadOptions()
+  }, [])
 
   const handleGoalToggle = (goal: string) => {
     setFormData(prev => ({
@@ -65,7 +98,7 @@ export default function Profile({ userEmail = 'user@example.com', userName = 'Us
   }
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto' }}>
+    <div style={{ width: '100%' }}>
       <div style={{ marginBottom: 32 }}>
         <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Profile Settings</h2>
         <p style={{ color: theme.textMuted, margin: 0 }}>Manage your account and preferences</p>
@@ -103,76 +136,84 @@ export default function Profile({ userEmail = 'user@example.com', userName = 'Us
       <div style={sectionStyle}>
         <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Health Goals</h3>
         <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>Select your primary health focus areas</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, alignItems: 'stretch' }}>
-          {allGoals.map(goal => (
-            <label
-              key={goal}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                minHeight: 52,
-                padding: '0 12px',
-                boxSizing: 'border-box',
-                lineHeight: '20px',
-                background: theme.bg,
-                border: `1.5px solid ${formData.healthGoals.includes(goal) ? theme.blue : theme.borderColor}`,
-                borderRadius: 6,
-                cursor: 'pointer',
-                color: theme.text,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={formData.healthGoals.includes(goal)}
-                onChange={() => handleGoalToggle(goal)}
-                style={{ cursor: 'pointer', flexShrink: 0 }}
-              />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{goal}</span>
-            </label>
-          ))}
-        </div>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>Loading options...</div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, alignItems: 'start' }}>
+            {healthGoals.map(goal => (
+              <label
+                key={goal.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  height: 52,
+                  padding: '0 12px',
+                  boxSizing: 'border-box',
+                  lineHeight: '20px',
+                  background: theme.bg,
+                  border: `1.5px solid ${formData.healthGoals.includes(goal.name) ? theme.blue : theme.borderColor}`,
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  color: theme.text,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.healthGoals.includes(goal.name)}
+                  onChange={() => handleGoalToggle(goal.name)}
+                  style={{ cursor: 'pointer', flexShrink: 0 }}
+                />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{goal.name}</span>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Content Preferences */}
+      {/* Resource Type Preferences */}
       <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Preferred Content Types</h3>
-        <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>Choose the formats you prefer</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, alignItems: 'stretch' }}>
-          {resourceTypes.map(type => (
-            <label
-              key={type}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                minHeight: 52,
-                padding: '0 12px',
-                boxSizing: 'border-box',
-                lineHeight: '20px',
-                background: theme.bg,
-                border: `1.5px solid ${formData.preferredResourceTypes.includes(type) ? theme.blue : theme.borderColor}`,
-                borderRadius: 6,
-                cursor: 'pointer',
-                color: theme.text,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={formData.preferredResourceTypes.includes(type)}
-                onChange={() => handleResourceTypeToggle(type)}
-                style={{ cursor: 'pointer', flexShrink: 0 }}
-              />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{type}</span>
-            </label>
-          ))}
-        </div>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Preferred Resource Types</h3>
+        <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>Choose which types of resources you prefer to see</p>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>Loading options...</div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, alignItems: 'start' }}>
+            {resourceTypes.map(type => (
+              <label
+                key={type}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  height: 52,
+                  padding: '0 12px',
+                  boxSizing: 'border-box',
+                  lineHeight: '20px',
+                  background: theme.bg,
+                  border: `1.5px solid ${formData.preferredResourceTypes.includes(type) ? theme.blue : theme.borderColor}`,
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  color: theme.text,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.preferredResourceTypes.includes(type)}
+                  onChange={() => handleResourceTypeToggle(type)}
+                  style={{ cursor: 'pointer', flexShrink: 0 }}
+                />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{type}</span>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Notifications */}

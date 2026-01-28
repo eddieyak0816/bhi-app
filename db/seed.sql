@@ -36,3 +36,17 @@ ON CONFLICT DO NOTHING;
 -- tags (persistent catalog used by the Admin tag-manager)
 INSERT INTO tags (name) VALUES ('Low_D') ON CONFLICT (name) DO NOTHING;
 INSERT INTO tags (name) VALUES ('Normal_D') ON CONFLICT (name) DO NOTHING;
+INSERT INTO tags (name) VALUES ('High_Glucose') ON CONFLICT (name) DO NOTHING;
+INSERT INTO tags (name) VALUES ('High_Cholesterol') ON CONFLICT (name) DO NOTHING;
+INSERT INTO tags (name) VALUES ('Low_Energy') ON CONFLICT (name) DO NOTHING;
+INSERT INTO tags (name) VALUES ('Weight_Management') ON CONFLICT (name) DO NOTHING;
+
+-- health_goals
+INSERT INTO health_goals (name, description) VALUES
+  ('Weight Management', 'Strategies for healthy weight control and maintenance'),
+  ('Energy Levels', 'Improving daily energy and reducing fatigue'),
+  ('Blood Sugar Control', 'Managing blood glucose levels and insulin sensitivity'),
+  ('Heart Health', 'Cardiovascular health and cholesterol management'),
+  ('Inflammation', 'Reducing chronic inflammation and supporting immune health'),
+  ('Other', 'Other health concerns and goals')
+ON CONFLICT (name) DO NOTHING;

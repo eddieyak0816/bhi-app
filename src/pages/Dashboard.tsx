@@ -8,9 +8,10 @@ interface DashboardProps {
   recentResources?: Array<{ title: string; type: string }>
   latestLabDate?: string
   bookmarkedCount?: number
+  onNavigate?: (page: string) => void
 }
 
-export default function Dashboard({ userEmail = 'user@example.com', recentResources = [], latestLabDate, bookmarkedCount = 0 }: DashboardProps) {
+export default function Dashboard({ userEmail = 'user@example.com', recentResources = [], latestLabDate, bookmarkedCount = 0, onNavigate }: DashboardProps) {
   const { theme } = useTheme()
   const { applicableTags, recommendedResources, loading, error } = useEvaluation()
   const { results } = useResults()
@@ -236,6 +237,7 @@ export default function Dashboard({ userEmail = 'user@example.com', recentResour
               fontWeight: 600,
               cursor: 'pointer',
             }}
+            onClick={() => onNavigate?.('labs')}
           >
             📊 Log Lab Results
           </button>
@@ -250,6 +252,7 @@ export default function Dashboard({ userEmail = 'user@example.com', recentResour
               fontWeight: 600,
               cursor: 'pointer',
             }}
+            onClick={() => onNavigate?.('resources')}
           >
             🔍 Browse Resources
           </button>
@@ -264,6 +267,7 @@ export default function Dashboard({ userEmail = 'user@example.com', recentResour
               fontWeight: 600,
               cursor: 'pointer',
             }}
+            onClick={() => onNavigate?.('profile')}
           >
             ⚙️ Edit Profile
           </button>

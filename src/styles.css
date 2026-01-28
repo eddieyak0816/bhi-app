@@ -51,7 +51,8 @@ body {
 }
 
 body.dark-mode .header {
-  border-color: #ffffff;
+  border: 1px solid #ffffff;
+  border-left: 3px solid var(--primary-blue);
 }
 
 .header h1 {
@@ -78,10 +79,10 @@ body.dark-mode .header {
 }
 
 body.dark-mode .card {
-  border-top: 1.5px solid #ffffff;
-  border-right: 1.5px solid #ffffff;
-  border-bottom: 1.5px solid #ffffff;
-  border-left: 4px solid var(--primary-blue);
+  border-top: 1px solid #ffffff;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  border-left: 3px solid var(--primary-blue);
 }
 
 .card h2, .card h3 {
@@ -204,7 +205,7 @@ body.dark-mode select,
 body.dark-mode textarea {
   background: #252525;
   color: #e0e0e0;
-  border: 1px solid #555;
+  border: 0.75px solid #555;
 }
 
 body.dark-mode input::placeholder,
@@ -223,11 +224,11 @@ body.dark-mode table {
 
 body.dark-mode table thead {
   background: #252525;
-  border: 1px solid #555;
+  border: 0.75px solid #555;
 }
 
 body.dark-mode table tbody tr {
-  border: 1px solid #555;
+  border: 0.75px solid #555;
 }
 
 .resources-list {
