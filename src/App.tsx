@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { SupabaseClient, createClient } from '@supabase/supabase-js'
 import { ThemeProvider } from './context/ThemeContext'
 import { ResultsProvider } from './context/ResultsContext'
 import { EvaluationProvider } from './context/EvaluationContext'
@@ -17,17 +16,9 @@ import Resources from './pages/ResourcesPage'
 import Labs from './pages/LabsPage'
 import Profile from './pages/ProfilePage'
 import { loadSampleData, SampleData } from './sample-data'
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-
-function createOptionalSupabase() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null
-  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-}
+import { supabase } from './lib/supabase'
 
 function AppContent() {
-  const [supabase] = useState<SupabaseClient | null>(() => createOptionalSupabase())
   const [data, setData] = useState<SampleData | null>(null)
   const [dataSource, setDataSource] = useState<'supabase' | 'sample' | 'none'>('none')
   const [currentPage, setCurrentPage] = useState<string>('home')
@@ -37,57 +28,72 @@ function AppContent() {
   const [currentRoute, setCurrentRoute] = useState<string>('login')
   const { isAuthenticated, loading } = useAuth()
 
+  console.log('[App] Auth state - isAuthenticated:', isAuthenticated, 'loading:', loading, 'currentRoute:', currentRoute, 'data exists:', !!data)
+
   useEffect(() => {
     let mounted = true
+    console.log('[App] Starting data load...')
     async function init() {
-      // Prefer Supabase when configured, but be explicit about what we received so debugging is easy
-      if (supabase) {
-        try {
-          const [{ data: lm, error: lmErr }, { data: lr, error: lrErr }, { data: r, error: rErr }] = await Promise.all([
-            supabase.from('lab_markers').select('id,name,unit'),
-            supabase.from('logic_rules').select('marker_id,min_value,max_value,tag_to_apply'),
-            supabase.from('resources').select('type,title,description,link_url,tags')
-          ])
+      // Load data from Supabase with timeout
+      try {
+        console.log('[App] Making Supabase queries...')
+        
+        const queryPromise = Promise.all([
+          supabase.from('lab_markers').select('id,name,unit'),
+          supabase.from('logic_rules').select('marker_id,min_value,max_value,tag_to_apply'),
+          supabase.from('resources').select('type,title,description,link_url,tags')
+        ])
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Data load timeout')), 5000)
+        )
 
-          // Log detailed results for debugging (visible in DevTools)
-          console.debug('Supabase query results', {
-            lab_markers_count: (lm || []).length,
-            logic_rules_count: (lr || []).length,
-            resources_count: (r || []).length,
-            errors: { lmErr, lrErr, rErr }
-          })
+        const [{ data: lm, error: lmErr }, { data: lr, error: lrErr }, { data: r, error: rErr }] = await Promise.race([
+          queryPromise,
+          timeoutPromise as any
+        ]) as any
 
-          if (!mounted) return
+        console.log('[App] Supabase queries completed', {
+          lab_markers_count: (lm || []).length,
+          logic_rules_count: (lr || []).length,
+          resources_count: (r || []).length,
+          errors: { lmErr, lrErr, rErr }
+        })
 
-          // If queries returned usable rows, use them; otherwise fall back to sample data
-          const hasRows = (lm && lm.length > 0) || (lr && lr.length > 0) || (r && r.length > 0)
-          if (hasRows && !lmErr && !lrErr && !rErr) {
-            const normalizeTags = (t: any): string[] => {
-              if (!t) return []
-              if (Array.isArray(t)) return t.map(String).map(s => s.trim())
-              // Postgres text[] sometimes arrives as a string like '{a,b}' — handle that
-              if (typeof t === 'string') return t.replace(/^[{]|[}]$/g, '').split(',').map(s => s.trim()).filter(Boolean)
-              return []
-            }
-            const normalizedResources = (r || []).map((res: any) => ({ ...res, tags: normalizeTags(res.tags) }))
-            setData({ lab_markers: lm || [], logic_rules: lr || [], resources: normalizedResources })
-            setDataSource('supabase')
-            return
+        if (!mounted) return
+
+        // If queries returned usable rows, use them; otherwise fall back to sample data
+        const hasRows = (lm && lm.length > 0) || (lr && lr.length > 0) || (r && r.length > 0)
+        if (hasRows && !lmErr && !lrErr && !rErr) {
+          const normalizeTags = (t: any): string[] => {
+            if (!t) return []
+            if (Array.isArray(t)) return t.map(String).map(s => s.trim())
+            // Postgres text[] sometimes arrives as a string like '{a,b}' — handle that
+            if (typeof t === 'string') return t.replace(/^[{]|[}]$/g, '').split(',').map(s => s.trim()).filter(Boolean)
+            return []
           }
-
-          console.warn('Supabase connected but returned no rows or errors — falling back to sample data', { lmErr, lrErr, rErr })
-        } catch (err) {
-          console.warn('Supabase read failed (exception), falling back to sample data', err)
+          const normalizedResources = (r || []).map((res: any) => ({ ...res, tags: normalizeTags(res.tags) }))
+          setData({ lab_markers: lm || [], logic_rules: lr || [], resources: normalizedResources })
+          setDataSource('supabase')
+          console.log('[App] Using Supabase data')
+          return
         }
+
+        console.warn('Supabase connected but returned no rows or errors — falling back to sample data', { lmErr, lrErr, rErr })
+      } catch (err) {
+        console.warn('[App] Supabase data load failed or timed out, falling back to sample data', err)
       }
 
-      // fallback
-      setData(loadSampleData())
-      setDataSource('sample')
+      // Always fall back to sample data if we get here
+      if (mounted) {
+        console.log('[App] Using sample data')
+        setData(loadSampleData())
+        setDataSource('sample')
+      }
     }
     init()
     return () => { mounted = false }
-  }, [supabase, refreshKey])
+  }, [refreshKey])
 
   // Handle hash-based routing
   useEffect(() => {
@@ -144,6 +150,7 @@ function AppContent() {
     return <LoginPage />
   }
 
+  console.log('[App] About to check data, data exists:', !!data, 'dataSource:', dataSource)
   if (!data) return <div className="center">Loading…</div>
 
   if (showOnboard) {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 export type UserRole = 'user' | 'admin' | 'super_admin'
@@ -26,59 +26,127 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const initializedRef = useRef(false)
 
   // Initialize auth state on mount
   useEffect(() => {
     let mounted = true
 
-    async function initAuth() {
+    // Check for existing session first
+    const initializeAuth = async () => {
       try {
-        // Get current session
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session }, error } = await supabase.auth.getSession()
+        console.log('[Auth] getSession result:', session?.user?.id, error)
 
-        if (session?.user && mounted) {
-          // Fetch user role from profiles table
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('name, role')
-            .eq('id', session.user.id)
-            .single()
+        if (!mounted) return
 
-          setUser({
+        if (error) {
+          console.error('[Auth] getSession error:', error)
+          setLoading(false)
+          initializedRef.current = true
+          return
+        }
+
+        if (session?.user) {
+          // Set basic user info immediately
+          const basicUser = {
             id: session.user.id,
             email: session.user.email || '',
-            name: profile?.name || '',
-            role: (profile?.role || 'user') as UserRole,
-          })
+            name: session.user.user_metadata?.name || '',
+            role: 'user' as UserRole,
+          }
+          setUser(basicUser)
+          console.log('[Auth] Session found, user set')
+
+          // Fetch profile for role
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('name, role')
+              .eq('id', session.user.id)
+              .single()
+
+            if (!mounted) return
+
+            if (!profileError && profile) {
+              console.log('[Auth] Profile loaded, role:', profile.role)
+              setUser({
+                id: session.user.id,
+                email: session.user.email || '',
+                name: profile.name || '',
+                role: (profile.role || 'user') as UserRole,
+              })
+            } else if (profileError) {
+              console.warn('[Auth] Profile fetch error:', profileError)
+            }
+          } catch (profileErr) {
+            console.warn('[Auth] Profile fetch exception:', profileErr)
+          }
+        } else {
+          console.log('[Auth] No existing session')
+        }
+
+        if (mounted) {
+          setLoading(false)
+          initializedRef.current = true
         }
       } catch (err) {
-        console.error('Auth init error:', err)
-      } finally {
-        if (mounted) setLoading(false)
+        console.error('[Auth] Init error:', err)
+        if (mounted) {
+          setLoading(false)
+          initializedRef.current = true
+        }
       }
     }
 
-    initAuth()
+    initializeAuth()
 
-    // Listen for auth state changes
+    // Listen for auth state changes after initial load
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[Auth] State change:', event)
       if (!mounted) return
 
-      if (session?.user) {
+      // Ignore INITIAL_SESSION event - we handle that in initializeAuth
+      if (event === 'INITIAL_SESSION') {
+        return
+      }
+
+      // Ignore events while we're still initializing
+      if (!initializedRef.current) {
+        console.log('[Auth] Ignoring event during initialization:', event)
+        return
+      }
+
+      if (event === 'SIGNED_OUT') {
+        console.log('[Auth] Signed out')
+        setUser(null)
+        return
+      }
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        const basicUser = {
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.user_metadata?.name || '',
+          role: 'user' as UserRole,
+        }
+        setUser(basicUser)
+
+        // Fetch profile
         const { data: profile } = await supabase
           .from('profiles')
           .select('name, role')
           .eq('id', session.user.id)
           .single()
 
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          name: profile?.name || '',
-          role: (profile?.role || 'user') as UserRole,
-        })
-      } else {
-        setUser(null)
+        if (profile && mounted) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: profile.name || '',
+            role: (profile.role || 'user') as UserRole,
+          })
+        }
       }
     })
 
@@ -185,11 +253,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = async () => {
+    console.log('[Auth] Logging out...')
     try {
-      await supabase.auth.signOut()
+      // Clear user state immediately for responsive UI
       setUser(null)
+      await supabase.auth.signOut()
+      console.log('[Auth] Logout complete')
     } catch (err) {
-      console.error('Logout error:', err)
+      console.error('[Auth] Logout error:', err)
+      // Still clear user even if signOut fails
+      setUser(null)
     }
   }
 
