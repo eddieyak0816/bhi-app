@@ -26,7 +26,7 @@ function AppContent() {
   const [tags, setTags] = useState<string[]>([])
   const [refreshKey, setRefreshKey] = useState(0)
   const [currentRoute, setCurrentRoute] = useState<string>('login')
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, user } = useAuth()
 
   console.log('[App] Auth state - isAuthenticated:', isAuthenticated, 'loading:', loading, 'currentRoute:', currentRoute, 'data exists:', !!data)
 
@@ -167,7 +167,7 @@ function AppContent() {
         {currentPage === 'home' && <Dashboard recentResources={data.resources.slice(0, 3)} bookmarkedCount={2} onNavigate={handleNavigate} />}
         {currentPage === 'resources' && <Resources />}
         {currentPage === 'labs' && <Labs />}
-        {currentPage === 'profile' && <Profile userEmail="user@example.com" userName="John Doe" />}
+        {currentPage === 'profile' && <Profile userEmail={user?.email} userName={user?.name} />}
         {currentPage === 'admin' && <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} />}
       </Layout>
     </ProtectedRoute>

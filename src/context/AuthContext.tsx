@@ -58,30 +58,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(basicUser)
           console.log('[Auth] Session found, user set')
 
-          // Fetch profile for role
-          try {
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('name, role')
-              .eq('id', session.user.id)
-              .single()
+          // Fetch profile for role - add retry logic
+          const fetchProfile = async (retries = 3): Promise<void> => {
+            for (let i = 0; i < retries; i++) {
+              try {
+                console.log(`[Auth] Fetching profile (attempt ${i + 1})...`)
+                const { data: profile, error: profileError } = await supabase
+                  .from('profiles')
+                  .select('name, role')
+                  .eq('id', session.user.id)
+                  .single()
 
-            if (!mounted) return
+                if (!mounted) return
 
-            if (!profileError && profile) {
-              console.log('[Auth] Profile loaded, role:', profile.role)
-              setUser({
-                id: session.user.id,
-                email: session.user.email || '',
-                name: profile.name || '',
-                role: (profile.role || 'user') as UserRole,
-              })
-            } else if (profileError) {
-              console.warn('[Auth] Profile fetch error:', profileError)
+                if (!profileError && profile) {
+                  console.log('[Auth] Profile loaded successfully, role:', profile.role)
+                  setUser({
+                    id: session.user.id,
+                    email: session.user.email || '',
+                    name: profile.name || '',
+                    role: (profile.role || 'user') as UserRole,
+                  })
+                  return
+                } else if (profileError) {
+                  console.warn(`[Auth] Profile fetch error (attempt ${i + 1}):`, profileError.message, profileError.code)
+                  // If it's a "not found" error, the profile might not exist yet
+                  if (profileError.code === 'PGRST116' && i < retries - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500))
+                    continue
+                  }
+                }
+              } catch (profileErr) {
+                console.warn(`[Auth] Profile fetch exception (attempt ${i + 1}):`, profileErr)
+                if (i < retries - 1) {
+                  await new Promise(resolve => setTimeout(resolve, 500))
+                }
+              }
             }
-          } catch (profileErr) {
-            console.warn('[Auth] Profile fetch exception:', profileErr)
           }
+          await fetchProfile()
         } else {
           console.log('[Auth] No existing session')
         }

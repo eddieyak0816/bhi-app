@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 
 interface ProfilePageProps {
@@ -14,14 +15,20 @@ interface HealthGoal {
   is_active: boolean
 }
 
-export default function Profile({ userEmail = 'user@example.com', userName = 'User' }: ProfilePageProps) {
+export default function Profile({ userEmail, userName }: ProfilePageProps) {
   const { theme } = useTheme()
+  const { user } = useAuth()
+
+  // Use auth context user data, falling back to props
+  const displayEmail = user?.email || userEmail || ''
+  const displayName = user?.name || userName || ''
+
   const [formData, setFormData] = useState({
-    fullName: userName,
-    email: userEmail,
-    age: '',
-    healthGoals: ['Weight Management', 'Energy Levels'],
-    preferredResourceTypes: ['video', 'article'],
+    fullName: displayName,
+    email: displayEmail,
+    age: '49',
+    healthGoals: [] as string[],
+    preferredResourceTypes: [] as string[],
     notificationsEnabled: true,
     emailUpdates: false,
   })
@@ -29,29 +36,66 @@ export default function Profile({ userEmail = 'user@example.com', userName = 'Us
   const [healthGoals, setHealthGoals] = useState<HealthGoal[]>([])
   const [resourceTypes, setResourceTypes] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  // Load health goals and resource types from Supabase
+  // Update form data when user changes
   useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      fullName: displayName,
+      email: displayEmail,
+    }))
+  }, [displayName, displayEmail])
+
+  // Load health goals and resource types from Supabase with timeout
+  useEffect(() => {
+    let mounted = true
+
     const loadOptions = async () => {
       try {
         setLoading(true)
-        const [goalsResponse, typesResponse] = await Promise.all([
+        setLoadError(null)
+
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Loading timed out')), 5000)
+        )
+
+        const queryPromise = Promise.all([
           supabase.from('health_goals').select('*').eq('is_active', true).order('name'),
           supabase.from('resource_types').select('name').eq('is_active', true).order('name')
         ])
 
-        if (goalsResponse.error) throw goalsResponse.error
-        if (typesResponse.error) throw typesResponse.error
+        const [goalsResponse, typesResponse] = await Promise.race([
+          queryPromise,
+          timeoutPromise
+        ]) as any
+
+        if (!mounted) return
+
+        if (goalsResponse.error) {
+          console.warn('Health goals fetch error:', goalsResponse.error)
+        }
+        if (typesResponse.error) {
+          console.warn('Resource types fetch error:', typesResponse.error)
+        }
 
         setHealthGoals(goalsResponse.data || [])
-        setResourceTypes((typesResponse.data || []).map(t => t.name))
+        setResourceTypes((typesResponse.data || []).map((t: any) => t.name))
       } catch (err) {
         console.error('Failed to load options:', err)
+        if (mounted) {
+          setLoadError('Could not load options. Please refresh the page.')
+        }
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
     loadOptions()
+
+    return () => { mounted = false }
   }, [])
 
   const handleGoalToggle = (goal: string) => {
@@ -138,6 +182,10 @@ export default function Profile({ userEmail = 'user@example.com', userName = 'Us
         <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>Select your primary health focus areas</p>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>Loading options...</div>
+        ) : loadError ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#DC2626' }}>{loadError}</div>
+        ) : healthGoals.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>No health goals configured yet.</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, alignItems: 'start' }}>
             {healthGoals.map(goal => (
@@ -180,6 +228,10 @@ export default function Profile({ userEmail = 'user@example.com', userName = 'Us
         <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>Choose which types of resources you prefer to see</p>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>Loading options...</div>
+        ) : loadError ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#DC2626' }}>{loadError}</div>
+        ) : resourceTypes.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>No resource types configured yet.</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, alignItems: 'start' }}>
             {resourceTypes.map(type => (
