@@ -3,7 +3,11 @@ import { SupabaseClient, createClient } from '@supabase/supabase-js'
 import { ThemeProvider } from './context/ThemeContext'
 import { ResultsProvider } from './context/ResultsContext'
 import { EvaluationProvider } from './context/EvaluationContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { Layout } from './components/Layout'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
 import Onboarding from './pages/Onboarding'
 import LabInput from './pages/LabInput'
 import Results from './pages/Results'
@@ -30,6 +34,8 @@ function AppContent() {
   const [showOnboard, setShowOnboard] = useState(true)
   const [tags, setTags] = useState<string[]>([])
   const [refreshKey, setRefreshKey] = useState(0)
+  const [currentRoute, setCurrentRoute] = useState<string>('login')
+  const { isAuthenticated, loading } = useAuth()
 
   useEffect(() => {
     let mounted = true
@@ -83,6 +89,61 @@ function AppContent() {
     return () => { mounted = false }
   }, [supabase, refreshKey])
 
+  // Handle hash-based routing
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1) || '/'
+      if (hash === '/login' || hash === '/signup' || hash === '/') {
+        setCurrentRoute(hash === '/' ? 'login' : hash.slice(1))
+      } else if (isAuthenticated) {
+        // Navigate to dashboard if authenticated
+        const route = hash.split('/')[1] || 'home'
+        setCurrentRoute(route)
+      } else {
+        // Redirect to login if not authenticated
+        setCurrentRoute('login')
+        window.location.hash = '#/login'
+      }
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+    handleHashChange() // Initial route
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [isAuthenticated])
+
+  // Handle auth state changes
+  useEffect(() => {
+    if (loading) return
+    
+    if (!isAuthenticated && currentRoute !== 'login' && currentRoute !== 'signup') {
+      window.location.hash = '#/login'
+    } else if (isAuthenticated && (currentRoute === 'login' || currentRoute === 'signup')) {
+      window.location.hash = '#/home'
+    }
+  }, [isAuthenticated, loading, currentRoute])
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
+  // Route to login/signup pages
+  if (currentRoute === 'login') {
+    return <LoginPage />
+  }
+
+  if (currentRoute === 'signup') {
+    return <SignupPage />
+  }
+
+  // All other routes require authentication
+  if (!isAuthenticated) {
+    return <LoginPage />
+  }
+
   if (!data) return <div className="center">Loading…</div>
 
   if (showOnboard) {
@@ -94,24 +155,28 @@ function AppContent() {
   }
 
   return (
-    <Layout currentPage={currentPage} onNavigate={handleNavigate}>
-      {currentPage === 'home' && <Dashboard recentResources={data.resources.slice(0, 3)} bookmarkedCount={2} onNavigate={handleNavigate} />}
-      {currentPage === 'resources' && <Resources resources={data.resources.map((r, i) => ({ id: String(i), ...r, bookmarked: i % 3 === 0 }))} />}
-      {currentPage === 'labs' && <Labs />}
-      {currentPage === 'profile' && <Profile userEmail="user@example.com" userName="John Doe" />}
-      {currentPage === 'admin' && <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} />}
-    </Layout>
+    <ProtectedRoute>
+      <Layout currentPage={currentPage} onNavigate={handleNavigate} onLogout={() => { window.location.hash = '#/login' }}>
+        {currentPage === 'home' && <Dashboard recentResources={data.resources.slice(0, 3)} bookmarkedCount={2} onNavigate={handleNavigate} />}
+        {currentPage === 'resources' && <Resources />}
+        {currentPage === 'labs' && <Labs />}
+        {currentPage === 'profile' && <Profile userEmail="user@example.com" userName="John Doe" />}
+        {currentPage === 'admin' && <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} />}
+      </Layout>
+    </ProtectedRoute>
   )
 }
 
 export default function App() {
   return (
     <ThemeProvider>
-      <ResultsProvider>
-        <EvaluationProvider>
-          <AppContent />
-        </EvaluationProvider>
-      </ResultsProvider>
+      <AuthProvider>
+        <ResultsProvider>
+          <EvaluationProvider>
+            <AppContent />
+          </EvaluationProvider>
+        </ResultsProvider>
+      </AuthProvider>
     </ThemeProvider>
   )
 }

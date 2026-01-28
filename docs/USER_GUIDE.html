@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BHI App - User Guide</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1a1a2e;
+      background: #f8f9fc;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 60px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+      padding-bottom: 30px;
+      border-bottom: 3px solid #3D7DCA;
+    }
+
+    .logo {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 36px;
+      color: #1a1a2e;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: #666;
+    }
+
+    .disclaimer {
+      background: #FFF7ED;
+      border-left: 4px solid #B45309;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .disclaimer strong {
+      color: #92400E;
+    }
+
+    .disclaimer p {
+      color: #78350F;
+      margin-top: 8px;
+    }
+
+    h2 {
+      font-size: 28px;
+      color: #3D7DCA;
+      margin-top: 50px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    h3 {
+      font-size: 20px;
+      color: #1a1a2e;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+
+    h4 {
+      font-size: 16px;
+      color: #374151;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 15px;
+      color: #4b5563;
+    }
+
+    ul, ol {
+      margin-left: 25px;
+      margin-bottom: 20px;
+    }
+
+    li {
+      margin-bottom: 8px;
+      color: #4b5563;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    th {
+      background: #3D7DCA;
+      color: white;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .card h4 {
+      margin-top: 0;
+      color: #3D7DCA;
+    }
+
+    .tip {
+      background: #EFF6FF;
+      border-left: 4px solid #3D7DCA;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .tip strong {
+      color: #1E40AF;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 13px;
+    }
+
+    .toc {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 25px 30px;
+      margin: 30px 0;
+    }
+
+    .toc h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+
+    .toc ul {
+      list-style: none;
+      margin: 0;
+    }
+
+    .toc li {
+      margin-bottom: 8px;
+    }
+
+    .toc a {
+      color: #3D7DCA;
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 14px;
+    }
+
+    .confidential-banner {
+      background: #1a1a2e;
+      color: #ffffff;
+      padding: 15px 25px;
+      margin-bottom: 30px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .confidential-banner strong {
+      color: #EF4444;
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+
+    .confidential-banner p {
+      color: #d1d5db;
+      font-size: 12px;
+      margin: 8px 0 0 0;
+    }
+
+    .copyright-footer {
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      padding: 12px 20px;
+      margin-top: 20px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        padding: 40px;
+      }
+      h2 {
+        page-break-before: auto;
+      }
+      .section {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="confidential-banner">
+      <strong>CONFIDENTIAL & PROPRIETARY</strong>
+      <p>© 2026 Eddie Yakubovich / Maximus Digital Marketing. All rights reserved.<br>
+      Unauthorized reproduction, distribution, or disclosure is strictly prohibited.</p>
+    </div>
+
+    <div class="header">
+      <div class="logo">🏥</div>
+      <h1>BHI App User Guide</h1>
+      <p class="subtitle">Balanced Health Institute - Health Education Platform</p>
+    </div>
+
+    <div class="disclaimer">
+      <strong>⚠️ Important Disclaimer</strong>
+      <p>This is an educational tool, not a medical diagnostic service. Always consult your healthcare provider for medical advice.</p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ul>
+        <li><a href="#getting-started">1. Getting Started</a></li>
+        <li><a href="#navigation">2. Navigation</a></li>
+        <li><a href="#dashboard">3. Home (Dashboard)</a></li>
+        <li><a href="#resources">4. Resources</a></li>
+        <li><a href="#lab-results">5. Lab Results</a></li>
+        <li><a href="#profile">6. Profile</a></li>
+        <li><a href="#admin">7. Admin Section</a></li>
+        <li><a href="#data-storage">8. Data Storage</a></li>
+        <li><a href="#tips">9. Tips</a></li>
+        <li><a href="#troubleshooting">10. Troubleshooting</a></li>
+      </ul>
+    </div>
+
+    <!-- Getting Started -->
+    <h2 id="getting-started">1. Getting Started</h2>
+
+    <h3>First Launch</h3>
+    <p>When you first open the app, you'll see a welcome screen that explains:</p>
+    <ul>
+      <li>The purpose of the platform</li>
+      <li>How to use the basic features</li>
+      <li>An important disclaimer about the educational nature of the tool</li>
+    </ul>
+    <p>Click <strong>"Get Started"</strong> to enter the main application, or <strong>"Skip Introduction"</strong> to bypass the welcome screen.</p>
+
+    <h3>Dark/Light Mode</h3>
+    <p>A theme toggle button (sun/moon icon) appears in the top-right corner of every screen. Click it to switch between light and dark modes. Your preference is saved automatically.</p>
+
+    <!-- Navigation -->
+    <h2 id="navigation">2. Navigation</h2>
+
+    <p>The app has five main sections accessible from the top navigation bar:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Tab</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Home</strong></td>
+          <td>Dashboard with quick stats and personalized recommendations</td>
+        </tr>
+        <tr>
+          <td><strong>Resources</strong></td>
+          <td>Browse all health education materials</td>
+        </tr>
+        <tr>
+          <td><strong>Lab Results</strong></td>
+          <td>Enter and view your lab test results</td>
+        </tr>
+        <tr>
+          <td><strong>Profile</strong></td>
+          <td>Manage your account settings and preferences</td>
+        </tr>
+        <tr>
+          <td><strong>Admin</strong></td>
+          <td>Content management (admin users only)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Dashboard -->
+    <h2 id="dashboard">3. Home (Dashboard)</h2>
+
+    <p>The dashboard provides an overview of your activity:</p>
+
+    <h3>Stats Cards</h3>
+    <ul>
+      <li><strong>Bookmarked Resources</strong> - Number of resources you've saved</li>
+      <li><strong>Lab Results</strong> - Number of lab results you've entered</li>
+      <li><strong>Health Insights</strong> - Categories derived from your lab results</li>
+      <li><strong>Recommendations</strong> - Resources matched to your health profile</li>
+    </ul>
+
+    <h3>Personalized Recommendations</h3>
+    <p>If you've entered lab results, the dashboard shows resources specifically matched to your health insights. These are prioritized based on how many of your categories match the resource.</p>
+
+    <h3>Quick Actions</h3>
+    <p>Shortcut buttons to:</p>
+    <ul>
+      <li>Log new lab results</li>
+      <li>Browse resources</li>
+      <li>Edit your profile</li>
+    </ul>
+
+    <!-- Resources -->
+    <h2 id="resources">4. Resources</h2>
+
+    <p>Browse the library of health education materials.</p>
+
+    <h3>Viewing Options</h3>
+    <ul>
+      <li><strong>Grid View</strong> - Card layout showing resource previews</li>
+      <li><strong>List View</strong> - Compact list format</li>
+    </ul>
+    <p>Toggle between views using the grid/list button.</p>
+
+    <h3>Filtering Resources</h3>
+    <ul>
+      <li><strong>Search</strong> - Type keywords to find resources by title or description</li>
+      <li><strong>Type Filter</strong> - Filter by resource type (e.g., video, article, guide)</li>
+      <li><strong>Category Filter</strong> - Filter by health categories</li>
+    </ul>
+
+    <h3>Resource Cards</h3>
+    <p>Each resource displays:</p>
+    <ul>
+      <li><strong>Type</strong> - The format of the resource</li>
+      <li><strong>Title</strong> - Resource name</li>
+      <li><strong>Description</strong> - Brief summary</li>
+      <li><strong>Categories</strong> - Health categories (categories matching your profile are highlighted)</li>
+    </ul>
+
+    <h3>Resource Actions</h3>
+    <ul>
+      <li><strong>Bookmark</strong> - Save to your bookmarks (stored locally)</li>
+      <li><strong>Open</strong> - Visit the external resource link</li>
+      <li><strong>View Details</strong> - See full resource information in a modal</li>
+    </ul>
+
+    <!-- Lab Results -->
+    <h2 id="lab-results">5. Lab Results</h2>
+
+    <p>Enter your lab test results to receive personalized resource recommendations.</p>
+
+    <h3>Entering Results</h3>
+    <ol>
+      <li>Select a lab marker from the dropdown (e.g., Vitamin D, Glucose, TSH)</li>
+      <li>Enter your test value</li>
+      <li>Submit to save the result</li>
+    </ol>
+
+    <h3>How Matching Works</h3>
+    <p>The app uses "logic rules" to match your lab values to health categories:</p>
+    <ul>
+      <li>Each lab marker has defined ranges (min/max values)</li>
+      <li>When your result falls within a range, the associated category is applied to your profile</li>
+      <li>Resources with matching categories are recommended to you</li>
+    </ul>
+
+    <!-- Profile -->
+    <h2 id="profile">6. Profile</h2>
+
+    <p>Manage your account and preferences.</p>
+
+    <h3>Personal Information</h3>
+    <ul>
+      <li>Full Name</li>
+      <li>Email (display only)</li>
+      <li>Age</li>
+    </ul>
+
+    <h3>Health Goals</h3>
+    <p>Select your primary health focus areas. These help personalize your experience.</p>
+
+    <h3>Preferred Resource Types</h3>
+    <p>Choose which formats you prefer (videos, articles, guides, etc.)</p>
+
+    <h3>Notifications</h3>
+    <ul>
+      <li><strong>In-App Notifications</strong> - Alerts within the application</li>
+      <li><strong>Email Updates</strong> - Weekly summary of new resources</li>
+    </ul>
+
+    <!-- Admin Section -->
+    <h2 id="admin">7. Admin Section</h2>
+
+    <p><em>This section is for administrators managing the platform content.</em></p>
+
+    <h3>Admin Tabs</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Tab</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Resources</strong></td>
+          <td>Create, edit, and delete educational resources</td>
+        </tr>
+        <tr>
+          <td><strong>Resource Types</strong></td>
+          <td>Manage the types/formats of resources</td>
+        </tr>
+        <tr>
+          <td><strong>Lab Markers</strong></td>
+          <td>Define lab tests that users can enter</td>
+        </tr>
+        <tr>
+          <td><strong>Categories</strong></td>
+          <td>Manage health category categories</td>
+        </tr>
+        <tr>
+          <td><strong>Health Goals</strong></td>
+          <td>Configure available health goals for user profiles</td>
+        </tr>
+        <tr>
+          <td><strong>Criteria</strong></td>
+          <td>Set up logic rules that match lab values to categories</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Managing Resources</h3>
+
+    <h4>Creating a Resource</h4>
+    <ol>
+      <li>In the "Create New Resource" section, select a type</li>
+      <li>Enter the title</li>
+      <li>Optionally add a URL link</li>
+      <li>Select applicable categories</li>
+      <li>Click "Create"</li>
+    </ol>
+
+    <h4>Filtering Resources</h4>
+    <p>Use the Filter Resources box to search by:</p>
+    <ul>
+      <li>Keyword (searches titles)</li>
+      <li>Type (multi-select)</li>
+      <li>Categories (multi-select)</li>
+    </ul>
+    <p>Click "Clear Filters" to reset.</p>
+
+    <h3>Managing Criteria (Logic Rules)</h3>
+    <p>Criteria define how lab results map to categories. Each rule specifies:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Lab Marker</strong></td>
+          <td>Which test this rule applies to</td>
+        </tr>
+        <tr>
+          <td><strong>Min Value</strong></td>
+          <td>Lower bound of the range (optional)</td>
+        </tr>
+        <tr>
+          <td><strong>Max Value</strong></td>
+          <td>Upper bound of the range (optional)</td>
+        </tr>
+        <tr>
+          <td><strong>Category to Apply</strong></td>
+          <td>The category assigned when the value matches</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card">
+      <h4>Example Rule</h4>
+      <ul>
+        <li><strong>Marker:</strong> Vitamin D</li>
+        <li><strong>Min:</strong> 0</li>
+        <li><strong>Max:</strong> 29</li>
+        <li><strong>Category:</strong> "Low Vitamin D"</li>
+      </ul>
+      <p>When a user enters a Vitamin D result of 25, they receive the "Low Vitamin D" category, and resources with that category are recommended.</p>
+    </div>
+
+    <!-- Data Storage -->
+    <h2 id="data-storage">8. Data Storage</h2>
+
+    <h3>What's Stored Locally (Browser)</h3>
+    <ul>
+      <li>Dark/light mode preference</li>
+      <li>Bookmarked resources</li>
+    </ul>
+
+    <h3>What's Stored in the Database</h3>
+    <ul>
+      <li>Resources and their metadata</li>
+      <li>Lab markers and logic rules</li>
+      <li>Categories and resource types</li>
+      <li>Health goals</li>
+      <li>User-entered lab results</li>
+    </ul>
+
+    <!-- Tips -->
+    <h2 id="tips">9. Tips</h2>
+
+    <div class="tip">
+      <p><strong>1. Enter accurate lab values</strong> - The recommendation system depends on correct data</p>
+    </div>
+
+    <div class="tip">
+      <p><strong>2. Use bookmarks</strong> - Save resources you want to revisit</p>
+    </div>
+
+    <div class="tip">
+      <p><strong>3. Check the dashboard</strong> - Personalized recommendations update as you add lab results</p>
+    </div>
+
+    <div class="tip">
+      <p><strong>4. Try both view modes</strong> - Grid view for browsing, list view for scanning</p>
+    </div>
+
+    <!-- Troubleshooting -->
+    <h2 id="troubleshooting">10. Troubleshooting</h2>
+
+    <h3>Resources not loading</h3>
+    <ul>
+      <li>Check your internet connection</li>
+      <li>Refresh the page</li>
+      <li>Clear browser cache if issues persist</li>
+    </ul>
+
+    <h3>Recommendations not appearing</h3>
+    <ul>
+      <li>Ensure you've entered lab results</li>
+      <li>Verify that logic rules exist for your markers (admin)</li>
+      <li>Check that resources have matching categories (admin)</li>
+    </ul>
+
+    <h3>Dark mode not saving</h3>
+    <ul>
+      <li>Ensure cookies/localStorage are enabled in your browser</li>
+    </ul>
+
+    <div class="footer">
+      <p><strong>BHI App User Guide</strong></p>
+      <p>Document Version: 1.0 | Last Updated: January 2026</p>
+      <p>Balanced Health Institute</p>
+      <div class="copyright-footer">
+        <strong>© 2026 Eddie Yakubovich / Maximus Digital Marketing. All rights reserved. Confidential.</strong>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -163,7 +163,7 @@ export default function Resources() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Tag</label>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Category</label>
                 <select
                   value={filterTag}
                   onChange={e => setFilterTag(e.target.value)}
@@ -177,7 +177,7 @@ export default function Resources() {
                     color: theme.text,
                   }}
                 >
-                  <option value="">All Tags</option>
+                  <option value="">All Categories</option>
                   {uniqueTags.map(t => (
                     <option key={t} value={t}>
                       {t}

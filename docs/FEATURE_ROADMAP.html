@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BHI App - Feature Roadmap</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1a1a2e;
+      background: #f8f9fc;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 60px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+      padding-bottom: 30px;
+      border-bottom: 3px solid #3D7DCA;
+    }
+
+    .logo {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 36px;
+      color: #1a1a2e;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: #666;
+    }
+
+    h2 {
+      font-size: 24px;
+      color: #3D7DCA;
+      margin-top: 50px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    h3 {
+      font-size: 18px;
+      color: #1a1a2e;
+      margin-top: 25px;
+      margin-bottom: 12px;
+    }
+
+    h4 {
+      font-size: 15px;
+      color: #374151;
+      margin-top: 18px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      margin-bottom: 12px;
+      color: #4b5563;
+    }
+
+    ul, ol {
+      margin-left: 25px;
+      margin-bottom: 15px;
+    }
+
+    li {
+      margin-bottom: 6px;
+      color: #4b5563;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 14px;
+    }
+
+    th {
+      background: #3D7DCA;
+      color: white;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .status-decided {
+      display: inline-block;
+      background: #10B981;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .status-open {
+      display: inline-block;
+      background: #F59E0B;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .feature-card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-left: 4px solid #3D7DCA;
+      border-radius: 0 8px 8px 0;
+      padding: 20px 25px;
+      margin: 25px 0;
+    }
+
+    .feature-card.decided {
+      border-left-color: #10B981;
+    }
+
+    .feature-card h2 {
+      margin-top: 0;
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .questions-box {
+      background: #FEF3C7;
+      border: 1px solid #F59E0B;
+      border-radius: 8px;
+      padding: 15px 20px;
+      margin: 15px 0;
+    }
+
+    .questions-box h4 {
+      color: #92400E;
+      margin-top: 0;
+    }
+
+    .questions-box ol {
+      margin-bottom: 0;
+    }
+
+    .questions-box li {
+      color: #78350F;
+    }
+
+    .implementation-box {
+      background: #ECFDF5;
+      border: 1px solid #10B981;
+      border-radius: 8px;
+      padding: 15px 20px;
+      margin: 15px 0;
+    }
+
+    .implementation-box h4 {
+      color: #065F46;
+      margin-top: 0;
+    }
+
+    .implementation-box ol {
+      margin-bottom: 0;
+    }
+
+    .priority-high {
+      background: #FEE2E2;
+      color: #991B1B;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .priority-medium {
+      background: #FEF3C7;
+      color: #92400E;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .priority-low {
+      background: #E0E7FF;
+      color: #3730A3;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .toc {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 25px 30px;
+      margin: 30px 0;
+    }
+
+    .toc h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+
+    .toc ul {
+      list-style: none;
+      margin: 0;
+      columns: 2;
+    }
+
+    .toc li {
+      margin-bottom: 8px;
+    }
+
+    .toc a {
+      color: #3D7DCA;
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 14px;
+    }
+
+    .confidential-banner {
+      background: #1a1a2e;
+      color: #ffffff;
+      padding: 15px 25px;
+      margin-bottom: 30px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .confidential-banner strong {
+      color: #EF4444;
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+
+    .confidential-banner p {
+      color: #d1d5db;
+      font-size: 12px;
+      margin: 8px 0 0 0;
+    }
+
+    .copyright-footer {
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      padding: 12px 20px;
+      margin-top: 20px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 40px 0;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        padding: 40px;
+      }
+      .feature-card {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="confidential-banner">
+      <strong>CONFIDENTIAL & PROPRIETARY</strong>
+      <p>© 2026 Eddie Yakubovich / Maximus Digital Marketing. All rights reserved.<br>
+      Unauthorized reproduction, distribution, or disclosure is strictly prohibited.</p>
+    </div>
+
+    <div class="header">
+      <div class="logo">🚀</div>
+      <h1>BHI App Feature Roadmap</h1>
+      <p class="subtitle">Planned Features and Enhancements</p>
+    </div>
+
+    <div class="toc">
+      <h3>Table of Contents</h3>
+      <ul>
+        <li><a href="#auth">1. User Authentication & Roles</a></li>
+        <li><a href="#search">2. Search Functionality</a></li>
+        <li><a href="#bookmarks">3. Bookmarks Persistence</a></li>
+        <li><a href="#recent">4. Recently Viewed</a></li>
+        <li><a href="#export">5. Print/Export Lab Results</a></li>
+        <li><a href="#history">6. Lab Result History</a></li>
+        <li><a href="#ranges">7. Reference Ranges</a></li>
+        <li><a href="#ratings">8. Resource Ratings</a></li>
+        <li><a href="#related">9. Related Resources</a></li>
+        <li><a href="#categories">10. Rename Tags to Categories</a></li>
+        <li><a href="#bulk">11. Bulk Import/Export</a></li>
+        <li><a href="#analytics">12. Analytics Dashboard</a></li>
+        <li><a href="#draft">13. Draft/Publish Workflow</a></li>
+        <li><a href="#duplicate">14. Duplicate Detection</a></li>
+        <li><a href="#email">15. Email Notifications</a></li>
+        <li><a href="#progress">16. Progress Tracking</a></li>
+        <li><a href="#notes">17. Notes Feature</a></li>
+      </ul>
+    </div>
+
+    <!-- Priority Overview -->
+    <h2>Implementation Priority Overview</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Priority</th>
+          <th>Feature</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="priority-high">HIGH</span></td>
+          <td>User Authentication & Roles</td>
+          <td><span class="status-decided">DECIDED</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-high">HIGH</span></td>
+          <td>Rename Tags to Categories</td>
+          <td><span class="status-completed">COMPLETED</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-high">HIGH</span></td>
+          <td>Bookmarks Persistence</td>
+          <td><span class="status-open">OPEN</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-medium">MEDIUM</span></td>
+          <td>Search Functionality</td>
+          <td><span class="status-open">OPEN</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-medium">MEDIUM</span></td>
+          <td>Reference Ranges Display</td>
+          <td><span class="status-open">OPEN</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-medium">MEDIUM</span></td>
+          <td>Lab Result History</td>
+          <td><span class="status-open">OPEN</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-medium">MEDIUM</span></td>
+          <td>Print/Export Lab Results</td>
+          <td><span class="status-open">OPEN</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-medium">MEDIUM</span></td>
+          <td>Draft/Publish Workflow</td>
+          <td><span class="status-open">OPEN</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-low">LOW</span></td>
+          <td>Related Resources</td>
+          <td><span class="status-open">OPEN</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-low">LOW</span></td>
+          <td>Resource Ratings</td>
+          <td><span class="status-open">OPEN</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-low">LOW</span></td>
+          <td>All Others</td>
+          <td><span class="status-open">OPEN</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr class="divider">
+
+    <!-- Feature 1: Auth -->
+    <div class="feature-card decided" id="auth">
+      <h2>1. User Authentication & Roles <span class="status-decided">DECIDED</span></h2>
+
+      <p>Implement a login system with different user roles that control access to features.</p>
+
+      <h3>Technical Implementation</h3>
+      <p><strong>Authentication Service:</strong> Supabase Auth (integrated with existing Supabase database)</p>
+
+      <h3>User Roles</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Permissions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>User</strong></td>
+            <td>View resources, enter lab results, manage own profile, bookmark resources</td>
+          </tr>
+          <tr>
+            <td><strong>Admin</strong></td>
+            <td>All User permissions + manage resources, types, markers, categories, criteria</td>
+          </tr>
+          <tr>
+            <td><strong>Super Admin</strong></td>
+            <td>All Admin permissions + manage users, set reference ranges, access analytics</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Registration & Login Decisions</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Setting</th>
+            <th>Decision</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Registration</td>
+            <td>Both self-registration AND admin invitations</td>
+          </tr>
+          <tr>
+            <td>Login method</td>
+            <td>Email/password (username can be used instead of email)</td>
+          </tr>
+          <tr>
+            <td>Required at signup</td>
+            <td>Email (or username), name, password</td>
+          </tr>
+          <tr>
+            <td>Email verification</td>
+            <td>Not required</td>
+          </tr>
+          <tr>
+            <td>Password requirements</td>
+            <td>Min 6 chars, uppercase, lowercase, and number</td>
+          </tr>
+          <tr>
+            <td>Session timeout</td>
+            <td>30 minutes of inactivity</td>
+          </tr>
+          <tr>
+            <td>Password reset</td>
+            <td>Standard forgot password email flow</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Role Management Rules</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Rule</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>First Super Admin</td>
+            <td>Created directly in database during initial setup</td>
+          </tr>
+          <tr>
+            <td>Creating Super Admins</td>
+            <td>Only Super Admins can create other Super Admins</td>
+          </tr>
+          <tr>
+            <td>Minimum Super Admins</td>
+            <td>System prevents deleting the last Super Admin</td>
+          </tr>
+          <tr>
+            <td>Account deletion</td>
+            <td>A user's account can only be deleted by themselves</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="implementation-box">
+        <h4>Implementation Tasks</h4>
+        <ol>
+          <li>Set up Supabase Auth configuration</li>
+          <li>Create users table with role field</li>
+          <li>Build login page</li>
+          <li>Build registration page</li>
+          <li>Build forgot password flow</li>
+          <li>Implement session timeout (30 min)</li>
+          <li>Create role-based access control</li>
+          <li>Build user management page (Super Admin only)</li>
+          <li>Seed first Super Admin account</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 2: Search -->
+    <div class="feature-card" id="search">
+      <h2>2. Search Functionality <span class="status-open">OPEN</span></h2>
+
+      <p>Global search capability across all pages to quickly find resources, lab markers, or categories.</p>
+
+      <h3>Proposed Behavior</h3>
+      <ul>
+        <li>Search bar in the header, visible on all pages</li>
+        <li>Searches across: resource titles/descriptions, category names, lab marker names</li>
+        <li>Results grouped by type</li>
+        <li>Keyboard shortcut to focus search (Ctrl+K or /)</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>Should search results link directly to items, or show a results page?</li>
+          <li>Include search history/recent searches?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 3: Bookmarks -->
+    <div class="feature-card" id="bookmarks">
+      <h2>3. Bookmarks Persistence <span class="status-open">OPEN</span></h2>
+
+      <p>Save bookmarked resources to the database instead of localStorage, so bookmarks persist across devices.</p>
+
+      <h3>Proposed Behavior</h3>
+      <ul>
+        <li>When a user bookmarks a resource, it's saved to their account</li>
+        <li>Bookmarks sync across all devices where user is logged in</li>
+        <li>Bookmarks page/section to view all saved resources</li>
+      </ul>
+
+      <p><strong>Note:</strong> Requires User Authentication (Feature #1) to be implemented first.</p>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>Should users be able to organize bookmarks into folders?</li>
+          <li>Limit on number of bookmarks?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 4: Recently Viewed -->
+    <div class="feature-card" id="recent">
+      <h2>4. Recently Viewed Resources <span class="status-open">OPEN</span></h2>
+
+      <p>Track and display resources the user has recently accessed.</p>
+
+      <h3>Proposed Behavior</h3>
+      <ul>
+        <li>Track last 10-20 resources viewed</li>
+        <li>Display on dashboard in "Recently Viewed" section</li>
+        <li>Click to quickly return to a resource</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>How many recent items to show?</li>
+          <li>Should viewing history be optional (privacy setting)?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 5: Print/Export -->
+    <div class="feature-card" id="export">
+      <h2>5. Print/Export Lab Results <span class="status-open">OPEN</span></h2>
+
+      <p>Allow users to generate a printable summary of their entered lab results.</p>
+
+      <h3>Critical Disclaimer</h3>
+      <p><strong>⚠️ The export must clearly state that this is user-entered data, not results analyzed or validated by the application.</strong></p>
+
+      <h3>Proposed Behavior</h3>
+      <ul>
+        <li>"Export" or "Print" button on Lab Results page</li>
+        <li>Generates PDF or printable view with user's name, date, lab values</li>
+        <li><strong>Prominent disclaimer</strong> that data was entered by the user</li>
+        <li>No interpretation or recommendations included</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>PDF download vs. print-friendly page view?</li>
+          <li>Should users select which results to include, or export all?</li>
+          <li>Exact disclaimer wording to use?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 6: History -->
+    <div class="feature-card" id="history">
+      <h2>6. Lab Result History <span class="status-open">OPEN</span></h2>
+
+      <p>Track lab results over time and optionally show trends.</p>
+
+      <h3>Critical Disclaimer</h3>
+      <p><strong>⚠️ Same as print/export - this is user-entered data for personal tracking only, not medical analysis.</strong></p>
+
+      <h3>Proposed Behavior</h3>
+      <ul>
+        <li>Each lab result includes a date</li>
+        <li>History view shows all past values for a marker</li>
+        <li>Optional simple line chart showing trend over time</li>
+        <li>Clear labeling that this is personal tracking, not medical advice</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>Should users enter the actual test date, or use entry date?</li>
+          <li>Show charts automatically, or as an optional view?</li>
+          <li>Allow users to delete individual historical entries?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 7: Reference Ranges -->
+    <div class="feature-card" id="ranges">
+      <h2>7. Reference Ranges Display <span class="status-open">OPEN</span></h2>
+
+      <p>Show normal/optimal reference ranges alongside lab values.</p>
+
+      <h3>Proposed Behavior</h3>
+      <ul>
+        <li>When entering or viewing a lab result, show the reference range</li>
+        <li>Visual indicator if value is low/normal/high</li>
+        <li>Reference ranges managed by Super Admin</li>
+      </ul>
+
+      <h3>Super Admin Configuration</h3>
+      <p>New admin section to set reference ranges per marker:</p>
+      <ul>
+        <li>Marker name</li>
+        <li>Low threshold</li>
+        <li>High threshold</li>
+        <li>Optimal range (optional)</li>
+        <li>Notes/source</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>Should ranges vary by user demographics (age, sex)?</li>
+          <li>Where do reference ranges come from? (Standard medical references?)</li>
+          <li>How to handle markers with no defined range?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 8: Ratings -->
+    <div class="feature-card" id="ratings">
+      <h2>8. Resource Ratings/Feedback <span class="status-open">OPEN</span></h2>
+
+      <p>Allow users to rate resources and provide feedback on helpfulness.</p>
+
+      <h3>Proposed Behavior</h3>
+      <ul>
+        <li>Rating system (1-5 stars, or thumbs up/down)</li>
+        <li>Optional text feedback</li>
+        <li>Average rating displayed on resource cards</li>
+        <li>Admin can view feedback</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>Star rating (1-5) or simple helpful/not helpful?</li>
+          <li>Should ratings affect resource visibility or recommendations?</li>
+          <li>Can admins respond to feedback?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 9: Related -->
+    <div class="feature-card" id="related">
+      <h2>9. Related Resources <span class="status-open">OPEN</span></h2>
+
+      <p>Show "related resources" suggestions based on similarity.</p>
+
+      <h3>Matching Logic</h3>
+      <p>Resources are considered related if they share:</p>
+      <ul>
+        <li>Categories (most weight)</li>
+        <li>Resource type</li>
+        <li>Keywords in title/description</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>How many related resources to show?</li>
+          <li>Should related resources be manually curated or auto-generated?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 10: Categories -->
+    <div class="feature-card" id="categories">
+      <h2>10. Rename Tags to Categories <span class="status-completed">COMPLETED</span></h2>
+
+      <p>Change all references from "Tags" to "Categories" throughout the application for clarity.</p>
+
+      <h3>Completed Changes</h3>
+      <ul>
+        <li>UI labels: Admin tab, filter labels, resource cards updated</li>
+        <li>Documentation: USER_GUIDE updated</li>
+        <li>Database field names: Kept as "tags" (no migration needed)</li>
+        <li>Code references: Maintained for backward compatibility</li>
+      </ul>
+
+      <h3>Implementation Notes</h3>
+      <ul>
+        <li>Frontend UI updated for user clarity</li>
+        <li>Backend API continues to use existing structure</li>
+      </ul>
+    </div>
+
+    <!-- Feature 11: Bulk -->
+    <div class="feature-card" id="bulk">
+      <h2>11. Bulk Import/Export <span class="status-open">OPEN</span></h2>
+
+      <p>Allow admins to import and export data via CSV files.</p>
+
+      <h3>Supported Data Types</h3>
+      <ul>
+        <li>Resources</li>
+        <li>Categories</li>
+        <li>Lab Markers</li>
+        <li>Logic Rules (Criteria)</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>What fields are required vs. optional for each type?</li>
+          <li>Should import overwrite existing records or skip duplicates?</li>
+          <li>Maximum file size/record count?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 12: Analytics -->
+    <div class="feature-card" id="analytics">
+      <h2>12. Analytics Dashboard <span class="status-open">OPEN</span></h2>
+
+      <p>Admin dashboard showing platform usage statistics.</p>
+
+      <h3>Included Metrics</h3>
+      <ul>
+        <li>Most viewed resources</li>
+        <li>Resources by type and category</li>
+        <li>Total registered users</li>
+        <li>Active users (last 7/30 days)</li>
+      </ul>
+
+      <h3>Excluded (Privacy)</h3>
+      <ul>
+        <li>Individual user lab results</li>
+        <li>Personal health data</li>
+        <li>Individual viewing history</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>What time periods to support?</li>
+          <li>Who can access analytics? (Admin, Super Admin only?)</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 13: Draft -->
+    <div class="feature-card" id="draft">
+      <h2>13. Draft/Publish Workflow <span class="status-open">OPEN</span></h2>
+
+      <p>Allow resources to be saved as drafts before publishing to users.</p>
+
+      <h3>Proposed Statuses</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Visibility</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Draft</td>
+            <td>Admins only</td>
+          </tr>
+          <tr>
+            <td>Published</td>
+            <td>All users</td>
+          </tr>
+          <tr>
+            <td>Archived</td>
+            <td>Hidden, but retained</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>Should there be an approval workflow?</li>
+          <li>Archive vs. Delete - what's the difference in retention?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 14: Duplicate -->
+    <div class="feature-card" id="duplicate">
+      <h2>14. Duplicate Detection <span class="status-open">OPEN</span></h2>
+
+      <p>Warn admins when creating content that may duplicate existing entries.</p>
+
+      <h3>Duplicate Criteria</h3>
+      <ul>
+        <li><strong>Resources:</strong> Exact or similar title match, same URL</li>
+        <li><strong>Lab Markers:</strong> Same name (case-insensitive)</li>
+        <li><strong>Categories:</strong> Same name (case-insensitive)</li>
+        <li><strong>Criteria:</strong> Same marker + overlapping range + same category</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>What similarity threshold for "similar" titles?</li>
+          <li>Block creation or just warn?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 15: Email -->
+    <div class="feature-card" id="email">
+      <h2>15. Email Notifications <span class="status-open">OPEN</span></h2>
+
+      <p>Optional email notifications for users about relevant updates.</p>
+
+      <h3>Notification Types</h3>
+      <ul>
+        <li>New resources matching user's categories</li>
+        <li>Weekly digest of new content</li>
+        <li>Account-related notifications</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>Which email service to use?</li>
+          <li>What triggers an "immediate" notification vs. digest?</li>
+          <li>Should admins be able to send announcements?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 16: Progress -->
+    <div class="feature-card" id="progress">
+      <h2>16. Progress Tracking <span class="status-open">OPEN</span></h2>
+
+      <p>Show users their progress exploring the resource library.</p>
+
+      <h3>Proposed Metrics</h3>
+      <ul>
+        <li>Resources viewed: X of Y total</li>
+        <li>Percentage of library explored</li>
+        <li>Resources viewed per category</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>Is progress per-user or can it be seen by admins?</li>
+          <li>Should there be achievements/badges?</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Feature 17: Notes -->
+    <div class="feature-card" id="notes">
+      <h2>17. Notes Feature <span class="status-open">OPEN</span></h2>
+
+      <p>Allow users to add personal notes to resources or lab results.</p>
+
+      <h3>Proposed Behavior</h3>
+      <ul>
+        <li>"Add Note" option on any resource or lab result</li>
+        <li>Notes are private to the user</li>
+        <li>View/edit/delete notes</li>
+        <li>Notes visible when viewing the associated item</li>
+      </ul>
+
+      <div class="questions-box">
+        <h4>Open Questions</h4>
+        <ol>
+          <li>Should notes be plain text or support formatting?</li>
+          <li>Export notes with lab results?</li>
+          <li>Attach notes to resources, lab results, or both?</li>
+        </ol>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h2>Next Steps</h2>
+    <ol>
+      <li>Review this document and answer open questions</li>
+      <li>Prioritize features based on user needs</li>
+      <li>Create detailed specifications for high-priority items</li>
+      <li>Begin implementation in priority order</li>
+    </ol>
+
+    <div class="footer">
+      <p><strong>BHI App Feature Roadmap</strong></p>
+      <p>Document Version: 1.0 | Last Updated: January 2026</p>
+      <p>Balanced Health Institute</p>
+      <div class="copyright-footer">
+        <strong>© 2026 Eddie Yakubovich / Maximus Digital Marketing. All rights reserved. Confidential.</strong>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

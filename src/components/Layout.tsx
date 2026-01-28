@@ -1,22 +1,30 @@
 import React from 'react'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 
 interface LayoutProps {
   children: React.ReactNode
   currentPage?: string
   onNavigate?: (page: string) => void
+  onLogout?: () => void
 }
 
-export function Layout({ children, currentPage = 'home', onNavigate }: LayoutProps) {
+export function Layout({ children, currentPage = 'home', onNavigate, onLogout }: LayoutProps) {
   const { darkMode, setDarkMode, theme } = useTheme()
+  const { user, logout, isAdmin } = useAuth()
 
   const navItems = [
     { id: 'home', label: 'Home' },
     { id: 'resources', label: 'Resources' },
     { id: 'labs', label: 'Lab Results' },
     { id: 'profile', label: 'Profile' },
-    { id: 'admin', label: 'Admin' },
+    ...(isAdmin ? [{ id: 'admin', label: 'Admin' }] : []),
   ]
+
+  const handleLogout = async () => {
+    await logout()
+    onLogout?.()
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: theme.bg, color: theme.text }}>
@@ -61,6 +69,11 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
 
         {/* Right side controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {user && (
+            <div style={{ fontSize: 12, color: theme.textMuted, marginRight: 8 }}>
+              {user.name}
+            </div>
+          )}
           <button
             onClick={() => setDarkMode(!darkMode)}
             title={darkMode ? 'Light mode' : 'Dark mode'}
@@ -75,6 +88,22 @@ export function Layout({ children, currentPage = 'home', onNavigate }: LayoutPro
             }}
           >
             {darkMode ? '☀️' : '🌙'}
+          </button>
+          <button
+            onClick={handleLogout}
+            title="Logout"
+            style={{
+              background: theme.bgSecondary,
+              border: `1.5px solid ${theme.borderColor}`,
+              borderRadius: 6,
+              padding: '6px 10px',
+              cursor: 'pointer',
+              fontSize: 14,
+              color: theme.text,
+              fontWeight: 500,
+            }}
+          >
+            Logout
           </button>
         </div>
       </header>

@@ -47,11 +47,11 @@ body {
   box-shadow: 0 2px 8px rgba(26, 31, 54, 0.08);
   margin-bottom: 32px;
   border: 1.5px solid #d0d0d0;
-  border-left: 4px solid var(--primary-blue);
+  border-left: 3px solid var(--primary-blue);
 }
 
 body.dark-mode .header {
-  border: 1px solid #ffffff;
+  border: 1px solid #888888;
   border-left: 3px solid var(--primary-blue);
 }
 
@@ -75,14 +75,14 @@ body.dark-mode .header {
   box-shadow: 0 2px 8px rgba(26, 31, 54, 0.08);
   margin-bottom: 24px;
   border: 1.5px solid #d0d0d0;
-  border-left: 4px solid var(--primary-blue);
+  border-left: 3px solid var(--primary-blue);
 }
 
 body.dark-mode .card {
-  border-top: 1px solid #ffffff;
-  border-right: 1px solid #ffffff;
-  border-bottom: 1px solid #ffffff;
-  border-left: 3px solid var(--primary-blue);
+  border-top: 1px solid #888888;
+  border-right: 1px solid #888888;
+  border-bottom: 1px solid #888888;
+  border-left: 4px solid var(--primary-blue);
 }
 
 .card h2, .card h3 {
@@ -318,16 +318,20 @@ input[type="checkbox"] {
   font-weight: 500;
   font-size: 15px;
   color: var(--text-secondary);
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
+  border-radius: 6px 6px 0 0;
   margin-bottom: -2px;
   transition: all 0.2s;
 }
 
 .tab:hover {
   color: var(--primary-blue);
+  background: rgba(61, 125, 202, 0.08);
 }
 
 .tab.active {
-  color: var(--primary-blue);
+  color: #ffffff;
+  background: var(--primary-blue);
   border-bottom-color: var(--primary-blue);
+  font-weight: 600;
 }

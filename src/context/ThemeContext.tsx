@@ -29,6 +29,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem('bhi-dark-mode', JSON.stringify(darkMode))
+    if (darkMode) {
+      document.body.classList.add('dark-mode')
+    } else {
+      document.body.classList.remove('dark-mode')
+    }
   }, [darkMode])
 
   const theme: Theme = darkMode
@@ -39,7 +44,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         textMuted: '#aaa',
         textLight: '#ccc',
         card: '#252525',
-        borderColor: '#ffffff',
+        borderColor: '#888888',
         borderLight: '#444',
         blue: '#3B82F6',
       }
