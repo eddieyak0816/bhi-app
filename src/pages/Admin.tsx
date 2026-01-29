@@ -1162,12 +1162,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             </div>
                           )}
                           
-                          {/* Categories Line */}
-                          {r.categories && r.categories.length > 0 && (
-                            <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                              <strong>Categories:</strong> {r.categories.join(', ')}
-                            </div>
-                          )}
+                          {/* Categories Line - always reserve space */}
+                          <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                            {r.categories && r.categories.length > 0 ? (
+                              <><strong>Categories:</strong> {r.categories.join(', ')}</>
+                            ) : (
+                              <>&nbsp;</>
+                            )}
+                          </div>
                           
                           <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
                             <button className="btn-ghost" onClick={() => {
