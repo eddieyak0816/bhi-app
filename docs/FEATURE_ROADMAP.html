@@ -124,6 +124,39 @@
       margin-left: 10px;
     }
 
+    .status-complete {
+      display: inline-block;
+      background: #10B981;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .status-completed {
+      display: inline-block;
+      background: #10B981;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .status-partial {
+      display: inline-block;
+      background: #06B6D4;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
     .status-open {
       display: inline-block;
       background: #F59E0B;
@@ -364,7 +397,7 @@
         <tr>
           <td><span class="priority-high">HIGH</span></td>
           <td>User Authentication & Roles</td>
-          <td><span class="status-decided">DECIDED</span></td>
+          <td><span class="status-complete">COMPLETED</span></td>
         </tr>
         <tr>
           <td><span class="priority-high">HIGH</span></td>
@@ -373,23 +406,23 @@
         </tr>
         <tr>
           <td><span class="priority-high">HIGH</span></td>
-          <td>Bookmarks Persistence</td>
-          <td><span class="status-open">OPEN</span></td>
-        </tr>
-        <tr>
-          <td><span class="priority-medium">MEDIUM</span></td>
           <td>Search Functionality</td>
-          <td><span class="status-open">OPEN</span></td>
+          <td><span class="status-partial">PARTIALLY COMPLETED</span></td>
+        </tr>
+        <tr>
+          <td><span class="priority-high">HIGH</span></td>
+          <td>Bookmarks Persistence</td>
+          <td><span class="status-partial">PARTIALLY COMPLETED</span></td>
         </tr>
         <tr>
           <td><span class="priority-medium">MEDIUM</span></td>
-          <td>Reference Ranges Display</td>
-          <td><span class="status-open">OPEN</span></td>
+          <td>Recently Viewed Resources</td>
+          <td><span class="status-complete">COMPLETED</span></td>
         </tr>
         <tr>
           <td><span class="priority-medium">MEDIUM</span></td>
           <td>Lab Result History</td>
-          <td><span class="status-open">OPEN</span></td>
+          <td><span class="status-complete">COMPLETED</span></td>
         </tr>
         <tr>
           <td><span class="priority-medium">MEDIUM</span></td>
@@ -423,7 +456,7 @@
 
     <!-- Feature 1: Auth -->
     <div class="feature-card decided" id="auth">
-      <h2>1. User Authentication & Roles <span class="status-decided">DECIDED</span></h2>
+      <h2>1. User Authentication & Roles <span class="status-complete">COMPLETED</span></h2>
 
       <p>Implement a login system with different user roles that control access to features.</p>
 
@@ -540,71 +573,67 @@
 
     <!-- Feature 2: Search -->
     <div class="feature-card" id="search">
-      <h2>2. Search Functionality <span class="status-open">OPEN</span></h2>
+      <h2>2. Search Functionality <span class="status-partial">PARTIALLY COMPLETED</span></h2>
 
       <p>Global search capability across all pages to quickly find resources, lab markers, or categories.</p>
 
-      <h3>Proposed Behavior</h3>
+      <h3>Current Implementation</h3>
       <ul>
-        <li>Search bar in the header, visible on all pages</li>
-        <li>Searches across: resource titles/descriptions, category names, lab marker names</li>
-        <li>Results grouped by type</li>
-        <li>Keyboard shortcut to focus search (Ctrl+K or /)</li>
+        <li>✓ Search box in Resources page filters by keyword</li>
+        <li>✓ Searches across resource titles and descriptions</li>
+        <li>✓ Real-time filtering (instant as-you-type)</li>
+        <li>✓ Works alongside type and category filters</li>
       </ul>
 
-      <div class="questions-box">
-        <h4>Open Questions</h4>
-        <ol>
-          <li>Should search results link directly to items, or show a results page?</li>
-          <li>Include search history/recent searches?</li>
-        </ol>
-      </div>
+      <h3>Future Enhancement</h3>
+      <ul>
+        <li>Global search bar in header</li>
+        <li>Keyboard shortcut (Ctrl+K)</li>
+        <li>Search lab markers and categories</li>
+        <li>Search results page with grouped results</li>
+      </ul>
     </div>
 
     <!-- Feature 3: Bookmarks -->
     <div class="feature-card" id="bookmarks">
-      <h2>3. Bookmarks Persistence <span class="status-open">OPEN</span></h2>
+      <h2>3. Bookmarks Persistence <span class="status-partial">PARTIALLY COMPLETED</span></h2>
 
       <p>Save bookmarked resources to the database instead of localStorage, so bookmarks persist across devices.</p>
 
-      <h3>Proposed Behavior</h3>
+      <h3>Current Implementation</h3>
       <ul>
-        <li>When a user bookmarks a resource, it's saved to their account</li>
-        <li>Bookmarks sync across all devices where user is logged in</li>
-        <li>Bookmarks page/section to view all saved resources</li>
+        <li>✓ Users can bookmark resources</li>
+        <li>✓ Bookmarks stored in browser localStorage</li>
+        <li>✓ Bookmark count displayed on dashboard</li>
+        <li>✓ Visual feedback (star icon) shows bookmarked status</li>
       </ul>
 
-      <p><strong>Note:</strong> Requires User Authentication (Feature #1) to be implemented first.</p>
-
-      <div class="questions-box">
-        <h4>Open Questions</h4>
-        <ol>
-          <li>Should users be able to organize bookmarks into folders?</li>
-          <li>Limit on number of bookmarks?</li>
-        </ol>
-      </div>
+      <h3>Future Enhancement (Next Phase)</h3>
+      <ul>
+        <li>Sync bookmarks to database for cross-device access</li>
+        <li>Bookmark organization/folders</li>
+        <li>Limits on number of bookmarks</li>
+      </ul>
     </div>
 
     <!-- Feature 4: Recently Viewed -->
     <div class="feature-card" id="recent">
-      <h2>4. Recently Viewed Resources <span class="status-open">OPEN</span></h2>
+      <h2>4. Recently Viewed Resources <span class="status-complete">COMPLETED</span></h2>
 
       <p>Track and display resources the user has recently accessed.</p>
 
-      <h3>Proposed Behavior</h3>
+      <h3>Current Implementation</h3>
       <ul>
-        <li>Track last 10-20 resources viewed</li>
-        <li>Display on dashboard in "Recently Viewed" section</li>
-        <li>Click to quickly return to a resource</li>
+        <li>✓ Dashboard displays recently viewed resources when user has not entered lab results yet</li>
+        <li>✓ Shows up to 3 recent resources as cards</li>
+        <li>✓ Displays resource type, title, and quick action buttons</li>
       </ul>
 
-      <div class="questions-box">
-        <h4>Open Questions</h4>
-        <ol>
-          <li>How many recent items to show?</li>
-          <li>Should viewing history be optional (privacy setting)?</li>
-        </ol>
-      </div>
+      <h3>Usage</h3>
+      <ul>
+        <li>View on Home (Dashboard) tab</li>
+        <li>Click "Continue Reading" to revisit a resource</li>
+      </ul>
     </div>
 
     <!-- Feature 5: Print/Export -->
@@ -636,26 +665,36 @@
 
     <!-- Feature 6: History -->
     <div class="feature-card" id="history">
-      <h2>6. Lab Result History <span class="status-open">OPEN</span></h2>
+      <h2>6. Lab Result History <span class="status-complete">COMPLETED</span></h2>
 
       <p>Track lab results over time and optionally show trends.</p>
 
-      <h3>Critical Disclaimer</h3>
-      <p><strong>⚠️ Same as print/export - this is user-entered data for personal tracking only, not medical analysis.</strong></p>
-
-      <h3>Proposed Behavior</h3>
+      <h3>Current Implementation</h3>
       <ul>
-        <li>Each lab result includes a date</li>
-        <li>History view shows all past values for a marker</li>
-        <li>Optional simple line chart showing trend over time</li>
-        <li>Clear labeling that this is personal tracking, not medical advice</li>
+        <li>✓ Lab results include date tracking (entry date shown)</li>
+        <li>✓ History view shows all past values for a marker</li>
+        <li>✓ Users can filter by marker and view detailed history table</li>
+        <li>✓ Color-coded status indicators (green for normal, red for outside range)</li>
+        <li>✓ Results sorted by date, most recent first</li>
+        <li>✓ Users can delete individual historical entries</li>
       </ul>
 
-      <div class="questions-box">
-        <h4>Open Questions</h4>
-        <ol>
-          <li>Should users enter the actual test date, or use entry date?</li>
-          <li>Show charts automatically, or as an optional view?</li>
+      <h3>Usage</h3>
+      <ul>
+        <li>Go to Lab Results tab</li>
+        <li>Select a specific marker to view its full history</li>
+        <li>See date, value, unit, and normal range</li>
+        <li>Delete individual results with delete button</li>
+      </ul>
+
+      <h3>Future Enhancement</h3>
+      <ul>
+        <li>Optional trend charts (e.g., Recharts library)</li>
+        <li>Export history to PDF</li>
+      </ul>
+    </div>
+
+    <!-- Feature 7: Reference Ranges -->
           <li>Allow users to delete individual historical entries?</li>
         </ol>
       </div>

@@ -295,14 +295,34 @@
     <!-- Getting Started -->
     <h2 id="getting-started">1. Getting Started</h2>
 
-    <h3>First Launch</h3>
-    <p>When you first open the app, you'll see a welcome screen that explains:</p>
+    <h3>Creating an Account</h3>
+    <p>When you first open the app, you'll be presented with the login screen.</p>
+    <p><strong>To create a new account:</strong></p>
+    <ol>
+      <li>Click "Sign Up" or "Create Account"</li>
+      <li>Enter your email address</li>
+      <li>Choose a password (minimum 6 characters, must include uppercase, lowercase, and number)</li>
+      <li>Enter your full name</li>
+      <li>Click "Create Account"</li>
+    </ol>
+    <p>Your account is created immediately—no email verification required.</p>
+
+    <h3>Logging In</h3>
+    <ol>
+      <li>Enter your email and password</li>
+      <li>Click "Log In"</li>
+      <li>You'll be automatically logged in and taken to your dashboard</li>
+    </ol>
+    <p>If you forget your password, click "Forgot Password?" to reset it via email.</p>
+
+    <h3>First Launch - Onboarding (Optional)</h3>
+    <p>When you first log in, you may see a welcome screen that explains:</p>
     <ul>
       <li>The purpose of the platform</li>
       <li>How to use the basic features</li>
       <li>An important disclaimer about the educational nature of the tool</li>
     </ul>
-    <p>Click <strong>"Get Started"</strong> to enter the main application, or <strong>"Skip Introduction"</strong> to bypass the welcome screen.</p>
+    <p>You can click <strong>"Get Started"</strong> to enter the main application, or <strong>"Skip"</strong> to go straight to your dashboard.</p>
 
     <h3>Dark/Light Mode</h3>
     <p>A theme toggle button (sun/moon icon) appears in the top-right corner of every screen. Click it to switch between light and dark modes. Your preference is saved automatically.</p>
@@ -409,10 +429,32 @@
 
     <h3>Entering Results</h3>
     <ol>
-      <li>Select a lab marker from the dropdown (e.g., Vitamin D, Glucose, TSH)</li>
+      <li>Go to the <strong>Lab Results</strong> tab</li>
+      <li>Click <strong>"Log New Result"</strong></li>
+      <li>Select a lab marker from common presets (e.g., Blood Glucose, Cholesterol) or enter a custom marker</li>
       <li>Enter your test value</li>
-      <li>Submit to save the result</li>
+      <li>The unit and normal range will auto-populate if available</li>
+      <li>Click <strong>"Save Result"</strong></li>
     </ol>
+    <div class="tip">
+      <strong>Privacy Notice:</strong> Your results are stored in your account for future reference. You have full control over this data.
+    </div>
+
+    <h3>Viewing Your Results</h3>
+    <p>Your lab results are displayed in a table showing:</p>
+    <ul>
+      <li><strong>Date</strong> - When you entered the result</li>
+      <li><strong>Marker</strong> - The test name</li>
+      <li><strong>Value</strong> - Your measured value</li>
+      <li><strong>Range</strong> - Normal/optimal range for reference</li>
+      <li><strong>Status</strong> - Visual indicator (green for normal, red for outside range)</li>
+    </ul>
+    <p>You can:</p>
+    <ul>
+      <li><strong>Filter by marker</strong> - Click a marker name to see all results for that test over time</li>
+      <li><strong>Delete results</strong> - Click the delete button (✕) to remove a result</li>
+      <li><strong>View history</strong> - Select a marker to see all past values in a table</li>
+    </ul>
 
     <h3>How Matching Works</h3>
     <p>The app uses "logic rules" to match your lab values to health categories:</p>
@@ -451,102 +493,363 @@
 
     <p><em>This section is for administrators managing the platform content.</em></p>
 
-    <h3>Admin Tabs</h3>
+    <h3>Admin Tabs Overview</h3>
+    <p>The Admin section has 8 management tabs. Here's what each one does:</p>
     <table>
       <thead>
         <tr>
           <th>Tab</th>
           <th>Purpose</th>
+          <th>Who Uses It</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td><strong>Resources</strong></td>
-          <td>Create, edit, and delete educational resources</td>
+          <td>Create, edit, and delete health education resources</td>
+          <td>Content managers</td>
         </tr>
         <tr>
           <td><strong>Resource Types</strong></td>
-          <td>Manage the types/formats of resources</td>
+          <td>Manage resource format types (video, article, etc.)</td>
+          <td>System administrators</td>
         </tr>
         <tr>
           <td><strong>Lab Markers</strong></td>
-          <td>Define lab tests that users can enter</td>
+          <td>Define the lab tests users can enter results for</td>
+          <td>Lab coordinators</td>
+        </tr>
+        <tr>
+          <td><strong>Tags</strong></td>
+          <td>Create organizational tags for labeling resources</td>
+          <td>Content managers</td>
         </tr>
         <tr>
           <td><strong>Categories</strong></td>
-          <td>Manage health category categories</td>
+          <td>Create health categories for matching lab results</td>
+          <td>Content strategists</td>
         </tr>
         <tr>
           <td><strong>Health Goals</strong></td>
-          <td>Configure available health goals for user profiles</td>
+          <td>Set up health goals that users can select</td>
+          <td>Content strategists</td>
         </tr>
         <tr>
           <td><strong>Criteria</strong></td>
-          <td>Set up logic rules that match lab values to categories</td>
+          <td>Create logic rules that connect lab values to categories</td>
+          <td>Data analysts</td>
+        </tr>
+        <tr>
+          <td><strong>Audit Log</strong></td>
+          <td>View a complete record of all changes made in the app</td>
+          <td>System administrators</td>
         </tr>
       </tbody>
     </table>
+
+    <h3>Key Concept: Tags vs. Categories</h3>
+    <div class="tip">
+      <strong>Important:</strong> Tags and Categories serve different purposes:
+    </div>
+    <ul>
+      <li><strong>Tags</strong> - Organizational labels used to tag resources (e.g., "Heart Health", "Weight Management", "Stress"). Admins create tags and apply them to resources for easy filtering. Tags don't automatically trigger anything—they're just labels.</li>
+      <li><strong>Categories</strong> - Health conditions triggered by lab results (e.g., "Low Vitamin D", "High Blood Glucose"). When a user's lab result matches criteria, that category is assigned. Resources with matching categories are then recommended.</li>
+    </ul>
+    <h4>Example:</h4>
+    <ul>
+      <li>A tag might be "Vitamin Health" (just a label on a resource)</li>
+      <li>A category might be "Low Vitamin D" (triggered when Vitamin D is below 30)</li>
+      <li>When a user enters Vitamin D of 25, they get the "Low Vitamin D" category</li>
+      <li>Resources tagged with "Vitamin Health" AND marked with "Low Vitamin D" appear in recommendations</li>
+    </ul>
 
     <h3>Managing Resources</h3>
 
+    <p><strong>Resources are the health education materials that users browse and receive as recommendations.</strong></p>
+
     <h4>Creating a Resource</h4>
+    <p><strong>Step-by-step:</strong></p>
     <ol>
-      <li>In the "Create New Resource" section, select a type</li>
-      <li>Enter the title</li>
-      <li>Optionally add a URL link</li>
-      <li>Select applicable categories</li>
-      <li>Click "Create"</li>
+      <li>In the "Create New Resource" section, select a <strong>Resource Type</strong> (e.g., Video, Article)</li>
+      <li>Enter the <strong>Resource Title</strong> (what users will see)</li>
+      <li>Optionally add a <strong>URL Link</strong> - The external link where this resource lives</li>
+      <li>Select one or more <strong>Categories</strong> - When users have these categories, they'll see this resource</li>
+      <li>Select one or more <strong>Tags</strong> - Organizational labels for grouping (optional but recommended)</li>
+      <li>Click <strong>"Create"</strong></li>
     </ol>
 
-    <h4>Filtering Resources</h4>
-    <p>Use the Filter Resources box to search by:</p>
+    <h4>Viewing Resources</h4>
+    <p>Choose your preferred view:</p>
     <ul>
-      <li>Keyword (searches titles)</li>
-      <li>Type (multi-select)</li>
-      <li>Categories (multi-select)</li>
+      <li><strong>Grid View</strong> (card layout) - Good for browsing and visual overview</li>
+      <li><strong>Table View</strong> (list format) - Good for scanning many resources and bulk operations</li>
     </ul>
-    <p>Click "Clear Filters" to reset.</p>
+
+    <h4>Filtering Resources</h4>
+    <p>Use filters to find resources you want to edit or delete:</p>
+    <ul>
+      <li><strong>Keyword Search</strong> - Search by resource title or description</li>
+      <li><strong>Type Filter</strong> (Multi-select) - Select one or multiple resource types</li>
+      <li><strong>Category Filter</strong> (Multi-select) - Select one or multiple categories</li>
+      <li><strong>Clear Filters</strong> - Click to reset all filters</li>
+    </ul>
+
+    <h4>Editing a Resource</h4>
+    <ol>
+      <li>Find the resource (use filters if needed)</li>
+      <li>Click <strong>"Edit"</strong> on the resource card or table row</li>
+      <li>Modify the Title, URL, Categories, or Tags</li>
+      <li>Click <strong>"Save"</strong> to confirm or <strong>"Cancel"</strong> to discard</li>
+    </ol>
+
+    <h4>Deleting Resources</h4>
+    <ul>
+      <li><strong>Single Resource</strong> - Click "Delete" on any resource</li>
+      <li><strong>Multiple Resources (Bulk Delete)</strong> - Select multiple resources using checkboxes, then click "Bulk Delete"</li>
+    </ul>
+    <div class="tip">
+      <strong>Important:</strong> Deletion is permanent and affects users immediately.
+    </div>
+
+    <h3>Managing Resource Types</h3>
+
+    <p><strong>Resource types define the format or medium of resources.</strong> Examples: Video, Article, Podcast, Guide, Infographic.</p>
+
+    <h4>Add a Type</h4>
+    <ol>
+      <li>Enter a type name in the "Add Type" field</li>
+      <li>Click <strong>"Add Type"</strong></li>
+    </ol>
+
+    <h4>Edit a Type</h4>
+    <ol>
+      <li>Click <strong>"Edit"</strong> on the type</li>
+      <li>Modify the name</li>
+      <li>Click <strong>"Save"</strong></li>
+    </ol>
+
+    <h4>Delete a Type</h4>
+    <ul>
+      <li>Click <strong>"Delete"</strong> on any type</li>
+      <li><strong>Note:</strong> You cannot delete a type that's currently assigned to resources</li>
+      <li><strong>Workaround:</strong> Edit all resources using that type to assign them a different type first</li>
+    </ul>
+
+    <h3>Managing Tags</h3>
+
+    <p><strong>Tags are organizational labels applied to resources to make them easier to find and organize.</strong> Think of tags like filing system labels—they help organize content but don't automatically trigger anything.</p>
+
+    <h4>When to Use Tags</h4>
+    <p>Use tags to organize resources by topic, method, or audience:</p>
+    <ul>
+      <li><strong>By Topic:</strong> "Sleep Optimization", "Nutrition", "Mental Health"</li>
+      <li><strong>By Method:</strong> "Meditation", "Supplements", "Exercise"</li>
+      <li><strong>By Audience:</strong> "Beginners", "Advanced", "For Parents"</li>
+      <li><strong>By Goal:</strong> "Weight Management", "Energy", "Recovery"</li>
+    </ul>
+
+    <h4>Add a Tag</h4>
+    <ol>
+      <li>Go to the <strong>Tags</strong> tab</li>
+      <li>Enter a tag name in the "Add Tag" field</li>
+      <li>Click <strong>"Add Tag"</strong> or press Enter</li>
+    </ol>
+
+    <h4>View and Filter Tags</h4>
+    <ul>
+      <li><strong>Card View</strong> - Visual grid layout</li>
+      <li><strong>Table View</strong> - List showing tag name and usage count</li>
+      <li><strong>Search</strong> - Use the search box to find tags by name</li>
+    </ul>
+
+    <h4>Edit a Tag</h4>
+    <ol>
+      <li>Click <strong>"Edit"</strong> on the tag</li>
+      <li>Modify the tag name</li>
+      <li>Click <strong>"Save"</strong></li>
+    </ol>
+
+    <h4>Delete a Tag</h4>
+    <ol>
+      <li>Click <strong>"Delete"</strong> on any tag</li>
+      <li>Confirm the deletion</li>
+      <li><strong>Result:</strong> The tag is removed from all resources</li>
+    </ol>
+
+    <h4>View Tag Usage</h4>
+    <p>In table view, each tag shows <strong>"Used in X places"</strong>. This tells you how many resources have that tag applied.</p>
+
+    <h3>Managing Lab Markers</h3>
+
+    <p><strong>Lab markers are the specific health tests that users can enter results for.</strong></p>
+
+    <h4>Understanding Lab Markers</h4>
+    <p>Each lab marker has:</p>
+    <ul>
+      <li><strong>Name</strong> - The test name (e.g., "Vitamin D", "Blood Glucose", "TSH")</li>
+      <li><strong>Unit</strong> - The measurement unit (e.g., "ng/mL", "mg/dL", "mIU/L")</li>
+    </ul>
+
+    <h4>Add a Marker</h4>
+    <ol>
+      <li>Enter the <strong>Marker Name</strong></li>
+      <li>Enter the <strong>Unit</strong> (optional but recommended)</li>
+      <li>Click <strong>"Add Marker"</strong></li>
+    </ol>
+
+    <h4>Edit a Marker</h4>
+    <ol>
+      <li>Click <strong>"Edit"</strong> on the marker</li>
+      <li>Modify the name and/or unit</li>
+      <li>Click <strong>"Save"</strong></li>
+    </ol>
+
+    <h4>Delete a Marker</h4>
+    <ul>
+      <li>Click <strong>"Delete"</strong> on any marker</li>
+      <li><strong>Caution:</strong> Deleting a marker will also delete all associated logic rules</li>
+    </ul>
+
+    <h3>Managing Categories</h3>
+
+    <p><strong>Categories represent health conditions or states triggered by lab results.</strong> They're used to group resources and match them to users based on their lab values.</p>
+
+    <h4>Add a Category</h4>
+    <ol>
+      <li>Enter a <strong>Category Name</strong> (the health condition or state)</li>
+      <li>Optionally add a <strong>Description</strong></li>
+      <li>Click <strong>"Add"</strong></li>
+    </ol>
+
+    <h4>Edit a Category</h4>
+    <ol>
+      <li>Click <strong>"Edit"</strong> on the category</li>
+      <li>Modify the name and/or description</li>
+      <li>Click <strong>"Save"</strong></li>
+    </ol>
+
+    <h4>Delete a Category</h4>
+    <ul>
+      <li>Click <strong>"Delete"</strong> on the category</li>
+      <li><strong>Result:</strong> The category is removed from all resources and logic rules</li>
+    </ul>
+
+    <h4>View Category Usage</h4>
+    <p>Each category shows how many resources and rules use it, helping you identify which categories are actively used.</p>
+
+    <h3>Managing Health Goals</h3>
+
+    <p><strong>Health goals are options that users can select in their profile to personalize their experience.</strong></p>
+
+    <h4>Add a Health Goal</h4>
+    <ol>
+      <li>Enter a <strong>Goal Name</strong></li>
+      <li>Optionally add a <strong>Description</strong></li>
+      <li>Click <strong>"Add Goal"</strong></li>
+    </ol>
+
+    <h4>Edit a Health Goal</h4>
+    <ol>
+      <li>Click <strong>"Edit"</strong> on the goal</li>
+      <li>Modify the name and/or description</li>
+      <li>Click <strong>"Save"</strong></li>
+    </ol>
+
+    <h4>Active/Inactive Toggle</h4>
+    <ul>
+      <li><strong>Active Goals</strong> - Visible to users in their Profile</li>
+      <li><strong>Inactive Goals</strong> - Hidden from users</li>
+      <li>Click <strong>"Activate"</strong> or <strong>"Deactivate"</strong> to toggle</li>
+    </ul>
+
+    <h4>Delete a Health Goal</h4>
+    <ul>
+      <li>Click <strong>"Delete"</strong> on any goal</li>
+      <li><strong>Result:</strong> The goal is permanently removed from the system</li>
+    </ul>
 
     <h3>Managing Criteria (Logic Rules)</h3>
-    <p>Criteria define how lab results map to categories. Each rule specifies:</p>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Field</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>Lab Marker</strong></td>
-          <td>Which test this rule applies to</td>
-        </tr>
-        <tr>
-          <td><strong>Min Value</strong></td>
-          <td>Lower bound of the range (optional)</td>
-        </tr>
-        <tr>
-          <td><strong>Max Value</strong></td>
-          <td>Upper bound of the range (optional)</td>
-        </tr>
-        <tr>
-          <td><strong>Category to Apply</strong></td>
-          <td>The category assigned when the value matches</td>
-        </tr>
-      </tbody>
-    </table>
+    <p><strong>Criteria are logic rules that define the connection between lab values and health categories.</strong> They're the "engine" that powers personalized recommendations.</p>
 
+    <h4>Understanding Logic Rules</h4>
+    <p>A logic rule specifies:</p>
+    <ul>
+      <li><strong>Which lab marker to monitor</strong> - What test are we looking at?</li>
+      <li><strong>The acceptable value range</strong> - What values trigger this category?</li>
+      <li><strong>Which category to apply</strong> - What should be recommended?</li>
+      <li><strong>The operator</strong> - How to evaluate the range</li>
+    </ul>
+
+    <h4>How Rules Work (Example)</h4>
     <div class="card">
-      <h4>Example Rule</h4>
+      <p><strong>Rule:</strong></p>
       <ul>
-        <li><strong>Marker:</strong> Vitamin D</li>
-        <li><strong>Min:</strong> 0</li>
-        <li><strong>Max:</strong> 29</li>
-        <li><strong>Category:</strong> "Low Vitamin D"</li>
+        <li>Marker: Vitamin D</li>
+        <li>Min Value: 0</li>
+        <li>Max Value: 29</li>
+        <li>Category: "Low Vitamin D"</li>
       </ul>
-      <p>When a user enters a Vitamin D result of 25, they receive the "Low Vitamin D" category, and resources with that category are recommended.</p>
+      <p><strong>What this means:</strong> When a user enters a Vitamin D result between 0-29, they automatically receive the "Low Vitamin D" category. All resources categorized as "Low Vitamin D" then appear in their recommendations.</p>
     </div>
+
+    <h4>Creating a Rule</h4>
+    <ol>
+      <li>Select a <strong>Lab Marker</strong> (which test)</li>
+      <li>Enter <strong>Min Value</strong> (lowest value in the range, optional)</li>
+      <li>Enter <strong>Max Value</strong> (highest value in the range, optional)</li>
+      <li>Select a <strong>Category to Apply</strong> (what gets recommended)</li>
+      <li>Click <strong>"Create Rule"</strong> or <strong>"Add"</strong></li>
+    </ol>
+
+    <h4>Editing a Rule</h4>
+    <ol>
+      <li>Click <strong>"Edit"</strong> on the rule</li>
+      <li>Modify the marker, range values, or category</li>
+      <li>Click <strong>"Save"</strong></li>
+    </ol>
+
+    <h4>Deleting a Rule</h4>
+    <ul>
+      <li>Click <strong>"Delete"</strong> on any rule</li>
+      <li><strong>Result:</strong> The rule is removed; future matches won't be affected</li>
+    </ul>
+
+    <h4>Best Practices for Criteria</h4>
+    <ul>
+      <li><strong>No overlapping ranges</strong> - Avoid two rules with overlapping values for the same marker</li>
+      <li><strong>Define all ranges</strong> - For users to get recommendations, you need rules</li>
+      <li><strong>Use meaningful categories</strong> - Make it clear what each rule means</li>
+      <li><strong>Test your rules</strong> - Add a sample lab result to verify recommendations appear</li>
+      <li><strong>Use operators correctly</strong> - Make sure the logic makes sense</li>
+    </ul>
+
+    <h3>Viewing Activity - Audit Log</h3>
+
+    <p><strong>The Audit Log is a complete history of all administrative changes made in the system.</strong></p>
+
+    <h4>What's Recorded</h4>
+    <ul>
+      <li><strong>Action</strong> - What was done (created, updated, deleted, etc.)</li>
+      <li><strong>Table</strong> - Which feature was affected (resources, markers, categories, etc.)</li>
+      <li><strong>User</strong> - Who made the change (admin email)</li>
+      <li><strong>Timestamp</strong> - Exactly when the change was made</li>
+      <li><strong>Details</strong> - What changed (old value → new value)</li>
+    </ul>
+
+    <h4>Why This Matters</h4>
+    <ul>
+      <li>Provides accountability for platform changes</li>
+      <li>Helps troubleshoot issues ("When did this change?")</li>
+      <li>Supports compliance and documentation needs</li>
+    </ul>
+
+    <h4>Filtering the Audit Log</h4>
+    <ul>
+      <li><strong>Action</strong> - Filter by type of change (create, update, delete)</li>
+      <li><strong>Table</strong> - Filter by feature (resources, markers, categories, etc.)</li>
+    </ul>
+
 
     <!-- Data Storage -->
     <h2 id="data-storage">8. Data Storage</h2>
@@ -559,58 +862,177 @@
 
     <h3>What's Stored in the Database</h3>
     <ul>
+      <li>Your profile information (name, email, age, preferences)</li>
+      <li>Your health goals selection</li>
+      <li>Your preferred resource types</li>
       <li>Resources and their metadata</li>
-      <li>Lab markers and logic rules</li>
-      <li>Categories and resource types</li>
-      <li>Health goals</li>
-      <li>User-entered lab results</li>
+      <li>Lab markers and logic rules (admin only)</li>
+      <li>Categories and resource types (admin only)</li>
+      <li>Your entered lab results (for history and recommendations)</li>
+      <li>Your bookmarked resources (persisted)</li>
+    </ul>
+
+    <h3>Privacy & Security</h3>
+    <ul>
+      <li>Your data is stored securely in our database</li>
+      <li>Only you can access your personal information</li>
+      <li>Admins can only see resources and system configuration, not individual user data</li>
+      <li>Lab values are used only for generating category recommendations</li>
     </ul>
 
     <!-- Tips -->
-    <h2 id="tips">9. Tips</h2>
+    <h2 id="tips">9. Tips & Best Practices</h2>
 
     <div class="tip">
-      <p><strong>1. Enter accurate lab values</strong> - The recommendation system depends on correct data</p>
+      <p><strong>1. Create an account</strong> - Sign up to save your lab results and bookmarks securely</p>
     </div>
 
     <div class="tip">
-      <p><strong>2. Use bookmarks</strong> - Save resources you want to revisit</p>
+      <p><strong>2. Enter accurate lab values</strong> - The recommendation system depends on correct data to provide relevant suggestions</p>
     </div>
 
     <div class="tip">
-      <p><strong>3. Check the dashboard</strong> - Personalized recommendations update as you add lab results</p>
+      <p><strong>3. Use bookmarks</strong> - Save resources you want to revisit or learn more about later</p>
     </div>
 
     <div class="tip">
-      <p><strong>4. Try both view modes</strong> - Grid view for browsing, list view for scanning</p>
+      <p><strong>4. Update your profile</strong> - Select health goals and resource types to get better recommendations</p>
+    </div>
+
+    <div class="tip">
+      <p><strong>5. Check the dashboard regularly</strong> - Personalized recommendations update as you add lab results</p>
+    </div>
+
+    <div class="tip">
+      <p><strong>6. Review your history</strong> - Click on a lab marker to see all your past results over time</p>
+    </div>
+
+    <div class="tip">
+      <p><strong>7. Use both view modes</strong> - Grid view for browsing, list view for scanning and bulk operations (admin)</p>
+    </div>
+
+    <div class="tip">
+      <p><strong>8. Set up comprehensive rules</strong> - Admins should create rules for all relevant marker ranges to ensure users get proper recommendations</p>
     </div>
 
     <!-- Troubleshooting -->
     <h2 id="troubleshooting">10. Troubleshooting</h2>
 
+    <h3>I can't log in</h3>
+    <ul>
+      <li><strong>Check your credentials</strong> - Verify email and password are correct</li>
+      <li><strong>Reset password</strong> - Click "Forgot Password?" and follow the email instructions</li>
+      <li><strong>Clear browser cache</strong> - Try clearing cookies and cached data</li>
+      <li><strong>Try a different browser</strong> - Test if the issue is browser-specific</li>
+    </ul>
+
     <h3>Resources not loading</h3>
     <ul>
-      <li>Check your internet connection</li>
-      <li>Refresh the page</li>
-      <li>Clear browser cache if issues persist</li>
+      <li><strong>Check your internet connection</strong> - Ensure you have an active connection</li>
+      <li><strong>Refresh the page</strong> - Press F5 or Ctrl+R to reload</li>
+      <li><strong>Clear browser cache</strong> - Remove cached data and try again</li>
+      <li><strong>Try a different browser</strong> - Test if the issue is browser-specific</li>
     </ul>
 
     <h3>Recommendations not appearing</h3>
     <ul>
-      <li>Ensure you've entered lab results</li>
-      <li>Verify that logic rules exist for your markers (admin)</li>
-      <li>Check that resources have matching categories (admin)</li>
+      <li><strong>Ensure you've entered lab results</strong> - Go to Lab Results tab and add at least one result</li>
+      <li><strong>Verify logic rules exist</strong> - Admins should check Criteria tab for relevant rules</li>
+      <li><strong>Check category matching</strong> - Confirm resources have the same categories as your rules</li>
+      <li><strong>Re-enter lab values</strong> - Try adding a new lab result to trigger recommendations</li>
+    </ul>
+
+    <h3>My bookmarks disappeared</h3>
+    <ul>
+      <li><strong>Check if you're logged in</strong> - Bookmarks are stored per account</li>
+      <li><strong>Verify bookmarks exist</strong> - Go to Resources and check the bookmark status</li>
+      <li><strong>Clear browser data</strong> - If using localStorage, clearing browser data will remove bookmarks</li>
     </ul>
 
     <h3>Dark mode not saving</h3>
     <ul>
-      <li>Ensure cookies/localStorage are enabled in your browser</li>
+      <li><strong>Enable browser storage</strong> - Ensure cookies and localStorage are enabled</li>
+      <li><strong>Check privacy mode</strong> - Private/Incognito mode won't persist preferences</li>
+      <li><strong>Refresh after toggling</strong> - Try switching modes again and refreshing the page</li>
+    </ul>
+
+    <h3>Lab results not matching categories</h3>
+    <ul>
+      <li><strong>Check value ranges</strong> - Verify the rule's min/max values match your lab result</li>
+      <li><strong>Confirm rule exists</strong> - Admins should verify the rule was created successfully</li>
+      <li><strong>Check category assignment</strong> - Ensure the rule assigns the correct category</li>
+      <li><strong>Refresh recommendations</strong> - Try adding another lab result to refresh recommendations</li>
+    </ul>
+
+    <h3>Profile changes not saving</h3>
+    <ul>
+      <li><strong>Click Save Changes</strong> - Ensure you clicked the save button after making edits</li>
+      <li><strong>Check internet connection</strong> - A lost connection can prevent saves</li>
+      <li><strong>Verify changes were made</strong> - Refresh the page to confirm the update</li>
+    </ul>
+
+    <h3>I accidentally deleted something</h3>
+    <ul>
+      <li>Unfortunately, deletions are permanent</li>
+      <li>For resources or markers: Admins can recreate them</li>
+      <li>For lab results: Users can re-enter them</li>
+      <li>For categories: Admins can recreate them</li>
+    </ul>
+
+    <h3>Still having issues?</h3>
+    <ul>
+      <li><strong>Note the exact error message</strong> - This helps with troubleshooting</li>
+      <li><strong>Check browser console</strong> - Press F12 to open developer tools and check for errors</li>
+      <li><strong>Try logging out and back in</strong> - Sometimes this resolves authentication issues</li>
+      <li><strong>Contact support</strong> - Reach out to your administrator with details about the issue</li>
+    </ul>
+
+    <h3>Troubleshooting - Admin Issues</h3>
+
+    <h4>I can't see the Admin tab</h4>
+    <ul>
+      <li><strong>Check your role</strong> - Only users with Admin or Super Admin roles can access Admin features</li>
+      <li><strong>Verify your permissions</strong> - Contact your Super Admin to confirm your role</li>
+      <li><strong>Log out and back in</strong> - Sometimes permissions take a moment to apply</li>
+    </ul>
+
+    <h4>I deleted something by accident</h4>
+    <ul>
+      <li><strong>Check the Audit Log</strong> - See exactly when and what was deleted</li>
+      <li><strong>Recreate the item</strong> - Unfortunately deletions are permanent, but you can recreate them using the form</li>
+      <li><strong>Contact your Super Admin</strong> - If you need help recovering data, they may have backups</li>
+    </ul>
+
+    <h4>Resources won't create or update</h4>
+    <ul>
+      <li><strong>Check all required fields</strong> - Ensure title and type are filled in</li>
+      <li><strong>Verify categories exist</strong> - Make sure at least one category is selected</li>
+      <li><strong>Check internet connection</strong> - Network errors can cause save failures</li>
+      <li><strong>Review error message</strong> - Copy any error messages and share with technical support</li>
+    </ul>
+
+    <h4>Criteria/Rules aren't matching user results</h4>
+    <ul>
+      <li><strong>Verify marker exists</strong> - Check that the marker is created and spelled correctly</li>
+      <li><strong>Check value ranges</strong> - Ensure min/max values are logical (min &lt; max usually)</li>
+      <li><strong>Confirm category exists</strong> - The target category must exist in the system</li>
+      <li><strong>Test with a sample result</strong> - Add a test lab result to verify the rule works</li>
+    </ul>
+
+    <h4>Changes aren't showing to users</h4>
+    <ul>
+      <li><strong>Wait a moment</strong> - Changes propagate within seconds, but may need a page refresh</li>
+      <li><strong>Ask users to refresh</strong> - Tell users to press F5 or refresh their browser</li>
+      <li><strong>Clear cache</strong> - Instruct users to clear browser cache if changes still don't appear</li>
     </ul>
 
     <div class="footer">
       <p><strong>BHI App User Guide</strong></p>
-      <p>Document Version: 1.0 | Last Updated: January 2026</p>
+      <p>Document Version: 2.1 | Last Updated: January 28, 2026</p>
       <p>Balanced Health Institute</p>
+      <p style="margin-top: 20px; font-size: 14px; color: #666;">
+        <strong>Version 2.1 Changes:</strong> Added comprehensive Admin Tabs Overview, Tags vs. Categories explanation, complete Tags management section, enhanced all admin management sections with best practices, added Audit Log documentation, and expanded admin troubleshooting.
+      </p>
       <div class="copyright-footer">
         <strong>© 2026 Eddie Yakubovich / Maximus Digital Marketing. All rights reserved. Confidential.</strong>
       </div>

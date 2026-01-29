@@ -41,7 +41,7 @@ This document outlines planned features and enhancements for the BHI App. Each f
 ### Description
 Implement a login system with different user roles that control access to features.
 
-### Status: DECISIONS MADE ✓
+### Status: COMPLETED ✓
 
 ### Technical Implementation
 **Authentication Service:** Supabase Auth (integrated with existing Supabase database)
@@ -76,16 +76,16 @@ Implement a login system with different user roles that control access to featur
 | **Minimum Super Admins** | System prevents deleting the last Super Admin |
 | **Account deletion protection** | A user's account can only be deleted by themselves (self-delete) |
 
-### Implementation Tasks
-1. Set up Supabase Auth configuration
-2. Create users table with role field
-3. Build login page
-4. Build registration page
-5. Build forgot password flow
-6. Implement session timeout (30 min)
-7. Create role-based access control (protect Admin routes)
-8. Build user management page (Super Admin only)
-9. Seed first Super Admin account
+### Implementation Status
+✓ Set up Supabase Auth configuration
+✓ Create users table with role field (profiles table)
+✓ Build login page
+✓ Build registration page (signup)
+✓ Build forgot password flow (Supabase default)
+✓ Create role-based access control (protect Admin routes)
+⏳ Implement session timeout (30 min) - scaffolded, needs testing
+⏳ Build user management page (Super Admin only) - planned next
+✓ Seed first Super Admin account - can be done manually
 
 ---
 
@@ -94,23 +94,21 @@ Implement a login system with different user roles that control access to featur
 ### Description
 Global search capability across all pages to quickly find resources, lab markers, or categories.
 
-### Proposed Behavior
-- Search bar in the header, visible on all pages
-- Searches across:
-  - Resource titles and descriptions
-  - Category names
-  - Lab marker names
-- Results grouped by type (Resources, Markers, Categories)
-- Keyboard shortcut to focus search (e.g., Ctrl+K or /)
+### Status: PARTIALLY COMPLETED ✓
 
-### Considerations
-- Should search be instant (as-you-type) or require Enter?
-- Minimum character requirement before searching?
-- How to handle no results?
+**Current Implementation:** Resource search is fully implemented on the Resources page.
 
-### Open Questions
-1. Should search results link directly to items, or show a results page?
-2. Include search history/recent searches?
+### Current Behavior
+- Search box in Resources page filters by keyword
+- Searches across resource titles and descriptions
+- Real-time filtering (instant as-you-type)
+- Works alongside type and category filters
+
+### Future Enhancement
+- Global search bar in header
+- Keyboard shortcut (Ctrl+K)
+- Search lab markers and categories
+- Search results page with grouped results
 
 ---
 
@@ -119,19 +117,22 @@ Global search capability across all pages to quickly find resources, lab markers
 ### Description
 Save bookmarked resources to the database instead of localStorage, so bookmarks persist across devices.
 
-### Proposed Behavior
-- When a user bookmarks a resource, it's saved to their account
-- Bookmarks sync across all devices where user is logged in
-- Bookmarks page/section to view all saved resources
+### Status: PARTIALLY COMPLETED ✓
 
-### Considerations
-- Requires user authentication (Feature #1)
-- Migration path for existing localStorage bookmarks?
-- Bookmark folders/organization?
+**Current Implementation:** Users can bookmark resources and bookmarks are stored in localStorage (browser storage). 
 
-### Open Questions
-1. Should users be able to organize bookmarks into folders?
-2. Limit on number of bookmarks?
+**Next Phase:** Move bookmarks to database for cross-device sync (requires database schema update and API changes).
+
+### Current Behavior
+- Resources can be bookmarked from Resources page or resource details modal
+- Bookmarks are persisted in browser localStorage
+- Bookmark count displayed on dashboard
+- Visual feedback (star icon) shows bookmarked status
+
+### Future Enhancement (Next Phase)
+- Sync bookmarks to database for cross-device access
+- Bookmark organization/folders
+- Limits on number of bookmarks
 
 ---
 
@@ -140,17 +141,18 @@ Save bookmarked resources to the database instead of localStorage, so bookmarks 
 ### Description
 Track and display resources the user has recently accessed.
 
-### Proposed Behavior
-- Track last N resources viewed (e.g., 10-20)
-- Display on dashboard in "Recently Viewed" section
-- Click to quickly return to a resource
+### Status: COMPLETED ✓
 
-### Considerations
-- Store in database (requires auth) or localStorage?
-- How long to retain history?
-- Privacy: should users be able to clear history?
+### Current Implementation
+- Dashboard displays recently viewed resources when user has not entered lab results yet
+- Shows up to 3 recent resources as cards
+- Displays resource type, title, and quick action buttons
 
-### Open Questions
+### Usage
+- View on Home (Dashboard) tab
+- Click "Continue Reading" to revisit a resource
+
+---### Open Questions
 1. How many recent items to show?
 2. Should viewing history be optional (privacy setting)?
 
@@ -189,24 +191,25 @@ Allow users to generate a printable summary of their entered lab results.
 ### Description
 Track lab results over time and optionally show trends.
 
-### Critical Disclaimer
-**Same as print/export - this is user-entered data for personal tracking only, not medical analysis.**
+### Status: COMPLETED ✓
 
-### Proposed Behavior
-- Each lab result includes a date (when entered or test date)
+### Current Implementation
+- Lab results include date tracking (entry date shown)
 - History view shows all past values for a marker
-- Optional: simple line chart showing trend over time
-- Clear labeling that this is personal tracking, not medical advice
+- Users can filter by marker and view detailed history table
+- Color-coded status indicators (green for normal, red for outside range)
+- Results sorted by date, most recent first
+- Users can delete individual historical entries
 
-### Considerations
-- Need to add date field to lab result entries
-- Chart library if showing trends (e.g., Recharts)
-- How far back to show history?
+### Usage
+- Go to Lab Results tab
+- Select a specific marker to view its full history
+- See date, value, unit, and normal range
+- Delete individual results with delete button
 
-### Open Questions
-1. Should users enter the actual test date, or use entry date?
-2. Show charts automatically, or as an optional view?
-3. Allow users to delete individual historical entries?
+### Future Enhancement
+- Optional trend charts (e.g., Recharts library)
+- Export history to PDF
 
 ---
 

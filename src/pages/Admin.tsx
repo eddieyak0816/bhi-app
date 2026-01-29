@@ -27,6 +27,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [markerCreationVisible, setMarkerCreationVisible] = useState(false)
   const [markerName, setMarkerName] = useState('')
   const [markerUnit, setMarkerUnit] = useState('')
+  const [markerMinNormal, setMarkerMinNormal] = useState<number | null>(null)
+  const [markerMaxNormal, setMarkerMaxNormal] = useState<number | null>(null)
 
   const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit'>('resources')
   // Use global theme context
@@ -1756,14 +1758,18 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 <div style={{display:'flex',gap:12,alignItems:'center'}}>
                   <input placeholder="Marker name" value={markerName} onChange={e => setMarkerName(e.target.value)} style={{flex:1,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}} />
                   <input placeholder="Unit (optional)" value={markerUnit} onChange={e => setMarkerUnit(e.target.value)} style={{width:120,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
+                  <input placeholder="Min value (optional)" type="number" value={markerMinNormal ?? ''} onChange={e => setMarkerMinNormal(e.target.value ? Number(e.target.value) : null)} style={{width:100,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
+                  <input placeholder="Max value (optional)" type="number" value={markerMaxNormal ?? ''} onChange={e => setMarkerMaxNormal(e.target.value ? Number(e.target.value) : null)} style={{width:100,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
                   <button className="btn-primary" onClick={async () => {
                     if (!markerName.trim()) return alert('Name required')
                     try {
-                      const res = await fetch(apiUrl('/api/admin/lab-markers'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify({ name: markerName.trim(), unit: markerUnit.trim() }) })
+                      const res = await fetch(apiUrl('/api/admin/lab-markers'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify({ name: markerName.trim(), unit: markerUnit.trim(), min_normal: markerMinNormal, max_normal: markerMaxNormal }) })
                       if (!res.ok) throw new Error('create marker failed')
                       await load()
                       setMarkerName('')
                       setMarkerUnit('')
+                      setMarkerMinNormal(null)
+                      setMarkerMaxNormal(null)
                     } catch (err) {
                       console.error('createMarker', err)
                       alert('Create marker failed (check server logs)')
@@ -1854,6 +1860,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     <tr>
                       <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('name')}>Name{getSortIndicator('name')}</th>
                       <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('unit')}>Unit{getSortIndicator('unit')}</th>
+                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Min Value</th>
+                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Max Value</th>
                       <th style={{padding:8,textAlign:'right',color:'#ffffff',fontWeight:500}}>Actions</th>
                     </tr>
                   </thead>
@@ -1872,11 +1880,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <>
                             <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
                             <td style={{padding:8}}><input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
+                            <td style={{padding:8}}><input type="number" value={editData.min_normal ?? ''} onChange={e => setEditData({...editData, min_normal: e.target.value ? Number(e.target.value) : null})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
+                            <td style={{padding:8}}><input type="number" value={editData.max_normal ?? ''} onChange={e => setEditData({...editData, max_normal: e.target.value ? Number(e.target.value) : null})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
                             <td style={{padding:8,textAlign:'right'}}>
                               <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
                                 <button className="btn-ghost" onClick={async () => {
                                   try {
-                                    const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit }) })
+                                    const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit, min_normal: editData.min_normal, max_normal: editData.max_normal }) })
                                     if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                                     await load()
                                     setEditingId(null)
@@ -1892,11 +1902,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <>
                             <td style={{padding:8}}><strong>{m.name}</strong></td>
                             <td style={{padding:8}} className="small muted">{m.unit || '—'}</td>
+                            <td style={{padding:8}} className="small muted">{m.min_normal ?? '—'}</td>
+                            <td style={{padding:8}} className="small muted">{m.max_normal ?? '—'}</td>
                             <td style={{padding:8,textAlign:'right'}}>
                               <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
                                 <button className="btn-ghost" onClick={() => {
                                   setEditingId(m.id)
-                                  setEditData({name: m.name, unit: m.unit})
+                                  setEditData({name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal})
                                 }}>✎</button>
                                 <button className="btn-ghost" onClick={async () => {
                                   if (!confirm(`Delete marker "${m.name}"?`)) return
@@ -1937,10 +1949,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       <>
                         <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={styles.input} />
                         <input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} placeholder="Unit" style={styles.input} />
+                        <input type="number" value={editData.min_normal ?? ''} onChange={e => setEditData({...editData, min_normal: e.target.value ? Number(e.target.value) : null})} placeholder="Min value" style={styles.input} />
+                        <input type="number" value={editData.max_normal ?? ''} onChange={e => setEditData({...editData, max_normal: e.target.value ? Number(e.target.value) : null})} placeholder="Max value" style={styles.input} />
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
                           <button className="btn-ghost" onClick={async () => {
                             try {
-                              const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit }) })
+                              const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit, min_normal: editData.min_normal, max_normal: editData.max_normal }) })
                               if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                               await load()
                               setEditingId(null)
@@ -1954,9 +1968,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     ) : (
                       <>
                         <h5 style={{margin:'0 0 4px 0',fontSize:16,fontWeight:600}}>{m.name}</h5>
-                        {m.unit && <p style={{margin:'0 0 12px 0',fontSize:12,color:theme.text}}>Unit: {m.unit}</p>}
+                        {m.unit && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Unit: {m.unit}</p>}
+                        {m.min_normal !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Min: {m.min_normal}</p>}
+                        {m.max_normal !== null && <p style={{margin:'0 0 12px 0',fontSize:12,color:theme.text}}>Max: {m.max_normal}</p>}
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-                          <button className="btn-ghost" onClick={() => {setEditingId(m.id); setEditData({name: m.name, unit: m.unit})}} style={{fontSize:13}}>✎ Edit</button>
+                          <button className="btn-ghost" onClick={() => {setEditingId(m.id); setEditData({name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal})}} style={{fontSize:13}}>✎ Edit</button>
                           <button className="btn-ghost" onClick={async () => {
                             if (!confirm(`Delete marker "${m.name}"?`)) return
                             try {

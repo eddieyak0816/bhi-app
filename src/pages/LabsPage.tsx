@@ -1,12 +1,23 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import { useResults } from '../context/ResultsContext'
+
+interface LabMarker {
+  id: string
+  name: string
+  unit?: string
+  min_normal?: number
+  max_normal?: number
+}
 
 export default function Labs() {
   const { theme } = useTheme()
   const { results, addResult, removeResult, getResultsForMarker } = useResults()
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [labMarkers, setLabMarkers] = useState<LabMarker[]>([])
+  const [loadingMarkers, setLoadingMarkers] = useState(true)
   const [formData, setFormData] = useState({
     markerName: '',
     value: '',
@@ -15,15 +26,30 @@ export default function Labs() {
     maxNormal: '',
   })
 
-  const commonMarkers = [
-    { name: 'Blood Glucose', unit: 'mg/dL', minNormal: 70, maxNormal: 100 },
-    { name: 'Cholesterol', unit: 'mg/dL', minNormal: 0, maxNormal: 200 },
-    { name: 'HDL', unit: 'mg/dL', minNormal: 40, maxNormal: 500 },
-    { name: 'LDL', unit: 'mg/dL', minNormal: 0, maxNormal: 100 },
-    { name: 'Triglycerides', unit: 'mg/dL', minNormal: 0, maxNormal: 150 },
-    { name: 'Blood Pressure Systolic', unit: 'mmHg', minNormal: 90, maxNormal: 120 },
-    { name: 'Blood Pressure Diastolic', unit: 'mmHg', minNormal: 60, maxNormal: 80 },
-  ]
+  // Fetch lab markers from Supabase
+  useEffect(() => {
+    async function fetchMarkers() {
+      try {
+        const { data, error } = await supabase
+          .from('lab_markers')
+          .select('id, name, unit, min_normal, max_normal')
+          .order('name')
+        
+        if (error) throw error
+        if (data) {
+          setLabMarkers(data as LabMarker[])
+        }
+      } catch (err) {
+        console.error('Error fetching lab markers:', err)
+        // Fallback to empty array if fetch fails
+        setLabMarkers([])
+      } finally {
+        setLoadingMarkers(false)
+      }
+    }
+
+    fetchMarkers()
+  }, [])
 
   const uniqueMarkers = Array.from(new Set(results.map(r => r.markerName)))
   const filteredResults = selectedMarker ? getResultsForMarker(selectedMarker) : results.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -40,9 +66,9 @@ export default function Labs() {
       return
     }
 
-    const selectedMarkerData = commonMarkers.find(m => m.name === formData.markerName)
-    const minNormal = parseFloat(formData.minNormal) || selectedMarkerData?.minNormal || 0
-    const maxNormal = parseFloat(formData.maxNormal) || selectedMarkerData?.maxNormal || 100
+    const selectedMarkerData = labMarkers.find(m => m.name === formData.markerName)
+    const minNormal = parseFloat(formData.minNormal) || selectedMarkerData?.min_normal || 0
+    const maxNormal = parseFloat(formData.maxNormal) || selectedMarkerData?.max_normal || 100
 
     addResult({
       markerName: formData.markerName,
@@ -63,13 +89,13 @@ export default function Labs() {
     setShowForm(false)
   }
 
-  const handleSelectCommonMarker = (marker: { name: string; unit: string; minNormal: number; maxNormal: number }) => {
+  const handleSelectCommonMarker = (marker: LabMarker) => {
     setFormData(prev => ({
       ...prev,
       markerName: marker.name,
-      unit: marker.unit,
-      minNormal: String(marker.minNormal),
-      maxNormal: String(marker.maxNormal),
+      unit: marker.unit || '',
+      minNormal: String(marker.min_normal || 0),
+      maxNormal: String(marker.max_normal || 100),
     }))
   }
 
@@ -129,147 +155,155 @@ export default function Labs() {
         >
           <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Add Lab Result</h3>
 
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 8, color: theme.textMuted, textTransform: 'uppercase' }}>
-              Select Marker or Enter Custom
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 16 }}>
-              {commonMarkers.map(marker => (
-                <button
-                  key={marker.name}
-                  onClick={() => handleSelectCommonMarker(marker)}
-                  style={{
-                    background: formData.markerName === marker.name ? theme.blue : theme.bg,
-                    color: formData.markerName === marker.name ? '#fff' : theme.text,
-                    border: `1.5px solid ${formData.markerName === marker.name ? theme.blue : theme.borderColor}`,
-                    borderRadius: 6,
-                    padding: '8px 12px',
-                    fontSize: 12,
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                  }}
-                >
-                  {marker.name}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Marker Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Blood Glucose"
-                  value={formData.markerName}
-                  onChange={e => setFormData({ ...formData, markerName: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1.5px solid ${theme.borderColor}`,
-                    borderRadius: 6,
-                    fontSize: 14,
-                    background: theme.bg,
-                    color: theme.text,
-                  }}
-                />
+          {loadingMarkers ? (
+            <div style={{ color: theme.textMuted }}>Loading markers...</div>
+          ) : labMarkers.length === 0 ? (
+            <div style={{ color: theme.textMuted }}>No lab markers available. Please check with an administrator.</div>
+          ) : (
+            <>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 8, color: theme.textMuted, textTransform: 'uppercase' }}>
+                  Select Marker or Enter Custom
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 16 }}>
+                  {labMarkers.map(marker => (
+                    <button
+                      key={marker.id}
+                      onClick={() => handleSelectCommonMarker(marker)}
+                      style={{
+                        background: formData.markerName === marker.name ? theme.blue : theme.bg,
+                        color: formData.markerName === marker.name ? '#fff' : theme.text,
+                        border: `1.5px solid ${formData.markerName === marker.name ? theme.blue : theme.borderColor}`,
+                        borderRadius: 6,
+                        padding: '8px 12px',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {marker.name}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Unit</label>
-                <input
-                  type="text"
-                  placeholder="e.g., mg/dL"
-                  value={formData.unit}
-                  onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: `1.5px solid ${theme.borderColor}`,
-                    borderRadius: 6,
-                    fontSize: 14,
-                    background: theme.bg,
-                    color: theme.text,
-                  }}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Marker Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Blood Glucose"
+                    value={formData.markerName}
+                    onChange={e => setFormData({ ...formData, markerName: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: `1.5px solid ${theme.borderColor}`,
+                      borderRadius: 6,
+                      fontSize: 14,
+                      background: theme.bg,
+                      color: theme.text,
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Unit</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., mg/dL"
+                    value={formData.unit}
+                    onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: `1.5px solid ${theme.borderColor}`,
+                      borderRadius: 6,
+                      fontSize: 14,
+                      background: theme.bg,
+                      color: theme.text,
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Your Value</label>
-              <input
-                type="number"
-                step="0.1"
-                placeholder="Enter value"
-                value={formData.value}
-                onChange={e => setFormData({ ...formData, value: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 6,
-                  fontSize: 14,
-                  background: theme.bg,
-                  color: theme.text,
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Min Normal</label>
-              <input
-                type="number"
-                step="0.1"
-                placeholder="Min"
-                value={formData.minNormal}
-                onChange={e => setFormData({ ...formData, minNormal: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 6,
-                  fontSize: 14,
-                  background: theme.bg,
-                  color: theme.text,
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Max Normal</label>
-              <input
-                type="number"
-                step="0.1"
-                placeholder="Max"
-                value={formData.maxNormal}
-                onChange={e => setFormData({ ...formData, maxNormal: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 6,
-                  fontSize: 14,
-                  background: theme.bg,
-                  color: theme.text,
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <button
-                onClick={handleAddResult}
-                style={{
-                  background: theme.blue,
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 6,
-                  padding: '10px 16px',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  width: '100%',
-                }}
-              >
-                Save Result
-              </button>
-            </div>
-          </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Your Value</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="Enter value"
+                    value={formData.value}
+                    onChange={e => setFormData({ ...formData, value: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: `1.5px solid ${theme.borderColor}`,
+                      borderRadius: 6,
+                      fontSize: 14,
+                      background: theme.bg,
+                      color: theme.text,
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Min Normal</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="Min"
+                    value={formData.minNormal}
+                    onChange={e => setFormData({ ...formData, minNormal: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: `1.5px solid ${theme.borderColor}`,
+                      borderRadius: 6,
+                      fontSize: 14,
+                      background: theme.bg,
+                      color: theme.text,
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Max Normal</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="Max"
+                    value={formData.maxNormal}
+                    onChange={e => setFormData({ ...formData, maxNormal: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: `1.5px solid ${theme.borderColor}`,
+                      borderRadius: 6,
+                      fontSize: 14,
+                      background: theme.bg,
+                      color: theme.text,
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  <button
+                    onClick={handleAddResult}
+                    style={{
+                      background: theme.blue,
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 6,
+                      padding: '10px 16px',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      width: '100%',
+                    }}
+                  >
+                    Save Result
+                  </button>
+                </div>
+              </div>
+            </>
+            )}
         </div>
       )}
 

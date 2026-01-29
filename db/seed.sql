@@ -7,9 +7,16 @@ INSERT INTO resource_types (name) VALUES ('doctor') ON CONFLICT (name) DO NOTHIN
 INSERT INTO resource_types (name) VALUES ('article') ON CONFLICT (name) DO NOTHING;
 
 -- lab_markers
-INSERT INTO lab_markers (id, name, unit)
+INSERT INTO lab_markers (id, name, unit, min_normal, max_normal)
 VALUES
-  ('11111111-1111-4111-8111-111111111111', 'Vitamin D', 'ng/mL')
+  ('11111111-1111-4111-8111-111111111111', 'Vitamin D', 'ng/mL', 30, 100),
+  ('11111111-1111-4111-8111-111111111112', 'Blood Glucose', 'mg/dL', 70, 100),
+  ('11111111-1111-4111-8111-111111111113', 'Cholesterol', 'mg/dL', 0, 200),
+  ('11111111-1111-4111-8111-111111111114', 'HDL', 'mg/dL', 40, 500),
+  ('11111111-1111-4111-8111-111111111115', 'LDL', 'mg/dL', 0, 100),
+  ('11111111-1111-4111-8111-111111111116', 'Triglycerides', 'mg/dL', 0, 150),
+  ('11111111-1111-4111-8111-111111111117', 'Blood Pressure Systolic', 'mmHg', 90, 120),
+  ('11111111-1111-4111-8111-111111111118', 'Blood Pressure Diastolic', 'mmHg', 60, 80)
 ON CONFLICT (id) DO NOTHING;
 
 -- logic_rules
