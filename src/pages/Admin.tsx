@@ -2455,13 +2455,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </table>
               </div>
               ) : (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:12}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4, 1fr)',gap:12}}>
                 {(sortColumn ? sortData(allowedTags
                   .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
                   .map(name => ({name})), 'name').map(obj => obj.name) : allowedTags
                   .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))).map(t => {
                   const usageCount = getTagUsageCount(t)
                   const tagColor = getTagColor(t)
+                  const titleTooLong = t.length > 30
                   return (
                     <div key={t} style={{
                       background:theme.bg,
@@ -2469,7 +2470,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       borderRadius:8,
                       padding:16,
                       boxShadow:'0 1px 2px rgba(0,0,0,0.05)',
-                      transition:'all 0.2s'
+                      transition:'all 0.2s',
+                      display:'flex',
+                      flexDirection:'column',
+                      minHeight:160
                     }}>
                       {editingId === `tag-${t}` ? (
                         <>
@@ -2480,7 +2484,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             autoFocus
                             style={{width:'100%',padding:'8px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,fontWeight:500}}
                           />
-                          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                          <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
                             <button className="btn-ghost" onClick={async () => {
                               try {
                                 const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name.trim() }) })
@@ -2497,14 +2501,25 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         </>
                       ) : (
                         <>
-                          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-                            <div style={{width:12,height:12,borderRadius:'50%',background:tagColor}}></div>
-                            <strong style={{fontSize:16,flex:1}}>{t}</strong>
+                          <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:12}}>
+                            <div style={{width:12,height:12,borderRadius:'50%',background:tagColor,flexShrink:0,marginTop:4}}></div>
+                            <div style={{flex:1,minWidth:0}}>
+                              {titleTooLong ? (
+                                <>
+                                  <strong style={{fontSize:16,display:'block',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',lineHeight:1.4}}>{t.substring(0, 30)}</strong>
+                                  <button onClick={() => {setResourceModalData({title: t}); setResourceModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:13,fontWeight:600,display:'block',textDecoration:'underline',marginTop:2}}>
+                                    more
+                                  </button>
+                                </>
+                              ) : (
+                                <strong style={{fontSize:16,display:'block',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',lineHeight:1.4}}>{t}</strong>
+                              )}
+                            </div>
                           </div>
                           <div style={{fontSize:12,color:'#666',marginBottom:12}}>
-                            Used in <span style={{fontWeight:600,color:'#1F2937'}}>{usageCount}</span> {usageCount === 1 ? 'place' : 'places'}
+                            Used in <span style={{fontWeight:600,color:'#1F2937'}}>{usageCount || 0}</span> {usageCount === 1 ? 'place' : 'places'}
                           </div>
-                          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                          <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
                             <button className="btn-ghost" onClick={() => {
                               setEditingId(`tag-${t}`)
                               setEditData({name: t})
