@@ -1010,7 +1010,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </table>
               </div>
               ) : (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:16}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
                 {(sortColumn ? sortData(resources
                   .filter(r => {
                     if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
@@ -1859,7 +1859,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </table>
               </div>
               ) : (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:12}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
                 {(sortColumn ? sortData(resourceTypes
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
                   .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
@@ -2099,7 +2099,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </table>
               </div>
               ) : (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))',gap:12}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
                 {labMarkers
                   .filter(m => 
                     (!filterLabMarkerName || m.name === filterLabMarkerName)
