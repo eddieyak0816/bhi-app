@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 
-type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; link_url?: string | null }
+type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null }
 
 export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () => void }) {
   const [resources, setResources] = useState<Resource[]>([])
@@ -1020,7 +1020,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     return true
                   })
                 ).map(r => (
-                  <div key={r.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                  <div key={r.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%'}}>
                     {editingId === r.id ? (
                       <>
                         <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus placeholder="Title" style={styles.input} />
@@ -1140,20 +1140,44 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       </>
                     ) : (
                       <>
-                        <h5 style={{margin:'0 0 8px 0',fontSize:16,fontWeight:600}}>{r.title}</h5>
-                        <div style={{fontSize:12,color:theme.text,marginBottom:8}}>
-                          <div><strong>Type:</strong> {r.type}</div>
-                          {r.tags && r.tags.length > 0 && <div><strong>Tags:</strong> {r.tags.join(', ')}</div>}
-                        </div>
-                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-                          <button className="btn-ghost" onClick={() => {
-                            if (r.id) {
-                              setEditingId(r.id)
-                              setEditData({title: r.title, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
-                            }
-                          }} style={{fontSize:13}}>✎ Edit</button>
-                          <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
-                        </div>
+                          <h5 style={{margin:'0 0 12px 0',fontSize:15,fontWeight:600,color:theme.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                            {r.title && r.title.length > 25 ? (
+                              <>
+                                {r.title.substring(0, 22)}…
+                              </>
+                            ) : (
+                              r.title
+                            )}
+                          </h5>
+                          
+                          {/* Type Line */}
+                          <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                            <strong>Type:</strong> {r.type}
+                          </div>
+                          
+                          {/* Tags Line */}
+                          {r.tags && r.tags.length > 0 && (
+                            <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                              <strong>Tags:</strong> {r.tags.join(', ')}
+                            </div>
+                          )}
+                          
+                          {/* Categories Line */}
+                          {r.categories && r.categories.length > 0 && (
+                            <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                              <strong>Categories:</strong> {r.categories.join(', ')}
+                            </div>
+                          )}
+                          
+                          <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
+                            <button className="btn-ghost" onClick={() => {
+                              if (r.id) {
+                                setEditingId(r.id)
+                                setEditData({title: r.title, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                              }
+                            }} style={{fontSize:13}}>✎ Edit</button>
+                            <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
+                          </div>
                       </>
                     )}
                   </div>

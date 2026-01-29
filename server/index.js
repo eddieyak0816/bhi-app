@@ -138,11 +138,11 @@ app.post('/api/admin/resources', async (req, res) => {
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
   const incomingKey = req.header('x-backend-api-key') || '';
   if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
-  const { type, title, description, tags, link_url } = req.body || {};
+  const { type, title, description, tags, categories, link_url } = req.body || {};
   if (!type || !title || !Array.isArray(tags)) return res.status(400).json({ error: 'missing-params' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const { data, error } = await sb.from('resources').insert([{ type, title, description: description || null, tags, link_url: link_url || null }]).select('id');
+    const { data, error } = await sb.from('resources').insert([{ type, title, description: description || null, tags, categories: categories || [], link_url: link_url || null }]).select('id');
     if (error) {
       console.error('admin-insert-resource-error', error);
       return res.status(500).json({ error: 'db_error', detail: error });
@@ -233,12 +233,13 @@ app.patch('/api/admin/resources/:id', async (req, res) => {
   const id = req.params.id;
   if (!id) return res.status(400).json({ error: 'missing-id' });
   
-  const { title, description, type, tags, link_url } = req.body || {};
+  const { title, description, type, tags, categories, link_url } = req.body || {};
   const updateData = {};
   if (title !== undefined) updateData.title = title;
   if (description !== undefined) updateData.description = description;
   if (type !== undefined) updateData.type = type;
   if (tags !== undefined) updateData.tags = tags;
+  if (categories !== undefined) updateData.categories = categories;
   if (link_url !== undefined) updateData.link_url = link_url;
   
   if (Object.keys(updateData).length === 0) return res.status(400).json({ error: 'no-fields-to-update' });
