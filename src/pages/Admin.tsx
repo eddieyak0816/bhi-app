@@ -1025,7 +1025,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     return true
                   })
                 ).map(r => (
-                  <div key={r.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%'}}>
+                  <div key={r.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%',position:'relative'}}>
                     {editingId === r.id ? (
                       <>
                         <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus placeholder="Title" style={styles.input} />
@@ -1147,55 +1147,63 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       </>
                     ) : (
                       <>
-                          <h5 style={{margin:'0 0 12px 0',fontSize:15,fontWeight:600,color:theme.text,lineHeight:'1.4',minHeight:'21px',maxHeight:'21px',overflow:'hidden',position:'relative'}}>
-                            <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
-                              {r.title}
-                            </span>
-                            {r.title && r.title.length > 25 && (
-                              <span onClick={() => {setResourceModalData(r); setResourceModalOpen(true)}} style={{position:'absolute',bottom:'50%',right:0,transform:'translateY(50%)',background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:600}}>
-                                more
-                              </span>
-                            )}
-                          </h5>
+                        {(() => {
+                          const titleTooLong = r.title && r.title.length > 25
+                          const tagsTooLong = r.tags && r.tags.join(', ').length > 30
+                          const categoriesTooLong = r.categories && r.categories.join(', ').length > 30
+                          const anyTruncated = titleTooLong || tagsTooLong || categoriesTooLong
                           
-                          {/* Type Line */}
-                          <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
-                            <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
-                              <strong>Type:</strong> {r.type}
-                            </span>
-                          </div>
-                          
-                          {/* Tags Line */}
-                          {r.tags && r.tags.length > 0 && (
-                            <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
-                              <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
-                                <strong>Tags:</strong> {r.tags.join(', ')}
-                              </span>
-                              {r.tags.join(', ').length > 30 && (
-                                <span onClick={() => {setResourceModalData(r); setResourceModalOpen(true)}} style={{position:'absolute',bottom:'50%',right:0,transform:'translateY(50%)',background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
-                                  more
+                          return (
+                            <>
+                              <h5 style={{margin:'0 0 12px 0',fontSize:15,fontWeight:600,color:theme.text,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                                <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>
+                                  {r.title}
                                 </span>
-                              )}
-                            </div>
-                          )}
-                          
-                          {/* Categories Line - always reserve space */}
-                          <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
-                            {r.categories && r.categories.length > 0 ? (
-                              <>
-                                <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
-                                  <strong>Categories:</strong> {r.categories.join(', ')}
-                                </span>
-                                {r.categories.join(', ').length > 30 && (
-                                  <span onClick={() => {setResourceModalData(r); setResourceModalOpen(true)}} style={{position:'absolute',bottom:'50%',right:0,transform:'translateY(50%)',background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
+                                {titleTooLong && (
+                                  <button onClick={() => {setResourceModalData(r); setResourceModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,paddingLeft:8,fontSize:15,fontWeight:600,flexShrink:0,textDecoration:'underline'}}>
                                     more
-                                  </span>
+                                  </button>
                                 )}
-                              </>
-                            ) : (
-                              <>&nbsp;</>
-                            )}
-                          </div>
+                              </h5>
+                              
+                              {/* Type Line */}
+                              <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
+                                <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
+                                  <strong>Type:</strong> {r.type}
+                                </span>
+                              </div>
+                              
+                              {/* Tags Line */}
+                              {r.tags && r.tags.length > 0 && (
+                                <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
+                                  <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
+                                    <strong>Tags:</strong> {r.tags.join(', ')}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {/* Categories Line - always reserve space */}
+                              <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
+                                {r.categories && r.categories.length > 0 ? (
+                                  <>
+                                    <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
+                                      <strong>Categories:</strong> {r.categories.join(', ')}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>&nbsp;</>
+                                )}
+                              </div>
+                              
+                              {/* More button for non-title overflow */}
+                              {(tagsTooLong || categoriesTooLong) && !titleTooLong && (
+                                <button onClick={() => {setResourceModalData(r); setResourceModalOpen(true)}} style={{position:'absolute',top:12,right:12,background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'right',fontSize:13,fontWeight:600,display:'inline',textDecoration:'underline'}}>
+                                  more
+                                </button>
+                              )}
+                            </>
+                          )
+                        })()}
                           
                           <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
                             <button className="btn-ghost" onClick={() => {
