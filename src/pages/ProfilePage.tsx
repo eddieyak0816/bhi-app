@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -47,23 +47,29 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
     }))
   }, [displayName, displayEmail])
 
-  // Load health goals and resource types from Supabase with timeout
+  // Load health goals and resource types from Supabase with timeout and retry
   useEffect(() => {
     let mounted = true
 
-    const loadOptions = async () => {
+    const loadOptions = async (retryCount = 0) => {
+      const maxRetries = 3
+      const timeoutMs = 8000
+
       try {
-        setLoading(true)
-        setLoadError(null)
+        if (retryCount === 0) {
+          setLoading(true)
+          setLoadError(null)
+        }
 
         // Add timeout to prevent hanging
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Loading timed out')), 5000)
+          setTimeout(() => reject(new Error('Request timed out')), timeoutMs)
         )
 
+        // Query health_goals (only active) and resource_types
         const queryPromise = Promise.all([
           supabase.from('health_goals').select('*').eq('is_active', true).order('name'),
-          supabase.from('resource_types').select('name').eq('is_active', true).order('name')
+          supabase.from('resource_types').select('name').order('name')
         ])
 
         const [goalsResponse, typesResponse] = await Promise.race([
@@ -82,15 +88,23 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
 
         setHealthGoals(goalsResponse.data || [])
         setResourceTypes((typesResponse.data || []).map((t: any) => t.name))
+        setLoadError(null)
+        if (mounted) setLoading(false)
       } catch (err) {
-        console.error('Failed to load options:', err)
-        if (mounted) {
-          setLoadError('Could not load options. Please refresh the page.')
+        console.error(`Failed to load options (attempt ${retryCount + 1}):`, err)
+        if (!mounted) return
+
+        // Retry if we haven't exceeded max retries
+        if (retryCount < maxRetries - 1) {
+          console.log(`Retrying in 1 second... (attempt ${retryCount + 2}/${maxRetries})`)
+          setTimeout(() => {
+            if (mounted) loadOptions(retryCount + 1)
+          }, 1000)
+          return
         }
-      } finally {
-        if (mounted) {
-          setLoading(false)
-        }
+
+        setLoadError('Could not load options. Please refresh the page.')
+        if (mounted) setLoading(false)
       }
     }
     loadOptions()

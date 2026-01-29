@@ -9,6 +9,7 @@ interface Resource {
   type: string
   description?: string
   tags: string[]
+  categories?: string[]
   link_url?: string
 }
 
@@ -19,29 +20,66 @@ export default function Resources() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filterType, setFilterType] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
   const [filterTag, setFilterTag] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
 
-  // Load resources from Supabase
+  // Load resources from Supabase with timeout and retry
   useEffect(() => {
-    const loadResources = async () => {
+    let mounted = true
+
+    const loadResources = async (retryCount = 0) => {
+      const maxRetries = 3
+      const timeoutMs = 8000
+
       try {
-        setLoading(true)
-        const { data, error: err } = await supabase.from('resources').select('*')
+        if (retryCount === 0) {
+          setLoading(true)
+          setError(null)
+        }
+
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timed out')), timeoutMs)
+        )
+
+        const queryPromise = supabase.from('resources').select('*')
+
+        const { data, error: err } = await Promise.race([
+          queryPromise,
+          timeoutPromise
+        ]) as any
+
+        if (!mounted) return
+
         if (err) throw err
         setResources(data || [])
+        setError(null)
+        if (mounted) setLoading(false)
       } catch (err) {
+        if (!mounted) return
+        console.error(`Resources error (attempt ${retryCount + 1}):`, err)
+
+        // Retry if we haven't exceeded max retries
+        if (retryCount < maxRetries - 1) {
+          console.log(`Retrying in 1 second... (attempt ${retryCount + 2}/${maxRetries})`)
+          setTimeout(() => {
+            if (mounted) loadResources(retryCount + 1)
+          }, 1000)
+          return
+        }
+
         const message = err instanceof Error ? err.message : 'Failed to load resources'
-        setError(message)
-        console.error('Resources error:', err)
-      } finally {
-        setLoading(false)
+        setError(message + '. Please refresh the page.')
+        if (mounted) setLoading(false)
       }
     }
     loadResources()
+
+    return () => { mounted = false }
   }, [])
 
   // Load bookmarks from localStorage
@@ -65,13 +103,15 @@ export default function Resources() {
   }
 
   const uniqueTypes = Array.from(new Set(resources.map(r => r.type)))
+  const uniqueCategories = Array.from(new Set(resources.flatMap(r => r.categories || [])))
   const uniqueTags = Array.from(new Set(resources.flatMap(r => r.tags)))
 
   const filtered = resources.filter(r => {
     const matchType = !filterType || r.type === filterType
+    const matchCategory = !filterCategory || (r.categories || []).includes(filterCategory)
     const matchTag = !filterTag || r.tags.includes(filterTag)
     const matchSearch = !searchTerm || r.title.toLowerCase().includes(searchTerm.toLowerCase()) || r.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchType && matchTag && matchSearch
+    return matchType && matchCategory && matchTag && matchSearch
   })
 
   // Prioritize resources matching user's tags
@@ -137,7 +177,7 @@ export default function Resources() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Type</label>
                 <select
@@ -165,6 +205,30 @@ export default function Resources() {
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Category</label>
                 <select
+                  value={filterCategory}
+                  onChange={e => setFilterCategory(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: `1.5px solid ${theme.borderColor}`,
+                    borderRadius: 6,
+                    fontSize: 14,
+                    background: theme.bg,
+                    color: theme.text,
+                  }}
+                >
+                  <option value="">All Categories</option>
+                  {uniqueCategories.map(c => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Tag</label>
+                <select
                   value={filterTag}
                   onChange={e => setFilterTag(e.target.value)}
                   style={{
@@ -177,7 +241,7 @@ export default function Resources() {
                     color: theme.text,
                   }}
                 >
-                  <option value="">All Categories</option>
+                  <option value="">All Tags</option>
                   {uniqueTags.map(t => (
                     <option key={t} value={t}>
                       {t}

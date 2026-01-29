@@ -14,6 +14,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // tag-manager state
   const [allowedTags, setAllowedTags] = useState<string[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
 
   // criteria / logic_rules state
@@ -27,7 +28,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [markerName, setMarkerName] = useState('')
   const [markerUnit, setMarkerUnit] = useState('')
 
-  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'criteria' | 'goals' | 'audit'>('resources')
+  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit'>('resources')
   // Use global theme context
   const { darkMode, theme: globalTheme } = useTheme()
   // View mode per tab (card or table)
@@ -36,6 +37,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     types: 'card',
     markers: 'card',
     tags: 'card',
+    categories: 'card',
     criteria: 'table',
     goals: 'card',
     audit: 'table'
@@ -44,10 +46,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [newTypeName, setNewTypeName] = useState('')
   const [createResourceOpen, setCreateResourceOpen] = useState(false)
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false)
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
   const [filterKeyword, setFilterKeyword] = useState('')
   const [filterTypes, setFilterTypes] = useState<string[]>([])
   const [filterTags, setFilterTags] = useState<string[]>([])
   const [auditRows, setAuditRows] = useState<Array<any>>([])
+  const [healthGoals, setHealthGoals] = useState<Array<{id: string; name: string; description?: string; is_active: boolean}>>([])
+  const [categories, setCategories] = useState<Array<{id: string; name: string; description?: string; is_active: boolean}>>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [selectAll, setSelectAll] = useState(false)
   const [selectedTagNames, setSelectedTagNames] = useState<string[]>([])
@@ -75,6 +80,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editData, setEditData] = useState<any>({})
   const [editingTagsDropdownOpen, setEditingTagsDropdownOpen] = useState(false)
+  const [editingCategoriesDropdownOpen, setEditingCategoriesDropdownOpen] = useState(false)
   const DEV_BACKEND_KEY = ((import.meta as any).env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   // session override for dev convenience (not persisted)
@@ -309,6 +315,34 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     }
   }
 
+  // load health goals from Supabase
+  async function loadHealthGoals() {
+    try {
+      const { data, error } = await supabase.from('health_goals').select('*').order('name')
+      if (error) {
+        console.warn('loadHealthGoals error:', error)
+        return
+      }
+      setHealthGoals(data || [])
+    } catch (err) {
+      console.error('loadHealthGoals', err)
+    }
+  }
+
+  // load categories from Supabase
+  async function loadCategories() {
+    try {
+      const { data, error } = await supabase.from('categories').select('*').order('name')
+      if (error) {
+        console.warn('loadCategories error:', error)
+        return
+      }
+      setCategories(data || [])
+    } catch (err) {
+      console.error('loadCategories', err)
+    }
+  }
+
   async function addTag(name: string) {
     const clean = (name || '').toString().trim()
     if (!clean) return null
@@ -406,11 +440,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     }
   }
 
-  useEffect(() => { load(); loadTags(); loadResourceTypes() }, [])
+  useEffect(() => { load(); loadTags(); loadResourceTypes(); loadHealthGoals(); loadCategories() }, [])
 
   async function create() {
     const fullUrl = linkUrl ? buildFullUrl(linkProtocol, linkUrl) : null
-    const payload = { type, title, description: null, tags: selectedTags.map(s => s.trim()).filter(Boolean), link_url: fullUrl }
+    const payload = { type, title, description: null, tags: selectedTags.map(s => s.trim()).filter(Boolean), categories: selectedCategories, link_url: fullUrl }
     try {
       const res = await fetch(apiUrl('/api/admin/resources'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify(payload) })
       if (!res.ok) {
@@ -420,6 +454,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       setTitle('')
       setLinkUrl('')
       setSelectedTags([])
+      setSelectedCategories([])
       setTagInput('')
       await load()
       await loadTags()
@@ -466,8 +501,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       <div className="tabs">
         <button className={`tab ${activeTab === 'resources' ? 'active' : ''}`} onClick={() => setActiveTab('resources')} style={{color: activeTab === 'resources' ? '#ffffff' : theme.text}}>Resources</button>
         <button className={`tab ${activeTab === 'types' ? 'active' : ''}`} onClick={() => setActiveTab('types')} style={{color: activeTab === 'types' ? '#ffffff' : theme.text}}>Resource Types</button>
+        <button className={`tab ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')} style={{color: activeTab === 'categories' ? '#ffffff' : theme.text}}>Categories</button>
+        <button className={`tab ${activeTab === 'tags' ? 'active' : ''}`} onClick={() => setActiveTab('tags')} style={{color: activeTab === 'tags' ? '#ffffff' : theme.text}}>Tags</button>
         <button className={`tab ${activeTab === 'markers' ? 'active' : ''}`} onClick={() => setActiveTab('markers')} style={{color: activeTab === 'markers' ? '#ffffff' : theme.text}}>Lab Markers</button>
-        <button className={`tab ${activeTab === 'tags' ? 'active' : ''}`} onClick={() => setActiveTab('tags')} style={{color: activeTab === 'tags' ? '#ffffff' : theme.text}}>Categories</button>
         <button className={`tab ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => setActiveTab('goals')} style={{color: activeTab === 'goals' ? '#ffffff' : theme.text}}>Health Goals</button>
         <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')} style={{color: activeTab === 'criteria' ? '#ffffff' : theme.text}}>Criteria</button>
       </div>
@@ -571,8 +607,51 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </div>
                     <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
                   </div>
-                  <div style={{marginTop:12}}>
-                    <div style={{marginBottom:12}}>
+                  <div style={{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                    <div>
+                      <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Categories:</label>
+                      <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                        {selectedCategories.map(c => (
+                          <div key={c} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#10b981',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                            <span>{c}</span>
+                            <button onClick={() => setSelectedCategories(s => s.filter(x => x !== c))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                          </div>
+                        ))}
+                        <div style={{position:'relative'}}>
+                          <button
+                            onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                            style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                          >
+                            + Add Category
+                          </button>
+                          {categoryDropdownOpen && (
+                            <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
+                              {categories.filter(c => c.is_active && !selectedCategories.includes(c.name)).map(c => (
+                                <label key={c.id} style={{display:'block',padding:'8px 12px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedCategories.includes(c.name)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedCategories(s => [...s, c.name])
+                                      } else {
+                                        setSelectedCategories(s => s.filter(x => x !== c.name))
+                                      }
+                                    }}
+                                    style={{marginRight:8}}
+                                  />
+                                  {c.name}
+                                </label>
+                              ))}
+                              {categories.filter(c => c.is_active && !selectedCategories.includes(c.name)).length === 0 && (
+                                <div style={{padding:'12px',textAlign:'center',color:theme.textMuted,fontSize:12}}>No more categories available</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
                       <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Tags:</label>
                       <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                         {selectedTags.map(t => (
@@ -582,7 +661,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           </div>
                         ))}
                         <div style={{position:'relative'}}>
-                          <button 
+                          <button
                             onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
                             style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
                           >
@@ -592,8 +671,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
                               {(allowedTags || []).filter((t: string) => !selectedTags.includes(t)).map((t: string) => (
                                 <label key={t} style={{display:'block',padding:'8px 12px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
-                                  <input 
-                                    type="checkbox" 
+                                  <input
+                                    type="checkbox"
                                     checked={selectedTags.includes(t)}
                                     onChange={(e) => {
                                       if (e.target.checked) {
@@ -777,7 +856,51 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               </td>
                               <td style={{padding:8}} className="small muted">{r.type}</td>
                               <td style={{padding:8}}>
-                                <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginBottom:8}}>
+                                {/* Categories */}
+                                <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginBottom:6}}>
+                                  <span style={{fontSize:10,color:theme.textMuted,fontWeight:600}}>Cat:</span>
+                                  {(editData.categories || []).map((c: string) => (
+                                    <span key={c} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',background:'#10b981',color:'#fff',borderRadius:12,fontSize:11,fontWeight:500}}>
+                                      {c}
+                                      <button onClick={() => setEditData({...editData, categories: (editData.categories || []).filter((x: string) => x !== c)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:12,lineHeight:1}}>✕</button>
+                                    </span>
+                                  ))}
+                                  <div style={{position:'relative'}}>
+                                    <button
+                                      onClick={() => setEditingCategoriesDropdownOpen(!editingCategoriesDropdownOpen)}
+                                      style={{padding:'2px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:11,fontWeight:500}}
+                                    >
+                                      +
+                                    </button>
+                                    {editingCategoriesDropdownOpen && (
+                                      <div style={{position:'absolute',top:'100%',left:0,marginTop:2,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:150,maxHeight:250,overflowY:'auto'}}>
+                                        {categories.filter(c => c.is_active && !(editData.categories || []).includes(c.name)).map(c => (
+                                          <label key={c.id} style={{display:'block',padding:'6px 10px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'1px solid ' + theme.borderLight,fontSize:12}}>
+                                            <input
+                                              type="checkbox"
+                                              checked={(editData.categories || []).includes(c.name)}
+                                              onChange={(e) => {
+                                                if (e.target.checked) {
+                                                  setEditData({...editData, categories: [...(editData.categories || []), c.name]})
+                                                } else {
+                                                  setEditData({...editData, categories: (editData.categories || []).filter((x: string) => x !== c.name)})
+                                                }
+                                              }}
+                                              style={{marginRight:6}}
+                                            />
+                                            {c.name}
+                                          </label>
+                                        ))}
+                                        {categories.filter(c => c.is_active && !(editData.categories || []).includes(c.name)).length === 0 && (
+                                          <div style={{padding:'8px',textAlign:'center',color:theme.textMuted,fontSize:11}}>No more categories</div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* Tags */}
+                                <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                                  <span style={{fontSize:10,color:theme.textMuted,fontWeight:600}}>Tags:</span>
                                   {(editData.tags || []).map((t: string) => (
                                     <span key={t} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',background:'#2563eb',color:'#fff',borderRadius:12,fontSize:11,fontWeight:500}}>
                                       {t}
@@ -785,7 +908,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                     </span>
                                   ))}
                                   <div style={{position:'relative'}}>
-                                    <button 
+                                    <button
                                       onClick={() => setEditingTagsDropdownOpen(!editingTagsDropdownOpen)}
                                       style={{padding:'2px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:11,fontWeight:500}}
                                     >
@@ -795,8 +918,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                       <div style={{position:'absolute',top:'100%',left:0,marginTop:2,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:150,maxHeight:250,overflowY:'auto'}}>
                                         {(allowedTags || []).filter((t: string) => !(editData.tags || []).includes(t)).map((t: string) => (
                                           <label key={t} style={{display:'block',padding:'6px 10px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'1px solid ' + theme.borderLight,fontSize:12}}>
-                                            <input 
-                                              type="checkbox" 
+                                            <input
+                                              type="checkbox"
                                               checked={(editData.tags || []).includes(t)}
                                               onChange={(e) => {
                                                 if (e.target.checked) {
@@ -820,11 +943,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   <button className="btn-ghost" onClick={async () => {
                                     try {
                                       const fullUrl = editData.link_url ? buildFullUrl(editData.link_protocol || 'https://', editData.link_url) : null
-                                      const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title, tags: editData.tags || [], link_url: fullUrl }) })
+                                      const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title, tags: editData.tags || [], categories: editData.categories || [], link_url: fullUrl }) })
                                       if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                                       await load()
                                       setEditingId(null)
                                       setEditingTagsDropdownOpen(false)
+                                      setEditingCategoriesDropdownOpen(false)
                                     } catch (err) {
                                       alert('Save resource failed — ' + ((err as any)?.message || 'check server logs'))
                                     }
@@ -832,6 +956,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   <button className="btn-ghost" onClick={() => {
                                     setEditingId(null)
                                     setEditingTagsDropdownOpen(false)
+                                    setEditingCategoriesDropdownOpen(false)
                                   }} style={{color:'#dc2626'}}>⊘</button>
                                 </div>
                               </td>
@@ -846,7 +971,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   <button className="btn-ghost" onClick={() => {
                                     if (r.id) {
                                       setEditingId(r.id)
-                                      setEditData({title: r.title, tags: r.tags || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                      setEditData({title: r.title, tags: r.tags || [], categories: (r as any).categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
                                     }
                                   }}>✎</button>
                                   <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626'}}>✕</button>
@@ -996,7 +1121,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       const res = await supabase.from('health_goals').insert({ name: newTypeName.trim(), description: '' })
                       if (res.error) throw res.error
                       setNewTypeName('')
-                      // Refresh data - you might need to add a loadHealthGoals function
+                      await loadHealthGoals()
                     } catch (err) {
                       alert('Create goal failed — ' + ((err as any)?.message || 'check server logs'))
                     }
@@ -1010,7 +1135,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 <button onClick={() => toggleViewMode('goals')} title={viewMode.goals === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.goals === 'card' ? '📋' : '🗂️'}</button>
               </div>
 
-              {viewMode.goals === 'table' ? (
+              {healthGoals.length === 0 ? (
+                <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:32,textAlign:'center',color:theme.textMuted}}>
+                  No health goals found. Add one above or run the migration to add defaults.
+                </div>
+              ) : viewMode.goals === 'table' ? (
                 <div style={{border:`1px solid ${theme.borderColor}`,borderRadius:6,overflow:'auto'}}>
                   <table style={styles.table}>
                     <thead>
@@ -1022,19 +1151,63 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       </tr>
                     </thead>
                     <tbody>
-                      {/* You'll need to fetch and display health goals here */}
-                      <tr>
-                        <td colSpan={4} style={{padding:20,textAlign:'center',color:theme.textMuted}}>Health goals management coming soon...</td>
-                      </tr>
+                      {healthGoals.map(goal => (
+                        <tr key={goal.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                          <td style={{padding:12,color:theme.text}}>{goal.name}</td>
+                          <td style={{padding:12,color:theme.textMuted}}>{goal.description || '-'}</td>
+                          <td style={{padding:12}}>
+                            <span style={{padding:'4px 8px',borderRadius:4,fontSize:12,background:goal.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',color:goal.is_active ? '#22c55e' : '#ef4444'}}>
+                              {goal.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td style={{padding:12,textAlign:'right'}}>
+                            <button onClick={async () => {
+                              await supabase.from('health_goals').update({ is_active: !goal.is_active }).eq('id', goal.id)
+                              await loadHealthGoals()
+                            }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 8px',cursor:'pointer',marginRight:8,color:theme.text}}>
+                              {goal.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button onClick={async () => {
+                              if (!confirm('Delete this health goal?')) return
+                              await supabase.from('health_goals').delete().eq('id', goal.id)
+                              await loadHealthGoals()
+                            }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'4px 8px',cursor:'pointer',color:'#ef4444'}}>
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
               ) : (
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
-                  {/* You'll need to fetch and display health goals here */}
-                  <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,textAlign:'center',color:theme.textMuted}}>
-                    Health goals management coming soon...
-                  </div>
+                  {healthGoals.map(goal => (
+                    <div key={goal.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:8}}>
+                        <h4 style={{margin:0,fontSize:14,fontWeight:600,color:theme.text}}>{goal.name}</h4>
+                        <span style={{padding:'2px 6px',borderRadius:4,fontSize:11,background:goal.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',color:goal.is_active ? '#22c55e' : '#ef4444'}}>
+                          {goal.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <p style={{margin:'0 0 12px 0',fontSize:13,color:theme.textMuted}}>{goal.description || 'No description'}</p>
+                      <div style={{display:'flex',gap:8}}>
+                        <button onClick={async () => {
+                          await supabase.from('health_goals').update({ is_active: !goal.is_active }).eq('id', goal.id)
+                          await loadHealthGoals()
+                        }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:theme.text}}>
+                          {goal.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button onClick={async () => {
+                          if (!confirm('Delete this health goal?')) return
+                          await supabase.from('health_goals').delete().eq('id', goal.id)
+                          await loadHealthGoals()
+                        }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:'#ef4444'}}>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -1768,6 +1941,121 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         </div>
       )}
 
+      {/* Categories Tab */}
+      {activeTab === 'categories' && (
+        <div>
+          {loading ? <div>Loading...</div> : (
+            <div>
+              {/* Category creation form */}
+              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Category</h3>
+                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                  <input
+                    placeholder="Category name (e.g., Diabetes, Heart Health)"
+                    value={newTypeName}
+                    onChange={e => setNewTypeName(e.target.value)}
+                    style={{flex:1,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                  />
+                  <button className="btn-primary" onClick={async () => {
+                    if (!newTypeName.trim()) return alert('Category name required')
+                    try {
+                      const res = await supabase.from('categories').insert({ name: newTypeName.trim(), description: '' })
+                      if (res.error) throw res.error
+                      setNewTypeName('')
+                      await loadCategories()
+                    } catch (err) {
+                      alert('Create category failed — ' + ((err as any)?.message || 'check server logs'))
+                    }
+                  }}>Add Category</button>
+                </div>
+              </div>
+
+              {/* Categories Grid */}
+              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Categories ({categories.length})</h3>
+                <button onClick={() => toggleViewMode('categories')} title={viewMode.categories === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.categories === 'card' ? '📋' : '🗂️'}</button>
+              </div>
+
+              {categories.length === 0 ? (
+                <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:32,textAlign:'center',color:theme.textMuted}}>
+                  No categories found. Add one above or run the migration to add defaults.
+                </div>
+              ) : viewMode.categories === 'table' ? (
+                <div style={{border:`1px solid ${theme.borderColor}`,borderRadius:6,overflow:'auto'}}>
+                  <table style={styles.table}>
+                    <thead>
+                      <tr style={styles.tableHeader}>
+                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Category Name</th>
+                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Description</th>
+                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Status</th>
+                        <th style={{padding:12,textAlign:'right',fontWeight:600,color:'#ffffff'}}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categories.map(cat => (
+                        <tr key={cat.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                          <td style={{padding:12,color:theme.text}}>{cat.name}</td>
+                          <td style={{padding:12,color:theme.textMuted}}>{cat.description || '-'}</td>
+                          <td style={{padding:12}}>
+                            <span style={{padding:'4px 8px',borderRadius:4,fontSize:12,background:cat.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',color:cat.is_active ? '#22c55e' : '#ef4444'}}>
+                              {cat.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td style={{padding:12,textAlign:'right'}}>
+                            <button onClick={async () => {
+                              await supabase.from('categories').update({ is_active: !cat.is_active }).eq('id', cat.id)
+                              await loadCategories()
+                            }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 8px',cursor:'pointer',marginRight:8,color:theme.text}}>
+                              {cat.is_active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button onClick={async () => {
+                              if (!confirm('Delete this category?')) return
+                              await supabase.from('categories').delete().eq('id', cat.id)
+                              await loadCategories()
+                            }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'4px 8px',cursor:'pointer',color:'#ef4444'}}>
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
+                  {categories.map(cat => (
+                    <div key={cat.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:8}}>
+                        <h4 style={{margin:0,fontSize:14,fontWeight:600,color:theme.text}}>{cat.name}</h4>
+                        <span style={{padding:'2px 6px',borderRadius:4,fontSize:11,background:cat.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',color:cat.is_active ? '#22c55e' : '#ef4444'}}>
+                          {cat.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <p style={{margin:'0 0 12px 0',fontSize:13,color:theme.textMuted}}>{cat.description || 'No description'}</p>
+                      <div style={{display:'flex',gap:8}}>
+                        <button onClick={async () => {
+                          await supabase.from('categories').update({ is_active: !cat.is_active }).eq('id', cat.id)
+                          await loadCategories()
+                        }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:theme.text}}>
+                          {cat.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button onClick={async () => {
+                          if (!confirm('Delete this category?')) return
+                          await supabase.from('categories').delete().eq('id', cat.id)
+                          await loadCategories()
+                        }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:'#ef4444'}}>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Tags Tab */}
       {activeTab === 'tags' && (
         <div>
@@ -1802,13 +2090,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Tags Search Filter */}
               <div style={styles.filterBox}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Categories</h3>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Tags</h3>
                 <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:10,alignItems:'end'}}>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Search Categories</label>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Search Tags</label>
                     <input
                       type="text"
-                      placeholder="Category name..."
+                      placeholder="Tag name..."
                       value={filterTagName}
                       onChange={e => setFilterTagName(e.target.value)}
                       list="search-tags-list"

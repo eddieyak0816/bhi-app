@@ -139,15 +139,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (event === 'SIGNED_IN' && session?.user) {
-        const basicUser = {
-          id: session.user.id,
-          email: session.user.email || '',
-          name: session.user.user_metadata?.name || '',
-          role: 'user' as UserRole,
-        }
-        setUser(basicUser)
+        // If user is already set with this ID, don't overwrite (avoids losing role)
+        // This can happen when Supabase fires SIGNED_IN after we already loaded via getSession
+        setUser(currentUser => {
+          if (currentUser?.id === session.user.id) {
+            console.log('[Auth] User already set, keeping existing data')
+            return currentUser
+          }
+          // New user signing in - set basic info and fetch profile
+          return {
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.name || '',
+            role: 'user' as UserRole,
+          }
+        })
 
-        // Fetch profile
+        // Only fetch profile if this is a different user
         const { data: profile } = await supabase
           .from('profiles')
           .select('name, role')
