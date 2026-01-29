@@ -90,6 +90,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // health goal modal state
   const [healthGoalModalOpen, setHealthGoalModalOpen] = useState(false)
   const [healthGoalModalData, setHealthGoalModalData] = useState<any>(null)
+  // resource modal state
+  const [resourceModalOpen, setResourceModalOpen] = useState(false)
+  const [resourceModalData, setResourceModalData] = useState<any>(null)
   const DEV_BACKEND_KEY = ((import.meta as any).env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   // session override for dev convenience (not persisted)
@@ -1144,32 +1147,51 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       </>
                     ) : (
                       <>
-                          <h5 style={{margin:'0 0 12px 0',fontSize:15,fontWeight:600,color:theme.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                            {r.title && r.title.length > 25 ? (
-                              <>
-                                {r.title.substring(0, 22)}…
-                              </>
-                            ) : (
-                              r.title
+                          <h5 style={{margin:'0 0 12px 0',fontSize:15,fontWeight:600,color:theme.text,lineHeight:'1.4',minHeight:'21px',maxHeight:'21px',overflow:'hidden',position:'relative'}}>
+                            <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
+                              {r.title}
+                            </span>
+                            {r.title && r.title.length > 25 && (
+                              <span onClick={() => {setResourceModalData(r); setResourceModalOpen(true)}} style={{position:'absolute',bottom:'50%',right:0,transform:'translateY(50%)',background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:600}}>
+                                more
+                              </span>
                             )}
                           </h5>
                           
                           {/* Type Line */}
-                          <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                            <strong>Type:</strong> {r.type}
+                          <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
+                            <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
+                              <strong>Type:</strong> {r.type}
+                            </span>
                           </div>
                           
                           {/* Tags Line */}
                           {r.tags && r.tags.length > 0 && (
-                            <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                              <strong>Tags:</strong> {r.tags.join(', ')}
+                            <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
+                              <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
+                                <strong>Tags:</strong> {r.tags.join(', ')}
+                              </span>
+                              {r.tags.join(', ').length > 30 && (
+                                <span onClick={() => {setResourceModalData(r); setResourceModalOpen(true)}} style={{position:'absolute',bottom:'50%',right:0,transform:'translateY(50%)',background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
+                                  more
+                                </span>
+                              )}
                             </div>
                           )}
                           
                           {/* Categories Line - always reserve space */}
-                          <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                          <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
                             {r.categories && r.categories.length > 0 ? (
-                              <><strong>Categories:</strong> {r.categories.join(', ')}</>
+                              <>
+                                <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
+                                  <strong>Categories:</strong> {r.categories.join(', ')}
+                                </span>
+                                {r.categories.join(', ').length > 30 && (
+                                  <span onClick={() => {setResourceModalData(r); setResourceModalOpen(true)}} style={{position:'absolute',bottom:'50%',right:0,transform:'translateY(50%)',background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
+                                    more
+                                  </span>
+                                )}
+                              </>
                             ) : (
                               <>&nbsp;</>
                             )}
@@ -1192,6 +1214,34 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Resource Modal */}
+      {resourceModalOpen && resourceModalData && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+          <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:500,maxHeight:'80vh',overflow:'auto',border:`1px solid ${theme.borderColor}`}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
+              <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{resourceModalData.title}</h3>
+              <button onClick={() => setResourceModalOpen(false)} style={{background:'transparent',border:'none',fontSize:24,cursor:'pointer',color:theme.text,padding:0}}>✕</button>
+            </div>
+            <div style={{marginBottom:16}}>
+              <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Type:</p>
+              <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.type}</p>
+            </div>
+            {resourceModalData.tags && resourceModalData.tags.length > 0 && (
+              <div style={{marginBottom:16}}>
+                <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Tags:</p>
+                <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.tags.join(', ')}</p>
+              </div>
+            )}
+            {resourceModalData.categories && resourceModalData.categories.length > 0 && (
+              <div style={{marginBottom:16}}>
+                <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Categories:</p>
+                <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.categories.join(', ')}</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
