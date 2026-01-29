@@ -1021,7 +1021,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               </div>
                             ))}
                             <div style={{position:'relative'}}>
-                              <button 
+                              <button
                                 onClick={() => setEditingTagsDropdownOpen(!editingTagsDropdownOpen)}
                                 style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
                               >
@@ -1031,8 +1031,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                 <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
                                   {(allowedTags || []).filter((t: string) => !(editData.tags || []).includes(t)).map((t: string) => (
                                     <label key={t} style={{display:'block',padding:'8px 12px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
-                                      <input 
-                                        type="checkbox" 
+                                      <input
+                                        type="checkbox"
                                         checked={(editData.tags || []).includes(t)}
                                         onChange={(e) => {
                                           if (e.target.checked) {
@@ -1054,15 +1054,59 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             </div>
                           </div>
                         </div>
+                        <div style={{marginTop:12,marginBottom:12}}>
+                          <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Categories:</label>
+                          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:8}}>
+                            {(editData.categories || []).map((c: string) => (
+                              <div key={c} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#16a34a',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                                <span>{c}</span>
+                                <button onClick={() => setEditData({...editData, categories: (editData.categories || []).filter((x: string) => x !== c)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                              </div>
+                            ))}
+                            <div style={{position:'relative'}}>
+                              <button
+                                onClick={() => setEditingCategoriesDropdownOpen(!editingCategoriesDropdownOpen)}
+                                style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                              >
+                                + Add Category
+                              </button>
+                              {editingCategoriesDropdownOpen && (
+                                <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
+                                  {(categories || []).filter((c: any) => c.is_active && !(editData.categories || []).includes(c.name)).map((c: any) => (
+                                    <label key={c.id} style={{display:'block',padding:'8px 12px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
+                                      <input
+                                        type="checkbox"
+                                        checked={(editData.categories || []).includes(c.name)}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setEditData({...editData, categories: [...(editData.categories || []), c.name]})
+                                          } else {
+                                            setEditData({...editData, categories: (editData.categories || []).filter((x: string) => x !== c.name)})
+                                          }
+                                        }}
+                                        style={{marginRight:8}}
+                                      />
+                                      {c.name}
+                                    </label>
+                                  ))}
+                                  {(categories || []).filter((c: any) => c.is_active && !(editData.categories || []).includes(c.name)).length === 0 && (
+                                    <div style={{padding:'12px',textAlign:'center',color:theme.textMuted,fontSize:12}}>No more categories available</div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                         <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
                           <button className="btn-ghost" onClick={async () => {
                             try {
                               const fullUrl = editData.link_url ? buildFullUrl(editData.link_protocol || 'https://', editData.link_url) : null
-                              const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title, tags: editData.tags || [], link_url: fullUrl }) })
+                              const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title, tags: editData.tags || [], categories: editData.categories || [], link_url: fullUrl }) })
                               if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                               await load()
                               setEditingId(null)
                               setEditingTagsDropdownOpen(false)
+                              setEditingCategoriesDropdownOpen(false)
                             } catch (err) {
                               alert('Save resource failed — ' + ((err as any)?.message || 'check server logs'))
                             }
@@ -1070,6 +1114,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <button className="btn-ghost" onClick={() => {
                             setEditingId(null)
                             setEditingTagsDropdownOpen(false)
+                            setEditingCategoriesDropdownOpen(false)
                           }} style={{color:'#dc2626',fontSize:14}}>⊘</button>
                         </div>
                       </>
@@ -1084,7 +1129,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <button className="btn-ghost" onClick={() => {
                             if (r.id) {
                               setEditingId(r.id)
-                              setEditData({title: r.title, tags: r.tags || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                              setEditData({title: r.title, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
                             }
                           }} style={{fontSize:13}}>✎ Edit</button>
                           <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
