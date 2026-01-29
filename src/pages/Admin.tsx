@@ -1573,7 +1573,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       setFilterCriteriaValue('')
                       setFilterCriteriaTag('')
                     }}
-                    style={{opacity: (filterCriteriaMarker || filterCriteriaValueType || filterCriteriaOperator || filterCriteriaValue || filterCriteriaTag) ? 1 : 0.5,cursor: (filterCriteriaMarker || filterCriteriaValueType || filterCriteriaOperator || filterCriteriaValue || filterCriteriaTag) ? 'pointer' : 'default'}}
+                    style={{opacity: (filterCriteriaMarker || filterCriteriaValueType || filterCriteriaOperator || filterCriteriaValue || filterCriteriaTag) ? 1 : 0.5,cursor: (filterCriteriaMarker || filterCriteriaValueType || filterCriteriaOperator || filterCriteriaValue || filterCriteriaTag) ? 'pointer' : 'default',padding:'6px 12px',fontSize:14}}
                   >
                     Clear
                   </button>
