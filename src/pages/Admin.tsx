@@ -657,6 +657,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                       } else {
                                         setSelectedCategories(s => s.filter(x => x !== c.name))
                                       }
+                                      setCategoryDropdownOpen(false)
                                     }}
                                     style={{marginRight:8}}
                                   />
@@ -700,6 +701,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                       } else {
                                         setSelectedTags(s => s.filter(x => x !== t))
                                       }
+                                      setTagDropdownOpen(false)
                                     }}
                                     style={{marginRight:8}}
                                   />
@@ -1060,6 +1062,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                           } else {
                                             setEditData({...editData, tags: (editData.tags || []).filter((x: string) => x !== t)})
                                           }
+                                          setEditingTagsDropdownOpen(false)
                                         }}
                                         style={{marginRight:8}}
                                       />
@@ -1103,6 +1106,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                           } else {
                                             setEditData({...editData, categories: (editData.categories || []).filter((x: string) => x !== c.name)})
                                           }
+                                          setEditingCategoriesDropdownOpen(false)
                                         }}
                                         style={{marginRight:8}}
                                       />
