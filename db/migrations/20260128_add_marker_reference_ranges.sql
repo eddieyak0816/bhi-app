@@ -6,6 +6,17 @@
 ALTER TABLE lab_markers ADD COLUMN IF NOT EXISTS min_normal NUMERIC DEFAULT NULL;
 ALTER TABLE lab_markers ADD COLUMN IF NOT EXISTS max_normal NUMERIC DEFAULT NULL;
 
+-- Add unique constraint on name if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'lab_markers_name_unique'
+  ) THEN
+    ALTER TABLE lab_markers ADD CONSTRAINT lab_markers_name_unique UNIQUE (name);
+  END IF;
+END $$;
+
 -- Insert the 7 common markers with reference ranges
 INSERT INTO lab_markers (name, unit, min_normal, max_normal) VALUES
   ('Blood Glucose', 'mg/dL', 70, 100),

@@ -83,6 +83,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [editData, setEditData] = useState<any>({})
   const [editingTagsDropdownOpen, setEditingTagsDropdownOpen] = useState(false)
   const [editingCategoriesDropdownOpen, setEditingCategoriesDropdownOpen] = useState(false)
+  // category modal state
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false)
+  const [categoryModalData, setCategoryModalData] = useState<any>(null)
+  const [categoryDescription, setCategoryDescription] = useState<string>('')
   const DEV_BACKEND_KEY = ((import.meta as any).env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   // session override for dev convenience (not persisted)
@@ -443,6 +447,17 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   }
 
   useEffect(() => { load(); loadTags(); loadResourceTypes(); loadHealthGoals(); loadCategories() }, [])
+
+  useEffect(() => {
+    if (activeTab === 'resources') load()
+    else if (activeTab === 'types') loadResourceTypes()
+    else if (activeTab === 'tags') loadTags()
+    else if (activeTab === 'categories') loadCategories()
+    else if (activeTab === 'goals') loadHealthGoals()
+    else if (activeTab === 'markers') load()
+    else if (activeTab === 'criteria') load()
+    else if (activeTab === 'audit') loadAudit()
+  }, [activeTab])
 
   async function create() {
     const fullUrl = linkUrl ? buildFullUrl(linkProtocol, linkUrl) : null
@@ -2010,21 +2025,32 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               {/* Category creation form */}
               <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
                 <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Category</h3>
-                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                <div style={{display:'flex',gap:12,alignItems:'flex-start',flexDirection:'column'}}>
                   <input
                     placeholder="Category name (e.g., Diabetes, Heart Health)"
                     value={newTypeName}
                     onChange={e => setNewTypeName(e.target.value)}
-                    style={{flex:1,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                    style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                  />
+                  <textarea
+                    placeholder="Description (optional)"
+                    value={categoryDescription}
+                    onChange={e => setCategoryDescription(e.target.value)}
+                    style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,minHeight:'80px',fontFamily:'inherit'}}
                   />
                   <button className="btn-primary" onClick={async () => {
                     if (!newTypeName.trim()) return alert('Category name required')
                     try {
-                      const res = await supabase.from('categories').insert({ name: newTypeName.trim(), description: '' })
-                      if (res.error) throw res.error
+                      const res = await supabase.from('categories').insert({ name: newTypeName.trim(), description: categoryDescription.trim(), is_active: true })
+                      if (res.error) {
+                        console.error('Insert error:', res.error)
+                        throw res.error
+                      }
                       setNewTypeName('')
+                      setCategoryDescription('')
                       await loadCategories()
                     } catch (err) {
+                      console.error('Create category error:', err)
                       alert('Create category failed — ' + ((err as any)?.message || 'check server logs'))
                     }
                   }}>Add Category</button>
@@ -2083,34 +2109,97 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </table>
                 </div>
               ) : (
+                <>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
-                  {categories.map(cat => (
-                    <div key={cat.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:8}}>
-                        <h4 style={{margin:0,fontSize:14,fontWeight:600,color:theme.text}}>{cat.name}</h4>
-                        <span style={{padding:'2px 6px',borderRadius:4,fontSize:11,background:cat.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',color:cat.is_active ? '#22c55e' : '#ef4444'}}>
+                  {categories.map(cat => {
+                    const description = cat.description || 'No description'
+                    const titleTooLong = cat.name.length > 25
+                    const descriptionTooLong = description.length > 85
+                    const isTruncated = titleTooLong || descriptionTooLong
+                    
+                    return (
+                      <div key={cat.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,display:'flex',flexDirection:'column',height:'100%',position:'relative'}}>
+                        <span style={{position:'absolute',top:12,right:12,padding:'2px 6px',borderRadius:4,fontSize:11,background:cat.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',color:cat.is_active ? '#22c55e' : '#ef4444'}}>
                           {cat.is_active ? 'Active' : 'Inactive'}
                         </span>
+                        <h4 style={{margin:'0 0 8px 0',fontSize:14,fontWeight:600,color:theme.text}}>
+                          {titleTooLong ? (
+                            <>
+                              {cat.name.substring(0, 22)}…{' '}
+                              <button onClick={() => {setCategoryModalData(cat); setCategoryModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
+                                more
+                              </button>
+                            </>
+                          ) : (
+                            cat.name
+                          )}
+                        </h4>
+                        <p style={{margin:'0 0 12px 0',fontSize:13,color:theme.textMuted,flex:1}}>
+                          {descriptionTooLong ? (
+                            <>
+                              <span style={{overflow:'hidden',textOverflow:'ellipsis',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>
+                                {description.substring(0, 85)}…{' '}
+                              </span>
+                              <button onClick={() => {setCategoryModalData(cat); setCategoryModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:13,fontWeight:500,display:'inline'}}>
+                                more
+                              </button>
+                            </>
+                          ) : (
+                            <span style={{overflow:'hidden',textOverflow:'ellipsis',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>
+                              {description}
+                            </span>
+                          )}
+                        </p>
+                        <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+                          <button onClick={async () => {
+                            await supabase.from('categories').update({ is_active: !cat.is_active }).eq('id', cat.id)
+                            await loadCategories()
+                          }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:theme.text}}>
+                            {cat.is_active ? 'Deactivate' : 'Activate'}
+                          </button>
+                          <button onClick={async () => {
+                            if (!confirm('Delete this category?')) return
+                            await supabase.from('categories').delete().eq('id', cat.id)
+                            await loadCategories()
+                          }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:'#ef4444'}}>
+                            Delete
+                          </button>
+                        </div>
                       </div>
-                      <p style={{margin:'0 0 12px 0',fontSize:13,color:theme.textMuted}}>{cat.description || 'No description'}</p>
+                    )
+                  })}
+                </div>
+
+                {/* Category Modal */}
+                {categoryModalOpen && categoryModalData && (
+                  <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+                    <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:500,maxHeight:'80vh',overflow:'auto',border:`1px solid ${theme.borderColor}`}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
+                        <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{categoryModalData.name}</h3>
+                        <button onClick={() => setCategoryModalOpen(false)} style={{background:'transparent',border:'none',fontSize:24,cursor:'pointer',color:theme.text,padding:0}}>✕</button>
+                      </div>
+                      <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.textMuted,whiteSpace:'pre-wrap'}}>{categoryModalData.description || 'No description'}</p>
                       <div style={{display:'flex',gap:8}}>
                         <button onClick={async () => {
-                          await supabase.from('categories').update({ is_active: !cat.is_active }).eq('id', cat.id)
+                          await supabase.from('categories').update({ is_active: !categoryModalData.is_active }).eq('id', categoryModalData.id)
                           await loadCategories()
-                        }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:theme.text}}>
-                          {cat.is_active ? 'Deactivate' : 'Activate'}
+                          setCategoryModalOpen(false)
+                        }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>
+                          {categoryModalData.is_active ? 'Deactivate' : 'Activate'}
                         </button>
                         <button onClick={async () => {
                           if (!confirm('Delete this category?')) return
-                          await supabase.from('categories').delete().eq('id', cat.id)
+                          await supabase.from('categories').delete().eq('id', categoryModalData.id)
                           await loadCategories()
-                        }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:'#ef4444'}}>
+                          setCategoryModalOpen(false)
+                        }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444'}}>
                           Delete
                         </button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+                </>
               )}
             </div>
           )}

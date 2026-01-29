@@ -539,7 +539,7 @@ export default function Resources() {
                         textAlign: 'center',
                       }}
                     >
-                      Read Full Article →
+                      Learn More →
                     </a>
                   )}
                 </div>
