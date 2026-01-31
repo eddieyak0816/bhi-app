@@ -267,7 +267,8 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
                   color: theme.text,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                    textOverflow: 'ellipsis',
+                    marginTop: 0,
                 }}
               >
                 <input
