@@ -277,9 +277,7 @@ label {
   color: var(--text-primary);
 }
 
-label:first-of-type {
-  margin-top: 0;
-}
+/* Removed label:first-of-type rule to ensure consistent top spacing for labels across forms */
 
 select, input[type="text"], input:not([type="checkbox"]) {
   width: 100%;
