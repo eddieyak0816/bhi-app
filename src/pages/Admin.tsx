@@ -743,34 +743,18 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       onChange={e => setFilterTypes(Array.from(e.currentTarget.selectedOptions, o => o.value))}
                       style={{width:'100%',padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,minHeight:36,maxHeight:100,overflowY:'auto'}}
                     >
-                      {Array.from(new Set(
-                        resources
-                          .filter(r => {
-                            if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                            if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
-                            return true
-                          })
-                          .map(r => r.type)
-                      )).sort().map(t => <option key={t} value={t}>{t}</option>)}
+                      {(resourceTypes || []).sort().map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:theme.text}}>Categories</label>
+                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:theme.text}}>Tags</label>
                     <select
                       multiple
                       value={filterTags}
                       onChange={e => setFilterTags(Array.from(e.currentTarget.selectedOptions, o => o.value))}
                       style={{width:'100%',padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,minHeight:36,maxHeight:100,overflowY:'auto'}}
                     >
-                      {Array.from(new Set(
-                        resources
-                          .filter(r => {
-                            if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                            if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
-                            return true
-                          })
-                          .flatMap(r => r.tags || [])
-                      )).sort().map(t => <option key={t} value={t}>{t}</option>)}
+                      {(allowedTags || []).sort().map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                 </div>
