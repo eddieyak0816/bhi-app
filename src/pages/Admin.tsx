@@ -2487,7 +2487,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               placeholder="Search tags..."
               value={tagSearchInput}
               onChange={e => setTagSearchInput(e.target.value)}
-              style={{padding:12,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bg,color:theme.text,fontSize:14}}
+              autoFocus
+              style={{padding:12,border:`2px solid #2563eb`,borderRadius:6,marginBottom:16,background:theme.bgSecondary,color:theme.text,fontSize:14,fontWeight:500,boxShadow:'0 2px 4px rgba(37, 99, 235, 0.1)'}}
             />
             <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
               {(allowedTags || [])
@@ -2536,7 +2537,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               placeholder="Search categories..."
               value={categorySearchInput}
               onChange={e => setCategorySearchInput(e.target.value)}
-              style={{padding:12,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bg,color:theme.text,fontSize:14}}
+              autoFocus
+              style={{padding:12,border:`2px solid #10b981`,borderRadius:6,marginBottom:16,background:theme.bgSecondary,color:theme.text,fontSize:14,fontWeight:500,boxShadow:'0 2px 4px rgba(16, 185, 129, 0.1)'}}
             />
             <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
               {categories
