@@ -15,7 +15,7 @@ test('admin can create and delete a resource (dev)', async ({ page }) => {
   await page.selectOption('select', { index: 0 }); // pick first marker in the form
   await page.fill('input[placeholder="Tag"]', 'Low');
   // ensure the tag exists in suggestions and pick it
-  await page.click('button:has-text("Low_D")');
+  await page.click('button:has-text("Low D")');
   // populate min/max and add
   await page.fill('input[aria-label="min_value"]', ruleMin).catch(() => {});
   await page.fill('input[aria-label="max_value"]', ruleMax).catch(() => {});
@@ -24,11 +24,11 @@ test('admin can create and delete a resource (dev)', async ({ page }) => {
   await page.locator('table tbody tr').filter({ hasText: 'Add' }).last().locator('input').nth(1).fill(ruleMax).catch(() => {});
   await page.click('button:has-text("Add")');
   // expect new rule row to appear with the tag and range
-  await page.waitForSelector('text=Low_D');
-  await expect(page.locator('table[data-testid="criteria-table"] tbody tr').filter({ hasText: 'Low_D' }).first()).toBeVisible();
+  await page.waitForSelector('text=Low D');
+  await expect(page.locator('table[data-testid="criteria-table"] tbody tr').filter({ hasText: 'Low D' }).first()).toBeVisible();
 
   // edit the newly-created rule: change max_value and verify
-  const ruleRow = page.locator('table[data-testid="criteria-table"] tbody tr').filter({ hasText: 'Low_D' }).first();
+  const ruleRow = page.locator('table[data-testid="criteria-table"] tbody tr').filter({ hasText: 'Low D' }).first();
   await ruleRow.locator('button:has-text("Edit")').click();
   // change max to 23.5 (use aria-labeled input)
   const editMaxInput = page.locator('input[aria-label="max_value"]').last();
@@ -49,7 +49,7 @@ test('admin can create and delete a resource (dev)', async ({ page }) => {
   const body = await content.json();
   const vit = (body.lab_markers || []).find((m: any) => /vitamin d/i.test(m.name));
   if (vit) {
-    const resp = await page.request.post('/api/admin/logic-rules/delete-by-attrs', { headers: { 'x-backend-api-key': 'foo', 'content-type': 'application/json' }, data: { marker_id: vit.id, min_value: 0, max_value: 30, tag_to_apply: 'Low_D' } });
+    const resp = await page.request.post('/api/admin/logic-rules/delete-by-attrs', { headers: { 'x-backend-api-key': 'foo', 'content-type': 'application/json' }, data: { marker_id: vit.id, min_value: 0, max_value: 30, tag_to_apply: 'Low D' } });
     expect(resp.ok()).toBeTruthy();
   }
 
@@ -59,7 +59,7 @@ test('admin can create and delete a resource (dev)', async ({ page }) => {
   // interact with the tag-manager: select an existing tag (seeded) and add a new tag inline
   await page.click('input[placeholder="Tag"]');
   await page.fill('input[placeholder="Tag"]', 'Low');
-  await page.click('button:has-text("Low_D")');
+  await page.click('button:has-text("Low D")');
 
   // create -> ensure appears in list
   await page.click('button:has-text("Create")');

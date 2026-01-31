@@ -69,6 +69,7 @@ async function updateCriteria() {
   
   // Delete old criteria with underscore tags
   const oldTags = [
+    'Low_D', 'Normal_D', 'High_Glucose', 'High_Cholesterol', 'Low_Energy', 'Weight_Management',
     'Deficient_VitD', 'Insufficient_VitD', 'Adequate_VitD', 'Excess_VitD',
     'Low_Glucose', 'Normal_Glucose', 'Prediabetic_Glucose', 'Diabetic_Glucose',
     'Desirable_Cholesterol', 'Borderline_High_Cholesterol', 'High_Cholesterol',

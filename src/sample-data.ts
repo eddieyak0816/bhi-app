@@ -11,13 +11,13 @@ export function loadSampleData(): SampleData {
       { id: 'glucose', name: 'Glucose', unit: 'mg/dL', min_normal: 70, max_normal: 100 }
     ],
     logic_rules: [
-      { marker_id: vitDId, min_value: 0, max_value: 30, tag_to_apply: 'Low_D' },
-      { marker_id: vitDId, min_value: 30.1, max_value: 1000, tag_to_apply: 'Normal_D' }
+      { marker_id: vitDId, min_value: 0, max_value: 30, tag_to_apply: 'Low D' },
+      { marker_id: vitDId, min_value: 30.1, max_value: 1000, tag_to_apply: 'Normal D' }
     ],
     resources: [
-      { type: 'video', title: 'Understanding Low Vit D', tags: ['Low_D'] },
-      { type: 'doctor', title: 'Dr. Jane Smith', tags: ['Low_D'] },
-      { type: 'article', title: 'Why Vitamin D matters', tags: ['Normal_D'] }
+      { type: 'video', title: 'Understanding Low Vit D', tags: ['Low D'] },
+      { type: 'doctor', title: 'Dr. Jane Smith', tags: ['Low D'] },
+      { type: 'article', title: 'Why Vitamin D matters', tags: ['Normal D'] }
     ]
   }
 }

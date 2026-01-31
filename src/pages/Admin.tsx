@@ -99,6 +99,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [devKeyOverride, setDevKeyOverride] = useState<string | null>(null)
   function effectiveDevKey() { return devKeyOverride || DEV_BACKEND_KEY }
 
+  // Modal state for tag/category selection with search
+  const [tagSearchModalOpen, setTagSearchModalOpen] = useState(false)
+  const [tagSearchInput, setTagSearchInput] = useState('')
+  const [tagSearchContext, setTagSearchContext] = useState<'create' | 'edit'>('create')
+  const [categorySearchModalOpen, setCategorySearchModalOpen] = useState(false)
+  const [categorySearchInput, setCategorySearchInput] = useState('')
+  const [categorySearchContext, setCategorySearchContext] = useState<'create' | 'edit'>('create')
+
   // Theme colors - use global theme from context
   const theme = {
     bg: globalTheme.bg,
@@ -504,6 +512,26 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     }
   }
 
+  // Helper to handle tag selection from modal
+  const handleTagSelect = (tag: string) => {
+    if (tagSearchContext === 'create') {
+      setSelectedTags(prev => prev.includes(tag) ? prev : [...prev, tag])
+    } else if (tagSearchContext === 'edit') {
+      setEditData(prev => ({...prev, tags: prev.tags.includes(tag) ? prev.tags : [...(prev.tags || []), tag]}))
+    }
+    setTagSearchInput('')
+  }
+
+  // Helper to handle category selection from modal
+  const handleCategorySelect = (category: string) => {
+    if (categorySearchContext === 'create') {
+      setSelectedCategories(prev => prev.includes(category) ? prev : [...prev, category])
+    } else if (categorySearchContext === 'edit') {
+      setEditData(prev => ({...prev, categories: prev.categories.includes(category) ? prev.categories : [...(prev.categories || []), category]}))
+    }
+    setCategorySearchInput('')
+  }
+
   return (
     <div className="card" style={{background:theme.bg,color:theme.text}}>
       <h3 style={{color:theme.text}}>Admin — Content manager (dev)</h3>
@@ -634,36 +662,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         ))}
                         <div style={{position:'relative'}}>
                           <button
-                            onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                            onClick={() => {setCategorySearchModalOpen(true); setCategorySearchContext('create'); setCategorySearchInput('')}}
                             style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
                           >
                             + Add Category
                           </button>
-                          {categoryDropdownOpen && (
-                            <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
-                              {categories.filter(c => c.is_active && !selectedCategories.includes(c.name)).map(c => (
-                                <label key={c.id} style={{display:'block',padding:'8px 12px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedCategories.includes(c.name)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedCategories(s => [...s, c.name])
-                                      } else {
-                                        setSelectedCategories(s => s.filter(x => x !== c.name))
-                                      }
-                                      setCategoryDropdownOpen(false)
-                                    }}
-                                    style={{marginRight:8}}
-                                  />
-                                  {c.name}
-                                </label>
-                              ))}
-                              {categories.filter(c => c.is_active && !selectedCategories.includes(c.name)).length === 0 && (
-                                <div style={{padding:'12px',textAlign:'center',color:theme.textMuted,fontSize:12}}>No more categories available</div>
-                              )}
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -678,36 +681,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         ))}
                         <div style={{position:'relative'}}>
                           <button
-                            onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
+                            onClick={() => {setTagSearchModalOpen(true); setTagSearchContext('create'); setTagSearchInput('')}}
                             style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
                           >
                             + Add Tag
                           </button>
-                          {tagDropdownOpen && (
-                            <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
-                              {(allowedTags || []).filter((t: string) => !selectedTags.includes(t)).map((t: string) => (
-                                <label key={t} style={{display:'block',padding:'8px 12px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedTags.includes(t)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedTags(s => [...s, t])
-                                      } else {
-                                        setSelectedTags(s => s.filter(x => x !== t))
-                                      }
-                                      setTagDropdownOpen(false)
-                                    }}
-                                    style={{marginRight:8}}
-                                  />
-                                  {t}
-                                </label>
-                              ))}
-                              {(allowedTags || []).filter(t => !selectedTags.includes(t)).length === 0 && (
-                                <div style={{padding:'12px',textAlign:'center',color:theme.textMuted,fontSize:12}}>No more tags available</div>
-                              )}
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -1039,36 +1017,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             ))}
                             <div style={{position:'relative'}}>
                               <button
-                                onClick={() => setEditingTagsDropdownOpen(!editingTagsDropdownOpen)}
+                                onClick={() => {setTagSearchModalOpen(true); setTagSearchContext('edit'); setTagSearchInput('')}}
                                 style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
                               >
                                 + Add Tag
                               </button>
-                              {editingTagsDropdownOpen && (
-                                <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
-                                  {(allowedTags || []).filter((t: string) => !(editData.tags || []).includes(t)).map((t: string) => (
-                                    <label key={t} style={{display:'block',padding:'8px 12px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
-                                      <input
-                                        type="checkbox"
-                                        checked={(editData.tags || []).includes(t)}
-                                        onChange={(e) => {
-                                          if (e.target.checked) {
-                                            setEditData({...editData, tags: [...(editData.tags || []), t]})
-                                          } else {
-                                            setEditData({...editData, tags: (editData.tags || []).filter((x: string) => x !== t)})
-                                          }
-                                          setEditingTagsDropdownOpen(false)
-                                        }}
-                                        style={{marginRight:8}}
-                                      />
-                                      {t}
-                                    </label>
-                                  ))}
-                                  {(allowedTags || []).filter(t => !(editData.tags || []).includes(t)).length === 0 && (
-                                    <div style={{padding:'12px',textAlign:'center',color:theme.textMuted,fontSize:12}}>No more tags available</div>
-                                  )}
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -2537,6 +2490,105 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tag Search Modal */}
+      {tagSearchModalOpen && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+          <div style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,maxWidth:500,width:'90%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
+            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>Select Tags</h3>
+            <input
+              type="text"
+              placeholder="Search tags..."
+              value={tagSearchInput}
+              onChange={e => setTagSearchInput(e.target.value)}
+              style={{padding:12,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bg,color:theme.text,fontSize:14}}
+            />
+            <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
+              {(allowedTags || [])
+                .filter((t: string) => 
+                  t.toLowerCase().includes(tagSearchInput.toLowerCase()) &&
+                  (tagSearchContext === 'create' ? !selectedTags.includes(t) : !(editData.tags || []).includes(t))
+                )
+                .map((t: string) => (
+                  <div
+                    key={t}
+                    onClick={() => handleTagSelect(t)}
+                    style={{
+                      padding:10,
+                      background:theme.bg,
+                      border:`1px solid ${theme.borderColor}`,
+                      borderRadius:6,
+                      marginBottom:8,
+                      cursor:'pointer',
+                      color:theme.text,
+                      transition:'all 0.2s'
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = theme.bgSecondary)}
+                    onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
+                  >
+                    {t}
+                  </div>
+                ))}
+            </div>
+            <button
+              onClick={() => setTagSearchModalOpen(false)}
+              style={{padding:10,background:theme.text,color:theme.card,border:'none',borderRadius:6,cursor:'pointer',fontWeight:600}}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Category Search Modal */}
+      {categorySearchModalOpen && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+          <div style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,maxWidth:500,width:'90%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
+            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>Select Categories</h3>
+            <input
+              type="text"
+              placeholder="Search categories..."
+              value={categorySearchInput}
+              onChange={e => setCategorySearchInput(e.target.value)}
+              style={{padding:12,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bg,color:theme.text,fontSize:14}}
+            />
+            <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
+              {categories
+                .filter((c: any) => 
+                  c.is_active &&
+                  c.name.toLowerCase().includes(categorySearchInput.toLowerCase()) &&
+                  (categorySearchContext === 'create' ? !selectedCategories.includes(c.name) : !(editData.categories || []).includes(c.name))
+                )
+                .map((c: any) => (
+                  <div
+                    key={c.id}
+                    onClick={() => handleCategorySelect(c.name)}
+                    style={{
+                      padding:10,
+                      background:theme.bg,
+                      border:`1px solid ${theme.borderColor}`,
+                      borderRadius:6,
+                      marginBottom:8,
+                      cursor:'pointer',
+                      color:theme.text,
+                      transition:'all 0.2s'
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = theme.bgSecondary)}
+                    onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
+                  >
+                    {c.name}
+                  </div>
+                ))}
+            </div>
+            <button
+              onClick={() => setCategorySearchModalOpen(false)}
+              style={{padding:10,background:theme.text,color:theme.card,border:'none',borderRadius:6,cursor:'pointer',fontWeight:600}}
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
     </div>
