@@ -1,13 +1,29 @@
 import React from 'react'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function Onboarding({ onClose }: { onClose: () => void }) {
   const { darkMode, setDarkMode, theme } = useTheme()
+  const { logout } = useAuth()
 
   return (
     <div style={{ minHeight: '100vh', background: theme.bg, padding: 24 }}>
       {/* Dark mode toggle in top right */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 16 }}>
+        <button
+          onClick={() => logout()}
+          style={{
+            background: theme.bgSecondary,
+            border: `1px solid ${theme.borderColor}`,
+            borderRadius: 6,
+            padding: '6px 10px',
+            cursor: 'pointer',
+            fontSize: 14,
+            color: theme.text,
+          }}
+        >
+          Logout
+        </button>
         <button
           onClick={() => setDarkMode(!darkMode)}
           title={darkMode ? 'Light mode' : 'Dark mode'}

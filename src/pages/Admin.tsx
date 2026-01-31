@@ -507,14 +507,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   return (
     <div className="card" style={{background:theme.bg,color:theme.text}}>
       <h3 style={{color:theme.text}}>Admin — Content manager (dev)</h3>
-      <div style={{display:'flex',gap:12,alignItems:'center'}}>
-        <p className="muted" style={{margin:0,color:theme.textMuted}}>Server-only actions require a backend key in dev.</p>
-        <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          <button className="btn-ghost" onClick={() => setDevKeyOverride('foo')} style={{color:theme.text,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px'}}>Use dev key (foo)</button>
-          <button className="btn-ghost" onClick={() => { const k = prompt('Enter a temporary backend key (session only)'); if (k) setDevKeyOverride(k) }} style={{color:theme.text,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px'}}>Set session key</button>
-          {effectiveDevKey() ? <div className="small" style={{color:theme.textMuted}}>Using key: <strong style={{color:theme.text}}>{effectiveDevKey() === 'foo' ? 'foo (session)' : 'session-set'}</strong></div> : <div className="small" style={{color:theme.textMuted}}>No backend key set</div>}
-        </div>
-      </div>
 
 
 

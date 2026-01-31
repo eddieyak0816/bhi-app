@@ -221,13 +221,14 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
+                  marginTop: 0,
                 }}
               >
                 <input
                   type="checkbox"
                   checked={formData.healthGoals.includes(goal.name)}
                   onChange={() => handleGoalToggle(goal.name)}
-                  style={{ cursor: 'pointer', flexShrink: 0 }}
+                  style={{ cursor: 'pointer', flexShrink: 0, alignSelf: 'center' }}
                 />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{goal.name}</span>
               </label>
