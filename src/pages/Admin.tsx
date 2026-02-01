@@ -1163,7 +1163,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   {r.title}
                                 </span>
                                 {titleTooLong && (
-                                  <button onClick={() => {setResourceModalData(r); setResourceModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,paddingLeft:8,fontSize:15,fontWeight:600,flexShrink:0,textDecoration:'underline'}}>
+                                  <button onClick={() => {setResourceModalData(r); setResourceEditForm({title: r.title, type: r.type, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')}); setIsEditingResource(true); setResourceModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,paddingLeft:8,fontSize:15,fontWeight:600,flexShrink:0,textDecoration:'underline'}}>
                                     more
                                   </button>
                                 )}
@@ -1200,7 +1200,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               
                               {/* More button for non-title overflow */}
                               {(tagsTooLong || categoriesTooLong) && !titleTooLong && (
-                                <button onClick={() => {setResourceModalData(r); setResourceModalOpen(true)}} style={{position:'absolute',top:12,right:12,background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'right',fontSize:13,fontWeight:600,display:'inline',textDecoration:'underline'}}>
+                                <button onClick={() => {setResourceModalData(r); setResourceEditForm({title: r.title, type: r.type, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')}); setIsEditingResource(true); setResourceModalOpen(true)}} style={{position:'absolute',top:12,right:12,background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'right',fontSize:13,fontWeight:600,display:'inline',textDecoration:'underline'}}>
                                   more
                                 </button>
                               )}
@@ -1212,7 +1212,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             <button className="btn-ghost" onClick={() => {
                               if (r.id) {
                                 setResourceModalData(r)
-                                setResourceEditForm({title: r.title, type: r.type, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                const capitalizedType = r.type ? resourceTypes.find(t => t.toLowerCase() === r.type.toLowerCase()) || r.type : ''
+                                setResourceEditForm({title: r.title, type: capitalizedType, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
                                 setIsEditingResource(true)
                                 setResourceModalOpen(true)
                               }
@@ -1234,6 +1235,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       {resourceModalOpen && resourceModalData && (
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
           <div style={{background:theme.bg,borderRadius:8,padding:24,width:'67.5%',maxWidth:2400,height:'60%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
+            {console.log('Resource modal rendering:', {isEditingResource, resourceModalData, resourceEditForm})}
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
               {!isEditingResource ? (
                 <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{resourceModalData.title}</h3>
@@ -1269,7 +1271,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   )}
                 </div>
                 <div style={{display:'flex',gap:8,marginTop:'auto'}}>
-                  <button onClick={() => { setIsEditingResource(true); setResourceEditForm({title: resourceModalData.title, type: resourceModalData.type, tags: resourceModalData.tags || [], categories: resourceModalData.categories || [], link_url: stripProtocol(resourceModalData.link_url || ''), link_protocol: getProtocol(resourceModalData.link_url || '')}) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>✎ Edit</button>
+                  <button onClick={() => { 
+                    console.log('Edit button clicked, resourceModalData:', resourceModalData)
+                    const capitalizedType = resourceModalData.type ? resourceTypes.find(t => t.toLowerCase() === resourceModalData.type.toLowerCase()) || resourceModalData.type : ''
+                    const formData = {title: resourceModalData.title, type: capitalizedType, tags: resourceModalData.tags || [], categories: resourceModalData.categories || [], link_url: stripProtocol(resourceModalData.link_url || ''), link_protocol: getProtocol(resourceModalData.link_url || '')}
+                    console.log('Setting form data:', formData)
+                    setResourceEditForm(formData)
+                    setIsEditingResource(true)
+                  }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>✎ Edit</button>
                   <button onClick={async () => {
                     if (!confirm('Delete this resource?')) return
                     try {
