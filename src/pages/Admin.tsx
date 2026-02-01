@@ -330,7 +330,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       const res = await fetch(apiUrl('/api/admin/resource-types'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
       if (!res.ok) return
       const body = await res.json()
-      setResourceTypes(Array.isArray(body) ? body.map((t: any) => t.name || t) : [])
+      setResourceTypes(Array.isArray(body) ? body.map((t: any) => (t.name || t).toLowerCase()) : [])
     } catch (err) {
       console.error('loadResourceTypes', err)
     }
@@ -520,7 +520,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     } else if (tagSearchContext === 'edit') {
       setEditData(prev => ({...prev, tags: prev.tags.includes(tag) ? prev.tags : [...(prev.tags || []), tag]}))
     } else if (tagSearchContext === 'filter-type') {
-      setFilterTypes(prev => prev.includes(tag) ? prev : [...prev, tag])
+      const normalizedTag = tag.toLowerCase()
+      setFilterTypes(prev => prev.includes(normalizedTag) ? prev : [...prev, normalizedTag])
     } else if (tagSearchContext === 'filter-tag') {
       setFilterTags(prev => prev.includes(tag) ? prev : [...prev, tag])
     }
@@ -799,17 +800,32 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Filter results summary */}
               {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0 || filterCategories.length > 0) && (
-                <div style={{marginBottom:12,fontSize:13,color:theme.text}}>
-                  {(() => {
-                    const filtered = resources.filter(r => {
-                      if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                      if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
-                      if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
-                      if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
-                      return true
-                    })
-                    return `Showing ${filtered.length} of ${resources.length} resources`
-                  })()}
+                <div style={{marginBottom:12,fontSize:13,color:theme.text,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div>
+                    {(() => {
+                      const filtered = resources.filter(r => {
+                        if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                        if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
+                        if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                        if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
+                        return true
+                      })
+                      return `Showing ${filtered.length} of ${resources.length} resources`
+                    })()}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setFilterKeyword('')
+                      setFilterTypes([])
+                      setFilterTags([])
+                      setFilterCategories([])
+                      setSelectedIds([])
+                      setSelectAll(false)
+                    }}
+                    style={{padding:'4px 10px',background:'#EF4444',color:'#fff',border:'none',borderRadius:4,cursor:'pointer',fontSize:12,fontWeight:600}}
+                  >
+                    Clear All
+                  </button>
                 </div>
               )}
 
@@ -843,13 +859,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     {(sortColumn ? sortData(resources
                       .filter(r => {
                         if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                        if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                        if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
                         if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
                         return true
                       }), sortColumn) : resources
                       .filter(r => {
                         if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                        if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                        if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
                         if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
                         return true
                       })
@@ -1006,14 +1022,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 {(sortColumn ? sortData(resources
                   .filter(r => {
                     if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                    if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                    if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
                     if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
                     if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
                     return true
                   }), sortColumn) : resources
                   .filter(r => {
                     if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                    if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                    if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
                     if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
                     if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
                     return true
@@ -1024,6 +1040,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       <>
                         <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus placeholder="Title" style={styles.input} />
                         <div style={{display:'flex',gap:8,marginTop:8}}>
+                          <select value={editData.type || r.type} onChange={e => setEditData({...editData, type: e.target.value})} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                            {resourceTypes.map(rt => <option key={rt} value={rt}>{rt}</option>)}
+                          </select>
                           <select value={editData.link_protocol || 'https://'} onChange={e => setEditData({...editData, link_protocol: e.target.value})} style={{padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',width:'auto',flexShrink:0}}>
                             <option value="https://">https://</option>
                             <option value="http://">http://</option>
@@ -1097,7 +1116,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <button className="btn-ghost" onClick={async () => {
                             try {
                               const fullUrl = editData.link_url ? buildFullUrl(editData.link_protocol || 'https://', editData.link_url) : null
-                              const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title, tags: editData.tags || [], categories: editData.categories || [], link_url: fullUrl }) })
+                              const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title, type: (editData.type || r.type).toLowerCase(), tags: editData.tags || [], categories: editData.categories || [], link_url: fullUrl }) })
                               if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                               await load()
                               setEditingId(null)
@@ -2590,7 +2609,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 .filter((c: any) => 
                   c.is_active &&
                   c.name.toLowerCase().includes(categorySearchInput.toLowerCase()) &&
-                  (categorySearchContext === 'create' ? !selectedCategories.includes(c.name) : !(editData.categories || []).includes(c.name))
+                  (categorySearchContext === 'create' ? !selectedCategories.includes(c.name) : 
+                   categorySearchContext === 'edit' ? !(editData.categories || []).includes(c.name) :
+                   !filterCategories.includes(c.name))
                 )
                 .map((c: any) => (
                   <div
