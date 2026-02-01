@@ -343,7 +343,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       const res = await fetch(apiUrl('/api/admin/resource-types'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
       if (!res.ok) return
       const body = await res.json()
-      const names = Array.isArray(body) ? body.map((t: any) => (t.name || t).toLowerCase()) : []
+      const names = Array.isArray(body) ? body.map((t: any) => (t.name || t)) : []
       console.log('loadResourceTypes response:', body)
       console.log('Extracted names:', names)
       setResourceTypes(names)
@@ -1410,7 +1410,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     try {
                       if (!resourceTypeEditForm.name || !resourceTypeEditForm.name.toString().trim()) return alert('Name required')
                       const url = apiUrl(`/api/admin/resource-types/${encodeURIComponent(originalResourceTypeName)}`)
-                      const payload = { new_name: resourceTypeEditForm.name.toLowerCase() }
+                      const payload = { new_name: resourceTypeEditForm.name }
                       console.log('API URL:', url)
                       console.log('Payload:', payload)
                       console.log('Headers:', { 'content-type': 'application/json', ...(authHeaders()) })
