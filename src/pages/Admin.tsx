@@ -1358,7 +1358,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               {/* Health Goal Modal */}
               {healthGoalModalOpen && healthGoalModalData && (
                 <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
-                  <div style={{background:theme.bg,borderRadius:8,padding:24,width:'67.5%',maxWidth:2400,height:'75%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative'}}>
+                  <div style={{background:theme.bg,borderRadius:8,padding:24,width:'67.5%',maxWidth:2400,height:'60%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
                       {!isEditingHealthGoal ? (
                         <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{healthGoalModalData.name}</h3>
@@ -1369,8 +1369,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </div>
                     {!isEditingHealthGoal ? (
                       <>
-                        <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.textMuted,whiteSpace:'pre-wrap'}}>{healthGoalModalData.description || 'No description'}</p>
-                        <div style={{display:'flex',gap:8}}>
+                        <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.textMuted,whiteSpace:'pre-wrap',flex:1}}>{healthGoalModalData.description || 'No description'}</p>
+                        <div style={{display:'flex',gap:8,marginTop:'auto'}}>
                           <button onClick={() => { setIsEditingHealthGoal(true); setHealthGoalEditForm({name: healthGoalModalData.name, description: healthGoalModalData.description || ''}) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>✎ Edit</button>
                           <button onClick={async () => {
                             if (!confirm('Delete this health goal?')) return
@@ -1382,8 +1382,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       </>
                     ) : (
                       <>
-                        <textarea value={healthGoalEditForm.description || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, description: e.target.value})} style={{width:'100%',minHeight:120,padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12}} />
-                        <div style={{display:'flex',gap:8}}>
+                        <textarea value={healthGoalEditForm.description || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, description: e.target.value})} style={{width:'100%',minHeight:120,padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,flex:1}} />
+                        <div style={{display:'flex',gap:8,marginTop:'auto'}}>
                           <button type="button" onClick={async () => {
                             console.log('HealthGoal Save clicked', { id: healthGoalModalData?.id, form: healthGoalEditForm })
                             try {
