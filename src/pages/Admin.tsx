@@ -561,8 +561,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         setEditData(prev => ({...prev, tags: prev.tags.includes(tag) ? prev.tags : [...(prev.tags || []), tag]}))
       }
     } else if (tagSearchContext === 'filter-type') {
-      const normalizedTag = tag.toLowerCase()
-      setFilterTypes(prev => prev.includes(normalizedTag) ? prev : [...prev, normalizedTag])
+      setFilterTypes(prev => prev.includes(tag) ? prev : [...prev, tag])
     } else if (tagSearchContext === 'filter-tag') {
       setFilterTags(prev => prev.includes(tag) ? prev : [...prev, tag])
     }
@@ -763,9 +762,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         value={filterKeyword}
                         onChange={e => setFilterKeyword(e.target.value)}
                         list="resource-titles-list"
-                        style={{width:'100%',padding:8,paddingRight:28,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}
+                        style={{width:'100%',padding:'6px 8px',paddingRight:28,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}
                       />
-                      <div style={{position:'absolute',right:8,pointerEvents:'none',color:theme.textMuted,fontSize:12}}>▼</div>
+                      <div style={{position:'absolute',right:8,pointerEvents:'none',color:theme.text,fontSize:12}}>▼</div>
                       <datalist id="resource-titles-list">
                         {Array.from(new Set(
                           resources
