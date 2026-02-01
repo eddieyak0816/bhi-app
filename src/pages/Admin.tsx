@@ -907,8 +907,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                               <button className="btn-ghost" onClick={() => {
                                 if (r.id) {
+                                  const capitalizedType = resourceTypes.find(t => t.toLowerCase() === r.type.toLowerCase()) || r.type
                                   setResourceModalData(r)
-                                  setResourceEditForm({title: r.title, type: r.type, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                  setResourceEditForm({title: r.title, type: capitalizedType, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
                                   setIsEditingResource(true)
                                   setResourceModalOpen(true)
                                 }
