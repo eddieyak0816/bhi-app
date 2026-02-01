@@ -502,15 +502,22 @@ app.patch('/api/admin/resource-types/:name', async (req, res) => {
   const newName = (req.body && req.body.new_name || '').toString().trim();
   if (!oldName || !newName) return res.status(400).json({ error: 'missing-params' });
   try {
+    console.log('PATCH resource-type', { oldName, newName });
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    // Update resource_types table
-    const { error: upErr } = await sb.from('resource_types').update({ name: newName }).eq('name', oldName);
+    // Update resource_types table - try exact match first, then case-insensitive
+    let { data: updateData, error: upErr } = await sb.from('resource_types').update({ name: newName }).eq('name', oldName).select();
+    if ((!updateData || updateData.length === 0) && upErr === null) {
+      console.log('No exact match found, trying case-insensitive');
+      // Try case-insensitive match
+      ({ data: updateData, error: upErr } = await sb.from('resource_types').update({ name: newName }).ilike('name', oldName).select());
+    }
+    console.log('Update result:', { data: updateData, error: upErr });
     if (upErr) {
       console.error('resource-type-update-error', upErr);
       return res.status(500).json({ error: 'db_error', detail: upErr });
     }
     // Propagate to resources.type field
-    const { error: resErr } = await sb.from('resources').update({ type: newName }).eq('type', oldName);
+    const { error: resErr } = await sb.from('resources').update({ type: newName }).ilike('type', oldName);
     if (resErr) console.warn('resources-type-propagate-failed', resErr);
     
     try {
