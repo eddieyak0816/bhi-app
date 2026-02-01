@@ -1264,22 +1264,22 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </>
             ) : (
               <>
-                <div style={{flex:1,overflowY:'auto',marginBottom:16}}>
+                <div style={{flex:1,overflowY:'auto',marginBottom:16,minWidth:0}}>
                   <div style={{marginBottom:12}}>
                     <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Type</label>
-                    <select value={resourceEditForm.type || ''} onChange={e => setResourceEditForm({...resourceEditForm, type: e.target.value})} style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}>
+                    <select value={resourceEditForm.type || ''} onChange={e => setResourceEditForm({...resourceEditForm, type: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}>
                       <option value="">Select a type</option>
                       {resourceTypes.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                   <div style={{marginBottom:12}}>
                     <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>URL</label>
-                    <div style={{display:'flex',gap:4}}>
-                      <select value={resourceEditForm.link_protocol || 'https://'} onChange={e => setResourceEditForm({...resourceEditForm, link_protocol: e.target.value})} style={{padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,flex:'0 0 auto',minWidth:80,background:theme.bgSecondary,color:theme.text}}>
+                    <div style={{display:'flex',gap:4,minWidth:0}}>
+                      <select value={resourceEditForm.link_protocol || 'https://'} onChange={e => setResourceEditForm({...resourceEditForm, link_protocol: e.target.value})} style={{padding:'6px 4px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12,flex:'0 0 auto',width:'85px',background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}>
                         <option value="https://">https://</option>
                         <option value="http://">http://</option>
                       </select>
-                      <input type="text" value={resourceEditForm.link_url || ''} onChange={e => setResourceEditForm({...resourceEditForm, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}} />
+                      <input type="text" value={resourceEditForm.link_url || ''} onChange={e => setResourceEditForm({...resourceEditForm, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box',minWidth:0}} />
                     </div>
                   </div>
                   <div style={{marginBottom:12}}>
