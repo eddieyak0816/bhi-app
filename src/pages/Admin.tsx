@@ -2691,7 +2691,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 .filter((t: string) => 
                   t.toLowerCase().includes(tagSearchInput.toLowerCase()) &&
                   (tagSearchContext === 'create' ? !selectedTags.includes(t) : 
-                   tagSearchContext === 'edit' ? !(editData.tags || []).includes(t) :
+                   tagSearchContext === 'edit' ? (resourceModalOpen && isEditingResource ? !(resourceEditForm.tags || []).includes(t) : !(editData.tags || []).includes(t)) :
                    tagSearchContext === 'filter-type' ? !filterTypes.includes(t) :
                    !filterTags.includes(t))
                 )
@@ -2745,7 +2745,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   c.is_active &&
                   c.name.toLowerCase().includes(categorySearchInput.toLowerCase()) &&
                   (categorySearchContext === 'create' ? !selectedCategories.includes(c.name) : 
-                   categorySearchContext === 'edit' ? !(editData.categories || []).includes(c.name) :
+                   categorySearchContext === 'edit' ? (resourceModalOpen && isEditingResource ? !(resourceEditForm.categories || []).includes(c.name) : !(editData.categories || []).includes(c.name)) :
                    !filterCategories.includes(c.name))
                 )
                 .map((c: any) => (
