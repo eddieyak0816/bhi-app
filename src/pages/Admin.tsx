@@ -101,6 +101,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [resourceModalData, setResourceModalData] = useState<any>(null)
   const [isEditingResource, setIsEditingResource] = useState(false)
   const [resourceEditForm, setResourceEditForm] = useState<{title?: string; type?: string; tags?: string[]; categories?: string[]; link_url?: string; link_protocol?: string}>({})
+  // resource type modal state
+  const [resourceTypeModalOpen, setResourceTypeModalOpen] = useState(false)
+  const [resourceTypeModalData, setResourceTypeModalData] = useState<any>(null)
+  const [isEditingResourceType, setIsEditingResourceType] = useState(false)
+  const [resourceTypeEditForm, setResourceTypeEditForm] = useState<{name?: string}>({})
   const DEV_BACKEND_KEY = ((import.meta as any).env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   // session override for dev convenience (not persisted)
@@ -1350,6 +1355,74 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         </div>
       )}
 
+      {/* Resource Type Modal */}
+      {resourceTypeModalOpen && resourceTypeModalData && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
+          <div style={{background:theme.bg,borderRadius:8,padding:24,width:'67.5%',maxWidth:2400,height:'60%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
+              {!isEditingResourceType ? (
+                <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{resourceTypeModalData.name}</h3>
+              ) : (
+                <input value={resourceTypeEditForm.name || ''} onChange={e => setResourceTypeEditForm({...resourceTypeEditForm, name: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:16}} />
+              )}
+              <button onClick={() => { setResourceTypeModalOpen(false); setIsEditingResourceType(false) }} tabIndex={-1} style={{position:'absolute',top:-5,right:-5,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
+            </div>
+            {!isEditingResourceType ? (
+              <>
+                <div style={{flex:1,overflowY:'auto',marginBottom:16}}>
+                  <div style={{marginBottom:12}}>
+                    <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Resource Type:</p>
+                    <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceTypeModalData.name}</p>
+                  </div>
+                </div>
+                <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+                  <button onClick={() => { setIsEditingResourceType(true); setResourceTypeEditForm({name: resourceTypeModalData.name}) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>✎ Edit</button>
+                  <button onClick={async () => {
+                    if (!confirm('Delete this resource type?')) return
+                    try {
+                      const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(resourceTypeModalData.name)}`), { method: 'DELETE', headers: { ...(authHeaders()) } })
+                      if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                      await loadResourceTypes()
+                      setResourceTypeModalOpen(false)
+                    } catch (err) {
+                      alert('Delete resource type failed — ' + ((err as any)?.message || 'check server logs'))
+                    }
+                  }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444'}}>✕ Delete</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{flex:1,display:'flex',gap:24,marginBottom:16,minWidth:0,overflowY:'auto'}}>
+                  {/* Main field */}
+                  <div style={{flex:1,minWidth:0,paddingRight:12}}>
+                    <div style={{marginBottom:12}}>
+                      <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Resource Type Name</label>
+                      <input type="text" value={resourceTypeEditForm.name || ''} onChange={e => setResourceTypeEditForm({...resourceTypeEditForm, name: e.target.value})} placeholder="e.g., article, book, podcast" style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box',width:'100%'}} />
+                    </div>
+                  </div>
+                </div>
+                <div style={{display:'flex',gap:12,marginTop:'auto',borderTop:`1px solid ${theme.borderColor}`,paddingTop:16}}>
+                  <button type="button" onClick={async () => {
+                    try {
+                      if (!resourceTypeEditForm.name || !resourceTypeEditForm.name.toString().trim()) return alert('Name required')
+                      const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(resourceTypeModalData.name)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: resourceTypeEditForm.name }) })
+                      if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                      await loadResourceTypes()
+                      setIsEditingResourceType(false)
+                      setResourceTypeModalOpen(false)
+                    } catch (err) {
+                      console.error('Save resource type error', err)
+                      alert('Save failed — ' + ((err as any)?.message || 'check server logs'))
+                    }
+                  }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'12px 16px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
+                  <button onClick={() => { setIsEditingResourceType(false); setResourceTypeModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'12px 16px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Health Goals Tab */}
       {activeTab === 'goals' && (
         <div>
@@ -1915,49 +1988,24 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
                       .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))
                       .map(rt => (
-                      <tr key={rt} style={{borderTop:`1px solid ${theme.borderColor}`}}>
-                        {editingId === `type-${rt}` ? (
-                          <>
-                            <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
-                            <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
-                              <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                                <button className="btn-ghost" onClick={async () => {
-                                  try {
-                                    const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name }) })
-                                    if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                                    await loadResourceTypes()
-                                    setEditingId(null)
-                                  } catch (err) {
-                                    alert('Save type failed — ' + ((err as any)?.message || 'check server logs'))
-                                  }
-                                }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#16a34a'}}>✓</button>
-                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#dc2626'}}>⊘</button>
-                              </div>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td style={{padding:8}}><strong>{rt}</strong></td>
-                            <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
-                              <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                                <button className="btn-ghost" onClick={() => {
-                                  setEditingId(`type-${rt}`)
-                                  setEditData({name: rt})
-                                }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
-                                <button className="btn-ghost" onClick={async () => {
-                                  if (!confirm(`Delete type "${rt}"?`)) return
-                                  try {
-                                    const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'DELETE', headers: authHeaders() })
-                                    if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                                    await loadResourceTypes()
-                                  } catch (err) {
-                                    alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
-                                  }
-                                }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
-                              </div>
-                            </td>
-                          </>
-                        )}
+                      <tr key={rt} style={{borderTop:`1px solid ${theme.borderColor}`,cursor:'pointer'}} onClick={() => { setResourceTypeModalData({name: rt}); setResourceTypeModalOpen(true) }}>
+                        <td style={{padding:8}}><strong>{rt}</strong></td>
+                        <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
+                          <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
+                            <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setResourceTypeModalOpen(true) }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
+                            <button className="btn-ghost" onClick={async (e) => {
+                              e.stopPropagation()
+                              if (!confirm(`Delete type "${rt}"?`)) return
+                              try {
+                                const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'DELETE', headers: authHeaders() })
+                                if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                await loadResourceTypes()
+                              } catch (err) {
+                                alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
+                              }
+                            }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1969,42 +2017,22 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
                   .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))).map(rt => (
-                  <div key={rt} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
-                    {editingId === `type-${rt}` ? (
-                      <>
-                        <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={styles.input} />
-                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-                          <button className="btn-ghost" onClick={async () => {
-                            try {
-                              const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name }) })
-                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                              await loadResourceTypes()
-                              setEditingId(null)
-                            } catch (err) {
-                              alert('Save type failed — ' + ((err as any)?.message || 'check server logs'))
-                            }
-                          }} style={{color:'#16a34a',fontSize:14}}>✓</button>
-                          <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626',fontSize:14}}>⊘</button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <h5 style={{margin:'0 0 12px 0',fontSize:16,fontWeight:600}}>{rt}</h5>
-                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-                          <button className="btn-ghost" onClick={() => {setEditingId(`type-${rt}`); setEditData({name: rt})}} style={{fontSize:13}}>✎ Edit</button>
-                          <button className="btn-ghost" onClick={async () => {
-                            if (!confirm(`Delete type "${rt}"?`)) return
-                            try {
-                              const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'DELETE', headers: authHeaders() })
-                              if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                              await loadResourceTypes()
-                            } catch (err) {
-                              alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
-                            }
-                          }} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
-                        </div>
-                      </>
-                    )}
+                  <div key={rt} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',cursor:'pointer'}} onClick={() => { setResourceTypeModalData({name: rt}); setResourceTypeModalOpen(true) }}>
+                    <h5 style={{margin:'0 0 12px 0',fontSize:16,fontWeight:600}}>{rt}</h5>
+                    <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                      <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setResourceTypeModalOpen(true) }} style={{fontSize:13}}>✎ Edit</button>
+                      <button className="btn-ghost" onClick={async (e) => {
+                        e.stopPropagation()
+                        if (!confirm(`Delete type "${rt}"?`)) return
+                        try {
+                          const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'DELETE', headers: authHeaders() })
+                          if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                          await loadResourceTypes()
+                        } catch (err) {
+                          alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
+                        }
+                      }} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
+                    </div>
                   </div>
                 ))}
               </div>
