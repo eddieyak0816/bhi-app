@@ -2207,8 +2207,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <tr key={cat.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
                           <td style={{padding:12,color:theme.text}}>{cat.name}</td>
                           <td style={{padding:12,color:theme.textMuted}}>{cat.description || '-'}</td>
-                          <td style={{padding:12,textAlign:'right'}}>
-                            <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 8px',cursor:'pointer',marginRight:8,color:theme.text}}>
+                          <td style={{padding:12,textAlign:'right',display:'flex',gap:8,justifyContent:'flex-end'}}>
+                            <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 8px',cursor:'pointer',color:theme.text}}>
                               ✎ Edit
                             </button>
                             <button onClick={async () => {
