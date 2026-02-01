@@ -1860,6 +1860,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       {/* Types Tab */}
       {activeTab === 'types' && (
         <div>
+          <style>{`input[list] { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: none !important; } input[list]::-webkit-calendar-picker-indicator { display: none !important; }`}</style>
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Type creation form */}
