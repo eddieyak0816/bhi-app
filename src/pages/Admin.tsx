@@ -87,6 +87,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // category modal state
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [categoryModalData, setCategoryModalData] = useState<any>(null)
+  const [categoryEditForm, setCategoryEditForm] = useState<any>({})
+  const [isEditingCategory, setIsEditingCategory] = useState(false)
   const [categoryDescription, setCategoryDescription] = useState<string>('')
   // health goal modal state
   const [healthGoalModalOpen, setHealthGoalModalOpen] = useState(false)
@@ -2190,13 +2192,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   No categories found. Add one above or run the migration to add defaults.
                 </div>
               ) : viewMode.categories === 'table' ? (
+                <>
                 <div style={{border:`1px solid ${theme.borderColor}`,borderRadius:6,overflow:'auto'}}>
                   <table style={styles.table}>
                     <thead>
                       <tr style={styles.tableHeader}>
                         <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Category Name</th>
                         <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Description</th>
-                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Status</th>
                         <th style={{padding:12,textAlign:'right',fontWeight:600,color:'#ffffff'}}>Actions</th>
                       </tr>
                     </thead>
@@ -2205,17 +2207,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <tr key={cat.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
                           <td style={{padding:12,color:theme.text}}>{cat.name}</td>
                           <td style={{padding:12,color:theme.textMuted}}>{cat.description || '-'}</td>
-                          <td style={{padding:12}}>
-                            <span style={{padding:'4px 8px',borderRadius:4,fontSize:12,background:cat.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',color:cat.is_active ? '#22c55e' : '#ef4444'}}>
-                              {cat.is_active ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
                           <td style={{padding:12,textAlign:'right'}}>
-                            <button onClick={async () => {
-                              await supabase.from('categories').update({ is_active: !cat.is_active }).eq('id', cat.id)
-                              await loadCategories()
-                            }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 8px',cursor:'pointer',marginRight:8,color:theme.text}}>
-                              {cat.is_active ? 'Deactivate' : 'Activate'}
+                            <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 8px',cursor:'pointer',marginRight:8,color:theme.text}}>
+                              ✎ Edit
                             </button>
                             <button onClick={async () => {
                               if (!confirm('Delete this category?')) return
@@ -2230,6 +2224,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </tbody>
                   </table>
                 </div>
+                </>
               ) : (
                 <>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
@@ -2241,14 +2236,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     
                     return (
                       <div key={cat.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,display:'flex',flexDirection:'column',height:'100%',position:'relative'}}>
-                        <span style={{position:'absolute',top:12,right:12,padding:'2px 6px',borderRadius:4,fontSize:11,background:cat.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',color:cat.is_active ? '#22c55e' : '#ef4444'}}>
-                          {cat.is_active ? 'Active' : 'Inactive'}
-                        </span>
                         <h4 style={{margin:'0 0 8px 0',fontSize:14,fontWeight:600,color:theme.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                           {titleTooLong ? (
                             <>
                               {cat.name.substring(0, 22)}…{' '}
-                              <button onClick={() => {setCategoryModalData(cat); setCategoryModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
+                              <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
                                 more
                               </button>
                             </>
@@ -2261,17 +2253,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             {description}
                           </span>
                           {descriptionTooLong && (
-                            <span onClick={() => {setCategoryModalData(cat); setCategoryModalOpen(true)}} style={{position:'absolute',bottom:0,right:0,background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
+                            <span onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{position:'absolute',bottom:0,right:0,background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
                               more
                             </span>
                           )}
                         </p>
                         <div style={{display:'flex',gap:8,marginTop:'auto'}}>
-                          <button onClick={async () => {
-                            await supabase.from('categories').update({ is_active: !cat.is_active }).eq('id', cat.id)
-                            await loadCategories()
-                          }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:theme.text}}>
-                            {cat.is_active ? 'Deactivate' : 'Activate'}
+                          <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:theme.text}}>
+                            ✎ Edit
                           </button>
                           <button onClick={async () => {
                             if (!confirm('Delete this category?')) return
@@ -2285,40 +2274,69 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     )
                   })}
                 </div>
-
-                {/* Category Modal */}
-                {categoryModalOpen && categoryModalData && (
-                  <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
-                    <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:500,maxHeight:'80vh',overflow:'auto',border:`1px solid ${theme.borderColor}`}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
-                        <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{categoryModalData.name}</h3>
-                        <button onClick={() => setCategoryModalOpen(false)} style={{background:'transparent',border:'none',fontSize:24,cursor:'pointer',color:theme.text,padding:0}}>✕</button>
-                      </div>
-                      <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.textMuted,whiteSpace:'pre-wrap'}}>{categoryModalData.description || 'No description'}</p>
-                      <div style={{display:'flex',gap:8}}>
-                        <button onClick={async () => {
-                          await supabase.from('categories').update({ is_active: !categoryModalData.is_active }).eq('id', categoryModalData.id)
-                          await loadCategories()
-                          setCategoryModalOpen(false)
-                        }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>
-                          {categoryModalData.is_active ? 'Deactivate' : 'Activate'}
-                        </button>
-                        <button onClick={async () => {
-                          if (!confirm('Delete this category?')) return
-                          await supabase.from('categories').delete().eq('id', categoryModalData.id)
-                          await loadCategories()
-                          setCategoryModalOpen(false)
-                        }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444'}}>
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 </>
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Category Edit Modal - Outside categories view */}
+      {categoryModalOpen && categoryModalData && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+          <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:700,width:'90%',maxHeight:'85vh',overflow:'auto',border:`1px solid ${theme.borderColor}`}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
+              <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Category</h3>
+              <button onClick={() => {setCategoryModalOpen(false); setIsEditingCategory(false)}} style={{background:'transparent',border:'none',fontSize:24,cursor:'pointer',color:theme.text,padding:0}}>✕</button>
+            </div>
+            {!isEditingCategory ? (
+              <>
+                <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Name:</p>
+                <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.text}}>{categoryModalData.name}</p>
+                <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Description:</p>
+                <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.text,whiteSpace:'pre-wrap'}}>{categoryModalData.description || 'No description'}</p>
+                <div style={{display:'flex',gap:8}}>
+                  <button onClick={() => setIsEditingCategory(true)} style={{flex:1,background:'#3b82f6',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>
+                    Edit
+                  </button>
+                  <button onClick={async () => {
+                    if (!confirm('Delete this category?')) return
+                    await supabase.from('categories').delete().eq('id', categoryModalData.id)
+                    await loadCategories()
+                    setCategoryModalOpen(false)
+                  }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444',fontWeight:600}}>
+                    Delete
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Name:</label>
+                <input type="text" value={categoryEditForm.name || ''} onChange={e => setCategoryEditForm({...categoryEditForm, name: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,marginBottom:16}} />
+                <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Description:</label>
+                <textarea value={categoryEditForm.description || ''} onChange={e => setCategoryEditForm({...categoryEditForm, description: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,minHeight:'150px',fontFamily:'inherit',marginBottom:16}} />
+                <div style={{display:'flex',gap:8}}>
+                  <button onClick={async () => {
+                    if (!categoryEditForm.name?.trim()) return alert('Category name required')
+                    try {
+                      await supabase.from('categories').update({name: categoryEditForm.name.trim(), description: categoryEditForm.description?.trim() || ''}).eq('id', categoryModalData.id)
+                      await loadCategories()
+                      setCategoryModalOpen(false)
+                      setIsEditingCategory(false)
+                    } catch (err) {
+                      console.error('Update error:', err)
+                      alert('Update failed — ' + ((err as any)?.message || 'check server logs'))
+                    }
+                  }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>
+                    Save
+                  </button>
+                  <button onClick={() => setIsEditingCategory(false)} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
