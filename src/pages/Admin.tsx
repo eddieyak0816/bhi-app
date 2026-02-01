@@ -686,6 +686,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       {/* Resources Tab */}
       {activeTab === 'resources' && (
         <div>
+          <style>{`input[list] { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: none !important; } input[list]::-webkit-calendar-picker-indicator { display: none !important; }`}</style>
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Create New Resource - Always Visible */}
@@ -747,34 +748,37 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </div>
                 </div>
 
-              {/* Filtering section */}
+              {/* Filtering section - Matching Create New Resource style */}
               <div style={{marginTop:0,marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
                   <h3 style={{margin:0,fontSize:16,fontWeight:600,color:theme.text}}>Filter Resources</h3>
                 </div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr',gap:10,alignItems:'start'}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,alignItems:'start'}}>
                   <div>
-                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:theme.text}}>Keyword Search</label>
-                    <input
-                      type="text"
-                      placeholder="Search titles..."
-                      value={filterKeyword}
-                      onChange={e => setFilterKeyword(e.target.value)}
-                      list="resource-titles-list"
-                      style={{width:'100%',padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
-                    />
-                    <datalist id="resource-titles-list">
-                      {Array.from(new Set(
-                        resources
-                          .filter(r => {
-                            if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
-                            if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
-                            return true
-                          })
-                          .map(r => r.title)
-                          .filter(t => !filterKeyword || t.toLowerCase().includes(filterKeyword.toLowerCase()))
-                      )).sort().map(title => <option key={title} value={title} />)}
-                    </datalist>
+                    <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Keyword Search</label>
+                    <div style={{position:'relative',display:'flex',alignItems:'center'}}>
+                      <input
+                        type="text"
+                        placeholder="Search titles..."
+                        value={filterKeyword}
+                        onChange={e => setFilterKeyword(e.target.value)}
+                        list="resource-titles-list"
+                        style={{width:'100%',padding:8,paddingRight:28,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}
+                      />
+                      <div style={{position:'absolute',right:8,pointerEvents:'none',color:theme.textMuted,fontSize:12}}>▼</div>
+                      <datalist id="resource-titles-list">
+                        {Array.from(new Set(
+                          resources
+                            .filter(r => {
+                              if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                              if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                              return true
+                            })
+                            .map(r => r.title)
+                            .filter(t => !filterKeyword || t.toLowerCase().includes(filterKeyword.toLowerCase()))
+                        )).sort().map(title => <option key={title} value={title} />)}
+                      </datalist>
+                    </div>
                   </div>
                   <div>
                     <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Resource Types:</label>
@@ -812,7 +816,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </div>
                   <div>
                     <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Categories:</label>
-                    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:12}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                       {filterCategories.map(c => (
                         <div key={c} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#10b981',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
                           <span>{c}</span>
@@ -828,7 +832,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </div>
                   </div>
                 </div>
-                <div style={{display:'flex',justifyContent:'flex-end'}}>
+                <div style={{display:'flex',justifyContent:'flex-end',marginTop:12}}>
                   {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0 || filterCategories.length > 0) && (
                     <button
                       onClick={() => {
