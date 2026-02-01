@@ -788,12 +788,17 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <button onClick={() => setFilterTypes(s => s.filter(x => x !== t))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
                         </div>
                       ))}
-                      <button
-                        onClick={() => {setTagSearchModalOpen(true); setTagSearchContext('filter-type'); setTagSearchInput('')}}
-                        style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
-                      >
-                        + Add Type
-                      </button>
+                      <div style={{position:'relative',display:'flex',alignItems:'center'}}>
+                        <select 
+                          value="" 
+                          onChange={e => {if (e.target.value) handleTagSelect(e.target.value); e.target.value = ''}}
+                          style={{padding:'6px 8px',paddingRight:28,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,cursor:'pointer',fontWeight:500,appearance:'none',WebkitAppearance:'none',MozAppearance:'none'}}
+                        >
+                          <option value="">Select a type...</option>
+                          {resourceTypes.filter(t => !filterTypes.includes(t)).map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <div style={{position:'absolute',right:8,pointerEvents:'none',color:theme.text,fontSize:12}}>▼</div>
+                      </div>
                     </div>
                   </div>
                   <div>
@@ -1887,17 +1892,20 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Search Resource Types</label>
-                    <input
-                      type="text"
-                      placeholder="Type name..."
-                      value={filterResourceTypeName}
-                      onChange={e => setFilterResourceTypeName(e.target.value)}
-                      list="search-resource-types-list"
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
-                    />
-                    <datalist id="search-resource-types-list">
-                      {Array.from(new Set(resourceTypes.filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))).sort().map(t => <option key={t} value={t} />)}
-                    </datalist>
+                    <div style={{position:'relative',display:'flex',alignItems:'center'}}>
+                      <input
+                        type="text"
+                        placeholder="Type name..."
+                        value={filterResourceTypeName}
+                        onChange={e => setFilterResourceTypeName(e.target.value)}
+                        list="search-resource-types-list"
+                        style={{width:'100%',padding:'6px 8px',paddingRight:28,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}
+                      />
+                      <div style={{position:'absolute',right:8,pointerEvents:'none',color:theme.text,fontSize:12}}>▼</div>
+                      <datalist id="search-resource-types-list">
+                        {Array.from(new Set(resourceTypes.filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))).sort().map(t => <option key={t} value={t} />)}
+                      </datalist>
+                    </div>
                   </div>
                   <button
                     className="btn-ghost"
