@@ -52,6 +52,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [filterKeyword, setFilterKeyword] = useState('')
   const [filterTypes, setFilterTypes] = useState<string[]>([])
   const [filterTags, setFilterTags] = useState<string[]>([])
+  const [filterCategories, setFilterCategories] = useState<string[]>([])
   const [auditRows, setAuditRows] = useState<Array<any>>([])
   const [healthGoals, setHealthGoals] = useState<Array<{id: string; name: string; description?: string; is_active: boolean}>>([])
   const [categories, setCategories] = useState<Array<{id: string; name: string; description?: string; is_active: boolean}>>([])
@@ -102,10 +103,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // Modal state for tag/category selection with search
   const [tagSearchModalOpen, setTagSearchModalOpen] = useState(false)
   const [tagSearchInput, setTagSearchInput] = useState('')
-  const [tagSearchContext, setTagSearchContext] = useState<'create' | 'edit'>('create')
+  const [tagSearchContext, setTagSearchContext] = useState<'create' | 'edit' | 'filter-type' | 'filter-tag'>('create')
   const [categorySearchModalOpen, setCategorySearchModalOpen] = useState(false)
   const [categorySearchInput, setCategorySearchInput] = useState('')
-  const [categorySearchContext, setCategorySearchContext] = useState<'create' | 'edit'>('create')
+  const [categorySearchContext, setCategorySearchContext] = useState<'create' | 'edit' | 'filter'>('create')
 
   // Theme colors - use global theme from context
   const theme = {
@@ -518,6 +519,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       setSelectedTags(prev => prev.includes(tag) ? prev : [...prev, tag])
     } else if (tagSearchContext === 'edit') {
       setEditData(prev => ({...prev, tags: prev.tags.includes(tag) ? prev.tags : [...(prev.tags || []), tag]}))
+    } else if (tagSearchContext === 'filter-type') {
+      setFilterTypes(prev => prev.includes(tag) ? prev : [...prev, tag])
+    } else if (tagSearchContext === 'filter-tag') {
+      setFilterTags(prev => prev.includes(tag) ? prev : [...prev, tag])
     }
     setTagSearchInput('')
   }
@@ -528,6 +533,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       setSelectedCategories(prev => prev.includes(category) ? prev : [...prev, category])
     } else if (categorySearchContext === 'edit') {
       setEditData(prev => ({...prev, categories: prev.categories.includes(category) ? prev.categories : [...(prev.categories || []), category]}))
+    } else if (categorySearchContext === 'filter') {
+      setFilterCategories(prev => prev.includes(category) ? prev : [...prev, category])
     }
     setCategorySearchInput('')
   }
@@ -696,12 +703,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               <div style={{marginTop:0,marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
                   <h3 style={{margin:0,fontSize:16,fontWeight:600,color:theme.text}}>Filter Resources</h3>
-                  {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0) && (
+                  {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0 || filterCategories.length > 0) && (
                     <button
                       onClick={() => {
                         setFilterKeyword('')
                         setFilterTypes([])
                         setFilterTags([])
+                        setFilterCategories([])
                         setSelectedIds([])
                         setSelectAll(false)
                       }}
@@ -711,7 +719,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </button>
                   )}
                 </div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,alignItems:'start'}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr',gap:10,alignItems:'start'}}>
                   <div>
                     <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:theme.text}}>Keyword Search</label>
                     <input
@@ -736,38 +744,68 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </datalist>
                   </div>
                   <div>
-                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:theme.text}}>Type</label>
-                    <select
-                      multiple
-                      value={filterTypes}
-                      onChange={e => setFilterTypes(Array.from(e.currentTarget.selectedOptions, o => o.value))}
-                      style={{width:'100%',padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,minHeight:36,maxHeight:100,overflowY:'auto'}}
-                    >
-                      {(resourceTypes || []).sort().map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
+                    <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Resource Types:</label>
+                    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                      {filterTypes.map(t => (
+                        <div key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#667eea',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                          <span>{t}</span>
+                          <button onClick={() => setFilterTypes(s => s.filter(x => x !== t))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => {setTagSearchModalOpen(true); setTagSearchContext('filter-type'); setTagSearchInput('')}}
+                        style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                      >
+                        + Add Type
+                      </button>
+                    </div>
                   </div>
                   <div>
-                    <label style={{display:'block',marginBottom:6,fontSize:12,fontWeight:600,color:theme.text}}>Tags</label>
-                    <select
-                      multiple
-                      value={filterTags}
-                      onChange={e => setFilterTags(Array.from(e.currentTarget.selectedOptions, o => o.value))}
-                      style={{width:'100%',padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,minHeight:36,maxHeight:100,overflowY:'auto'}}
-                    >
-                      {(allowedTags || []).sort().map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
+                    <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Tags:</label>
+                    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                      {filterTags.map(t => (
+                        <div key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#2563eb',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                          <span>{t}</span>
+                          <button onClick={() => setFilterTags(s => s.filter(x => x !== t))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => {setTagSearchModalOpen(true); setTagSearchContext('filter-tag'); setTagSearchInput('')}}
+                        style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                      >
+                        + Add Tag
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Categories:</label>
+                    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                      {filterCategories.map(c => (
+                        <div key={c} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#10b981',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                          <span>{c}</span>
+                          <button onClick={() => setFilterCategories(s => s.filter(x => x !== c))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => {setCategorySearchModalOpen(true); setCategorySearchContext('filter'); setCategorySearchInput('')}}
+                        style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                      >
+                        + Add Category
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Filter results summary */}
-              {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0) && (
+              {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0 || filterCategories.length > 0) && (
                 <div style={{marginBottom:12,fontSize:13,color:theme.text}}>
                   {(() => {
                     const filtered = resources.filter(r => {
                       if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
                       if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
                       if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                      if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
                       return true
                     })
                     return `Showing ${filtered.length} of ${resources.length} resources`
@@ -970,12 +1008,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
                     if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
                     if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                    if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
                     return true
                   }), sortColumn) : resources
                   .filter(r => {
                     if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
                     if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
                     if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                    if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
                     return true
                   })
                 ).map(r => (
@@ -2481,20 +2521,25 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       {tagSearchModalOpen && (
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
           <div style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,maxWidth:500,width:'90%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
-            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>Select Tags</h3>
+            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>
+              {tagSearchContext === 'filter-type' ? 'Select Resource Types' : 'Select Tags'}
+            </h3>
             <input
               type="text"
-              placeholder="Search tags..."
+              placeholder={tagSearchContext === 'filter-type' ? 'Search types...' : 'Search tags...'}
               value={tagSearchInput}
               onChange={e => setTagSearchInput(e.target.value)}
               autoFocus
               style={{padding:12,border:`2px solid #2563eb`,borderRadius:6,marginBottom:16,background:theme.bgSecondary,color:theme.text,fontSize:14,fontWeight:500,boxShadow:'0 2px 4px rgba(37, 99, 235, 0.1)'}}
             />
             <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
-              {(allowedTags || [])
+              {(tagSearchContext === 'filter-type' ? resourceTypes : allowedTags || [])
                 .filter((t: string) => 
                   t.toLowerCase().includes(tagSearchInput.toLowerCase()) &&
-                  (tagSearchContext === 'create' ? !selectedTags.includes(t) : !(editData.tags || []).includes(t))
+                  (tagSearchContext === 'create' ? !selectedTags.includes(t) : 
+                   tagSearchContext === 'edit' ? !(editData.tags || []).includes(t) :
+                   tagSearchContext === 'filter-type' ? !filterTypes.includes(t) :
+                   !filterTags.includes(t))
                 )
                 .map((t: string) => (
                   <div
