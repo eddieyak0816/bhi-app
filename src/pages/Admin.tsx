@@ -1398,7 +1398,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               alert('Save failed — ' + ((err as any)?.message || 'check server logs'))
                             }
                           }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff'}}>Save</button>
-                          <button onClick={() => setIsEditingHealthGoal(false)} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>Cancel</button>
+                          <button onClick={() => { setIsEditingHealthGoal(false); setHealthGoalModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>Cancel</button>
                         </div>
                       </>
                     )}
