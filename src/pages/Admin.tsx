@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null }
+type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
 
 export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () => void }) {
   const [resources, setResources] = useState<Resource[]>([])
@@ -81,7 +82,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [filterAuditTable, setFilterAuditTable] = useState<string>('')
   // editing state
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editData, setEditData] = useState<any>({})
+  const [editData, setEditData] = useState<EditData>({})
   const [editingTagsDropdownOpen, setEditingTagsDropdownOpen] = useState(false)
   const [editingCategoriesDropdownOpen, setEditingCategoriesDropdownOpen] = useState(false)
   // category modal state
@@ -1357,7 +1358,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               {/* Health Goal Modal */}
               {healthGoalModalOpen && healthGoalModalData && (
                 <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
-                  <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:500,maxHeight:'80vh',overflow:'auto',border:`1px solid ${theme.borderColor}`}}>
+                  <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:800,maxHeight:'80vh',overflow:'auto',border:`1px solid ${theme.borderColor}`}}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
                       {!isEditingHealthGoal ? (
                         <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{healthGoalModalData.name}</h3>
@@ -1385,11 +1386,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <div style={{display:'flex',gap:8}}>
                           <button onClick={async () => {
                             try {
-                              await supabase.from('health_goals').update({ name: healthGoalEditForm.name, description: healthGoalEditForm.description }).eq('id', healthGoalModalData.id)
+                              if (!healthGoalEditForm.name || !healthGoalEditForm.name.toString().trim()) return alert('Name required')
+                              const res = await supabase.from('health_goals').update({ name: (healthGoalEditForm.name || '').toString().trim(), description: healthGoalEditForm.description || '' }).eq('id', healthGoalModalData.id)
+                              if ((res as any).error) throw (res as any).error
                               await loadHealthGoals()
                               setIsEditingHealthGoal(false)
                               setHealthGoalModalOpen(false)
                             } catch (err) {
+                              console.error('Save health goal error', err)
                               alert('Save failed — ' + ((err as any)?.message || 'check server logs'))
                             }
                           }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff'}}>Save</button>
