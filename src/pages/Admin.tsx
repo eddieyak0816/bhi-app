@@ -93,6 +93,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // health goal modal state
   const [healthGoalModalOpen, setHealthGoalModalOpen] = useState(false)
   const [healthGoalModalData, setHealthGoalModalData] = useState<any>(null)
+  const [isEditingHealthGoal, setIsEditingHealthGoal] = useState(false)
+  const [healthGoalEditForm, setHealthGoalEditForm] = useState<{name?: string; description?: string}>({})
   // resource modal state
   const [resourceModalOpen, setResourceModalOpen] = useState(false)
   const [resourceModalData, setResourceModalData] = useState<any>(null)
@@ -1274,10 +1276,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   <table style={styles.table}>
                     <thead>
                       <tr style={styles.tableHeader}>
-                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Goal Name</th>
-                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Description</th>
-                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Status</th>
-                        <th style={{padding:12,textAlign:'right',fontWeight:600,color:'#ffffff'}}>Actions</th>
+                          <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Goal Name</th>
+                            <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Description</th>
+                            <th style={{padding:12,textAlign:'right',fontWeight:600,color:'#ffffff'}}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1285,18 +1286,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <tr key={goal.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
                           <td style={{padding:12,color:theme.text}}>{goal.name}</td>
                           <td style={{padding:12,color:theme.textMuted}}>{goal.description || '-'}</td>
-                          <td style={{padding:12}}>
-                            <span style={{padding:'4px 8px',borderRadius:4,fontSize:12,background:goal.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',color:goal.is_active ? '#22c55e' : '#ef4444'}}>
-                              {goal.is_active ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
                           <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
                             <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end',height:'100%'}}>
-                              <button onClick={async () => {
-                                await supabase.from('health_goals').update({ is_active: !goal.is_active }).eq('id', goal.id)
-                                await loadHealthGoals()
-                              }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',marginRight:8,color:theme.text,fontSize:16}}>
-                                {goal.is_active ? 'Deactivate' : 'Activate'}
+                              <button onClick={() => { setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true) }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}} aria-label={`Edit goal ${goal.name}`}>
+                                ✎
                               </button>
                               <button onClick={async () => {
                                 if (!confirm('Delete this health goal?')) return
@@ -1374,27 +1367,44 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
                   <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:500,maxHeight:'80vh',overflow:'auto',border:`1px solid ${theme.borderColor}`}}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
-                      <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{healthGoalModalData.name}</h3>
-                      <button onClick={() => setHealthGoalModalOpen(false)} style={{background:'transparent',border:'none',fontSize:24,cursor:'pointer',color:theme.text,padding:0}}>✕</button>
+                      {!isEditingHealthGoal ? (
+                        <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{healthGoalModalData.name}</h3>
+                      ) : (
+                        <input value={healthGoalEditForm.name || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, name: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:16}} />
+                      )}
+                      <button onClick={() => { setHealthGoalModalOpen(false); setIsEditingHealthGoal(false) }} style={{background:'transparent',border:'none',fontSize:24,cursor:'pointer',color:theme.text,padding:0}}>✕</button>
                     </div>
-                    <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.textMuted,whiteSpace:'pre-wrap'}}>{healthGoalModalData.description || 'No description'}</p>
-                    <div style={{display:'flex',gap:8}}>
-                      <button onClick={async () => {
-                        await supabase.from('health_goals').update({ is_active: !healthGoalModalData.is_active }).eq('id', healthGoalModalData.id)
-                        await loadHealthGoals()
-                        setHealthGoalModalOpen(false)
-                      }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>
-                        {healthGoalModalData.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button onClick={async () => {
-                        if (!confirm('Delete this health goal?')) return
-                        await supabase.from('health_goals').delete().eq('id', healthGoalModalData.id)
-                        await loadHealthGoals()
-                        setHealthGoalModalOpen(false)
-                      }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444'}}>
-                        Delete
-                      </button>
-                    </div>
+                    {!isEditingHealthGoal ? (
+                      <>
+                        <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.textMuted,whiteSpace:'pre-wrap'}}>{healthGoalModalData.description || 'No description'}</p>
+                        <div style={{display:'flex',gap:8}}>
+                          <button onClick={() => { setIsEditingHealthGoal(true); setHealthGoalEditForm({name: healthGoalModalData.name, description: healthGoalModalData.description || ''}) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>✎ Edit</button>
+                          <button onClick={async () => {
+                            if (!confirm('Delete this health goal?')) return
+                            await supabase.from('health_goals').delete().eq('id', healthGoalModalData.id)
+                            await loadHealthGoals()
+                            setHealthGoalModalOpen(false)
+                          }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444'}}>✕</button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <textarea value={healthGoalEditForm.description || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, description: e.target.value})} style={{width:'100%',minHeight:120,padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12}} />
+                        <div style={{display:'flex',gap:8}}>
+                          <button onClick={async () => {
+                            try {
+                              await supabase.from('health_goals').update({ name: healthGoalEditForm.name, description: healthGoalEditForm.description }).eq('id', healthGoalModalData.id)
+                              await loadHealthGoals()
+                              setIsEditingHealthGoal(false)
+                              setHealthGoalModalOpen(false)
+                            } catch (err) {
+                              alert('Save failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
+                          }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff'}}>Save</button>
+                          <button onClick={() => setIsEditingHealthGoal(false)} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>Cancel</button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
