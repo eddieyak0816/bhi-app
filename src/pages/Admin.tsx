@@ -1357,8 +1357,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Health Goal Modal */}
               {healthGoalModalOpen && healthGoalModalData && (
-                <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
-                  <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:800,maxHeight:'80vh',overflow:'auto',border:`1px solid ${theme.borderColor}`}}>
+                <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
+                  <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:800,maxHeight:'80vh',overflow:'auto',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto'}}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
                       {!isEditingHealthGoal ? (
                         <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{healthGoalModalData.name}</h3>
@@ -1384,7 +1384,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       <>
                         <textarea value={healthGoalEditForm.description || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, description: e.target.value})} style={{width:'100%',minHeight:120,padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12}} />
                         <div style={{display:'flex',gap:8}}>
-                          <button onClick={async () => {
+                          <button type="button" onClick={async () => {
+                            console.log('HealthGoal Save clicked', { id: healthGoalModalData?.id, form: healthGoalEditForm })
                             try {
                               if (!healthGoalEditForm.name || !healthGoalEditForm.name.toString().trim()) return alert('Name required')
                               const res = await supabase.from('health_goals').update({ name: (healthGoalEditForm.name || '').toString().trim(), description: healthGoalEditForm.description || '' }).eq('id', healthGoalModalData.id)
