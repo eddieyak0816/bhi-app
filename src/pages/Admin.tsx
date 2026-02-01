@@ -704,21 +704,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               <div style={{marginTop:0,marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
                   <h3 style={{margin:0,fontSize:16,fontWeight:600,color:theme.text}}>Filter Resources</h3>
-                  {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0 || filterCategories.length > 0) && (
-                    <button
-                      onClick={() => {
-                        setFilterKeyword('')
-                        setFilterTypes([])
-                        setFilterTags([])
-                        setFilterCategories([])
-                        setSelectedIds([])
-                        setSelectAll(false)
-                      }}
-                      style={{padding:'6px 12px',background:'#E0E7FF',color:'#6366F1',border:'none',borderRadius:4,cursor:'pointer',fontSize:13,fontWeight:600}}
-                    >
-                      Clear Filters
-                    </button>
-                  )}
                 </div>
                 <div style={{display:'grid',gridTemplateColumns:'1fr',gap:10,alignItems:'start'}}>
                   <div>
@@ -780,7 +765,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </div>
                   <div>
                     <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Categories:</label>
-                    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:12}}>
                       {filterCategories.map(c => (
                         <div key={c} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#10b981',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
                           <span>{c}</span>
@@ -796,36 +781,38 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </div>
                   </div>
                 </div>
+                <div style={{display:'flex',justifyContent:'flex-end'}}>
+                  {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0 || filterCategories.length > 0) && (
+                    <button
+                      onClick={() => {
+                        setFilterKeyword('')
+                        setFilterTypes([])
+                        setFilterTags([])
+                        setFilterCategories([])
+                        setSelectedIds([])
+                        setSelectAll(false)
+                      }}
+                      style={{padding:'6px 12px',background:'#EF4444',color:'#fff',border:'none',borderRadius:4,cursor:'pointer',fontSize:12,fontWeight:600}}
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Filter results summary */}
               {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0 || filterCategories.length > 0) && (
-                <div style={{marginBottom:12,fontSize:13,color:theme.text,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div>
-                    {(() => {
-                      const filtered = resources.filter(r => {
-                        if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                        if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
-                        if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
-                        if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
-                        return true
-                      })
-                      return `Showing ${filtered.length} of ${resources.length} resources`
-                    })()}
-                  </div>
-                  <button
-                    onClick={() => {
-                      setFilterKeyword('')
-                      setFilterTypes([])
-                      setFilterTags([])
-                      setFilterCategories([])
-                      setSelectedIds([])
-                      setSelectAll(false)
-                    }}
-                    style={{padding:'4px 10px',background:'#EF4444',color:'#fff',border:'none',borderRadius:4,cursor:'pointer',fontSize:12,fontWeight:600}}
-                  >
-                    Clear All
-                  </button>
+                <div style={{marginBottom:12,fontSize:13,color:theme.text}}>
+                  {(() => {
+                    const filtered = resources.filter(r => {
+                      if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                      if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
+                      if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                      if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
+                      return true
+                    })
+                    return `Showing ${filtered.length} of ${resources.length} resources`
+                  })()}
                 </div>
               )}
 
