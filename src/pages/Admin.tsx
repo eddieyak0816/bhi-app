@@ -866,7 +866,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       <th style={{padding:8,textAlign:'left',color:'#ffffff'}}><input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.currentTarget.checked)} /></th>
                       <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('title')}>Title{getSortIndicator('title')}</th>
                       <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('type')}>Type{getSortIndicator('type')}</th>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('tags')}>Categories{getSortIndicator('tags')}</th>
+                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>URL</th>
+                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Tags</th>
+                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Categories</th>
                       <th style={{padding:8,textAlign:'right',color:'#ffffff',fontWeight:500}}>Actions</th>
                     </tr>
                   </thead>
@@ -888,145 +890,32 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       .map(r => (
                         <tr key={r.id} data-id={r.id} style={styles.tableRow}>
                           <td style={{padding:8}}><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
-                          {editingId === r.id ? (
-                            <>
-                              <td style={{padding:8}}>
-                                <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                                  <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} placeholder="Title" style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12}} />
-                                  <div style={{display:'flex',gap:4}}>
-                                    <select value={editData.link_protocol || 'https://'} onChange={e => setEditData({...editData, link_protocol: e.target.value})} style={{padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12,flex:'0 0 auto',minWidth:60}}>
-                                      <option value="https://">https://</option>
-                                      <option value="http://">http://</option>
-                                    </select>
-                                    <input type="text" value={editData.link_url || ''} onChange={e => setEditData({...editData, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" style={{flex:1,padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12}} />
-                                  </div>
-                                </div>
-                              </td>
-                              <td style={{padding:8}} className="small muted">{r.type}</td>
-                              <td style={{padding:8}}>
-                                {/* Categories */}
-                                <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginBottom:6}}>
-                                  <span style={{fontSize:10,color:theme.textMuted,fontWeight:600}}>Cat:</span>
-                                  {(editData.categories || []).map((c: string) => (
-                                    <span key={c} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',background:'#10b981',color:'#fff',borderRadius:12,fontSize:11,fontWeight:500}}>
-                                      {c}
-                                      <button onClick={() => setEditData({...editData, categories: (editData.categories || []).filter((x: string) => x !== c)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:12,lineHeight:1}}>✕</button>
-                                    </span>
-                                  ))}
-                                  <div style={{position:'relative'}}>
-                                    <button
-                                      onClick={() => setEditingCategoriesDropdownOpen(!editingCategoriesDropdownOpen)}
-                                      style={{padding:'2px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:11,fontWeight:500}}
-                                    >
-                                      +
-                                    </button>
-                                    {editingCategoriesDropdownOpen && (
-                                      <div style={{position:'absolute',top:'100%',left:0,marginTop:2,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:150,maxHeight:250,overflowY:'auto'}}>
-                                        {categories.filter(c => c.is_active && !(editData.categories || []).includes(c.name)).map(c => (
-                                          <label key={c.id} style={{display:'block',padding:'6px 10px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'1px solid ' + theme.borderLight,fontSize:12}}>
-                                            <input
-                                              type="checkbox"
-                                              checked={(editData.categories || []).includes(c.name)}
-                                              onChange={(e) => {
-                                                if (e.target.checked) {
-                                                  setEditData({...editData, categories: [...(editData.categories || []), c.name]})
-                                                } else {
-                                                  setEditData({...editData, categories: (editData.categories || []).filter((x: string) => x !== c.name)})
-                                                }
-                                              }}
-                                              style={{marginRight:6}}
-                                            />
-                                            {c.name}
-                                          </label>
-                                        ))}
-                                        {categories.filter(c => c.is_active && !(editData.categories || []).includes(c.name)).length === 0 && (
-                                          <div style={{padding:'8px',textAlign:'center',color:theme.textMuted,fontSize:11}}>No more categories</div>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                {/* Tags */}
-                                <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
-                                  <span style={{fontSize:10,color:theme.textMuted,fontWeight:600}}>Tags:</span>
-                                  {(editData.tags || []).map((t: string) => (
-                                    <span key={t} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',background:'#2563eb',color:'#fff',borderRadius:12,fontSize:11,fontWeight:500}}>
-                                      {t}
-                                      <button onClick={() => setEditData({...editData, tags: (editData.tags || []).filter((x: string) => x !== t)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:12,lineHeight:1}}>✕</button>
-                                    </span>
-                                  ))}
-                                  <div style={{position:'relative'}}>
-                                    <button
-                                      onClick={() => setEditingTagsDropdownOpen(!editingTagsDropdownOpen)}
-                                      style={{padding:'2px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:11,fontWeight:500}}
-                                    >
-                                      +
-                                    </button>
-                                    {editingTagsDropdownOpen && (
-                                      <div style={{position:'absolute',top:'100%',left:0,marginTop:2,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:150,maxHeight:250,overflowY:'auto'}}>
-                                        {(allowedTags || []).filter((t: string) => !(editData.tags || []).includes(t)).map((t: string) => (
-                                          <label key={t} style={{display:'block',padding:'6px 10px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'1px solid ' + theme.borderLight,fontSize:12}}>
-                                            <input
-                                              type="checkbox"
-                                              checked={(editData.tags || []).includes(t)}
-                                              onChange={(e) => {
-                                                if (e.target.checked) {
-                                                  setEditData({...editData, tags: [...(editData.tags || []), t]})
-                                                } else {
-                                                  setEditData({...editData, tags: (editData.tags || []).filter((x: string) => x !== t)})
-                                                }
-                                              }}
-                                              style={{marginRight:6}}
-                                            />
-                                            {t}
-                                          </label>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </td>
-                              <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
-                                <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                                  <button className="btn-ghost" onClick={async () => {
-                                    try {
-                                      const fullUrl = editData.link_url ? buildFullUrl(editData.link_protocol || 'https://', editData.link_url) : null
-                                      const res = await fetch(apiUrl(`/api/admin/resources/${r.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: editData.title, tags: editData.tags || [], categories: editData.categories || [], link_url: fullUrl }) })
-                                      if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                                      await load()
-                                      setEditingId(null)
-                                      setEditingTagsDropdownOpen(false)
-                                      setEditingCategoriesDropdownOpen(false)
-                                    } catch (err) {
-                                      alert('Save resource failed — ' + ((err as any)?.message || 'check server logs'))
-                                    }
-                                  }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#16a34a'}}>✓</button>
-                                  <button className="btn-ghost" onClick={() => {
-                                    setEditingId(null)
-                                    setEditingTagsDropdownOpen(false)
-                                    setEditingCategoriesDropdownOpen(false)
-                                  }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#dc2626'}}>⊘</button>
-                                </div>
-                              </td>
-                            </>
-                          ) : (
-                            <>
-                              <td style={{padding:8}}><strong>{r.title}</strong></td>
-                              <td style={{padding:8}} className="small muted">{r.type}</td>
-                              <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
-                              <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
-                                <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                                  <button className="btn-ghost" onClick={() => {
-                                    if (r.id) {
-                                      setEditingId(r.id)
-                                      setEditData({title: r.title, tags: r.tags || [], categories: (r as any).categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
-                                    }
-                                  }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
-                                  <button className="btn-ghost" onClick={() => remove(r.id)} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
-                                </div>
-                              </td>
-                            </>
-                          )}
+                          <td style={{padding:8}}><strong>{r.title}</strong></td>
+                          <td style={{padding:8,fontSize:12}}>{r.type}</td>
+                          <td style={{padding:8,fontSize:12}}>
+                            {r.link_url ? (
+                              <a href={r.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'block',maxWidth:200}}>
+                                {r.link_url}
+                              </a>
+                            ) : (
+                              <span style={{color:theme.textMuted}}>—</span>
+                            )}
+                          </td>
+                          <td style={{padding:8,fontSize:12}}>{(r.tags || []).join(', ') || <span style={{color:theme.textMuted}}>—</span>}</td>
+                          <td style={{padding:8,fontSize:12}}>{(r.categories || []).join(', ') || <span style={{color:theme.textMuted}}>—</span>}</td>
+                          <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
+                              <button className="btn-ghost" onClick={() => {
+                                if (r.id) {
+                                  setResourceModalData(r)
+                                  setResourceEditForm({title: r.title, type: r.type, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                  setIsEditingResource(true)
+                                  setResourceModalOpen(true)
+                                }
+                              }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
+                              <button className="btn-ghost" onClick={() => remove(r.id)} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                   </tbody>
