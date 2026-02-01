@@ -1358,14 +1358,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               {/* Health Goal Modal */}
               {healthGoalModalOpen && healthGoalModalData && (
                 <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
-                  <div style={{background:theme.bg,borderRadius:8,padding:24,width:'67.5%',maxWidth:2400,height:'75%',overflow:'auto',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative'}}>
+                  <div style={{background:theme.bg,borderRadius:8,padding:24,width:'67.5%',maxWidth:2400,height:'75%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative'}}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
                       {!isEditingHealthGoal ? (
                         <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{healthGoalModalData.name}</h3>
                       ) : (
                         <input value={healthGoalEditForm.name || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, name: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:16}} />
                       )}
-                      <button onClick={() => { setHealthGoalModalOpen(false); setIsEditingHealthGoal(false) }} style={{position:'absolute',top:15,right:15,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
+                      <button onClick={() => { setHealthGoalModalOpen(false); setIsEditingHealthGoal(false) }} tabIndex={-1} style={{position:'absolute',top:-5,right:-5,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
                     </div>
                     {!isEditingHealthGoal ? (
                       <>
