@@ -1988,11 +1988,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
                       .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))
                       .map(rt => (
-                      <tr key={rt} style={{borderTop:`1px solid ${theme.borderColor}`,cursor:'pointer'}} onClick={() => { setResourceTypeModalData({name: rt}); setResourceTypeModalOpen(true) }}>
+                      <tr key={rt} style={{borderTop:`1px solid ${theme.borderColor}`,cursor:'pointer'}} onClick={() => { setResourceTypeModalData({name: rt}); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }}>
                         <td style={{padding:8}}><strong>{rt}</strong></td>
                         <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
                           <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                            <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setResourceTypeModalOpen(true) }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
+                            <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
                             <button className="btn-ghost" onClick={async (e) => {
                               e.stopPropagation()
                               if (!confirm(`Delete type "${rt}"?`)) return
@@ -2017,10 +2017,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
                   .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))).map(rt => (
-                  <div key={rt} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',cursor:'pointer'}} onClick={() => { setResourceTypeModalData({name: rt}); setResourceTypeModalOpen(true) }}>
+                  <div key={rt} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',cursor:'pointer'}} onClick={() => { setResourceTypeModalData({name: rt}); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }}>
                     <h5 style={{margin:'0 0 12px 0',fontSize:16,fontWeight:600}}>{rt}</h5>
                     <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-                      <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setResourceTypeModalOpen(true) }} style={{fontSize:13}}>✎ Edit</button>
+                      <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} style={{fontSize:13}}>✎ Edit</button>
                       <button className="btn-ghost" onClick={async (e) => {
                         e.stopPropagation()
                         if (!confirm(`Delete type "${rt}"?`)) return
