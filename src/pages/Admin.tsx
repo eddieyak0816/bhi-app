@@ -2266,7 +2266,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             if (!confirm('Delete this category?')) return
                             await supabase.from('categories').delete().eq('id', cat.id)
                             await loadCategories()
-                          }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:'#ef4444'}}>
+                          }} style={{flex:1,background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:'#ef4444'}}>
                             Delete
                           </button>
                         </div>
