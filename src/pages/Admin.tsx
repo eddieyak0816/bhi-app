@@ -1313,46 +1313,38 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     const descriptionTooLong = description.length > 85
                     
                     return (
-                      <div key={goal.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,display:'flex',flexDirection:'column',height:'100%'}}>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:8}}>
-                          <h4 style={{margin:0,fontSize:14,fontWeight:600,color:theme.text,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',paddingRight:8}}>
-                            {titleTooLong ? (
-                              <>
-                                {goal.name.substring(0, 22)}…{' '}
-                                <button onClick={() => {setHealthGoalModalData(goal); setHealthGoalModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
-                                  more
-                                </button>
-                              </>
-                            ) : (
-                              goal.name
-                            )}
-                          </h4>
-                          <span style={{padding:'2px 6px',borderRadius:4,fontSize:11,background:goal.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',color:goal.is_active ? '#22c55e' : '#ef4444',flexShrink:0}}>
-                            {goal.is_active ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
+                      <div key={goal.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,display:'flex',flexDirection:'column',height:'100%',position:'relative'}}>
+                        <h4 style={{margin:'0 0 8px 0',fontSize:14,fontWeight:600,color:theme.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                          {titleTooLong ? (
+                            <>
+                              {goal.name.substring(0, 22)}…{' '}
+                              <button onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
+                                more
+                              </button>
+                            </>
+                          ) : (
+                            goal.name
+                          )}
+                        </h4>
                         <p style={{margin:'0 0 12px 0',fontSize:13,color:theme.textMuted,flex:1,lineHeight:'1.4',minHeight:'36.4px',maxHeight:'36.4px',overflow:'hidden',position:'relative'}}>
                           <span style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
                             {description}
                           </span>
                           {descriptionTooLong && (
-                            <span onClick={() => {setHealthGoalModalData(goal); setHealthGoalModalOpen(true)}} style={{position:'absolute',bottom:0,right:0,background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
+                            <span onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={{position:'absolute',bottom:0,right:0,background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
                               more
                             </span>
                           )}
                         </p>
                         <div style={{display:'flex',gap:8,marginTop:'auto'}}>
-                          <button onClick={async () => {
-                            await supabase.from('health_goals').update({ is_active: !goal.is_active }).eq('id', goal.id)
-                            await loadHealthGoals()
-                          }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:theme.text}}>
-                            {goal.is_active ? 'Deactivate' : 'Activate'}
+                          <button onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:theme.text}}>
+                            ✎ Edit
                           </button>
                           <button onClick={async () => {
                             if (!confirm('Delete this health goal?')) return
                             await supabase.from('health_goals').delete().eq('id', goal.id)
                             await loadHealthGoals()
-                          }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:'#ef4444'}}>
+                          }} style={{flex:1,background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:'#ef4444'}}>
                             Delete
                           </button>
                         </div>
