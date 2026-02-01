@@ -2209,17 +2209,19 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <tr key={cat.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
                           <td style={{padding:12,color:theme.text}}>{cat.name}</td>
                           <td style={{padding:12,color:theme.textMuted}}>{cat.description || '-'}</td>
-                          <td style={{padding:12,textAlign:'right',display:'flex',gap:8,justifyContent:'flex-end'}}>
-                            <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 8px',cursor:'pointer',color:theme.text}}>
-                              ✎ Edit
-                            </button>
-                            <button onClick={async () => {
-                              if (!confirm('Delete this category?')) return
-                              await supabase.from('categories').delete().eq('id', cat.id)
-                              await loadCategories()
-                            }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'4px 8px',cursor:'pointer',color:'#ef4444'}}>
-                              Delete
-                            </button>
+                          <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end',height:'100%'}}>
+                              <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',color:theme.text,fontSize:16}} aria-label={`Edit category ${cat.name}`}>
+                                ✎
+                              </button>
+                              <button onClick={async () => {
+                                if (!confirm('Delete this category?')) return
+                                await supabase.from('categories').delete().eq('id', cat.id)
+                                await loadCategories()
+                              }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',color:'#ef4444',fontSize:16}} aria-label={`Delete category ${cat.name}`}>
+                                ✕
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
