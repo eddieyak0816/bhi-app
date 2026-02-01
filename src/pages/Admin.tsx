@@ -99,6 +99,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // resource modal state
   const [resourceModalOpen, setResourceModalOpen] = useState(false)
   const [resourceModalData, setResourceModalData] = useState<any>(null)
+  const [isEditingResource, setIsEditingResource] = useState(false)
+  const [resourceEditForm, setResourceEditForm] = useState<{title?: string; type?: string; tags?: string[]; categories?: string[]; link_url?: string; link_protocol?: string}>({})
   const DEV_BACKEND_KEY = ((import.meta as any).env.VITE_BACKEND_API_KEY as string) || ''
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   // session override for dev convenience (not persisted)
@@ -1188,8 +1190,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
                             <button className="btn-ghost" onClick={() => {
                               if (r.id) {
-                                setEditingId(r.id)
-                                setEditData({title: r.title, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                setResourceModalData(r)
+                                setResourceEditForm({title: r.title, type: r.type, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                setIsEditingResource(false)
+                                setResourceModalOpen(true)
                               }
                             }} style={{fontSize:13}}>✎ Edit</button>
                             <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
@@ -1207,28 +1211,126 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
       {/* Resource Modal */}
       {resourceModalOpen && resourceModalData && (
-        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
-          <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:800,maxHeight:'80vh',overflow:'auto',border:`1px solid ${theme.borderColor}`}}>
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
+          <div style={{background:theme.bg,borderRadius:8,padding:24,width:'67.5%',maxWidth:2400,height:'60%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
-              <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{resourceModalData.title}</h3>
-              <button onClick={() => setResourceModalOpen(false)} style={{background:'transparent',border:'none',fontSize:24,cursor:'pointer',color:theme.text,padding:0}}>✕</button>
+              {!isEditingResource ? (
+                <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{resourceModalData.title}</h3>
+              ) : (
+                <input value={resourceEditForm.title || ''} onChange={e => setResourceEditForm({...resourceEditForm, title: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:16}} />
+              )}
+              <button onClick={() => { setResourceModalOpen(false); setIsEditingResource(false) }} tabIndex={-1} style={{position:'absolute',top:-5,right:-5,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
             </div>
-            <div style={{marginBottom:16}}>
-              <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Type:</p>
-              <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.type}</p>
-            </div>
-            {resourceModalData.tags && resourceModalData.tags.length > 0 && (
-              <div style={{marginBottom:16}}>
-                <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Tags:</p>
-                <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.tags.join(', ')}</p>
+            {!isEditingResource ? (
+              <div style={{flex:1,overflowY:'auto',marginBottom:16}}>
+                <div style={{marginBottom:16}}>
+                  <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Type:</p>
+                  <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.type}</p>
+                </div>
+                {resourceModalData.link_url && (
+                  <div style={{marginBottom:16}}>
+                    <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>URL:</p>
+                    <p style={{margin:0,fontSize:14,color:theme.text}}><a href={resourceModalData.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>{resourceModalData.link_url}</a></p>
+                  </div>
+                )}
+                {resourceModalData.tags && resourceModalData.tags.length > 0 && (
+                  <div style={{marginBottom:16}}>
+                    <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Tags:</p>
+                    <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.tags.join(', ')}</p>
+                  </div>
+                )}
+                {resourceModalData.categories && resourceModalData.categories.length > 0 && (
+                  <div style={{marginBottom:16}}>
+                    <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Categories:</p>
+                    <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.categories.join(', ')}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{flex:1,overflowY:'auto',marginBottom:16}}>
+                <div style={{marginBottom:12}}>
+                  <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Title</label>
+                  <input value={resourceEditForm.title || ''} onChange={e => setResourceEditForm({...resourceEditForm, title: e.target.value})} style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}} />
+                </div>
+                <div style={{marginBottom:12}}>
+                  <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Type</label>
+                  <select value={resourceEditForm.type || ''} onChange={e => setResourceEditForm({...resourceEditForm, type: e.target.value})} style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}>
+                    <option value="">Select a type</option>
+                    {resourceTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div style={{marginBottom:12}}>
+                  <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>URL</label>
+                  <div style={{display:'flex',gap:4}}>
+                    <select value={resourceEditForm.link_protocol || 'https://'} onChange={e => setResourceEditForm({...resourceEditForm, link_protocol: e.target.value})} style={{padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,flex:'0 0 auto',minWidth:80,background:theme.bgSecondary,color:theme.text}}>
+                      <option value="https://">https://</option>
+                      <option value="http://">http://</option>
+                    </select>
+                    <input type="text" value={resourceEditForm.link_url || ''} onChange={e => setResourceEditForm({...resourceEditForm, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}} />
+                  </div>
+                </div>
+                <div style={{marginBottom:12}}>
+                  <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Tags</label>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:6}}>
+                    {(resourceEditForm.tags || []).map((tag: string) => (
+                      <span key={tag} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 8px',background:'#3b82f6',color:'#fff',borderRadius:12,fontSize:12,fontWeight:500}}>
+                        {tag}
+                        <button onClick={() => setResourceEditForm({...resourceEditForm, tags: (resourceEditForm.tags || []).filter((t: string) => t !== tag)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:12,lineHeight:1}}>✕</button>
+                      </span>
+                    ))}
+                  </div>
+                  <button onClick={() => setTagSearchModalOpen(true)} style={{padding:'4px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:12,fontWeight:500}}>+ Add Tag</button>
+                </div>
+                <div>
+                  <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Categories</label>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:6}}>
+                    {(resourceEditForm.categories || []).map((cat: string) => (
+                      <span key={cat} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 8px',background:'#10b981',color:'#fff',borderRadius:12,fontSize:12,fontWeight:500}}>
+                        {cat}
+                        <button onClick={() => setResourceEditForm({...resourceEditForm, categories: (resourceEditForm.categories || []).filter((c: string) => c !== cat)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:12,lineHeight:1}}>✕</button>
+                      </span>
+                    ))}
+                  </div>
+                  <button onClick={() => setCategorySearchModalOpen(true)} style={{padding:'4px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:12,fontWeight:500}}>+ Add Category</button>
+                </div>
               </div>
             )}
-            {resourceModalData.categories && resourceModalData.categories.length > 0 && (
-              <div style={{marginBottom:16}}>
-                <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Categories:</p>
-                <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.categories.join(', ')}</p>
-              </div>
-            )}
+            <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+              {!isEditingResource ? (
+                <>
+                  <button onClick={() => { setIsEditingResource(true); setResourceEditForm({title: resourceModalData.title, type: resourceModalData.type, tags: resourceModalData.tags || [], categories: resourceModalData.categories || [], link_url: stripProtocol(resourceModalData.link_url || ''), link_protocol: getProtocol(resourceModalData.link_url || '')}) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>✎ Edit</button>
+                  <button onClick={async () => {
+                    if (!confirm('Delete this resource?')) return
+                    try {
+                      const res = await fetch(apiUrl(`/api/admin/resources/${resourceModalData.id}`), { method: 'DELETE', headers: { ...(authHeaders()) } })
+                      if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                      await load()
+                      setResourceModalOpen(false)
+                    } catch (err) {
+                      alert('Delete resource failed — ' + ((err as any)?.message || 'check server logs'))
+                    }
+                  }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444'}}>✕ Delete</button>
+                </>
+              ) : (
+                <>
+                  <button type="button" onClick={async () => {
+                    try {
+                      if (!resourceEditForm.title || !resourceEditForm.title.toString().trim()) return alert('Title required')
+                      const fullUrl = resourceEditForm.link_url ? buildFullUrl(resourceEditForm.link_protocol || 'https://', resourceEditForm.link_url) : null
+                      const res = await fetch(apiUrl(`/api/admin/resources/${resourceModalData.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: resourceEditForm.title, type: (resourceEditForm.type || '').toLowerCase(), tags: resourceEditForm.tags || [], categories: resourceEditForm.categories || [], link_url: fullUrl }) })
+                      if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                      await load()
+                      setIsEditingResource(false)
+                      setResourceModalOpen(false)
+                    } catch (err) {
+                      console.error('Save resource error', err)
+                      alert('Save failed — ' + ((err as any)?.message || 'check server logs'))
+                    }
+                  }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff'}}>Save</button>
+                  <button onClick={() => { setIsEditingResource(false); setResourceModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>Cancel</button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
