@@ -490,6 +490,25 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     else if (activeTab === 'audit') loadAudit()
   }, [activeTab])
 
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (resourceModalOpen) {
+          setResourceModalOpen(false)
+          setIsEditingResource(false)
+        } else if (resourceTypeModalOpen) {
+          setResourceTypeModalOpen(false)
+          setIsEditingResourceType(false)
+        } else if (healthGoalModalOpen) {
+          setHealthGoalModalOpen(false)
+          setIsEditingHealthGoal(false)
+        }
+      }
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [resourceModalOpen, resourceTypeModalOpen, healthGoalModalOpen])
+
   async function create() {
     const fullUrl = linkUrl ? buildFullUrl(linkProtocol, linkUrl) : null
     const payload = { type, title, description: null, tags: selectedTags.map(s => s.trim()).filter(Boolean), categories: selectedCategories, link_url: fullUrl }
