@@ -960,8 +960,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   </div>
                                 </div>
                               </td>
-                              <td style={{padding:8,textAlign:'right'}}>
-                                <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                              <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                   <button className="btn-ghost" onClick={async () => {
                                     try {
                                       const fullUrl = editData.link_url ? buildFullUrl(editData.link_protocol || 'https://', editData.link_url) : null
@@ -974,12 +974,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                     } catch (err) {
                                       alert('Save resource failed — ' + ((err as any)?.message || 'check server logs'))
                                     }
-                                  }} style={{color:'#16a34a'}}>✓</button>
+                                  }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#16a34a'}}>✓</button>
                                   <button className="btn-ghost" onClick={() => {
                                     setEditingId(null)
                                     setEditingTagsDropdownOpen(false)
                                     setEditingCategoriesDropdownOpen(false)
-                                  }} style={{color:'#dc2626'}}>⊘</button>
+                                  }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#dc2626'}}>⊘</button>
                                 </div>
                               </td>
                             </>
@@ -988,15 +988,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               <td style={{padding:8}}><strong>{r.title}</strong></td>
                               <td style={{padding:8}} className="small muted">{r.type}</td>
                               <td style={{padding:8}} className="small muted">{(r.tags || []).join(', ')}</td>
-                              <td style={{padding:8,textAlign:'right'}}>
-                                <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                              <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                   <button className="btn-ghost" onClick={() => {
                                     if (r.id) {
                                       setEditingId(r.id)
                                       setEditData({title: r.title, tags: r.tags || [], categories: (r as any).categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
                                     }
-                                  }}>✎</button>
-                                  <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626'}}>✕</button>
+                                  }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
+                                  <button className="btn-ghost" onClick={() => remove(r.id)} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
                                 </div>
                               </td>
                             </>
@@ -1295,14 +1295,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               <button onClick={async () => {
                                 await supabase.from('health_goals').update({ is_active: !goal.is_active }).eq('id', goal.id)
                                 await loadHealthGoals()
-                              }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 8px',cursor:'pointer',marginRight:8,color:theme.text}}>
+                              }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',marginRight:8,color:theme.text,fontSize:16}}>
                                 {goal.is_active ? 'Deactivate' : 'Activate'}
                               </button>
                               <button onClick={async () => {
                                 if (!confirm('Delete this health goal?')) return
                                 await supabase.from('health_goals').delete().eq('id', goal.id)
                                 await loadHealthGoals()
-                              }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'4px 8px',cursor:'pointer',color:'#ef4444'}}>
+                              }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}} aria-label={`Delete goal ${goal.name}`}>
                                 ✕
                               </button>
                             </div>
@@ -1660,7 +1660,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   {allowedTags.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                               </td>
-                              <td style={{padding:8,textAlign:'right'}}>
+                              <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button className="btn-ghost" onClick={async () => {
                                   try {
                                     const markerId = labMarkers.find(m => m.name === editData.markerName)?.id || editData.marker_id
@@ -1671,9 +1672,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   } catch (err) {
                                     alert('Save criteria failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
-                                }} style={{color:'#16a34a'}}>✓</button>
-                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
-                              </td>
+                                }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#16a34a'}}>✓</button>
+                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#dc2626'}}>⊘</button>
+                              </div>
+                            </td>
                             </>
                           ) : (
                             <>
@@ -1682,8 +1684,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               <td style={{padding:8,textAlign:'left'}}>{l.max_value}</td>
                               <td style={{padding:8}}>{l.operator || 'between'}</td>
                               <td style={{padding:8}}>{l.tag_to_apply}</td>
-                              <td style={{padding:8,textAlign:'right'}}>
-                                <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                              <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                   <button className="btn-ghost" onClick={() => {
                                     setEditingId(l.id)
                                     setEditData({
@@ -1694,8 +1696,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                       operator: 'between',
                                       tag_to_apply: l.tag_to_apply
                                     })
-                                  }}>✎</button>
-                                  <button className="btn-ghost" onClick={() => deleteRule(l.id)} style={{color:'#dc2626'}}>✕</button>
+                                  }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
+                                  <button className="btn-ghost" onClick={() => deleteRule(l.id)} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
                                 </div>
                               </td>
                             </>
@@ -1793,8 +1795,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         {editingId === `type-${rt}` ? (
                           <>
                             <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
-                            <td style={{padding:8,textAlign:'right'}}>
-                              <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                            <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
+                              <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button className="btn-ghost" onClick={async () => {
                                   try {
                                     const res = await fetch(apiUrl(`/api/admin/resource-types/${encodeURIComponent(rt)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name }) })
@@ -1804,20 +1806,20 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   } catch (err) {
                                     alert('Save type failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
-                                }} style={{color:'#16a34a'}}>✓</button>
-                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                                }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#16a34a'}}>✓</button>
+                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#dc2626'}}>⊘</button>
                               </div>
                             </td>
                           </>
                         ) : (
                           <>
                             <td style={{padding:8}}><strong>{rt}</strong></td>
-                            <td style={{padding:8,textAlign:'right'}}>
-                              <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                            <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
+                              <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button className="btn-ghost" onClick={() => {
                                   setEditingId(`type-${rt}`)
                                   setEditData({name: rt})
-                                }}>✎</button>
+                                }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
                                 <button className="btn-ghost" onClick={async () => {
                                   if (!confirm(`Delete type "${rt}"?`)) return
                                   try {
@@ -1827,7 +1829,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   } catch (err) {
                                     alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
-                                }} style={{color:'#dc2626'}}>✕</button>
+                                }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
                               </div>
                             </td>
                           </>
@@ -2023,8 +2025,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             <td style={{padding:8}}><input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
                             <td style={{padding:8}}><input type="number" value={editData.min_normal ?? ''} onChange={e => setEditData({...editData, min_normal: e.target.value ? Number(e.target.value) : null})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
                             <td style={{padding:8}}><input type="number" value={editData.max_normal ?? ''} onChange={e => setEditData({...editData, max_normal: e.target.value ? Number(e.target.value) : null})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
-                            <td style={{padding:8,textAlign:'right'}}>
-                              <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                            <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
+                              <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button className="btn-ghost" onClick={async () => {
                                   try {
                                     const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit, min_normal: editData.min_normal, max_normal: editData.max_normal }) })
@@ -2034,8 +2036,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   } catch (err) {
                                     alert('Save marker failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
-                                }} style={{color:'#16a34a'}}>✓</button>
-                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{color:'#dc2626'}}>⊘</button>
+                                }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#16a34a'}}>✓</button>
+                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#dc2626'}}>⊘</button>
                               </div>
                             </td>
                           </>
@@ -2045,12 +2047,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             <td style={{padding:8}} className="small muted">{m.unit || '—'}</td>
                             <td style={{padding:8}} className="small muted">{m.min_normal ?? '—'}</td>
                             <td style={{padding:8}} className="small muted">{m.max_normal ?? '—'}</td>
-                            <td style={{padding:8,textAlign:'right'}}>
-                              <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
+                            <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
+                              <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button className="btn-ghost" onClick={() => {
                                   setEditingId(m.id)
                                   setEditData({name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal})
-                                }}>✎</button>
+                                }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
                                 <button className="btn-ghost" onClick={async () => {
                                   if (!confirm(`Delete marker "${m.name}"?`)) return
                                   try {
@@ -2067,7 +2069,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   } catch (err) {
                                     alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
-                                }} style={{color:'#dc2626'}}>✕</button>
+                                }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
                               </div>
                             </td>
                           </>
@@ -2432,7 +2434,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:12,fontSize:12,color:theme.textMuted}}>Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
                           <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
                             <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                              <button className="btn-ghost" onClick={() => {setEditingId(`tag-${t}`); setEditData({name: t})}} style={{fontSize:13}}>✎</button>
+                              <button className="btn-ghost" onClick={() => {setEditingId(`tag-${t}`); setEditData({name: t})}} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}} aria-label={`Edit tag ${t}`}>✎</button>
                               <button className="btn-ghost" onClick={async () => {
                                 if (!confirm(`Delete tag "${t}"?`)) return
                                 try {
@@ -2442,7 +2444,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                 } catch (err) {
                                   alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
                                 }
-                              }} style={{color:'#dc2626',fontSize:13}}>✕</button>
+                              }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}} aria-label={`Delete tag ${t}`}>✕</button>
                             </div>
                           </td>
                         </tr>
