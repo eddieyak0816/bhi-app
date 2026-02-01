@@ -1176,6 +1176,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                 </span>
                               </div>
                               
+                              {/* URL Line */}
+                              {r.link_url && (
+                                <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
+                                  <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
+                                    <strong>URL:</strong> <a href={r.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>{r.link_url}</a>
+                                  </span>
+                                </div>
+                              )}
+                              
                               {/* Tags Line */}
                               {r.tags && r.tags.length > 0 && (
                                 <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
