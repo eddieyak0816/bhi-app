@@ -1290,20 +1290,22 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               {goal.is_active ? 'Active' : 'Inactive'}
                             </span>
                           </td>
-                          <td style={{padding:12,textAlign:'right'}}>
-                            <button onClick={async () => {
-                              await supabase.from('health_goals').update({ is_active: !goal.is_active }).eq('id', goal.id)
-                              await loadHealthGoals()
-                            }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 8px',cursor:'pointer',marginRight:8,color:theme.text}}>
-                              {goal.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
-                            <button onClick={async () => {
-                              if (!confirm('Delete this health goal?')) return
-                              await supabase.from('health_goals').delete().eq('id', goal.id)
-                              await loadHealthGoals()
-                            }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'4px 8px',cursor:'pointer',color:'#ef4444'}}>
-                              Delete
-                            </button>
+                          <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end',height:'100%'}}>
+                              <button onClick={async () => {
+                                await supabase.from('health_goals').update({ is_active: !goal.is_active }).eq('id', goal.id)
+                                await loadHealthGoals()
+                              }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 8px',cursor:'pointer',marginRight:8,color:theme.text}}>
+                                {goal.is_active ? 'Deactivate' : 'Activate'}
+                              </button>
+                              <button onClick={async () => {
+                                if (!confirm('Delete this health goal?')) return
+                                await supabase.from('health_goals').delete().eq('id', goal.id)
+                                await loadHealthGoals()
+                              }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'4px 8px',cursor:'pointer',color:'#ef4444'}}>
+                                ✕
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -2426,9 +2428,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <tr key={t} style={styles.tableRow}>
                           <td style={{padding:12,fontWeight:500}}>{t}</td>
                           <td style={{padding:12,fontSize:12,color:theme.textMuted}}>Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
-                          <td style={{padding:12,textAlign:'right'}}>
-                            <div style={{display:'flex',gap:4,justifyContent:'flex-end'}}>
-                              <button className="btn-ghost" onClick={() => {setEditingId(`tag-${t}`); setEditData({name: t})}} style={{fontSize:13}}>✎ Edit</button>
+                          <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
+                              <button className="btn-ghost" onClick={() => {setEditingId(`tag-${t}`); setEditData({name: t})}} style={{fontSize:13}}>✎</button>
                               <button className="btn-ghost" onClick={async () => {
                                 if (!confirm(`Delete tag "${t}"?`)) return
                                 try {
@@ -2438,7 +2440,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                 } catch (err) {
                                   alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
                                 }
-                              }} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
+                              }} style={{color:'#dc2626',fontSize:13}}>✕</button>
                             </div>
                           </td>
                         </tr>
