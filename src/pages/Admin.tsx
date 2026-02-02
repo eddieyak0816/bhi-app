@@ -2691,9 +2691,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
               {(tagSearchContext === 'filter-type' ? resourceTypes : allowedTags || [])
                 .filter((t: string) => {
-                  const isTypeContext = tagSearchContext === 'filter-type'
-                  const count = isTypeContext ? getResourceTypeCount(t) : getTagCount(t)
-                  if ((isTypeContext || tagSearchContext === 'filter-tag') && count === 0) return false
+                  const isFilterContext = tagSearchContext === 'filter-type' || tagSearchContext === 'filter-tag'
+                  const count = tagSearchContext === 'filter-type' ? getResourceTypeCount(t) : getTagCount(t)
+                  if (isFilterContext && count === 0) return false
                   return t.toLowerCase().includes(tagSearchInput.toLowerCase()) &&
                     (tagSearchContext === 'create' ? !selectedTags.includes(t) :
                      tagSearchContext === 'edit' ? (resourceModalOpen && isEditingResource ? !(resourceEditForm.tags || []).includes(t) : !(editData.tags || []).includes(t)) :
@@ -2701,9 +2701,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                      !filterTags.includes(t))
                 })
                 .map((t: string) => {
-                  const isTypeContext = tagSearchContext === 'filter-type'
-                  const count = isTypeContext ? getResourceTypeCount(t) : getTagCount(t)
-                  const badgeColor = isTypeContext ? '#3D7DCA' : '#2563eb'
+                  const isFilterContext = tagSearchContext === 'filter-type' || tagSearchContext === 'filter-tag'
+                  const count = tagSearchContext === 'filter-type' ? getResourceTypeCount(t) : getTagCount(t)
+                  const badgeColor = tagSearchContext === 'filter-type' ? '#3D7DCA' : '#2563eb'
                   return (
                     <div
                       key={t}
@@ -2725,7 +2725,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
                     >
                       <span>{t}</span>
-                      <span style={{fontSize:12,fontWeight:600,background:badgeColor,color:'#fff',padding:'2px 8px',borderRadius:12}}>{count}</span>
+                      {isFilterContext && <span style={{fontSize:12,fontWeight:600,background:badgeColor,color:'#fff',padding:'2px 8px',borderRadius:12}}>{count}</span>}
                     </div>
                   )
                 })}
@@ -2766,6 +2766,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 })
                 .map((c: any) => {
                   const count = getCategoryCount(c.name)
+                  const isFilterContext = categorySearchContext === 'filter'
                   return (
                     <div
                       key={c.id}
@@ -2779,16 +2780,16 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         display:'flex',
                         justifyContent:'space-between',
                         alignItems:'center',
-                      cursor:'pointer',
-                      color:theme.text,
-                      transition:'all 0.2s'
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = theme.bgSecondary)}
-                    onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
-                  >
-                    <span>{c.name}</span>
-                    {count > 0 && <span style={{fontSize:12,fontWeight:600,background:'#10b981',color:'#fff',padding:'2px 8px',borderRadius:12}}>{count}</span>}
-                  </div>
+                        cursor:'pointer',
+                        color:theme.text,
+                        transition:'all 0.2s'
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = theme.bgSecondary)}
+                      onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
+                    >
+                      <span>{c.name}</span>
+                      {isFilterContext && <span style={{fontSize:12,fontWeight:600,background:'#10b981',color:'#fff',padding:'2px 8px',borderRadius:12}}>{count}</span>}
+                    </div>
                   )
                 })}
             </div>
