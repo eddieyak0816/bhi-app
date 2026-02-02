@@ -2265,14 +2265,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                   )
                   .map(m => (
-                  <div key={m.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+                  <div key={m.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%'}}>
                     {editingId === m.id ? (
                       <>
                         <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={styles.input} />
                         <input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} placeholder="Unit" style={styles.input} />
                         <input type="number" value={editData.min_normal ?? ''} onChange={e => setEditData({...editData, min_normal: e.target.value ? Number(e.target.value) : null})} placeholder="Min value" style={styles.input} />
                         <input type="number" value={editData.max_normal ?? ''} onChange={e => setEditData({...editData, max_normal: e.target.value ? Number(e.target.value) : null})} placeholder="Max value" style={styles.input} />
-                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                        <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
                           <button className="btn-ghost" onClick={async () => {
                             try {
                               const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit, min_normal: editData.min_normal, max_normal: editData.max_normal }) })
@@ -2292,9 +2292,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         {m.unit && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Unit: {m.unit}</p>}
                         {m.min_normal !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Min: {m.min_normal}</p>}
                         {m.max_normal !== null && <p style={{margin:'0 0 12px 0',fontSize:12,color:theme.text}}>Max: {m.max_normal}</p>}
-                        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-                          <button className="btn-ghost" onClick={() => {setEditingId(m.id); setEditData({name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal})}} style={{fontSize:13}}>✎ Edit</button>
-                          <button className="btn-ghost" onClick={async () => {
+                        <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
+                          <button onClick={() => {setEditingId(m.id); setEditData({name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal})}} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                          <button onClick={async () => {
                             if (!confirm(`Delete marker "${m.name}"?`)) return
                             try {
                               const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'DELETE', headers: authHeaders() })
@@ -2310,7 +2310,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             } catch (err) {
                               alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
                             }
-                          }} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
+                          }} style={cardButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕ Delete</button>
                         </div>
                       </>
                     )}
