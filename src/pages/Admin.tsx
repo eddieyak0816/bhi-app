@@ -431,7 +431,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const cardButtonStyles = {
     edit: {
       background:'transparent',
-      border:'2px solid #3D7DCA',
+      border:'1.5px solid #3D7DCA',
       borderRadius:6,
       padding:'8px 14px',
       cursor:'pointer',
@@ -442,13 +442,37 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     },
     delete: {
       background:'transparent',
-      border:'2px solid #dc2626',
+      border:'1.5px solid #dc2626',
       borderRadius:6,
       padding:'8px 14px',
       cursor:'pointer',
       fontSize:13,
       color:'#dc2626',
       fontWeight:500,
+      transition:'all 0.2s'
+    }
+  }
+
+  // Reusable button styles for Edit/Delete buttons on tables
+  const tableButtonStyles = {
+    edit: {
+      background:'transparent',
+      border:`1.5px solid #3D7DCA`,
+      borderRadius:4,
+      padding:'6px',
+      cursor:'pointer',
+      fontSize:16,
+      color:'#3D7DCA',
+      transition:'all 0.2s'
+    },
+    delete: {
+      background:'transparent',
+      border:'1.5px solid #dc2626',
+      borderRadius:4,
+      padding:'6px',
+      cursor:'pointer',
+      fontSize:16,
+      color:'#dc2626',
       transition:'all 0.2s'
     }
   }
@@ -1007,7 +1031,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:8,fontSize:12}}>{(r.categories || []).join(', ') || <span style={{color:theme.textMuted}}>—</span>}</td>
                           <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
                             <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                              <button className="btn-ghost" onClick={() => {
+                              <button onClick={() => {
                                 if (r.id) {
                                   const capitalizedType = resourceTypes.find(t => t.toLowerCase() === r.type.toLowerCase()) || r.type
                                   setResourceModalData(r)
@@ -1015,8 +1039,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   setIsEditingResource(true)
                                   setResourceModalOpen(true)
                                 }
-                              }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
-                              <button className="btn-ghost" onClick={() => remove(r.id)} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
+                              }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
+                              <button onClick={() => remove(r.id)} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕</button>
                             </div>
                           </td>
                         </tr>
@@ -1501,14 +1525,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:12,color:theme.textMuted}}>{goal.description || '-'}</td>
                           <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
                             <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end',height:'100%'}}>
-                              <button onClick={() => { setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true) }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}} aria-label={`Edit goal ${goal.name}`}>
+                              <button onClick={() => { setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true) }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit goal ${goal.name}`}>
                                 ✎
                               </button>
                               <button onClick={async () => {
                                 if (!confirm('Delete this health goal?')) return
                                 await supabase.from('health_goals').delete().eq('id', goal.id)
                                 await loadHealthGoals()
-                              }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}} aria-label={`Delete goal ${goal.name}`}>
+                              }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)} aria-label={`Delete goal ${goal.name}`}>
                                 ✕
                               </button>
                             </div>
@@ -1905,7 +1929,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               <td style={{padding:8}}>{l.tag_to_apply}</td>
                               <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
                                 <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                                  <button className="btn-ghost" onClick={() => {
+                                  <button onClick={() => {
                                     setEditingId(l.id)
                                     setEditData({
                                       marker_id: l.marker_id,
@@ -1915,8 +1939,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                       operator: 'between',
                                       tag_to_apply: l.tag_to_apply
                                     })
-                                  }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
-                                  <button className="btn-ghost" onClick={() => deleteRule(l.id)} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
+                                  }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
+                                  <button onClick={() => deleteRule(l.id)} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕</button>
                                 </div>
                               </td>
                             </>
@@ -2018,8 +2042,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <td style={{padding:8}}><strong>{rt}</strong></td>
                         <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
                           <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                            <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
-                            <button className="btn-ghost" onClick={async (e) => {
+                            <button onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
+                            <button onClick={async (e) => {
                               e.stopPropagation()
                               if (!confirm(`Delete type "${rt}"?`)) return
                               try {
@@ -2029,7 +2053,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               } catch (err) {
                                 alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
                               }
-                            }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
+                            }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕</button>
                           </div>
                         </td>
                       </tr>
@@ -2227,11 +2251,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             <td style={{padding:8}} className="small muted">{m.max_normal ?? '—'}</td>
                             <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
                               <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                                <button className="btn-ghost" onClick={() => {
+                                <button onClick={() => {
                                   setEditingId(m.id)
                                   setEditData({name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal})
-                                }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}}>✎</button>
-                                <button className="btn-ghost" onClick={async () => {
+                                }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
+                                <button onClick={async () => {
                                   if (!confirm(`Delete marker "${m.name}"?`)) return
                                   try {
                                     const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'DELETE', headers: authHeaders() })
@@ -2247,7 +2271,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   } catch (err) {
                                     alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
-                                }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}}>✕</button>
+                                }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕</button>
                               </div>
                             </td>
                           </>
@@ -2391,14 +2415,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:12,color:theme.textMuted}}>{cat.description || '-'}</td>
                           <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
                             <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end',height:'100%'}}>
-                              <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',color:theme.text,fontSize:16}} aria-label={`Edit category ${cat.name}`}>
+                              <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit category ${cat.name}`}>
                                 ✎
                               </button>
                               <button onClick={async () => {
                                 if (!confirm('Delete this category?')) return
                                 await supabase.from('categories').delete().eq('id', cat.id)
                                 await loadCategories()
-                              }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',color:'#ef4444',fontSize:16}} aria-label={`Delete category ${cat.name}`}>
+                              }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)} aria-label={`Delete category ${cat.name}`}>
                                 ✕
                               </button>
                             </div>
@@ -2612,8 +2636,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:12,fontSize:12,color:theme.textMuted}}>Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
                           <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
                             <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                              <button className="btn-ghost" onClick={() => {setEditingId(`tag-${t}`); setEditData({name: t})}} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:theme.text}} aria-label={`Edit tag ${t}`}>✎</button>
-                              <button className="btn-ghost" onClick={async () => {
+                              <button onClick={() => {setEditingId(`tag-${t}`); setEditData({name: t})}} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit tag ${t}`}>✎</button>
+                              <button onClick={async () => {
                                 if (!confirm(`Delete tag "${t}"?`)) return
                                 try {
                                   const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'DELETE', headers: authHeaders() })
@@ -2622,7 +2646,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                 } catch (err) {
                                   alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
                                 }
-                              }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#ef4444'}} aria-label={`Delete tag ${t}`}>✕</button>
+                              }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)} aria-label={`Delete tag ${t}`}>✕</button>
                             </div>
                           </td>
                         </tr>
