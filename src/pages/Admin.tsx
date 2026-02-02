@@ -264,15 +264,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     })
     return count
   }
-  function getTagColor(tagName: string) {
-    const colors = ['#EF4444', '#F97316', '#EAB308', '#22C55E', '#06B6D4', '#3B82F6', '#8B5CF6', '#EC4899']
-    let hash = 0
-    for (let i = 0; i < tagName.length; i++) {
-      hash = ((hash << 5) - hash) + tagName.charCodeAt(i)
-      hash = hash & hash
-    }
-    return colors[Math.abs(hash) % colors.length]
-  }
   function toggleViewMode(tab: string) {
     setViewMode(prev => ({
       ...prev,
@@ -2662,12 +2653,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   .map(name => ({name})), 'name').map(obj => obj.name) : allowedTags
                   .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))).map(t => {
                   const usageCount = getTagUsageCount(t)
-                  const tagColor = getTagColor(t)
                   const titleTooLong = t.length > 30
                   return (
                     <div key={t} style={{
                       background:theme.bg,
-                      border: editingId === `tag-${t}` ? `2px solid ${tagColor}` : `1px solid ${theme.borderColor}`,
+                      border:`1px solid ${theme.borderColor}`,
                       borderRadius:8,
                       padding:16,
                       boxShadow:'0 1px 2px rgba(0,0,0,0.05)',
@@ -2702,21 +2692,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         </>
                       ) : (
                         <>
-                          <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:12}}>
-                            <div style={{width:12,height:12,borderRadius:'50%',background:tagColor,flexShrink:0,marginTop:4}}></div>
-                            <div style={{flex:1,minWidth:0}}>
-                              {titleTooLong ? (
-                                <>
-                                  <strong style={{fontSize:16,display:'block',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',lineHeight:1.4}}>{t.substring(0, 30)}</strong>
-                                  <button onClick={() => {setResourceModalData({title: t}); setResourceModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:13,fontWeight:600,display:'block',textDecoration:'underline',marginTop:2}}>
-                                    more
-                                  </button>
-                                </>
-                              ) : (
-                                <strong style={{fontSize:16,display:'block',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',lineHeight:1.4}}>{t}</strong>
-                              )}
-                            </div>
-                          </div>
+                          <strong style={{fontSize:16,display:'block',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',lineHeight:1.4,marginBottom:12}}>{t}</strong>
                           <div style={{fontSize:12,color:'#666',marginBottom:12}}>
                             Used in <span style={{fontWeight:600,color:'#1F2937'}}>{usageCount || 0}</span> {usageCount === 1 ? 'place' : 'places'}
                           </div>
