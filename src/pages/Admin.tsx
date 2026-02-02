@@ -423,6 +423,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     return resources.filter(r => (r.categories || []).includes(category)).length
   }
 
+  function getTagCount(tag: string): number {
+    return resources.filter(r => (r.tags || []).includes(tag)).length
+  }
+
   // --- logic_rules (criteria) CRUD helpers ---
   function startEditRule(rule: any) {
     setEditingRuleId(rule.id || null)
@@ -2687,8 +2691,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
               {(tagSearchContext === 'filter-type' ? resourceTypes : allowedTags || [])
                 .filter((t: string) => {
-                  const count = tagSearchContext === 'filter-type' ? getResourceTypeCount(t) : null
-                  if (tagSearchContext === 'filter-type' && count === 0) return false
+                  const isTypeContext = tagSearchContext === 'filter-type'
+                  const count = isTypeContext ? getResourceTypeCount(t) : getTagCount(t)
+                  if ((isTypeContext || tagSearchContext === 'filter-tag') && count === 0) return false
                   return t.toLowerCase().includes(tagSearchInput.toLowerCase()) &&
                     (tagSearchContext === 'create' ? !selectedTags.includes(t) :
                      tagSearchContext === 'edit' ? (resourceModalOpen && isEditingResource ? !(resourceEditForm.tags || []).includes(t) : !(editData.tags || []).includes(t)) :
@@ -2696,7 +2701,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                      !filterTags.includes(t))
                 })
                 .map((t: string) => {
-                  const count = tagSearchContext === 'filter-type' ? getResourceTypeCount(t) : null
+                  const isTypeContext = tagSearchContext === 'filter-type'
+                  const count = isTypeContext ? getResourceTypeCount(t) : getTagCount(t)
+                  const badgeColor = isTypeContext ? '#3D7DCA' : '#2563eb'
                   return (
                     <div
                       key={t}
@@ -2718,7 +2725,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
                     >
                       <span>{t}</span>
-                      {count !== null && <span style={{fontSize:12,fontWeight:600,background:'#3D7DCA',color:'#fff',padding:'2px 8px',borderRadius:12}}>{count}</span>}
+                      <span style={{fontSize:12,fontWeight:600,background:badgeColor,color:'#fff',padding:'2px 8px',borderRadius:12}}>{count}</span>
                     </div>
                   )
                 })}
