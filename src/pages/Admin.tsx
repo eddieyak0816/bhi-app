@@ -2696,12 +2696,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <div style={{fontSize:12,color:'#666',marginBottom:12}}>
                             Used in <span style={{fontWeight:600,color:'#1F2937'}}>{usageCount || 0}</span> {usageCount === 1 ? 'place' : 'places'}
                           </div>
-                          <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
-                            <button className="btn-ghost" onClick={() => {
+                          <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
+                            <button onClick={() => {
                               setEditingId(`tag-${t}`)
                               setEditData({name: t})
-                            }} style={{fontSize:14}}>✎ Edit</button>
-                            <button className="btn-ghost" onClick={async () => {
+                            }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                            <button onClick={async () => {
                               if (!confirm(`Delete tag "${t}"? This will remove it from resources and delete any criteria referencing it.`)) return
                               try {
                                 const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'DELETE', headers: authHeaders() })
@@ -2711,7 +2711,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               } catch (err) {
                                 alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
                               }
-                            }} style={{color:'#dc2626',fontSize:14}}>✕ Delete</button>
+                            }} style={cardButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕ Delete</button>
                           </div>
                         </>
                       )}
