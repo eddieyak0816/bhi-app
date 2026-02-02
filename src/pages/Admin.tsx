@@ -1549,15 +1549,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             </span>
                           )}
                         </p>
-                        <div style={{display:'flex',gap:8,marginTop:'auto'}}>
-                          <button onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:theme.text}}>
+                        <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
+                          <button onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>
                             ✎ Edit
                           </button>
                           <button onClick={async () => {
                             if (!confirm('Delete this health goal?')) return
                             await supabase.from('health_goals').delete().eq('id', goal.id)
                             await loadHealthGoals()
-                          }} style={{flex:1,background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:'#ef4444'}}>
+                          }} style={cardButtonStyles.delete} {...getButtonHoverHandlers(true)}>
                             Delete
                           </button>
                         </div>
