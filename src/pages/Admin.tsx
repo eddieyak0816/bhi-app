@@ -414,6 +414,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     }
   }
 
+  // Helper functions to count resources by type and category
+  function getResourceTypeCount(type: string): number {
+    return resources.filter(r => (r.type || '').toLowerCase() === (type || '').toLowerCase()).length
+  }
+
+  function getCategoryCount(category: string): number {
+    return resources.filter(r => (r.categories || []).includes(category)).length
+  }
+
   // --- logic_rules (criteria) CRUD helpers ---
   function startEditRule(rule: any) {
     setEditingRuleId(rule.id || null)
@@ -2677,33 +2686,42 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             />
             <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
               {(tagSearchContext === 'filter-type' ? resourceTypes : allowedTags || [])
-                .filter((t: string) => 
-                  t.toLowerCase().includes(tagSearchInput.toLowerCase()) &&
-                  (tagSearchContext === 'create' ? !selectedTags.includes(t) : 
-                   tagSearchContext === 'edit' ? (resourceModalOpen && isEditingResource ? !(resourceEditForm.tags || []).includes(t) : !(editData.tags || []).includes(t)) :
-                   tagSearchContext === 'filter-type' ? !filterTypes.includes(t) :
-                   !filterTags.includes(t))
-                )
-                .map((t: string) => (
-                  <div
-                    key={t}
-                    onClick={() => handleTagSelect(t)}
-                    style={{
-                      padding:10,
-                      background:theme.bg,
-                      border:`1px solid ${theme.borderColor}`,
-                      borderRadius:6,
-                      marginBottom:8,
-                      cursor:'pointer',
-                      color:theme.text,
-                      transition:'all 0.2s'
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = theme.bgSecondary)}
-                    onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
-                  >
-                    {t}
-                  </div>
-                ))}
+                .filter((t: string) => {
+                  const count = tagSearchContext === 'filter-type' ? getResourceTypeCount(t) : null
+                  if (tagSearchContext === 'filter-type' && count === 0) return false
+                  return t.toLowerCase().includes(tagSearchInput.toLowerCase()) &&
+                    (tagSearchContext === 'create' ? !selectedTags.includes(t) :
+                     tagSearchContext === 'edit' ? (resourceModalOpen && isEditingResource ? !(resourceEditForm.tags || []).includes(t) : !(editData.tags || []).includes(t)) :
+                     tagSearchContext === 'filter-type' ? !filterTypes.includes(t) :
+                     !filterTags.includes(t))
+                })
+                .map((t: string) => {
+                  const count = tagSearchContext === 'filter-type' ? getResourceTypeCount(t) : null
+                  return (
+                    <div
+                      key={t}
+                      onClick={() => handleTagSelect(t)}
+                      style={{
+                        padding:10,
+                        background:theme.bg,
+                        border:`1px solid ${theme.borderColor}`,
+                        borderRadius:6,
+                        marginBottom:8,
+                        cursor:'pointer',
+                        color:theme.text,
+                        transition:'all 0.2s',
+                        display:'flex',
+                        justifyContent:'space-between',
+                        alignItems:'center'
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = theme.bgSecondary)}
+                      onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
+                    >
+                      <span>{t}</span>
+                      {count !== null && <span style={{fontSize:12,fontWeight:600,background:'#3D7DCA',color:'#fff',padding:'2px 8px',borderRadius:12}}>{count}</span>}
+                    </div>
+                  )
+                })}
             </div>
             <button
               onClick={() => setTagSearchModalOpen(false)}
@@ -2730,23 +2748,30 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             />
             <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
               {categories
-                .filter((c: any) => 
-                  c.is_active &&
-                  c.name.toLowerCase().includes(categorySearchInput.toLowerCase()) &&
-                  (categorySearchContext === 'create' ? !selectedCategories.includes(c.name) : 
-                   categorySearchContext === 'edit' ? (resourceModalOpen && isEditingResource ? !(resourceEditForm.categories || []).includes(c.name) : !(editData.categories || []).includes(c.name)) :
-                   !filterCategories.includes(c.name))
-                )
-                .map((c: any) => (
-                  <div
-                    key={c.id}
-                    onClick={() => handleCategorySelect(c.name)}
-                    style={{
-                      padding:10,
-                      background:theme.bg,
-                      border:`1px solid ${theme.borderColor}`,
-                      borderRadius:6,
-                      marginBottom:8,
+                .filter((c: any) => {
+                  const count = getCategoryCount(c.name)
+                  if (categorySearchContext === 'filter' && count === 0) return false
+                  return c.is_active &&
+                    c.name.toLowerCase().includes(categorySearchInput.toLowerCase()) &&
+                    (categorySearchContext === 'create' ? !selectedCategories.includes(c.name) :
+                     categorySearchContext === 'edit' ? (resourceModalOpen && isEditingResource ? !(resourceEditForm.categories || []).includes(c.name) : !(editData.categories || []).includes(c.name)) :
+                     !filterCategories.includes(c.name))
+                })
+                .map((c: any) => {
+                  const count = getCategoryCount(c.name)
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => handleCategorySelect(c.name)}
+                      style={{
+                        padding:10,
+                        background:theme.bg,
+                        border:`1px solid ${theme.borderColor}`,
+                        borderRadius:6,
+                        marginBottom:8,
+                        display:'flex',
+                        justifyContent:'space-between',
+                        alignItems:'center',
                       cursor:'pointer',
                       color:theme.text,
                       transition:'all 0.2s'
@@ -2754,9 +2779,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     onMouseEnter={e => (e.currentTarget.style.background = theme.bgSecondary)}
                     onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
                   >
-                    {c.name}
+                    <span>{c.name}</span>
+                    {count > 0 && <span style={{fontSize:12,fontWeight:600,background:'#10b981',color:'#fff',padding:'2px 8px',borderRadius:12}}>{count}</span>}
                   </div>
-                ))}
+                  )
+                })}
             </div>
             <button
               onClick={() => setCategorySearchModalOpen(false)}
