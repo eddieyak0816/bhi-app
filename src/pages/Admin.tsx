@@ -427,6 +427,58 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     return resources.filter(r => (r.tags || []).includes(tag)).length
   }
 
+  // Reusable button styles for Edit/Delete buttons on cards
+  const cardButtonStyles = {
+    edit: {
+      background:'transparent',
+      border:'2px solid #3D7DCA',
+      borderRadius:6,
+      padding:'8px 14px',
+      cursor:'pointer',
+      fontSize:13,
+      color:'#3D7DCA',
+      fontWeight:500,
+      transition:'all 0.2s'
+    },
+    delete: {
+      background:'transparent',
+      border:'2px solid #dc2626',
+      borderRadius:6,
+      padding:'8px 14px',
+      cursor:'pointer',
+      fontSize:13,
+      color:'#dc2626',
+      fontWeight:500,
+      transition:'all 0.2s'
+    }
+  }
+
+  // Helper function for button hover effects
+  const getButtonHoverHandlers = (isDelete: boolean = false) => ({
+    onMouseEnter: (e: any) => {
+      if (isDelete) {
+        e.currentTarget.style.background = 'rgba(220, 38, 38, 0.05)'
+        e.currentTarget.style.borderColor = '#b91c1c'
+        e.currentTarget.style.color = '#b91c1c'
+      } else {
+        e.currentTarget.style.background = 'rgba(61, 125, 202, 0.08)'
+        e.currentTarget.style.borderColor = '#2B5FA0'
+        e.currentTarget.style.color = '#2B5FA0'
+      }
+    },
+    onMouseLeave: (e: any) => {
+      if (isDelete) {
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.borderColor = '#dc2626'
+        e.currentTarget.style.color = '#dc2626'
+      } else {
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.borderColor = '#3D7DCA'
+        e.currentTarget.style.color = '#3D7DCA'
+      }
+    }
+  })
+
   // --- logic_rules (criteria) CRUD helpers ---
   function startEditRule(rule: any) {
     setEditingRuleId(rule.id || null)
@@ -1157,8 +1209,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           )
                         })()}
                           
-                          <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
-                            <button className="btn-ghost" onClick={() => {
+                          <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
+                            <button onClick={() => {
                               if (r.id) {
                                 setResourceModalData(r)
                                 const capitalizedType = r.type ? resourceTypes.find(t => t.toLowerCase() === r.type.toLowerCase()) || r.type : ''
@@ -1166,8 +1218,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                 setIsEditingResource(true)
                                 setResourceModalOpen(true)
                               }
-                            }} style={{fontSize:13}}>✎ Edit</button>
-                            <button className="btn-ghost" onClick={() => remove(r.id)} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
+                            }} style={cardButtonStyles.edit as any} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                            <button onClick={() => remove(r.id)} style={cardButtonStyles.delete as any} {...getButtonHoverHandlers(true)}>✕ Delete</button>
                           </div>
                       </>
                     )}
@@ -1993,9 +2045,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))).map(rt => (
                   <div key={rt} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',cursor:'pointer'}} onClick={() => { setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }}>
                     <h5 style={{margin:'0 0 12px 0',fontSize:16,fontWeight:600}}>{rt}</h5>
-                    <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
-                      <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} style={{fontSize:13}}>✎ Edit</button>
-                      <button className="btn-ghost" onClick={async (e) => {
+                    <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+                      <button onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} style={cardButtonStyles.edit as any} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                      <button onClick={async (e) => {
                         e.stopPropagation()
                         if (!confirm(`Delete type "${rt}"?`)) return
                         try {
@@ -2005,7 +2057,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         } catch (err) {
                           alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
                         }
-                      }} style={{color:'#dc2626',fontSize:13}}>✕ Delete</button>
+                      }} style={cardButtonStyles.delete as any} {...getButtonHoverHandlers(true)}>✕ Delete</button>
                     </div>
                   </div>
                 ))}
@@ -2390,16 +2442,16 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             </span>
                           )}
                         </p>
-                        <div style={{display:'flex',gap:8,marginTop:'auto'}}>
-                          <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:theme.text}}>
+                        <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
+                          <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={cardButtonStyles.edit as any} {...getButtonHoverHandlers(false)}>
                             ✎ Edit
                           </button>
                           <button onClick={async () => {
                             if (!confirm('Delete this category?')) return
                             await supabase.from('categories').delete().eq('id', cat.id)
                             await loadCategories()
-                          }} style={{flex:1,background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'6px 8px',cursor:'pointer',fontSize:12,color:'#ef4444'}}>
-                            Delete
+                          }} style={cardButtonStyles.delete as any} {...getButtonHoverHandlers(true)}>
+                            ✕ Delete
                           </button>
                         </div>
                       </div>
