@@ -637,12 +637,13 @@ app.post('/api/admin/resource-types', async (req, res) => {
   if (!name) return res.status(400).json({ error: 'missing-name' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const { data, error } = await sb.from('resource_types').insert([{ name: name.trim() }]).select('*');
+    const normalizedName = name.trim().toLowerCase();
+    const { data, error } = await sb.from('resource_types').insert([{ name: normalizedName }]).select('*');
     if (error) {
       console.error('admin-insert-resource-type-error', error);
       return res.status(500).json({ error: 'db_error', detail: error });
     }
-    return res.status(201).json(data?.[0] || { name: name.trim() });
+    return res.status(201).json(data?.[0] || { name: normalizedName });
   } catch (err) {
     console.error('admin-insert-resource-type-exception', err);
     return res.status(500).json({ error: 'server_error', detail: String(err) });

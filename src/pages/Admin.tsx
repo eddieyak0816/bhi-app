@@ -343,10 +343,24 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       const res = await fetch(apiUrl('/api/admin/resource-types'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
       if (!res.ok) return
       const body = await res.json()
-      const names = Array.isArray(body) ? body.map((t: any) => (t.name || t)) : []
+      const names = Array.isArray(body) ? body.map((t: any) => (t.name || t).toLowerCase()) : []
       console.log('loadResourceTypes response:', body)
       console.log('Extracted names:', names)
       setResourceTypes(names)
+      // Normalize or default the create dropdown value to match available resource types
+      if (names.length > 0) {
+        const currentTypeLower = (type || '').toLowerCase()
+        const match = names.find(n => (n || '').toLowerCase() === currentTypeLower)
+        if (match) {
+          if (match !== type) {
+            console.info('normalizing type to match available type casing:', match)
+            setType(match)
+          }
+        } else if (!type || !names.some(n => (n || '').toLowerCase() === currentTypeLower)) {
+          console.info('defaulting type to first resourceType:', names[0])
+          setType(names[0])
+        }
+      }
     } catch (err) {
       console.error('loadResourceTypes', err)
     }
@@ -511,7 +525,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
   async function create() {
     const fullUrl = linkUrl ? buildFullUrl(linkProtocol, linkUrl) : null
-    const payload = { type, title, description: null, tags: selectedTags.map(s => s.trim()).filter(Boolean), categories: selectedCategories, link_url: fullUrl }
+    const payload = { type: (type || '').toLowerCase(), title, description: null, tags: selectedTags.map(s => s.trim()).filter(Boolean), categories: selectedCategories, link_url: fullUrl }
+    console.info('create payload', payload)
     try {
       const res = await fetch(apiUrl('/api/admin/resources'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify(payload) })
       if (!res.ok) {
@@ -692,7 +707,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               <div style={{marginBottom:40,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
                   <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Create New Resource</h3>
                   <div style={{display:'flex',gap:12,alignItems:'center'}}>
-                    <select value={type} onChange={e => setType(e.target.value)} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                    <select value={type} onChange={e => { console.info('type select changed:', e.target.value); setType(e.target.value) }} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
                       {resourceTypes.map(rt => <option key={rt} value={rt}>{rt}</option>)}
                     </select>
                     <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{flex:1,minWidth:200,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
@@ -769,7 +784,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         {Array.from(new Set(
                           resources
                             .filter(r => {
-                              if (filterTypes.length > 0 && !filterTypes.includes(r.type)) return false
+                              if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === r.type.toLowerCase())) return false
                               if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
                               return true
                             })
@@ -856,7 +871,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   {(() => {
                     const filtered = resources.filter(r => {
                       if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                      if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
+                      if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
                       if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
                       if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
                       return true
@@ -898,13 +913,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     {(sortColumn ? sortData(resources
                       .filter(r => {
                         if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                        if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
+                        if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
                         if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
                         return true
                       }), sortColumn) : resources
                       .filter(r => {
                         if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                        if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
+                        if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
                         if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
                         return true
                       })
@@ -949,14 +964,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 {(sortColumn ? sortData(resources
                   .filter(r => {
                     if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                    if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
+                    if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
                     if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
                     if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
                     return true
                   }), sortColumn) : resources
                   .filter(r => {
                     if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                    if (filterTypes.length > 0 && !filterTypes.includes((r.type || '').toLowerCase())) return false
+                    if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
                     if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
                     if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
                     return true
