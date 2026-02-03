@@ -1011,8 +1011,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:8,fontSize:12}}>{r.type}</td>
                           <td style={{padding:8,fontSize:12}}>
                             {r.link_url ? (
-                              <a href={r.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'block',maxWidth:200}}>
-                                {r.link_url}
+                              <a href={r.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>
+                                Visit Site
                               </a>
                             ) : (
                               <span style={{color:theme.textMuted}}>—</span>
@@ -1187,7 +1187,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               {r.link_url && (
                                 <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
                                   <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
-                                    <strong>URL:</strong> <a href={r.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>{r.link_url}</a>
+                                    <strong>URL:</strong> <a href={r.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>Visit Site</a>
                                   </span>
                                 </div>
                               )}
@@ -1270,7 +1270,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   {resourceModalData.link_url && (
                     <div style={{marginBottom:12}}>
                       <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>URL:</p>
-                      <p style={{margin:0,fontSize:14,color:theme.text}}><a href={resourceModalData.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>{resourceModalData.link_url}</a></p>
+                      <p style={{margin:0,fontSize:14,color:theme.text}}><a href={resourceModalData.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>Visit Site</a></p>
                     </div>
                   )}
                   {resourceModalData.tags && resourceModalData.tags.length > 0 && (

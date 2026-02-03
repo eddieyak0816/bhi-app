@@ -98,7 +98,7 @@ export const ResourceModal: React.FC<ResourceModalProps> = ({
               {modalData.link_url && (
                 <div style={{marginBottom:12}}>
                   <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>URL:</p>
-                  <p style={{margin:0,fontSize:14,color:theme.text}}><a href={modalData.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>{modalData.link_url}</a></p>
+                  <p style={{margin:0,fontSize:14,color:theme.text}}><a href={modalData.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>Visit Site</a></p>
                 </div>
               )}
               {modalData.tags && modalData.tags.length > 0 && (
