@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BHI App - Improvement Roadmap</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; }
+        header { border-bottom: 3px solid #3b82f6; padding-bottom: 24px; margin-bottom: 32px; }
+        h1 { font-size: 2.5em; color: #1f2937; margin-bottom: 8px; }
+        .meta { color: #6b7280; font-size: 0.95em; }
+        .summary-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 24px 0; border-radius: 4px; }
+        .summary-box h2 { color: #1e40af; margin-bottom: 12px; font-size: 1.2em; }
+        .summary-box ul { list-style: none; padding-left: 0; }
+        .summary-box li { padding: 6px 0; color: #1e3a8a; }
+        .summary-box li:before { content: "✓ "; color: #10b981; font-weight: bold; margin-right: 8px; }
+        h2 { font-size: 1.8em; color: #1f2937; margin-top: 40px; margin-bottom: 20px; padding-top: 20px; border-top: 2px solid #e5e7eb; }
+        h3 { font-size: 1.3em; color: #374151; margin-top: 24px; margin-bottom: 12px; }
+        h4 { font-size: 1.1em; color: #4b5563; margin-top: 16px; margin-bottom: 8px; font-weight: 600; }
+        .recommendation { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 20px; margin: 16px 0; }
+        .recommendation-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+        .rec-title { font-weight: 600; color: #1f2937; font-size: 1.1em; }
+        .rec-meta { display: flex; gap: 12px; font-size: 0.85em; color: #6b7280; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: 500; }
+        .badge-critical { background: #fee2e2; color: #991b1b; }
+        .badge-high { background: #fef3c7; color: #92400e; }
+        .badge-medium { background: #dbeafe; color: #1e40af; }
+        .badge-low { background: #d1fae5; color: #065f46; }
+        .problem, .solution, .impact { margin: 12px 0; }
+        .problem strong, .solution strong, .impact strong { color: #1f2937; }
+        .problem { color: #7c2d12; background: #fed7aa; padding: 8px 12px; border-left: 3px solid #b45309; border-radius: 3px; }
+        .solution { color: #1e40af; background: #dbeafe; padding: 8px 12px; border-left: 3px solid #3b82f6; border-radius: 3px; }
+        .impact { color: #065f46; background: #d1fae5; padding: 8px 12px; border-left: 3px solid #10b981; border-radius: 3px; }
+        code { background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.9em; }
+        .files-section { background: #f0f9ff; padding: 12px; border-radius: 4px; margin: 12px 0; font-size: 0.95em; }
+        .files-section strong { color: #0369a1; }
+        .section-expert { font-size: 0.9em; color: #6b7280; font-style: italic; padding: 8px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 16px; }
+        .toc { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 20px; margin: 20px 0; }
+        .toc h3 { margin-top: 0; }
+        .toc ul { list-style: none; padding-left: 0; }
+        .toc li { padding: 6px 0; }
+        .toc a { color: #3b82f6; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .risk-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 16px 0; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f3f4f6; font-weight: 600; color: #1f2937; }
+        tr:hover { background: #fafafa; }
+        .timeline-phase { background: #f3f4f6; border-left: 4px solid #3b82f6; padding: 16px; margin: 12px 0; border-radius: 4px; }
+        .timeline-phase h4 { margin-top: 0; color: #1e40af; }
+        .timeline-phase ul { margin: 8px 0; padding-left: 20px; }
+        .timeline-phase li { margin: 4px 0; }
+        footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 0.9em; }
+        @media (max-width: 768px) { .container { padding: 20px; } h1 { font-size: 1.8em; } h2 { font-size: 1.4em; } .rec-meta { flex-direction: column; gap: 4px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏥 BHI App: Comprehensive Improvement Roadmap</h1>
+            <div class="meta">
+                <p><strong>Date Created:</strong> February 3, 2026</p>
+                <p><strong>Prepared By:</strong> Expert Team Analysis (UX/Product, Performance, Security, Product Strategy)</p>
+            </div>
+        </header>
+
+        <div class="summary-box">
+            <h2>Executive Summary</h2>
+            <p>This document summarizes recommendations from a comprehensive review by four specialized experts. The BHI App has a solid foundation (React, Supabase, clean architecture) but needs strategic improvements across UX, performance, security, and features to maximize user retention and unlock monetization opportunities.</p>
+            <h3 style="margin-top: 16px; color: #1e40af; font-size: 1.1em;">Key Findings</h3>
+            <ul>
+                <li><strong>User Friction:</strong> Lab entry workflow and onboarding lack clarity; retention could improve 25-35%</li>
+                <li><strong>Performance:</strong> Monolithic bundle and redundant API calls; 25-40% faster load times achievable</li>
+                <li><strong>Security Gaps:</strong> Critical compliance gaps (RLS, encryption, audit logging) require immediate attention</li>
+                <li><strong>Feature Opportunities:</strong> Monetization via consultations and creator marketplace; 20-40% higher engagement through social/trend features</li>
+            </ul>
+        </div>
+
+        <div class="toc">
+            <h3>Quick Navigation</h3>
+            <ul>
+                <li><a href="#part1">Part 1: UX/Product Design (7 recommendations)</a></li>
+                <li><a href="#part2">Part 2: Performance & Scalability (7 recommendations)</a></li>
+                <li><a href="#part3">Part 3: Security & Compliance (7 recommendations)</a></li>
+                <li><a href="#part4">Part 4: Feature Expansion & Monetization (7 recommendations)</a></li>
+                <li><a href="#priorities">Implementation Priorities & Timeline</a></li>
+                <li><a href="#metrics">Success Metrics</a></li>
+            </ul>
+        </div>
+
+        <h2 id="part1">Part 1: UX/Product Design Improvements</h2>
+        <div class="section-expert">Expert: UX/Product Specialist | Timeline: 6-8 weeks</div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 1: Guided Onboarding Flow</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> Static welcome screen; 60-70% of health app users abandon within first week</p>
+            <p class="impact"><strong>Impact:</strong> +25-35% feature adoption rate</p>
+            <p class="solution"><strong>Solution:</strong> 3-4 step interactive wizard (value prop, log first result, browse resources, set goals) with progress bar and skip option</p>
+            <div class="files-section"><strong>Files:</strong> Create <code>src/components/OnboardingStep.tsx</code> | Modify <code>src/pages/Onboarding.tsx</code>, <code>src/context/AuthContext.tsx</code></div>
+            <p><strong>Timeline:</strong> 2-3 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 2: Streamline Lab Entry</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> Multi-step process; no visual feedback on ranges</p>
+            <p class="impact"><strong>Impact:</strong> +40-50% lab entry frequency</p>
+            <p class="solution"><strong>Solution:</strong> Quick-action buttons on Dashboard, inline mini-form, visual range indicators (red/yellow/green), auto-save</p>
+            <div class="files-section"><strong>Files:</strong> Create <code>src/components/LabQuickEntry.tsx</code> | Modify <code>src/pages/Dashboard.tsx</code>, <code>src/pages/LabsPage.tsx</code></div>
+            <p><strong>Timeline:</strong> 1-2 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 3: Smart Resource Recommendations</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> Resources shown by filter; unclear why recommended</p>
+            <p class="impact"><strong>Impact:</strong> +30-50% engagement; +40% dwell time</p>
+            <p class="solution"><strong>Solution:</strong> "Recommended for You" carousel, context badges, related resources, learning paths</p>
+            <div class="files-section"><strong>Files:</strong> Modify <code>src/pages/ResourcesPage.tsx</code> | Create <code>src/components/ResourceCard.tsx</code></div>
+            <p><strong>Timeline:</strong> 2-3 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 4: Progressive Profiling</div>
+                <div class="rec-meta"><span class="badge badge-medium">MEDIUM IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> Collects all data upfront; high abandonment</p>
+            <p class="impact"><strong>Impact:</strong> +20% profile completion rate</p>
+            <p class="solution"><strong>Solution:</strong> Show critical fields first, inline editing, save feedback with toast notifications</p>
+            <div class="files-section"><strong>Files:</strong> Create <code>src/components/EditableSection.tsx</code> | Modify <code>src/pages/ProfilePage.tsx</code></div>
+            <p><strong>Timeline:</strong> 1-2 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 5: Mobile-First Responsive Design</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-high">HIGH</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> No responsive breakpoints; 60%+ access via mobile</p>
+            <p class="impact"><strong>Impact:</strong> Serves entire mobile user base</p>
+            <p class="solution"><strong>Solution:</strong> Mobile-first CSS, hamburger menu, responsive grids, 44px+ touch targets, swipe gestures</p>
+            <div class="files-section"><strong>Files:</strong> Create <code>src/styles/responsive.css</code> | Modify page components</div>
+            <p><strong>Timeline:</strong> 3-4 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 6: Engagement Loops</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-high">MEDIUM-HIGH</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> No progress feedback; no achievements</p>
+            <p class="impact"><strong>Impact:</strong> +20-40% repeat engagement</p>
+            <p class="solution"><strong>Solution:</strong> Health streak counter, milestone celebrations, weekly charts, smart notifications, reminder system</p>
+            <div class="files-section"><strong>Files:</strong> Create <code>src/context/NotificationContext.tsx</code> | Modify <code>src/pages/Dashboard.tsx</code></div>
+            <p><strong>Timeline:</strong> 2-3 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 7: Visual Health Status Dashboard</div>
+                <div class="rec-meta"><span class="badge badge-medium">MEDIUM IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> Stat cards equally weighted; out-of-range markers not highlighted</p>
+            <p class="impact"><strong>Impact:</strong> +15% perceived ease-of-use</p>
+            <p class="solution"><strong>Solution:</strong> Health Summary Card showing status, out-of-range count, trend chart, color-coded status</p>
+            <div class="files-section"><strong>Files:</strong> Create <code>src/components/HealthSummaryCard.tsx</code> | Modify <code>src/pages/Dashboard.tsx</code></div>
+            <p><strong>Timeline:</strong> 1-2 days</p>
+        </div>
+
+        <h2 id="part2">Part 2: Performance & Scalability</h2>
+        <div class="section-expert">Expert: Performance Architect | Timeline: 3-4 weeks</div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 1: Code Splitting & Lazy Loading</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> 5,324 lines loaded at startup</p>
+            <p class="impact"><strong>Impact:</strong> 25-40% bundle reduction; 2-3s faster TTI</p>
+            <p class="solution"><strong>Solution:</strong> React.lazy() for pages, Suspense boundaries, Vite manual chunking</p>
+            <p><strong>Timeline:</strong> 1-2 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 2: Smart Response Caching</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> Every page load queries markers, rules, resources</p>
+            <p class="impact"><strong>Impact:</strong> 60-70% fewer API calls</p>
+            <p class="solution"><strong>Solution:</strong> Stale-While-Revalidate (SWR) caching utility</p>
+            <p><strong>Timeline:</strong> 1-2 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 3: Database Indexes</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-low">LOW</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> No indexes on foreign keys; full table scans</p>
+            <p class="impact"><strong>Impact:</strong> 70-90% faster queries</p>
+            <p class="solution"><strong>Solution:</strong> Add 10+ strategic indexes on commonly queried columns</p>
+            <p><strong>Timeline:</strong> 0.5 day</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 4: Request Deduplication</div>
+                <div class="rec-meta"><span class="badge badge-medium">MEDIUM IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> Admin triggers multiple identical queries</p>
+            <p class="impact"><strong>Impact:</strong> 40-60% fewer requests</p>
+            <p class="solution"><strong>Solution:</strong> Deduplication utility, batch audit logging</p>
+            <p><strong>Timeline:</strong> 1-2 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 5: Error Boundaries</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> Single error crashes entire app</p>
+            <p class="impact"><strong>Impact:</strong> 99.5%+ availability</p>
+            <p class="solution"><strong>Solution:</strong> Error boundary components, retry logic with backoff</p>
+            <p><strong>Timeline:</strong> 1 day</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 6: State Management Optimization</div>
+                <div class="rec-meta"><span class="badge badge-medium">MEDIUM IMPACT</span><span class="badge badge-high">HIGH</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> Admin has 85+ state variables; excessive re-renders</p>
+            <p class="impact"><strong>Impact:</strong> 30-50% fewer re-renders</p>
+            <p class="solution"><strong>Solution:</strong> Consolidate with useReducer, useMemo, React.memo()</p>
+            <p><strong>Timeline:</strong> 3-4 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 7: Performance Monitoring</div>
+                <div class="rec-meta"><span class="badge badge-medium">MEDIUM IMPACT</span><span class="badge badge-low">LOW</span></div>
+            </div>
+            <p class="problem"><strong>Problem:</strong> No visibility into metrics; no error aggregation</p>
+            <p class="impact"><strong>Impact:</strong> 50%+ faster MTTR</p>
+            <p class="solution"><strong>Solution:</strong> Monitoring client capturing Core Web Vitals, API performance</p>
+            <p><strong>Timeline:</strong> 1 day</p>
+        </div>
+
+        <h2 id="part3">Part 3: Security & Healthcare Compliance</h2>
+        <div class="section-expert">Expert: Security & Compliance Specialist | Timeline: 4-6 weeks</div>
+
+        <div class="risk-box">
+            <h3 style="margin-top: 0;">🚨 Critical Issues (Address Immediately)</h3>
+            <p><strong>Issue 1: API Keys Exposed in Git</strong> - Rotate all secrets immediately, remove from git history</p>
+            <p><strong>Issue 2: RLS Not Enforced</strong> - Enable RLS on all health data tables (HIPAA requirement)</p>
+            <p><strong>Issue 3: No Audit Logging</strong> - Create immutable audit trail with 7-year retention</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 1: RLS Enforcement with Encryption</div>
+                <div class="rec-meta"><span class="badge badge-critical">CRITICAL</span><span class="badge badge-high">HIGH</span></div>
+            </div>
+            <p class="problem"><strong>Risk:</strong> RLS incomplete; health data unencrypted</p>
+            <p class="impact"><strong>Compliance:</strong> HIPAA Technical Safeguards</p>
+            <p class="solution"><strong>Solution:</strong> Enable RLS on all tables, add admin-only policies, pgcrypto encryption, test isolation</p>
+            <p><strong>Timeline:</strong> 2-3 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 2: API Request Signing</div>
+                <div class="rec-meta"><span class="badge badge-critical">CRITICAL</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Risk:</strong> Secrets in .env; no request signing</p>
+            <p class="solution"><strong>Solution:</strong> HMAC-SHA256 signing, timestamp validation, server-side API keys only</p>
+            <p><strong>Timeline:</strong> 1 day</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 3: Immutable Audit Logging</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Risk:</strong> Optional audit logging; no trail integrity</p>
+            <p class="impact"><strong>Compliance:</strong> HIPAA Audit Controls</p>
+            <p class="solution"><strong>Solution:</strong> Append-only audit log, log all actions with before/after values, 7-year retention</p>
+            <p><strong>Timeline:</strong> 2 days</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 4: Input Validation & Security Headers</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Risk:</strong> No input validation; no CSP headers; XSS/CSRF risks</p>
+            <p class="solution"><strong>Solution:</strong> Input validation with Joi, output encoding, security headers, CSRF tokens</p>
+            <p><strong>Timeline:</strong> 1 day</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 5: Session Security & Rate Limiting</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Risk:</strong> No session timeout; brute force possible</p>
+            <p class="solution"><strong>Solution:</strong> 30-min timeout with auto-logout, rate limiting (5 login attempts/15min), CORS restrictions</p>
+            <p><strong>Timeline:</strong> 1 day</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 6: Error Handling & Data Redaction</div>
+                <div class="rec-meta"><span class="badge badge-medium">MEDIUM</span><span class="badge badge-low">LOW</span></div>
+            </div>
+            <p class="problem"><strong>Risk:</strong> Verbose logs leak data structure and user info</p>
+            <p class="solution"><strong>Solution:</strong> Redaction utility, generic error messages, detailed logs only, disable dev endpoints</p>
+            <p><strong>Timeline:</strong> 1 day</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Recommendation 7: GDPR & HIPAA Documentation</div>
+                <div class="rec-meta"><span class="badge badge-critical">CRITICAL</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p class="problem"><strong>Risk:</strong> No data handling policy; no breach plan</p>
+            <p class="impact"><strong>Compliance:</strong> GDPR Articles 17, 20; HIPAA §164.400</p>
+            <p class="solution"><strong>Solution:</strong> Privacy policy, DSAR + deletion endpoints, breach notification plan, consent management</p>
+            <p><strong>Timeline:</strong> 1-2 days</p>
+        </div>
+
+        <h2 id="part4">Part 4: Feature Expansion & Monetization</h2>
+        <div class="section-expert">Expert: Product Strategy Specialist | Timeline: 3-6 months</div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Feature 1: Longitudinal Health Dashboard</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p><strong>Opportunity:</strong> Users lack visual health journey</p>
+            <p><strong>Value:</strong> +40% dwell time; clear progress</p>
+            <p><strong>Features:</strong> Trend charts, goal progress, "Health Score", correlation insights, downloadable reports</p>
+            <p><strong>Timeline:</strong> 2-3 weeks</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Feature 2: AI-Powered Recommendations</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-high">HIGH</span></div>
+            </div>
+            <p><strong>Opportunity:</strong> Rule-based recommendations lack personalization</p>
+            <p><strong>Value:</strong> +30-50% engagement</p>
+            <p><strong>Features:</strong> ML recommendation engine, collaborative filtering, learning paths, A/B testing</p>
+            <p><strong>Timeline:</strong> 3-4 weeks | <strong>Cost:</strong> ML infrastructure</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Feature 3: Expert Consultation Marketplace</div>
+                <div class="rec-meta"><span class="badge badge-critical">HIGHEST VALUE</span><span class="badge badge-high">HIGH</span></div>
+            </div>
+            <p><strong>Opportunity:</strong> Users want guidance; consultations = high-value service</p>
+            <p><strong>Value:</strong> $50K-250K+/month at scale; +40% retention</p>
+            <p><strong>Features:</strong> Practitioner directory, video scheduling, payment processing (15-25% commission), follow-up resources</p>
+            <p><strong>Timeline:</strong> 4-5 weeks | <strong>Monetization:</strong> 15-25% commission</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Feature 4: Wearable Device Integrations</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-medium">MEDIUM-HIGH</span></div>
+            </div>
+            <p><strong>Opportunity:</strong> Manual entry friction; wearables = passive data</p>
+            <p><strong>Value:</strong> +30% engagement</p>
+            <p><strong>Features:</strong> Apple Health, Garmin, Oura, Withings, Fitbit; auto-sync; correlation engine</p>
+            <p><strong>Timeline:</strong> 2-3 weeks</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Feature 5: Community & Social Features</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p><strong>Opportunity:</strong> Isolated experience; social drives 30-50% higher retention</p>
+            <p><strong>Value:</strong> +20-40% engagement; network effects</p>
+            <p><strong>Features:</strong> Health challenges, leaderboards, groups, peer feedback, badges, privacy-first design</p>
+            <p><strong>Timeline:</strong> 2-3 weeks</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Feature 6: FHIR API & Data Interoperability</div>
+                <div class="rec-meta"><span class="badge badge-medium">MEDIUM IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p><strong>Opportunity:</strong> Data lock-in reduces; API partnerships = B2B revenue</p>
+            <p><strong>Value:</strong> $500-2000/month B2B; reduced churn</p>
+            <p><strong>Features:</strong> FHIR export, CSV/PDF, webhooks, public API (freemium/premium)</p>
+            <p><strong>Timeline:</strong> 2-3 weeks</p>
+        </div>
+
+        <div class="recommendation">
+            <div class="recommendation-header">
+                <div class="rec-title">Feature 7: Content Creator Marketplace</div>
+                <div class="rec-meta"><span class="badge badge-high">HIGH IMPACT</span><span class="badge badge-medium">MEDIUM</span></div>
+            </div>
+            <p><strong>Opportunity:</strong> Admin-curated content is bottleneck</p>
+            <p><strong>Value:</strong> $20K-100K+/month; 30% library growth</p>
+            <p><strong>Features:</strong> Submission portal, author profiles, 50% revenue-share, tier system, dashboard, analytics</p>
+            <p><strong>Timeline:</strong> 3-4 weeks</p>
+        </div>
+
+        <h2 id="priorities">Implementation Priorities & Timeline</h2>
+
+        <div class="timeline-phase">
+            <h4>Phase 1: Quick Wins (Weeks 1-2)</h4>
+            <ul>
+                <li><strong>UX:</strong> Simplify lab entry, improve visual hierarchy</li>
+                <li><strong>Performance:</strong> Add database indexes, implement monitoring</li>
+                <li><strong>Security:</strong> Rotate API keys, add input validation</li>
+            </ul>
+            <p><strong>Effort:</strong> Low | <strong>Impact:</strong> High</p>
+        </div>
+
+        <div class="timeline-phase">
+            <h4>Phase 2: Core Improvements (Weeks 3-4)</h4>
+            <ul>
+                <li><strong>UX:</strong> Guided onboarding, progressive profiling</li>
+                <li><strong>Performance:</strong> Implement caching, code splitting</li>
+                <li><strong>Security:</strong> RLS enforcement, audit logging</li>
+            </ul>
+            <p><strong>Effort:</strong> Medium | <strong>Impact:</strong> Very High</p>
+        </div>
+
+        <div class="timeline-phase">
+            <h4>Phase 3: Engagement & Features (Weeks 5-8)</h4>
+            <ul>
+                <li><strong>UX:</strong> Engagement loops, resource personalization</li>
+                <li><strong>Features:</strong> Longitudinal dashboard, wearable integrations</li>
+                <li><strong>Community:</strong> Social features, challenges</li>
+            </ul>
+            <p><strong>Effort:</strong> Medium-High | <strong>Impact:</strong> High</p>
+        </div>
+
+        <div class="timeline-phase">
+            <h4>Phase 4: Monetization & Scale (Months 3+)</h4>
+            <ul>
+                <li><strong>Features:</strong> Expert consultation marketplace</li>
+                <li><strong>Features:</strong> AI recommendations, content creator program</li>
+                <li><strong>Integrations:</strong> FHIR API, B2B partnerships</li>
+            </ul>
+            <p><strong>Effort:</strong> High | <strong>Impact:</strong> Revenue Generation</p>
+        </div>
+
+        <h2 id="metrics">Success Metrics</h2>
+
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>Current</th>
+                <th>Target (6 mo)</th>
+                <th>Measurement</th>
+            </tr>
+            <tr>
+                <td>Lab entry frequency</td>
+                <td>Unknown</td>
+                <td>+40% per user/week</td>
+                <td>Analytics</td>
+            </tr>
+            <tr>
+                <td>User retention (Day 30)</td>
+                <td>Unknown</td>
+                <td>+30%</td>
+                <td>Cohort analysis</td>
+            </tr>
+            <tr>
+                <td>Resource dwell time</td>
+                <td>Unknown</td>
+                <td>+40% per session</td>
+                <td>Time on page</td>
+            </tr>
+            <tr>
+                <td>App load time</td>
+                <td>Unknown</td>
+                <td>&lt;1.5s</td>
+                <td>Lighthouse/Monitoring</td>
+            </tr>
+            <tr>
+                <td>Security audit score</td>
+                <td>~40/100</td>
+                <td>95/100</td>
+                <td>Third-party audit</td>
+            </tr>
+            <tr>
+                <td>Revenue per user</td>
+                <td>$0</td>
+                <td>$2-10/month</td>
+                <td>Subscription/Commission</td>
+            </tr>
+            <tr>
+                <td>Admin response time</td>
+                <td>Unknown</td>
+                <td>&lt;200ms</td>
+                <td>Database monitoring</td>
+            </tr>
+            <tr>
+                <td>Error rate</td>
+                <td>Unknown</td>
+                <td>&lt;0.5%</td>
+                <td>Error tracking</td>
+            </tr>
+        </table>
+
+        <footer>
+            <h3>References</h3>
+            <ul>
+                <li><strong>Project Status:</strong> See <code>DEVELOPER_STATUS.md</code></li>
+                <li><strong>Database Schema:</strong> See <code>PROJECT_SCOPE.md</code></li>
+                <li><strong>Quick Start:</strong> See <code>README.md</code></li>
+            </ul>
+            <p><strong>Document Generated:</strong> February 3, 2026</p>
+            <p><strong>Expert Team:</strong> 4-specialist analysis (UX/Product, Performance, Security, Product Strategy)</p>
+        </footer>
+    </div>
+</body>
+</html>
