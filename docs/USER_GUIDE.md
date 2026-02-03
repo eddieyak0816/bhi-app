@@ -305,16 +305,22 @@ Use filters to find resources you want to edit or delete:
 **Clear Filters**
 - Click to reset all filters and see all resources
 
+#### Viewing Resource Links
+
+When viewing a resource, you'll see a **"Visit Site"** link displayed in the resource details. This link takes you to the external resource (article, video, etc.). The link text is standardized for clean UI presentation regardless of the actual URL length.
+
 #### Editing a Resource
 
 1. Find the resource (use filters if needed)
 2. Click **"Edit"** on the resource card or table row
 3. Modify:
    - **Title** - The display name
-   - **URL** - The external link
+   - **URL** - The external link (enter domain with or without protocol; https:// is default)
    - **Categories** - Which health categories this applies to
    - **Tags** - Organizational labels
 4. Click **"Save"** to confirm or **"Cancel"** to discard changes
+
+**Note:** The URL is stored but displays as **"Visit Site"** in the user interface for a cleaner, more professional appearance.
 
 #### Deleting Resources
 
@@ -831,8 +837,14 @@ In table view, each row shows:
 
 ---
 
-*Document Version: 2.1*
-*Last Updated: January 28, 2026*
+*Document Version: 2.2*
+*Last Updated: February 3, 2026*
+
+**Changes in Version 2.2:**
+- Updated "Viewing Resource Links" section to document "Visit Site" link display pattern
+- Clarified URL input behavior (accepts domain with or without protocol; defaults to https://)
+- Added note explaining why full URLs display as "Visit Site" (cleaner UI presentation)
+- Noted this applies to user-facing resources and admin management interfaces
 
 **Changes in Version 2.1:**
 - Added comprehensive Admin Tabs Overview table
