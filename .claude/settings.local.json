@@ -9,7 +9,10 @@
       "Bash(npm run build:*)",
       "Bash(node setup-demo-data.js:*)",
       "Bash(node create-demo-user-signup.js:*)",
-      "WebFetch(domain:status.supabase.com)"
+      "WebFetch(domain:status.supabase.com)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
