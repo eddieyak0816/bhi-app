@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useEvaluation } from '../context/EvaluationContext'
 import { supabase } from '../lib/supabase'
+import { debug } from '../lib/debug'
 
 interface Resource {
   id: string
@@ -37,6 +38,7 @@ export default function Resources() {
         if (retryCount === 0) {
           setLoading(true)
           setError(null)
+          debug.info('ResourcesPage', 'Starting to load resources')
         }
 
         // Add timeout to prevent hanging
@@ -54,16 +56,59 @@ export default function Resources() {
         if (!mounted) return
 
         if (err) throw err
+
+        // Validate schema and data integrity
+        const schemaValidation = debug.validateSchema(
+          'ResourcesPage',
+          data || [],
+          ['id', 'type', 'title', 'tags', 'link_url'],
+          'resources'
+        )
+
+        if (!schemaValidation.valid) {
+          throw new Error(
+            `Schema mismatch: ${schemaValidation.issues.join('; ')}. ` +
+            `Expected fields: id, type, title, tags, link_url. ` +
+            `Check DevTools → Local Storage for detailed logs.`
+          )
+        }
+
+        // Check data integrity
+        const integrityCheck = debug.checkDataIntegrity(
+          'ResourcesPage',
+          data || [],
+          ['id', 'type', 'title', 'tags'],
+          'resources'
+        )
+
+        if (!integrityCheck.healthy) {
+          debug.warn('ResourcesPage', 'Data integrity issues found', {
+            issueCount: integrityCheck.issues.length,
+            sampleIssues: integrityCheck.issues.slice(0, 5)
+          })
+        }
+
         setResources(data || [])
         setError(null)
+        debug.info('ResourcesPage', `Successfully loaded ${(data || []).length} resources`)
         if (mounted) setLoading(false)
       } catch (err) {
         if (!mounted) return
-        console.error(`Resources error (attempt ${retryCount + 1}):`, err)
+
+        debug.error(
+          'ResourcesPage',
+          `Resources error (attempt ${retryCount + 1}/${maxRetries})`,
+          err instanceof Error ? err : new Error(String(err)),
+          {
+            retryCount,
+            maxRetries,
+            attempt: retryCount + 1
+          }
+        )
 
         // Retry if we haven't exceeded max retries
         if (retryCount < maxRetries - 1) {
-          console.log(`Retrying in 1 second... (attempt ${retryCount + 2}/${maxRetries})`)
+          debug.info('ResourcesPage', `Retrying in 1 second... (attempt ${retryCount + 2}/${maxRetries})`)
           setTimeout(() => {
             if (mounted) loadResources(retryCount + 1)
           }, 1000)
@@ -71,7 +116,13 @@ export default function Resources() {
         }
 
         const message = err instanceof Error ? err.message : 'Failed to load resources'
-        setError(message + '. Please refresh the page.')
+        const errorMsg =
+          message + '. ' +
+          'Open DevTools → Console to see detailed error logs. ' +
+          'Run window.debug.printSummary() for a summary or window.debug.exportLogs() for full logs.'
+
+        setError(errorMsg)
+        debug.printSummary()
         if (mounted) setLoading(false)
       }
     }
