@@ -275,10 +275,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut({ scope: 'local' })
       
       // Also clear any auth-related localStorage keys manually
-      const keysToRemove = Object.keys(localStorage).filter(key => 
+      const keysToRemove = Object.keys(localStorage).filter(key =>
         key.includes('supabase') || key.includes('auth')
       )
       keysToRemove.forEach(key => localStorage.removeItem(key))
+      localStorage.removeItem('bhi-onboarded')
       
       console.log('[Auth] Logout complete')
     } catch (err) {
