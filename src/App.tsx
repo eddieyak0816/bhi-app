@@ -21,11 +21,20 @@ import { supabase } from './lib/supabase'
 function AppContent() {
   const [data, setData] = useState<SampleData | null>(null)
   const [dataSource, setDataSource] = useState<'supabase' | 'sample' | 'none'>('none')
-  const [currentPage, setCurrentPage] = useState<string>('home')
-  const [showOnboard, setShowOnboard] = useState(true)
+  const [currentPage, setCurrentPage] = useState<string>(() => {
+    // Initialize from hash immediately so page survives reload
+    const hash = window.location.hash.slice(2) // strip '#/'
+    return hash || 'home'
+  })
+  const [showOnboard, setShowOnboard] = useState(() => {
+    return localStorage.getItem('bhi-onboarded') !== 'true'
+  })
   const [tags, setTags] = useState<string[]>([])
   const [refreshKey, setRefreshKey] = useState(0)
-  const [currentRoute, setCurrentRoute] = useState<string>('login')
+  const [currentRoute, setCurrentRoute] = useState<string>(() => {
+    const hash = window.location.hash.slice(2) || 'home'
+    return hash
+  })
   const { isAuthenticated, loading, user } = useAuth()
 
   console.log('[App] Auth state - isAuthenticated:', isAuthenticated, 'loading:', loading, 'currentRoute:', currentRoute, 'data exists:', !!data)
@@ -95,38 +104,50 @@ function AppContent() {
     return () => { mounted = false }
   }, [refreshKey])
 
-  // Handle hash-based routing
+  // Listen for hash changes (browser back/forward, manual URL edits)
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.slice(1) || '/'
-      if (hash === '/login' || hash === '/signup' || hash === '/') {
-        setCurrentRoute(hash === '/' ? 'login' : hash.slice(1))
-      } else if (isAuthenticated) {
-        // Navigate to dashboard if authenticated
-        const route = hash.split('/')[1] || 'home'
+      const route = (window.location.hash.slice(2)) || 'home' // strip '#/'
+      if (route === 'login' || route === 'signup') {
         setCurrentRoute(route)
-      } else {
-        // Redirect to login if not authenticated
-        setCurrentRoute('login')
-        window.location.hash = '#/login'
+      } else if (isAuthenticated) {
+        setCurrentRoute(route)
+        setCurrentPage(route)
       }
     }
-
     window.addEventListener('hashchange', handleHashChange)
-    handleHashChange() // Initial route
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [isAuthenticated])
 
-  // Handle auth state changes
+  // Auth gate: once loading is done, decide where to go
   useEffect(() => {
     if (loading) return
-    
-    if (!isAuthenticated && currentRoute !== 'login' && currentRoute !== 'signup') {
+
+    if (!isAuthenticated) {
+      setCurrentRoute('login')
       window.location.hash = '#/login'
-    } else if (isAuthenticated && (currentRoute === 'login' || currentRoute === 'signup')) {
-      window.location.hash = '#/home'
+    } else {
+      // Auth just resolved — read the intended page from the hash
+      const route = (window.location.hash.slice(2)) || 'home'
+      if (route === 'login' || route === 'signup') {
+        // Was on a pre-auth page; go home
+        setCurrentRoute('home')
+        setCurrentPage('home')
+        window.location.hash = '#/home'
+      } else {
+        // Hash already has a valid page (e.g. #/resources after reload) — honour it
+        setCurrentRoute(route)
+        setCurrentPage(route)
+      }
     }
-  }, [isAuthenticated, loading, currentRoute])
+  }, [isAuthenticated, loading])
+
+  // Keep URL in sync when user clicks nav tabs
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      window.location.hash = `#/${currentPage}`
+    }
+  }, [currentPage, isAuthenticated, loading])
 
   if (loading) {
     return (
@@ -154,7 +175,7 @@ function AppContent() {
   if (!data) return <div className="center">Loading…</div>
 
   if (showOnboard) {
-    return <Onboarding onClose={() => setShowOnboard(false)} />
+    return <Onboarding onClose={() => { localStorage.setItem('bhi-onboarded', 'true'); setShowOnboard(false) }} />
   }
 
   const handleNavigate = (page: string) => {

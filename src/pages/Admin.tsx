@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import React, { useEffect, useState, useCallback } from 'react'
+import { supabase, withTimeout } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
+import { useVisibilityRefresh } from '../hooks/useVisibilityRefresh'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
@@ -270,9 +271,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       [tab]: prev[tab] === 'card' ? 'table' : 'card'
     }))
   }
-  async function fetchJson(input: string, init: RequestInit = {}) {
+  async function fetchJson(input: string, init: RequestInit = {}, signal?: AbortSignal) {
     const headers = { ...(init.headers || {}), ...(authHeaders()) }
-    const res = await fetch(apiUrl(input), { ...init, headers })
+    const res = await fetch(apiUrl(input), { ...init, headers, signal })
     if (!res.ok) {
       const body = await res.text().catch(() => '')
       const err = new Error(`${res.status} ${body}`)
@@ -283,57 +284,77 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     return res.json().catch(() => null)
   }
 
+  // Controller used to cancel in-flight admin loads when a refresh happens
+  const loadControllerRef = React.useRef<AbortController | null>(null)
+
   async function load() {
+    // cancel previous load
+    try { loadControllerRef.current?.abort() } catch {}
+    const controller = new AbortController()
+    loadControllerRef.current = controller
     setLoading(true)
     try {
-      try {
-      const body = await fetchJson('/api/admin/content')
+      const body = await fetchJson('/api/admin/content', {}, controller.signal)
+      if (controller.signal.aborted) return
       // ensure caller gets normalized shapes (resources already normalized upstream)
       setResources((body && body.resources) || [])
       setLogicRules((body && body.logic_rules) || [])
       setLabMarkers((body && body.lab_markers) || [])
     } catch (err) {
       console.error('load admin content failed', err)
-      alert('Failed to load admin content — ' + ((err as any)?.message || 'check server logs'))
-    }
-    } catch (err) {
-      console.error(err)
+      if (!controller.signal.aborted) alert('Failed to load admin content — ' + ((err as any)?.message || 'check server logs'))
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
+      if (loadControllerRef.current === controller) loadControllerRef.current = null
     }
   }
 
   async function loadAudit() {
+    try { loadControllerRef.current?.abort() } catch {}
+    const controller = new AbortController()
+    loadControllerRef.current = controller
     setLoading(true)
     try {
-      const res = await fetch(apiUrl('/api/admin/audit'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
+      const res = await fetch(apiUrl('/api/admin/audit'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}, signal: controller.signal })
       const body = await res.json()
+      if (controller.signal.aborted) return
       setAuditRows(body || [])
     } catch (err) {
-      console.error('loadAudit', err)
+      if (!controller.signal.aborted) console.error('loadAudit', err)
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
+      if (loadControllerRef.current === controller) loadControllerRef.current = null
     }
   }
 
   // load canonical tags for the tag-manager
   async function loadTags() {
+    try { loadControllerRef.current?.abort() } catch {}
+    const controller = new AbortController()
+    loadControllerRef.current = controller
     try {
-      const res = await fetch(apiUrl('/api/admin/tags'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
-      if (!res.ok) return
+      const res = await fetch(apiUrl('/api/admin/tags'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}, signal: controller.signal })
+      if (!res.ok || controller.signal.aborted) return
       const body = await res.json()
+      if (controller.signal.aborted) return
       setAllowedTags(Array.isArray(body) ? body.map(String) : [])
     } catch (err) {
-      console.error('loadTags', err)
+      if (!controller.signal.aborted) console.error('loadTags', err)
+    } finally {
+      if (loadControllerRef.current === controller) loadControllerRef.current = null
     }
   }
 
   // load resource types
   async function loadResourceTypes() {
+    try { loadControllerRef.current?.abort() } catch {}
+    const controller = new AbortController()
+    loadControllerRef.current = controller
     try {
-      const res = await fetch(apiUrl('/api/admin/resource-types'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {} })
-      if (!res.ok) return
+      const res = await fetch(apiUrl('/api/admin/resource-types'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}, signal: controller.signal })
+      if (!res.ok || controller.signal.aborted) return
       const body = await res.json()
+      if (controller.signal.aborted) return
       const names = Array.isArray(body) ? body.map((t: any) => (t.name || t).toLowerCase()) : []
       console.log('loadResourceTypes response:', body)
       console.log('Extracted names:', names)
@@ -353,19 +374,29 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         }
       }
     } catch (err) {
-      console.error('loadResourceTypes', err)
+      if (!controller.signal.aborted) console.error('loadResourceTypes', err)
+    } finally {
+      if (loadControllerRef.current === controller) loadControllerRef.current = null
     }
   }
 
   // load health goals from Supabase
   async function loadHealthGoals() {
     try {
-      const { data, error } = await supabase.from('health_goals').select('*').order('name')
+      try { loadControllerRef.current?.abort() } catch {}
+      const controller = new AbortController()
+      loadControllerRef.current = controller
+      const result = await withTimeout(
+        supabase.from('health_goals').select('*').order('name') as any,
+        8000
+      ) as any
+      const { data, error } = result
+      if (controller.signal.aborted) return
       if (error) {
         console.warn('loadHealthGoals error:', error)
         return
       }
-      setHealthGoals(data || [])
+      if (!controller.signal.aborted) setHealthGoals(data || [])
     } catch (err) {
       console.error('loadHealthGoals', err)
     }
@@ -374,12 +405,20 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // load categories from Supabase
   async function loadCategories() {
     try {
-      const { data, error } = await supabase.from('categories').select('*').order('name')
+      try { loadControllerRef.current?.abort() } catch {}
+      const controller = new AbortController()
+      loadControllerRef.current = controller
+      const result = await withTimeout(
+        supabase.from('categories').select('*').order('name') as any,
+        8000
+      ) as any
+      const { data, error } = result
+      if (controller.signal.aborted) return
       if (error) {
         console.warn('loadCategories error:', error)
         return
       }
-      setCategories(data || [])
+      if (!controller.signal.aborted) setCategories(data || [])
     } catch (err) {
       console.error('loadCategories', err)
     }
@@ -583,6 +622,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     else if (activeTab === 'criteria') load()
     else if (activeTab === 'audit') loadAudit()
   }, [activeTab])
+
+  // Refresh page when tab becomes visible again after being hidden
+  useVisibilityRefresh()
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {

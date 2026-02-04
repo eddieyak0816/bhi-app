@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../lib/supabase'
+import { supabase, withTimeout } from '../lib/supabase'
+import { useVisibilityRefresh } from '../hooks/useVisibilityRefresh'
 
 interface ProfilePageProps {
   userEmail?: string
@@ -37,6 +38,7 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
   const [resourceTypes, setResourceTypes] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const loadControllerRef = useRef<AbortController | null>(null)
 
   // Update form data when user changes
   useEffect(() => {
@@ -47,70 +49,54 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
     }))
   }, [displayName, displayEmail])
 
-  // Load health goals and resource types from Supabase with timeout and retry
-  useEffect(() => {
-    let mounted = true
+  // Load health goals and resource types from Supabase
+  const loadOptions = async () => {
+    setLoading(true)
+    setLoadError(null)
+    try { loadControllerRef.current?.abort() } catch {}
+    const controller = new AbortController()
+    loadControllerRef.current = controller
 
-    const loadOptions = async (retryCount = 0) => {
-      const maxRetries = 3
-      const timeoutMs = 15000
-
-      try {
-        if (retryCount === 0) {
-          setLoading(true)
-          setLoadError(null)
-        }
-
-        // Add timeout to prevent hanging
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timed out')), timeoutMs)
-        )
-
-        // Query health_goals (only active) and resource_types
-        const queryPromise = Promise.all([
+    try {
+      const result = await withTimeout(
+        Promise.all([
           supabase.from('health_goals').select('*').eq('is_active', true).order('name'),
           supabase.from('resource_types').select('name').order('name')
-        ])
+        ]) as any,
+        8000
+      ) as any
+      const [goalsResponse, typesResponse] = result
 
-        const [goalsResponse, typesResponse] = await Promise.race([
-          queryPromise,
-          timeoutPromise
-        ]) as any
-
-        if (!mounted) return
-
-        if (goalsResponse.error) {
-          console.warn('Health goals fetch error:', goalsResponse.error)
-        }
-        if (typesResponse.error) {
-          console.warn('Resource types fetch error:', typesResponse.error)
-        }
-
-        setHealthGoals(goalsResponse.data || [])
-        setResourceTypes((typesResponse.data || []).map((t: any) => t.name))
-        setLoadError(null)
-        if (mounted) setLoading(false)
-      } catch (err) {
-        console.error(`Failed to load options (attempt ${retryCount + 1}):`, err)
-        if (!mounted) return
-
-        // Retry if we haven't exceeded max retries
-        if (retryCount < maxRetries - 1) {
-          console.log(`Retrying in 1 second... (attempt ${retryCount + 2}/${maxRetries})`)
-          setTimeout(() => {
-            if (mounted) loadOptions(retryCount + 1)
-          }, 1000)
-          return
-        }
-
-        setLoadError('Could not load options. Please refresh the page.')
-        if (mounted) setLoading(false)
+      if (goalsResponse.error) {
+        console.warn('Health goals fetch error:', goalsResponse.error)
+        throw goalsResponse.error
       }
-    }
-    loadOptions()
+      if (typesResponse.error) {
+        console.warn('Resource types fetch error:', typesResponse.error)
+        throw typesResponse.error
+      }
 
-    return () => { mounted = false }
+      if (controller.signal.aborted) return
+      setHealthGoals(goalsResponse.data || [])
+      setResourceTypes((typesResponse.data || []).map((t: any) => t.name))
+      setLoadError(null)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      console.error(`Failed to load options: ${errorMsg}`, err)
+      if (!controller.signal.aborted) setLoadError(errorMsg)
+    } finally {
+      if (!controller.signal.aborted) setLoading(false)
+      if (loadControllerRef.current === controller) loadControllerRef.current = null
+    }
+  }
+
+  useEffect(() => {
+    loadOptions()
   }, [])
+
+  // Refresh data when tab becomes visible again after being hidden
+  useVisibilityRefresh()
+
 
   const handleGoalToggle = (goal: string) => {
     setFormData(prev => ({

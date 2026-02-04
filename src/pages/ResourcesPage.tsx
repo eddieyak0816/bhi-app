@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useEvaluation } from '../context/EvaluationContext'
-import { supabase } from '../lib/supabase'
+import { supabase, withTimeout } from '../lib/supabase'
 import { debug } from '../lib/debug'
+import { useVisibilityRefresh } from '../hooks/useVisibilityRefresh'
 
 interface Resource {
   id: string
@@ -25,111 +26,106 @@ export default function Resources() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
+  const mountedRef = useRef(true)
+  const loadControllerRef = useRef<AbortController | null>(null)
+  const loadingTimerRef = useRef<number | null>(null)
+  const [showRetryOverlay, setShowRetryOverlay] = useState(false)
 
-  // Load resources from Supabase with timeout and retry
-  useEffect(() => {
-    let mounted = true
+  // Load resources from Supabase
+  const loadResources = async () => {
+    if (!mountedRef.current) return
+    // cancel previous in-flight load if any
+    try { loadControllerRef.current?.abort() } catch {};
+    const controller = new AbortController()
+    loadControllerRef.current = controller
+    setShowRetryOverlay(false)
+    setLoading(true)
+    setError(null)
+    debug.info('ResourcesPage', 'Starting to load resources')
 
-    const loadResources = async (retryCount = 0) => {
-      const maxRetries = 3
-      const timeoutMs = 15000
+    try {
+      const queryPromise = supabase.from('resources').select('*')
+      const { data, error: err } = await withTimeout(queryPromise as any, 8000)
 
-      try {
-        if (retryCount === 0) {
-          setLoading(true)
-          setError(null)
-          debug.info('ResourcesPage', 'Starting to load resources')
-        }
+      // If the controller was aborted while waiting, stop here
+      if (controller.signal.aborted) return
 
-        // Add timeout to prevent hanging
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Request timed out')), timeoutMs)
-        )
+      if (err) throw err
 
-        const queryPromise = supabase.from('resources').select('*')
+      // Validate schema
+      const schemaValidation = debug.validateSchema(
+        'ResourcesPage',
+        data || [],
+        ['id', 'type', 'title', 'tags', 'link_url'],
+        'resources'
+      )
 
-        const { data, error: err } = await Promise.race([
-          queryPromise,
-          timeoutPromise
-        ]) as any
-
-        if (!mounted) return
-
-        if (err) throw err
-
-        // Validate schema and data integrity
-        const schemaValidation = debug.validateSchema(
-          'ResourcesPage',
-          data || [],
-          ['id', 'type', 'title', 'tags', 'link_url'],
-          'resources'
-        )
-
-        if (!schemaValidation.valid) {
-          throw new Error(
-            `Schema mismatch: ${schemaValidation.issues.join('; ')}. ` +
-            `Expected fields: id, type, title, tags, link_url. ` +
-            `Check DevTools → Local Storage for detailed logs.`
-          )
-        }
-
-        // Check data integrity
-        const integrityCheck = debug.checkDataIntegrity(
-          'ResourcesPage',
-          data || [],
-          ['id', 'type', 'title', 'tags'],
-          'resources'
-        )
-
-        if (!integrityCheck.healthy) {
-          debug.warn('ResourcesPage', 'Data integrity issues found', {
-            issueCount: integrityCheck.issues.length,
-            sampleIssues: integrityCheck.issues.slice(0, 5)
-          })
-        }
-
-        setResources(data || [])
-        setError(null)
-        debug.info('ResourcesPage', `Successfully loaded ${(data || []).length} resources`)
-        if (mounted) setLoading(false)
-      } catch (err) {
-        if (!mounted) return
-
-        debug.error(
-          'ResourcesPage',
-          `Resources error (attempt ${retryCount + 1}/${maxRetries})`,
-          err instanceof Error ? err : new Error(String(err)),
-          {
-            retryCount,
-            maxRetries,
-            attempt: retryCount + 1
-          }
-        )
-
-        // Retry if we haven't exceeded max retries
-        if (retryCount < maxRetries - 1) {
-          debug.info('ResourcesPage', `Retrying in 1 second... (attempt ${retryCount + 2}/${maxRetries})`)
-          setTimeout(() => {
-            if (mounted) loadResources(retryCount + 1)
-          }, 1000)
-          return
-        }
-
-        const message = err instanceof Error ? err.message : 'Failed to load resources'
-        const errorMsg =
-          message + '. ' +
-          'Open DevTools → Console to see detailed error logs. ' +
-          'Run window.debug.printSummary() for a summary or window.debug.exportLogs() for full logs.'
-
-        setError(errorMsg)
-        debug.printSummary()
-        if (mounted) setLoading(false)
+      if (!schemaValidation.valid) {
+        throw new Error(`Schema mismatch: ${schemaValidation.issues.join('; ')}`)
       }
+
+      // Check data integrity
+      const integrityCheck = debug.checkDataIntegrity(
+        'ResourcesPage',
+        data || [],
+        ['id', 'type', 'title', 'tags'],
+        'resources'
+      )
+
+      if (!integrityCheck.healthy) {
+        debug.warn('ResourcesPage', 'Data integrity issues found', {
+          issueCount: integrityCheck.issues.length
+        })
+      }
+
+      if (mountedRef.current && !controller.signal.aborted) setResources(data || [])
+      if (mountedRef.current && !controller.signal.aborted) setError(null)
+      debug.info('ResourcesPage', `Successfully loaded ${(data || []).length} resources`)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      debug.error('ResourcesPage', `Resources error: ${errorMsg}`, err instanceof Error ? err : new Error(String(err)))
+      if (mountedRef.current && !controller.signal.aborted) setError(errorMsg)
+    } finally {
+        if (mountedRef.current && !controller.signal.aborted) setLoading(false)
+        // clear controller when done
+        if (loadControllerRef.current === controller) loadControllerRef.current = null
     }
+  }
+
+  useEffect(() => {
+    mountedRef.current = true
     loadResources()
 
-    return () => { mounted = false }
+    return () => {
+      mountedRef.current = false
+      try { loadControllerRef.current?.abort() } catch {}
+      if (loadingTimerRef.current) {
+        window.clearTimeout(loadingTimerRef.current)
+      }
+    }
   }, [])
+
+  // Refresh data when tab becomes visible again after being hidden
+  useVisibilityRefresh()
+
+  // Show retry overlay if a normal load gets stuck
+  useEffect(() => {
+    if (loading) {
+      if (loadingTimerRef.current) window.clearTimeout(loadingTimerRef.current)
+      loadingTimerRef.current = window.setTimeout(() => {
+        if (loading) setShowRetryOverlay(true)
+      }, 5000)
+    } else {
+      if (loadingTimerRef.current) {
+        window.clearTimeout(loadingTimerRef.current)
+        loadingTimerRef.current = null
+      }
+      setShowRetryOverlay(false)
+    }
+    return () => {
+      if (loadingTimerRef.current) window.clearTimeout(loadingTimerRef.current)
+    }
+  }, [loading])
 
   // Load bookmarks from localStorage
   useEffect(() => {
@@ -569,6 +565,20 @@ export default function Resources() {
               </div>
             </div>
           )}
+
+            {/* Retry overlay when loading stalls */}
+            {showRetryOverlay && (
+              <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:2000}}>
+                <div style={{background:theme.card,padding:24,borderRadius:8,maxWidth:420,textAlign:'center',color:theme.text}}>
+                  <h3 style={{marginTop:0}}>Still loading?</h3>
+                  <p style={{color:theme.textMuted,marginBottom:12}}>The data load appears to be taking longer than expected. You can retry manually.</p>
+                  <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+                    <button onClick={() => { setShowRetryOverlay(false); loadResources() }} style={{background:'#16a34a',border:'none',borderRadius:6,padding:'10px 14px',color:'#fff',cursor:'pointer'}}>Retry</button>
+                    <button onClick={() => setShowRetryOverlay(false)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'10px 14px',color:theme.text,cursor:'pointer'}}>Dismiss</button>
+                  </div>
+                </div>
+              </div>
+            )}
         </>
       )}
     </div>
