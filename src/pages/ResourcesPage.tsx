@@ -33,7 +33,7 @@ export default function Resources() {
 
     const loadResources = async (retryCount = 0) => {
       const maxRetries = 3
-      const timeoutMs = 8000
+      const timeoutMs = 15000
 
       try {
         if (retryCount === 0) {
