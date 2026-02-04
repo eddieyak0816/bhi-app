@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BHI App - Deployment Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 40px; }
+        header { border-bottom: 3px solid #10b981; padding-bottom: 24px; margin-bottom: 32px; }
+        h1 { font-size: 2em; color: #1f2937; margin-bottom: 8px; }
+        .meta { color: #6b7280; font-size: 0.9em; }
+        h2 { font-size: 1.6em; color: #1f2937; margin-top: 32px; margin-bottom: 16px; border-bottom: 2px solid #e5e7eb; padding-bottom: 12px; }
+        h3 { font-size: 1.1em; color: #374151; margin-top: 20px; margin-bottom: 8px; }
+        h4 { font-size: 1em; color: #4b5563; margin-top: 12px; margin-bottom: 6px; font-weight: 600; }
+        .highlight { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .highlight h3 { margin-top: 0; color: #d97706; }
+        .critical { background: #fee2e2; border-left: 4px solid #ef4444; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .critical h3 { margin-top: 0; color: #dc2626; }
+        .success { background: #d1fae5; border-left: 4px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .success h3 { margin-top: 0; color: #059669; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f3f4f6; font-weight: 600; }
+        tr:hover { background: #fafafa; }
+        .code-block { background: #1f2937; color: #f3f4f6; padding: 16px; border-radius: 4px; overflow-x: auto; margin: 16px 0; font-family: 'Monaco', 'Courier New', monospace; font-size: 0.9em; }
+        .step { background: #eff6ff; padding: 16px; margin: 12px 0; border-left: 4px solid #3b82f6; border-radius: 4px; }
+        .step strong { color: #1e40af; }
+        footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 0.9em; }
+        ul { margin-left: 20px; }
+        li { margin: 6px 0; }
+        a { color: #3b82f6; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .architecture { background: #f3f4f6; padding: 20px; border-radius: 4px; font-family: 'Monaco', 'Courier New', monospace; margin: 16px 0; white-space: pre; color: #374151; }
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            h1 { font-size: 1.5em; }
+            h2 { font-size: 1.3em; }
+            .code-block { font-size: 0.8em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 BHI App - Deployment Guide</h1>
+            <div class="meta">
+                <p><strong>How to Access and Run the App Online</strong></p>
+                <p><strong>Last Updated:</strong> February 3, 2026</p>
+            </div>
+        </header>
+
+        <div class="success">
+            <h3>✅ Quick Start - Access Live App</h3>
+            <p><strong>The app is already deployed and live online. No setup required!</strong></p>
+            <ul>
+                <li><strong>Frontend (User-Facing App):</strong> <a href="https://gleaming-praline-ba5b42.netlify.app/" target="_blank">https://gleaming-praline-ba5b42.netlify.app/</a></li>
+                <li><strong>Backend API:</strong> <a href="https://bhi-app-backend.onrender.com" target="_blank">https://bhi-app-backend.onrender.com</a></li>
+                <li><strong>Database:</strong> Supabase PostgreSQL (hosted)</li>
+            </ul>
+        </div>
+
+        <h2>Current Deployment Status</h2>
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Status</th>
+                <th>Provider</th>
+                <th>URL</th>
+            </tr>
+            <tr>
+                <td><strong>Frontend</strong></td>
+                <td>✅ Live</td>
+                <td>Netlify</td>
+                <td><a href="https://gleaming-praline-ba5b42.netlify.app/" target="_blank">View App</a></td>
+            </tr>
+            <tr>
+                <td><strong>Backend</strong></td>
+                <td>✅ Live</td>
+                <td>Render</td>
+                <td><a href="https://bhi-app-backend.onrender.com" target="_blank">API Endpoint</a></td>
+            </tr>
+            <tr>
+                <td><strong>Database</strong></td>
+                <td>✅ Live</td>
+                <td>Supabase</td>
+                <td>PostgreSQL</td>
+            </tr>
+            <tr>
+                <td><strong>Auto-Deploy</strong></td>
+                <td>✅ Enabled</td>
+                <td>GitHub</td>
+                <td>Push to main branch</td>
+            </tr>
+        </table>
+
+        <h2>Architecture Overview</h2>
+        <div class="architecture">User Browser
+    ↓
+Frontend (Netlify) — https://gleaming-praline-ba5b42.netlify.app/
+    ↓
+Backend API (Render) — https://bhi-app-backend.onrender.com
+    ↓
+Database (Supabase) — PostgreSQL</div>
+
+        <h2>How the App Works Online</h2>
+        <h3>User Flow</h3>
+        <ol>
+            <li><strong>Visit the site</strong> → <a href="https://gleaming-praline-ba5b42.netlify.app/" target="_blank">https://gleaming-praline-ba5b42.netlify.app/</a></li>
+            <li><strong>Create account or login</strong> → Supabase authentication</li>
+            <li><strong>Browse resources</strong> → Fetched from Supabase database</li>
+            <li><strong>Enter lab results</strong> → Saved in Supabase (optional)</li>
+            <li><strong>Use admin features</strong> → Backend API handles resource management</li>
+        </ol>
+
+        <div class="critical">
+            <h3>⚠️ CRITICAL: Database Setup Required</h3>
+            <p><strong>IMPORTANT:</strong> Before users can fully use the app, you must run the database migrations.</p>
+
+            <h4>Missing Tables</h4>
+            <p>The following tables are missing from Supabase and need to be created:</p>
+            <ul>
+                <li><code>categories</code> (for resource categorization)</li>
+                <li><code>health_goals</code> (for user health goal preferences)</li>
+            </ul>
+
+            <h4>Impact</h4>
+            <p>These pages will show "Loading..." until tables are created:</p>
+            <ul>
+                <li>Resources tab (entire page)</li>
+                <li>Profile → Health Goals section</li>
+                <li>Profile → Preferred Resource Types section</li>
+                <li>Admin → Categories tab</li>
+                <li>Admin → Health Goals tab</li>
+            </ul>
+        </div>
+
+        <h2>How to Fix Missing Tables (5 Minutes)</h2>
+
+        <div class="step">
+            <strong>Step 1: Go to Supabase Dashboard</strong>
+            <p>Visit: <a href="https://supabase.com" target="_blank">https://supabase.com</a></p>
+            <p>Log in to your project and select your BHI App project</p>
+        </div>
+
+        <div class="step">
+            <strong>Step 2: Open SQL Editor</strong>
+            <p>Click <strong>"SQL Editor"</strong> in left sidebar</p>
+            <p>Click <strong>"New Query"</strong></p>
+        </div>
+
+        <div class="step">
+            <strong>Step 3: Run First Migration - Categories Table</strong>
+            <ul>
+                <li>Copy content from: <code>db/migrations/20260128_create_categories_table.sql</code></li>
+                <li>Paste into SQL editor</li>
+                <li>Click <strong>"Run"</strong></li>
+                <li>Wait for success message</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <strong>Step 4: Run Second Migration - Health Goals Table</strong>
+            <ul>
+                <li>Copy content from: <code>db/migrations/20260128_create_health_goals_table_v2.sql</code></li>
+                <li>Paste into SQL editor</li>
+                <li>Click <strong>"Run"</strong></li>
+                <li>Wait for success message</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <strong>Step 5: Verify</strong>
+            <ul>
+                <li>Refresh the app in your browser</li>
+                <li>Resources page should now load</li>
+                <li>Profile sections should show options</li>
+                <li>Admin tabs should display data</li>
+            </ul>
+        </div>
+
+        <h2>Making Updates to the App</h2>
+        <p>When you make code changes, they auto-deploy to the live site within minutes.</p>
+
+        <h3>Deployment Workflow</h3>
+
+        <div class="step">
+            <strong>1. Make code changes locally</strong>
+            <div class="code-block">npm run dev  # Test locally first</div>
+        </div>
+
+        <div class="step">
+            <strong>2. Commit and push to GitHub</strong>
+            <div class="code-block">git add .
+git commit -m "Your commit message"
+git push origin main</div>
+        </div>
+
+        <div class="step">
+            <strong>3. Netlify auto-deploys</strong>
+            <ul>
+                <li>GitHub webhook triggers Netlify build</li>
+                <li><code>npm run build</code> runs automatically</li>
+                <li>New version deploys to <a href="https://gleaming-praline-ba5b42.netlify.app/" target="_blank">https://gleaming-praline-ba5b42.netlify.app/</a></li>
+                <li>Takes ~2-3 minutes</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <strong>4. Render auto-deploys backend</strong>
+            <ul>
+                <li>Render watches your GitHub repo</li>
+                <li>Rebuilds when <code>main</code> branch changes</li>
+                <li>New version available at <a href="https://bhi-app-backend.onrender.com" target="_blank">https://bhi-app-backend.onrender.com</a></li>
+            </ul>
+        </div>
+
+        <h3>Check Deployment Status</h3>
+        <ul>
+            <li><strong>Netlify:</strong> Visit <a href="https://app.netlify.com" target="_blank">https://app.netlify.com</a> → Click your site → Deployments tab</li>
+            <li><strong>Render:</strong> Visit <a href="https://dashboard.render.com" target="_blank">https://dashboard.render.com</a> → Click backend service → Logs tab</li>
+        </ul>
+
+        <h2>Troubleshooting</h2>
+
+        <h3>Blank White Page</h3>
+        <p><strong>Cause:</strong> Assets loading from wrong path (vite.config.ts base path)</p>
+        <p><strong>Solution:</strong> Ensure <code>vite.config.ts</code> has <code>base: '/'</code> (not <code>/bhi-app/</code>)</p>
+
+        <h3>"Loading..." on Resources/Profile/Admin Pages</h3>
+        <p><strong>Cause:</strong> Database tables missing</p>
+        <p><strong>Solution:</strong> Run migrations (see "How to Fix Missing Tables" section above)</p>
+
+        <h3>Backend Not Responding</h3>
+        <p><strong>Cause:</strong> Render server may be sleeping</p>
+        <p><strong>Solutions:</strong></p>
+        <ul>
+            <li>Visit <a href="https://bhi-app-backend.onrender.com" target="_blank">https://bhi-app-backend.onrender.com</a> to wake it up</li>
+            <li>Check Render dashboard for errors</li>
+            <li>Verify environment variables are set correctly</li>
+        </ul>
+
+        <h3>Can't Create Account</h3>
+        <p><strong>Cause:</strong> Supabase auth not configured</p>
+        <p><strong>Solutions:</strong></p>
+        <ul>
+            <li>Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env</li>
+            <li>Verify these are set in Netlify environment variables</li>
+            <li>Check Supabase dashboard for service health</li>
+        </ul>
+
+        <h2>Quick Reference</h2>
+        <table>
+            <tr>
+                <th>What</th>
+                <th>Where</th>
+                <th>How</th>
+            </tr>
+            <tr>
+                <td><strong>Use the app</strong></td>
+                <td><a href="https://gleaming-praline-ba5b42.netlify.app/" target="_blank">https://gleaming-praline-ba5b42.netlify.app/</a></td>
+                <td>Open in browser, create account</td>
+            </tr>
+            <tr>
+                <td><strong>Deploy changes</strong></td>
+                <td>GitHub main branch</td>
+                <td><code>git push origin main</code></td>
+            </tr>
+            <tr>
+                <td><strong>Check deployment</strong></td>
+                <td>Netlify dashboard</td>
+                <td><a href="https://app.netlify.com" target="_blank">https://app.netlify.com</a></td>
+            </tr>
+            <tr>
+                <td><strong>View logs</strong></td>
+                <td>Render dashboard</td>
+                <td><a href="https://dashboard.render.com" target="_blank">https://dashboard.render.com</a></td>
+            </tr>
+            <tr>
+                <td><strong>Configure secrets</strong></td>
+                <td>Netlify/Render</td>
+                <td>Environment variables in dashboard</td>
+            </tr>
+            <tr>
+                <td><strong>Fix loading pages</strong></td>
+                <td>Supabase SQL Editor</td>
+                <td>Run migrations (see guide above)</td>
+            </tr>
+            <tr>
+                <td><strong>View database</strong></td>
+                <td>Supabase dashboard</td>
+                <td><a href="https://supabase.com" target="_blank">https://supabase.com</a></td>
+            </tr>
+        </table>
+
+        <h2>Getting Help</h2>
+        <ul>
+            <li><strong>Live app:</strong> <a href="https://gleaming-praline-ba5b42.netlify.app/" target="_blank">https://gleaming-praline-ba5b42.netlify.app/</a></li>
+            <li><strong>Code repo:</strong> <a href="https://github.com/eddieyak0816/bhi-app" target="_blank">https://github.com/eddieyak0816/bhi-app</a></li>
+            <li><strong>Documentation:</strong> See README.md, DEVELOPER_STATUS.md</li>
+            <li><strong>Architecture:</strong> See PROJECT_SCOPE.md</li>
+            <li><strong>Strategic recommendations:</strong> See IMPROVEMENT_ROADMAP.md</li>
+        </ul>
+
+        <footer>
+            <p><strong>BHI App Deployment Guide</strong> — Created February 3, 2026</p>
+            <p>For the most up-to-date information, see the Markdown version: <code>docs/DEPLOYMENT_GUIDE.md</code></p>
+        </footer>
+    </div>
+</body>
+</html>
