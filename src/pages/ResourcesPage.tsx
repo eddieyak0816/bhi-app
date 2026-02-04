@@ -9,7 +9,6 @@ interface Resource {
   type: string
   description?: string
   tags: string[]
-  categories?: string[]
   link_url?: string
 }
 
@@ -20,7 +19,6 @@ export default function Resources() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filterType, setFilterType] = useState('')
-  const [filterCategory, setFilterCategory] = useState('')
   const [filterTag, setFilterTag] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -103,15 +101,13 @@ export default function Resources() {
   }
 
   const uniqueTypes = Array.from(new Set(resources.map(r => r.type)))
-  const uniqueCategories = Array.from(new Set(resources.flatMap(r => r.categories || [])))
   const uniqueTags = Array.from(new Set(resources.flatMap(r => r.tags)))
 
   const filtered = resources.filter(r => {
     const matchType = !filterType || r.type === filterType
-    const matchCategory = !filterCategory || (r.categories || []).includes(filterCategory)
     const matchTag = !filterTag || r.tags.includes(filterTag)
     const matchSearch = !searchTerm || r.title.toLowerCase().includes(searchTerm.toLowerCase()) || r.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchType && matchCategory && matchTag && matchSearch
+    return matchType && matchTag && matchSearch
   })
 
   // Prioritize resources matching user's tags
@@ -197,30 +193,6 @@ export default function Resources() {
                   {uniqueTypes.map(t => (
                     <option key={t} value={t}>
                       {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Category</label>
-                <select
-                  value={filterCategory}
-                  onChange={e => setFilterCategory(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    border: `1.5px solid ${theme.borderColor}`,
-                    borderRadius: 6,
-                    fontSize: 14,
-                    background: theme.bg,
-                    color: theme.text,
-                  }}
-                >
-                  <option value="">All Categories</option>
-                  {uniqueCategories.map(c => (
-                    <option key={c} value={c}>
-                      {c}
                     </option>
                   ))}
                 </select>
