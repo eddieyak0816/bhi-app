@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 5173",
+    "deploy": "npm run build && git add dist -f && git commit -m 'Deploy to GitHub Pages' && git subtree push --prefix dist origin gh-pages",
     "seed:db": "psql $DATABASE_URL -f ./db/seed.sql",
     "test:e2e": "playwright test --config=playwright.config.ts",
     "dev:server": "node server/index.js",

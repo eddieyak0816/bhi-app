@@ -237,6 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             name,
           },
+          emailRedirectTo: undefined,
         },
       })
 
@@ -245,20 +246,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data?.user) {
-        // Create profile with default user role
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email,
-            name,
-            role: 'user',
-          })
-
-        if (profileError) {
-          return { success: false, error: profileError.message }
-        }
-
+        // Profile is automatically created by the on_auth_user_created trigger
+        // No need to manually create it here - the trigger handles it
+        
         setUser({
           id: data.user.id,
           email,
@@ -280,7 +270,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Clear user state immediately for responsive UI
       setUser(null)
-      await supabase.auth.signOut()
+      
+      // Clear all Supabase session storage
+      await supabase.auth.signOut({ scope: 'local' })
+      
+      // Also clear any auth-related localStorage keys manually
+      const keysToRemove = Object.keys(localStorage).filter(key => 
+        key.includes('supabase') || key.includes('auth')
+      )
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+      
       console.log('[Auth] Logout complete')
     } catch (err) {
       console.error('[Auth] Logout error:', err)

@@ -5,7 +5,11 @@
       "Bash(xargs ls:*)",
       "Bash(wc:*)",
       "Bash(grep:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm run build:*)",
+      "Bash(node setup-demo-data.js:*)",
+      "Bash(node create-demo-user-signup.js:*)",
+      "WebFetch(domain:status.supabase.com)"
     ]
   }
 }
