@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useEvaluation } from '../context/EvaluationContext'
-import { supabase, withTimeout } from '../lib/supabase'
+import { directFetch } from '../lib/supabase'
 import { debug } from '../lib/debug'
-import { useVisibilityRefresh } from '../hooks/useVisibilityRefresh'
 
 interface Resource {
   id: string
@@ -31,8 +30,8 @@ export default function Resources() {
   const loadingTimerRef = useRef<number | null>(null)
   const [showRetryOverlay, setShowRetryOverlay] = useState(false)
 
-  // Load resources from Supabase
-  const loadResources = async () => {
+  // Load resources using direct fetch (more reliable than Supabase client after window switches)
+  const loadResources = async (retryCount = 0) => {
     if (!mountedRef.current) return
     // cancel previous in-flight load if any
     try { loadControllerRef.current?.abort() } catch {};
@@ -41,11 +40,13 @@ export default function Resources() {
     setShowRetryOverlay(false)
     setLoading(true)
     setError(null)
-    debug.info('ResourcesPage', 'Starting to load resources')
+
+    debug.info('ResourcesPage', `Starting to load resources (attempt ${retryCount + 1})`)
 
     try {
-      const queryPromise = supabase.from('resources').select('*')
-      const { data, error: err } = await withTimeout(queryPromise as any, 8000)
+      // Always use direct fetch - it's more reliable than the Supabase client
+      // The Supabase JS client can get stuck after window/tab switches
+      const { data, error: err } = await directFetch<Resource>('resources', { timeout: 8000 })
 
       // If the controller was aborted while waiting, stop here
       if (controller.signal.aborted) return
@@ -84,6 +85,17 @@ export default function Resources() {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
       debug.error('ResourcesPage', `Resources error: ${errorMsg}`, err instanceof Error ? err : new Error(String(err)))
+
+      // Auto-retry on timeout
+      if (errorMsg.includes('timeout') && retryCount < 2 && mountedRef.current && !controller.signal.aborted) {
+        debug.info('ResourcesPage', `Timeout detected, auto-retrying (attempt ${retryCount + 2})...`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+        if (mountedRef.current && !controller.signal.aborted) {
+          loadResources(retryCount + 1)
+          return
+        }
+      }
+
       if (mountedRef.current && !controller.signal.aborted) setError(errorMsg)
     } finally {
         if (mountedRef.current && !controller.signal.aborted) setLoading(false)
@@ -104,9 +116,6 @@ export default function Resources() {
       }
     }
   }, [])
-
-  // Refresh data when tab becomes visible again after being hidden
-  useVisibilityRefresh()
 
   // Show retry overlay if a normal load gets stuck
   useEffect(() => {

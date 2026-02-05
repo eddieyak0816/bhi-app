@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { supabase, withTimeout } from '../lib/supabase'
+import { supabase, directFetch } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
-import { useVisibilityRefresh } from '../hooks/useVisibilityRefresh'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
@@ -385,47 +384,77 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     }
   }
 
-  // load health goals from Supabase
-  async function loadHealthGoals() {
+  // load health goals using direct fetch (more reliable)
+  async function loadHealthGoals(retryCount = 0) {
     try {
       try { loadHealthGoalsControllerRef.current?.abort() } catch {}
       const controller = new AbortController()
       loadHealthGoalsControllerRef.current = controller
-      const result = await withTimeout(
-        supabase.from('health_goals').select('*').order('name') as any,
-        8000
-      ) as any
-      const { data, error } = result
+
+      console.log(`[Admin] Loading health goals (attempt ${retryCount + 1})...`)
+
+      const { data, error } = await directFetch<{
+        id: string
+        name: string
+        description?: string
+        is_active: boolean
+      }>('health_goals', {
+        order: { column: 'name', ascending: true },
+        timeout: 8000
+      })
+
       if (controller.signal.aborted) return
       if (error) {
-        console.warn('loadHealthGoals error:', error)
-        return
+        throw error
       }
-      if (!controller.signal.aborted) setHealthGoals(data || [])
+      setHealthGoals(data || [])
+      console.log('[Admin] Successfully loaded health goals')
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
       console.error('loadHealthGoals', err)
+      // Auto-retry on timeout
+      if (errorMsg.includes('timeout') && retryCount < 2) {
+        console.log(`[Admin] Health goals timeout, retrying (attempt ${retryCount + 2})...`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+        loadHealthGoals(retryCount + 1)
+      }
     }
   }
 
-  // load categories from Supabase
-  async function loadCategories() {
+  // load categories using direct fetch (more reliable)
+  async function loadCategories(retryCount = 0) {
     try {
       try { loadCategoriesControllerRef.current?.abort() } catch {}
       const controller = new AbortController()
       loadCategoriesControllerRef.current = controller
-      const result = await withTimeout(
-        supabase.from('categories').select('*').order('name') as any,
-        8000
-      ) as any
-      const { data, error } = result
+
+      console.log(`[Admin] Loading categories (attempt ${retryCount + 1})...`)
+
+      const { data, error } = await directFetch<{
+        id: string
+        name: string
+        description?: string
+        is_active: boolean
+      }>('categories', {
+        order: { column: 'name', ascending: true },
+        timeout: 8000
+      })
+
       if (controller.signal.aborted) return
       if (error) {
-        console.warn('loadCategories error:', error)
-        return
+        throw error
       }
-      if (!controller.signal.aborted) setCategories(data || [])
+      setCategories(data || [])
+      console.log('[Admin] Successfully loaded categories')
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
       console.error('loadCategories', err)
+      // Auto-retry on timeout
+      if (errorMsg.includes('timeout') && retryCount < 2) {
+        console.log(`[Admin] Categories timeout, retrying (attempt ${retryCount + 2})...`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+        loadCategories(retryCount + 1)
+      }
     }
   }
 
@@ -627,9 +656,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     else if (activeTab === 'criteria') load()
     else if (activeTab === 'audit') loadAudit()
   }, [activeTab])
-
-  // Refresh page when tab becomes visible again after being hidden
-  useVisibilityRefresh()
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {

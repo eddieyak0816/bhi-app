@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
-import { supabase, withTimeout } from '../lib/supabase'
-import { useVisibilityRefresh } from '../hooks/useVisibilityRefresh'
+import { directFetch } from '../lib/supabase'
 
 interface ProfilePageProps {
   userEmail?: string
@@ -49,40 +48,59 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
     }))
   }, [displayName, displayEmail])
 
-  // Load health goals and resource types from Supabase
-  const loadOptions = async () => {
+  // Load health goals and resource types using direct fetch (more reliable)
+  const loadOptions = async (retryCount = 0) => {
     setLoading(true)
     setLoadError(null)
     try { loadControllerRef.current?.abort() } catch {}
     const controller = new AbortController()
     loadControllerRef.current = controller
 
-    try {
-      const result = await withTimeout(
-        Promise.all([
-          supabase.from('health_goals').select('*').eq('is_active', true).order('name'),
-          supabase.from('resource_types').select('name').order('name')
-        ]) as any,
-        8000
-      ) as any
-      const [goalsResponse, typesResponse] = result
+    console.log(`[ProfilePage] Loading options (attempt ${retryCount + 1})...`)
 
-      if (goalsResponse.error) {
-        console.warn('Health goals fetch error:', goalsResponse.error)
-        throw goalsResponse.error
+    try {
+      // Use direct fetch for reliability - Supabase client can get stuck after window switches
+      const [goalsResult, typesResult] = await Promise.all([
+        directFetch<HealthGoal>('health_goals', {
+          eq: { column: 'is_active', value: true },
+          order: { column: 'name', ascending: true },
+          timeout: 8000
+        }),
+        directFetch<{ name: string }>('resource_types', {
+          select: 'name',
+          order: { column: 'name', ascending: true },
+          timeout: 8000
+        })
+      ])
+
+      if (goalsResult.error) {
+        console.warn('Health goals fetch error:', goalsResult.error)
+        throw goalsResult.error
       }
-      if (typesResponse.error) {
-        console.warn('Resource types fetch error:', typesResponse.error)
-        throw typesResponse.error
+      if (typesResult.error) {
+        console.warn('Resource types fetch error:', typesResult.error)
+        throw typesResult.error
       }
 
       if (controller.signal.aborted) return
-      setHealthGoals(goalsResponse.data || [])
-      setResourceTypes((typesResponse.data || []).map((t: any) => t.name))
+      setHealthGoals(goalsResult.data || [])
+      setResourceTypes((typesResult.data || []).map((t: { name: string }) => t.name))
       setLoadError(null)
+      console.log('[ProfilePage] Successfully loaded options')
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
-      console.error(`Failed to load options: ${errorMsg}`, err)
+      console.error(`[ProfilePage] Failed to load options: ${errorMsg}`, err)
+
+      // Auto-retry on timeout (up to 2 retries)
+      if (errorMsg.includes('timeout') && retryCount < 2 && !controller.signal.aborted) {
+        console.log(`[ProfilePage] Timeout detected, auto-retrying (attempt ${retryCount + 2})...`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+        if (!controller.signal.aborted) {
+          loadOptions(retryCount + 1)
+          return
+        }
+      }
+
       if (!controller.signal.aborted) setLoadError(errorMsg)
     } finally {
       if (!controller.signal.aborted) setLoading(false)
@@ -93,10 +111,6 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
   useEffect(() => {
     loadOptions()
   }, [])
-
-  // Refresh data when tab becomes visible again after being hidden
-  useVisibilityRefresh()
-
 
   const handleGoalToggle = (goal: string) => {
     setFormData(prev => ({
