@@ -331,8 +331,11 @@ export default function Resources() {
                       padding: 16,
                       cursor: 'pointer',
                       transition: 'all 0.2s',
-                      display: viewMode === 'list' ? 'flex' : 'block',
+                      display: 'flex',
+                      flexDirection: viewMode === 'list' ? 'row' : 'column',
                       gap: viewMode === 'list' ? 16 : 0,
+                      justifyContent: viewMode === 'list' ? 'space-between' : 'flex-start',
+                      alignItems: viewMode === 'list' ? 'flex-end' : 'stretch',
                     }}
                     onMouseEnter={e => {
                       ;(e.currentTarget as HTMLElement).style.borderColor = theme.blue
@@ -371,7 +374,7 @@ export default function Resources() {
                         </div>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: 8, flexDirection: viewMode === 'list' ? 'row' : 'column', alignSelf: 'flex-start' }}>
+                    <div style={{ display: 'flex', gap: 8, flexDirection: viewMode === 'list' ? 'row' : 'column', marginTop: viewMode === 'list' ? 0 : 12 }}>
                       <button
                         onClick={() => toggleBookmark(resource.id)}
                         style={{
