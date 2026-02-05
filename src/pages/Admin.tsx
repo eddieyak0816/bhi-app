@@ -284,8 +284,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     return res.json().catch(() => null)
   }
 
-  // Controller used to cancel in-flight admin loads when a refresh happens
+  // Separate controllers for each async function to prevent cross-interference
   const loadControllerRef = React.useRef<AbortController | null>(null)
+  const loadAuditControllerRef = React.useRef<AbortController | null>(null)
+  const loadTagsControllerRef = React.useRef<AbortController | null>(null)
+  const loadResourceTypesControllerRef = React.useRef<AbortController | null>(null)
+  const loadHealthGoalsControllerRef = React.useRef<AbortController | null>(null)
+  const loadCategoriesControllerRef = React.useRef<AbortController | null>(null)
 
   async function load() {
     // cancel previous load
@@ -310,9 +315,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   }
 
   async function loadAudit() {
-    try { loadControllerRef.current?.abort() } catch {}
+    try { loadAuditControllerRef.current?.abort() } catch {}
     const controller = new AbortController()
-    loadControllerRef.current = controller
+    loadAuditControllerRef.current = controller
     setLoading(true)
     try {
       const res = await fetch(apiUrl('/api/admin/audit'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}, signal: controller.signal })
@@ -323,15 +328,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       if (!controller.signal.aborted) console.error('loadAudit', err)
     } finally {
       if (!controller.signal.aborted) setLoading(false)
-      if (loadControllerRef.current === controller) loadControllerRef.current = null
+      if (loadAuditControllerRef.current === controller) loadAuditControllerRef.current = null
     }
   }
 
   // load canonical tags for the tag-manager
   async function loadTags() {
-    try { loadControllerRef.current?.abort() } catch {}
+    try { loadTagsControllerRef.current?.abort() } catch {}
     const controller = new AbortController()
-    loadControllerRef.current = controller
+    loadTagsControllerRef.current = controller
     try {
       const res = await fetch(apiUrl('/api/admin/tags'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}, signal: controller.signal })
       if (!res.ok || controller.signal.aborted) return
@@ -341,15 +346,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     } catch (err) {
       if (!controller.signal.aborted) console.error('loadTags', err)
     } finally {
-      if (loadControllerRef.current === controller) loadControllerRef.current = null
+      if (loadTagsControllerRef.current === controller) loadTagsControllerRef.current = null
     }
   }
 
   // load resource types
   async function loadResourceTypes() {
-    try { loadControllerRef.current?.abort() } catch {}
+    try { loadResourceTypesControllerRef.current?.abort() } catch {}
     const controller = new AbortController()
-    loadControllerRef.current = controller
+    loadResourceTypesControllerRef.current = controller
     try {
       const res = await fetch(apiUrl('/api/admin/resource-types'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}, signal: controller.signal })
       if (!res.ok || controller.signal.aborted) return
@@ -376,16 +381,16 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     } catch (err) {
       if (!controller.signal.aborted) console.error('loadResourceTypes', err)
     } finally {
-      if (loadControllerRef.current === controller) loadControllerRef.current = null
+      if (loadResourceTypesControllerRef.current === controller) loadResourceTypesControllerRef.current = null
     }
   }
 
   // load health goals from Supabase
   async function loadHealthGoals() {
     try {
-      try { loadControllerRef.current?.abort() } catch {}
+      try { loadHealthGoalsControllerRef.current?.abort() } catch {}
       const controller = new AbortController()
-      loadControllerRef.current = controller
+      loadHealthGoalsControllerRef.current = controller
       const result = await withTimeout(
         supabase.from('health_goals').select('*').order('name') as any,
         8000
@@ -405,9 +410,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // load categories from Supabase
   async function loadCategories() {
     try {
-      try { loadControllerRef.current?.abort() } catch {}
+      try { loadCategoriesControllerRef.current?.abort() } catch {}
       const controller = new AbortController()
-      loadControllerRef.current = controller
+      loadCategoriesControllerRef.current = controller
       const result = await withTimeout(
         supabase.from('categories').select('*').order('name') as any,
         8000
