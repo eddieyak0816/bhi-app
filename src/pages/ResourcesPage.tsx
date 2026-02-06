@@ -21,7 +21,10 @@ export default function Resources() {
   const [error, setError] = useState<string | null>(null)
   const [filterType, setFilterType] = useState('')
   const [filterTag, setFilterTag] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [categoriesList, setCategoriesList] = useState<Array<{ id: number; name: string }>>([])
+  const [categoryTagMap, setCategoryTagMap] = useState<Record<string, string[]>>({})
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null)
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set())
@@ -153,6 +156,41 @@ export default function Resources() {
     }
   }, [])
 
+  // Load categories and tag->category mapping for client-side filtering
+  useEffect(() => {
+    let mounted = true
+    async function loadCategories() {
+      try {
+        const { data: cats, error: catsErr } = await directFetch<{ id: number; name: string }>('categories', { timeout: 8000 })
+        if (catsErr) throw catsErr
+        if (!mounted) return
+        const catsArr = cats || []
+        setCategoriesList(catsArr)
+
+        // Load tag_categories join rows
+        const { data: tcs, error: tcErr } = await directFetch<{ tag_name: string; category_id: number }>('tag_categories', { timeout: 8000 })
+        if (tcErr) throw tcErr
+        const tcRows = tcs || []
+
+        const idToName: Record<number, string> = {}
+        for (const c of catsArr) idToName[c.id] = c.name
+
+        const map: Record<string, string[]> = {}
+        for (const row of tcRows) {
+          const cname = idToName[row.category_id]
+          if (!cname) continue
+          map[cname] = map[cname] || []
+          if (!map[cname].includes(row.tag_name)) map[cname].push(row.tag_name)
+        }
+        if (mounted) setCategoryTagMap(map)
+      } catch (err) {
+        debug.warn('ResourcesPage', 'Failed to load categories or tag mappings', err)
+      }
+    }
+    loadCategories()
+    return () => { mounted = false }
+  }, [])
+
   // Save bookmarks to localStorage
   const toggleBookmark = (id: string) => {
     const newBookmarks = new Set(bookmarks)
@@ -167,12 +205,24 @@ export default function Resources() {
 
   const uniqueTypes = Array.from(new Set(resources.map(r => r.type)))
   const uniqueTags = Array.from(new Set(resources.flatMap(r => r.tags)))
+  const uniqueCategories = categoriesList.map(c => c.name)
 
   const filtered = resources.filter(r => {
     const matchType = !filterType || r.type === filterType
     const matchTag = !filterTag || r.tags.includes(filterTag)
-    const matchSearch = !searchTerm || r.title.toLowerCase().includes(searchTerm.toLowerCase()) || r.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchType && matchTag && matchSearch
+
+    // match category filter: check resource.tags intersection with tags assigned to selected category
+    let matchCategory = true
+    if (filterCategory) {
+      const tagsForCategory = categoryTagMap[filterCategory] || []
+      const resourceTags = r.tags || []
+      matchCategory = resourceTags.some(t => tagsForCategory.includes(t)) || (Array.isArray((r as any).categories) && (r as any).categories.includes(filterCategory))
+    }
+
+    const q = searchTerm.trim().toLowerCase()
+    const matchSearch = !q || r.title.toLowerCase().includes(q) || r.description?.toLowerCase().includes(q) || r.tags.some(t => t.toLowerCase().includes(q)) || (Array.isArray((r as any).categories) && (r as any).categories.join(' ').toLowerCase().includes(q))
+
+    return matchType && matchTag && matchCategory && matchSearch
   })
 
   // Prioritize resources matching user's tags
@@ -283,6 +333,28 @@ export default function Resources() {
                     <option key={t} value={t}>
                       {t}
                     </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Category</label>
+                <select
+                  value={filterCategory}
+                  onChange={e => setFilterCategory(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: `1.5px solid ${theme.borderColor}`,
+                    borderRadius: 6,
+                    fontSize: 14,
+                    background: theme.bg,
+                    color: theme.text,
+                  }}
+                >
+                  <option value="">All Categories</option>
+                  {uniqueCategories.map(c => (
+                    <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
               </div>

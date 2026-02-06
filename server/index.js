@@ -451,6 +451,104 @@ app.get('/api/admin/tags', async (req, res) => {
   }
 });
 
+// ADMIN: Categories CRUD (server-only)
+app.get('/api/admin/categories', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('categories').select('*').order('name', { ascending: true });
+    if (error) {
+      console.error('admin-list-categories-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(200).json(data || []);
+  } catch (err) {
+    console.error('admin-categories-list-error', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.post('/api/admin/categories', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const { name, description, is_active } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'missing-name' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('categories').insert([{ name, description: description || '', is_active: typeof is_active === 'boolean' ? is_active : true }]).select('id');
+    if (error) {
+      console.error('admin-insert-category-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    const returnedId = Array.isArray(data) ? data[0].id : data;
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'create_category', p_target_table: 'categories', p_target_id: returnedId, p_details: { name } });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+    } catch (err) { console.warn('admin-audit-exception', err) }
+    return res.status(200).json({ id: returnedId });
+  } catch (err) {
+    console.error('admin-insert-category-exception', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.patch('/api/admin/categories/:id', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const id = req.params.id;
+  const { name, description, is_active } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'missing-id' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (description !== undefined) updates.description = description;
+    if (is_active !== undefined) updates.is_active = is_active;
+    if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'no-fields-to-update' });
+    const { error } = await sb.from('categories').update(updates).eq('id', id);
+    if (error) {
+      console.error('admin-update-category-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'update_category', p_target_table: 'categories', p_target_id: id, p_details: updates });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+    } catch (err) { console.warn('admin-audit-exception', err) }
+    return res.status(200).json({ updated: id });
+  } catch (err) {
+    console.error('admin-update-category-exception', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.delete('/api/admin/categories/:id', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'missing-id' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('categories').delete().eq('id', id);
+    if (error) {
+      console.error('admin-delete-category-error', error);
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'delete_category', p_target_table: 'categories', p_target_id: id, p_details: '{}' });
+      if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
+    } catch (err) { console.warn('admin-audit-exception', err) }
+    return res.status(200).json({ deleted: id });
+  } catch (err) {
+    console.error('admin-delete-category-exception', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // ADMIN: create a tag (server-side persistent when possible; accepts optional category_name or categories[])
 app.post('/api/admin/tags', async (req, res) => {
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
@@ -613,28 +711,43 @@ app.patch('/api/admin/resource-types/:name', async (req, res) => {
   try {
     console.log('PATCH resource-type', { oldName, newName });
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    // Update resource_types table - try exact match first, then case-insensitive
-    let { data: updateData, error: upErr } = await sb.from('resource_types').update({ name: newName }).eq('name', oldName).select();
-    if ((!updateData || updateData.length === 0) && upErr === null) {
-      console.log('No exact match found, trying case-insensitive');
-      // Try case-insensitive match
-      ({ data: updateData, error: upErr } = await sb.from('resource_types').update({ name: newName }).ilike('name', oldName).select());
-    }
-    console.log('Update result:', { data: updateData, error: upErr });
-    if (upErr) {
-      console.error('resource-type-update-error', upErr);
-      return res.status(500).json({ error: 'db_error', detail: upErr });
-    }
-    // Propagate to resources.type field
-    const { error: resErr } = await sb.from('resources').update({ type: newName }).ilike('type', oldName);
-    if (resErr) console.warn('resources-type-propagate-failed', resErr);
-    
+    const normalizedNew = (newName || '').toString().trim().toLowerCase();
+
+    // 1) Ensure new resource type exists (upsert)
     try {
-      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'update_resource_type', p_target_table: 'resource_types', p_target_id: null, p_details: { oldName, newName } });
+      const { error: upsertErr } = await sb.from('resource_types').upsert([{ name: normalizedNew }]);
+      if (upsertErr) {
+        console.error('resource-type-upsert-error', upsertErr);
+        return res.status(500).json({ error: 'db_error', detail: upsertErr });
+      }
+    } catch (err) {
+      console.error('resource-type-upsert-ex', err);
+      return res.status(500).json({ error: 'server_error', detail: String(err) });
+    }
+
+    // 2) Propagate to resources.type field (update resources to reference new name)
+    try {
+      const { error: resErr } = await sb.from('resources').update({ type: normalizedNew }).ilike('type', oldName);
+      if (resErr) console.warn('resources-type-propagate-failed', resErr);
+    } catch (err) {
+      console.error('resources-type-propagate-ex', err);
+      return res.status(500).json({ error: 'server_error', detail: String(err) });
+    }
+
+    // 3) Remove old resource_type entry (if exists)
+    try {
+      const { error: delErr } = await sb.from('resource_types').delete().ilike('name', oldName);
+      if (delErr) console.warn('resource-types-delete-old-failed', delErr);
+    } catch (err) {
+      console.error('resource-types-delete-old-ex', err);
+    }
+
+    try {
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'update_resource_type', p_target_table: 'resource_types', p_target_id: null, p_details: { oldName, newName: normalizedNew } });
       if (auditErr) console.warn('admin-audit-rpc-error', auditErr);
     } catch (err) { console.warn('admin-audit-exception', err); }
-    
-    return res.status(200).json({ oldName, newName });
+
+    return res.status(200).json({ oldName, newName: normalizedNew });
   } catch (err) {
     console.error('admin-update-resource-type-error', err);
     return res.status(500).json({ error: 'server_error', detail: String(err) });

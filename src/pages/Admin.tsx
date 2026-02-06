@@ -59,6 +59,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [auditRows, setAuditRows] = useState<Array<any>>([])
   const [healthGoals, setHealthGoals] = useState<Array<{id: string; name: string; description?: string; is_active: boolean}>>([])
   const [categories, setCategories] = useState<Array<{id: string; name: string; description?: string; is_active: boolean}>>([])
+  const [categoriesError, setCategoriesError] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [selectAll, setSelectAll] = useState(false)
   const [selectedTagNames, setSelectedTagNames] = useState<string[]>([])
@@ -445,7 +446,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     }
   }
 
-  // load categories using direct fetch (more reliable)
+  // load categories via server admin endpoint (requires backend key)
   async function loadCategories(retryCount = 0) {
     try {
       try { loadCategoriesControllerRef.current?.abort() } catch {}
@@ -454,25 +455,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
       console.log(`[Admin] Loading categories (attempt ${retryCount + 1})...`)
 
-      const { data, error } = await directFetch<{
-        id: string
-        name: string
-        description?: string
-        is_active: boolean
-      }>('categories', {
-        order: { column: 'name', ascending: true },
-        timeout: 8000
-      })
-
+      const data = await fetchJson('/api/admin/categories', { method: 'GET' }, controller.signal).catch(err => { throw err })
       if (controller.signal.aborted) return
-      if (error) {
-        throw error
-      }
-      setCategories(data || [])
+      setCategoriesError(null)
+      setCategories(Array.isArray(data) ? data : [])
       console.log('[Admin] Successfully loaded categories')
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
       console.error('loadCategories', err)
+      setCategoriesError(errorMsg)
       // Auto-retry on timeout
       if (errorMsg.includes('timeout') && retryCount < 2) {
         console.log(`[Admin] Categories timeout, retrying (attempt ${retryCount + 2})...`)
@@ -2462,11 +2453,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   <button className="btn-primary" onClick={async () => {
                     if (!newTypeName.trim()) return alert('Category name required')
                     try {
-                      const res = await supabase.from('categories').insert({ name: newTypeName.trim(), description: categoryDescription.trim(), is_active: true })
-                      if (res.error) {
-                        console.error('Insert error:', res.error)
-                        throw res.error
-                      }
+                      await fetchJson('/api/admin/categories', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: newTypeName.trim(), description: categoryDescription.trim(), is_active: true }) })
                       setNewTypeName('')
                       setCategoryDescription('')
                       await loadCategories()
@@ -2486,7 +2473,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {categories.length === 0 ? (
                 <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:32,textAlign:'center',color:theme.textMuted}}>
-                  No categories found. Add one above or run the migration to add defaults.
+                  {categoriesError ? (
+                    <div>
+                      <p style={{margin:0}}>Failed to load categories: {categoriesError}</p>
+                      <p style={{marginTop:8,fontSize:13}}>Ensure the backend is running and VITE_BACKEND_API_KEY is set for the Admin UI.</p>
+                    </div>
+                  ) : (
+                    <div>No categories found. Add one above or run the migration to add defaults.</div>
+                  )}
                 </div>
               ) : viewMode.categories === 'table' ? (
                 <>
@@ -2511,8 +2505,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               </button>
                               <button onClick={async () => {
                                 if (!confirm('Delete this category?')) return
-                                await supabase.from('categories').delete().eq('id', cat.id)
-                                await loadCategories()
+                                try {
+                                  await fetchJson(`/api/admin/categories/${encodeURIComponent(cat.id)}`, { method: 'DELETE' })
+                                  await loadCategories()
+                                } catch (err) {
+                                  console.error('Delete category error:', err)
+                                  alert('Delete failed — ' + ((err as any)?.message || 'check server logs'))
+                                }
                               }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)} aria-label={`Delete category ${cat.name}`}>
                                 ✕
                               </button>
@@ -2563,8 +2562,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           </button>
                           <button onClick={async () => {
                             if (!confirm('Delete this category?')) return
-                            await supabase.from('categories').delete().eq('id', cat.id)
-                            await loadCategories()
+                            try {
+                              await fetchJson(`/api/admin/categories/${encodeURIComponent(cat.id)}`, { method: 'DELETE' })
+                              await loadCategories()
+                            } catch (err) {
+                              console.error('Delete category error:', err)
+                              alert('Delete failed — ' + ((err as any)?.message || 'check server logs'))
+                            }
                           }} style={cardButtonStyles.delete as any} {...getButtonHoverHandlers(true)}>
                             ✕ Delete
                           </button>
@@ -2600,9 +2604,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </button>
                   <button onClick={async () => {
                     if (!confirm('Delete this category?')) return
-                    await supabase.from('categories').delete().eq('id', categoryModalData.id)
-                    await loadCategories()
-                    setCategoryModalOpen(false)
+                    try {
+                      await fetchJson(`/api/admin/categories/${encodeURIComponent(categoryModalData.id)}`, { method: 'DELETE' })
+                      await loadCategories()
+                      setCategoryModalOpen(false)
+                    } catch (err) {
+                      console.error('Delete category error:', err)
+                      alert('Delete failed — ' + ((err as any)?.message || 'check server logs'))
+                    }
                   }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444',fontWeight:600}}>
                     Delete
                   </button>
@@ -2618,7 +2627,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   <button onClick={async () => {
                     if (!categoryEditForm.name?.trim()) return alert('Category name required')
                     try {
-                      await supabase.from('categories').update({name: categoryEditForm.name.trim(), description: categoryEditForm.description?.trim() || ''}).eq('id', categoryModalData.id)
+                      await fetchJson(`/api/admin/categories/${encodeURIComponent(categoryModalData.id)}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: categoryEditForm.name.trim(), description: categoryEditForm.description?.trim() || '' }) })
                       await loadCategories()
                       setCategoryModalOpen(false)
                       setIsEditingCategory(false)

@@ -1,6 +1,6 @@
 export type LabMarker = { id: string; name: string; unit?: string; min_normal?: number; max_normal?: number }
 export type LogicRule = { marker_id: string; min_value: number; max_value: number; tag_to_apply: string }
-export type Resource = { type: string; title: string; description?: string; link_url?: string; tags: string[] }
+export type Resource = { type: string; title: string; description?: string; link_url?: string; tags: string[]; categories?: string[] }
 export type SampleData = { lab_markers: LabMarker[]; logic_rules: LogicRule[]; resources: Resource[] }
 
 export function loadSampleData(): SampleData {
@@ -15,9 +15,9 @@ export function loadSampleData(): SampleData {
       { marker_id: vitDId, min_value: 30.1, max_value: 1000, tag_to_apply: 'Normal D' }
     ],
     resources: [
-      { type: 'video', title: 'Understanding Low Vit D', tags: ['Low D'] },
-      { type: 'doctor', title: 'Dr. Jane Smith', tags: ['Low D'] },
-      { type: 'article', title: 'Why Vitamin D matters', tags: ['Normal D'] }
+      { type: 'video', title: 'Understanding Low Vit D', tags: ['Low D'], categories: ['Nutrition'] },
+      { type: 'doctor', title: 'Dr. Jane Smith', tags: ['Low D'], categories: ['Nutrition'] },
+      { type: 'article', title: 'Why Vitamin D matters', tags: ['Normal D'], categories: ['Nutrition'] }
     ]
   }
 }
