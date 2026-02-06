@@ -813,23 +813,23 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // Helper to handle category selection from modal
   const handleCategorySelect = (category: string) => {
     if (categorySearchContext === 'create') {
-      setSelectedCategories(prev => prev.includes(category) ? prev : [...prev, category])
+      setSelectedCategories(prev => prev.includes(category) ? prev : [category, ...prev])
     } else if (categorySearchContext === 'edit') {
       if (resourceModalOpen && isEditingResource) {
         // Editing resource in modal
-        setResourceEditForm(prev => ({...prev, categories: (prev.categories || []).includes(category) ? prev.categories : [...(prev.categories || []), category]}))
+        setResourceEditForm(prev => ({...prev, categories: (prev.categories || []).includes(category) ? prev.categories : [category, ...(prev.categories || [])]}))
       } else {
         // Editing resource in table (inline)
         setEditData(prev => {
           const categories = (prev as any)?.categories || []
           return {
             ...prev,
-            categories: categories.includes(category) ? categories : [...categories, category]
+            categories: categories.includes(category) ? categories : [category, ...categories]
           }
         })
       }
     } else if (categorySearchContext === 'filter') {
-      setFilterCategories(prev => prev.includes(category) ? prev : [...prev, category])
+      setFilterCategories(prev => prev.includes(category) ? prev : [category, ...prev])
     }
     setCategorySearchInput('')
   }
@@ -872,7 +872,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
                     >
                       <option value="">(All Actions)</option>
-                      {Array.from(new Set(auditRows.map(a => a.action))).sort().map(action => (
+                      {Array.from(new Set(auditRows.map(a => a.action))).sort((a,b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' })).map(action => (
                         <option key={action} value={action}>{action}</option>
                       ))}
                     </select>
@@ -885,7 +885,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
                     >
                       <option value="">(All Tables)</option>
-                      {Array.from(new Set(auditRows.map(a => a.target_table))).sort().map(table => (
+                      {Array.from(new Set(auditRows.map(a => a.target_table))).sort((a,b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' })).map(table => (
                         <option key={table} value={table}>{table}</option>
                       ))}
                     </select>
@@ -941,7 +941,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Create New Resource</h3>
                   <div style={{display:'flex',gap:12,alignItems:'center'}}>
                     <select value={type} onChange={e => { console.info('type select changed:', e.target.value); setType(e.target.value) }} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
-                      {resourceTypes.map(rt => <option key={rt} value={rt}>{rt}</option>)}
+                      {(resourceTypes || []).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(rt => <option key={rt} value={rt}>{rt}</option>)}
                     </select>
                     <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{flex:1,minWidth:200,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
                     <div style={{display:'flex',gap:6,minWidth:300}}>
@@ -1023,7 +1023,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             })
                             .map(r => r.title)
                             .filter(t => !filterKeyword || t.toLowerCase().includes(filterKeyword.toLowerCase()))
-                        )).sort().map(title => <option key={title} value={title} />)}
+                        )).sort((a,b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' })).map(title => <option key={title} value={title} />)}
                       </datalist>
                     </div>
                   </div>
@@ -1143,19 +1143,20 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </tr>
                   </thead>
                   <tbody>
-                    {(sortColumn ? sortData(resources
-                      .filter(r => {
-                        if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                        if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
-                        if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
-                        return true
-                      }), sortColumn) : resources
-                      .filter(r => {
-                        if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                        if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
-                        if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
-                        return true
-                      })
+                    {(
+                      sortColumn ? sortData(resources
+                        .filter(r => {
+                          if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                          if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
+                          if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                          return true
+                        }), sortColumn) : (resources || [])
+                        .filter(r => {
+                          if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                          if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
+                          if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                          return true
+                        }).slice().sort((a,b) => (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' }))
                     )
                       .map(r => (
                         <tr key={r.id} data-id={r.id} style={styles.tableRow}>
@@ -1194,21 +1195,22 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
               ) : (
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
-                {(sortColumn ? sortData(resources
-                  .filter(r => {
-                    if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                    if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
-                    if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
-                    if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
-                    return true
-                  }), sortColumn) : resources
-                  .filter(r => {
-                    if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
-                    if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
-                    if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
-                    if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
-                    return true
-                  })
+                {(
+                  sortColumn ? sortData(resources
+                    .filter(r => {
+                      if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                      if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
+                      if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                      if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
+                      return true
+                    }), sortColumn) : (resources || [])
+                    .filter(r => {
+                      if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
+                      if (filterTypes.length > 0 && !filterTypes.some(ft => ft.toLowerCase() === (r.type || '').toLowerCase())) return false
+                      if (filterTags.length > 0 && !filterTags.some(t => r.tags.includes(t))) return false
+                      if (filterCategories.length > 0 && !(r.categories || []).some(c => filterCategories.includes(c))) return false
+                      return true
+                    }).slice().sort((a,b) => (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' }))
                 ).map(r => (
                   <div key={r.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%',position:'relative'}}>
                     {editingId === r.id ? (
@@ -1216,7 +1218,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus placeholder="Title" style={styles.input} />
                         <div style={{display:'flex',gap:8,marginTop:8}}>
                           <select value={editData.type || r.type} onChange={e => setEditData({...editData, type: e.target.value})} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
-                            {resourceTypes.map(rt => <option key={rt} value={rt}>{rt}</option>)}
+                            {(resourceTypes || []).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(rt => <option key={rt} value={rt}>{rt}</option>)}
                           </select>
                           <select value={editData.link_protocol || 'https://'} onChange={e => setEditData({...editData, link_protocol: e.target.value})} style={{padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',width:'auto',flexShrink:0}}>
                             <option value="https://">https://</option>
@@ -1662,7 +1664,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       </tr>
                     </thead>
                     <tbody>
-                      {healthGoals.map(goal => (
+                      {(healthGoals || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(goal => (
                         <tr key={goal.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
                           <td style={{padding:12,color:theme.text}}>{goal.name}</td>
                           <td style={{padding:12,color:theme.textMuted}}>{goal.description || '-'}</td>
@@ -1687,7 +1689,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 </div>
               ) : (
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
-                  {healthGoals.map(goal => {
+                  {(healthGoals || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(goal => {
                     const description = goal.description || 'No description'
                     const titleTooLong = goal.name.length > 25
                     const descriptionTooLong = description.length > 85
@@ -1716,6 +1718,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             </span>
                           )}
                         </p>
+                        <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
+                          {(Object.keys(tagsMeta || {}).filter((t: string) => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(goal.name))).map((t: string) => (
+                            <span key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 8px',background:'#3b82f6',color:'#fff',borderRadius:12,fontSize:12,fontWeight:500}}>{t}</span>
+                          ))}
+                        </div>
                         <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
                           <button onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>
                             ✎ Edit
@@ -1811,7 +1818,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       onChange={e => setRuleForm(f => ({ ...f, markerName: e.target.value }))}
                     />
                     <datalist id="add-criteria-markers-list">
-                      {labMarkers.map(m => <option key={m.id} value={m.name} />)}
+                      {(labMarkers || []).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(m => <option key={m.id} value={m.name} />)}
                     </datalist>
                   </div>
                   <div>
@@ -1833,7 +1840,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       onChange={e => setRuleForm(f => ({ ...f, tag_to_apply: e.target.value }))}
                     />
                     <datalist id="add-criteria-tags-list">
-                      {allowedTags.map(t => <option key={t} value={t} />)}
+                      {(allowedTags || []).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(t => <option key={t} value={t} />)}
                     </datalist>
                   </div>
                   <button className="btn-primary" onClick={saveRule}>Add Criteria</button>
@@ -1862,7 +1869,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         .map(markerId => labMarkers.find(m => m.id === markerId))
                         .filter(m => m && (!filterCriteriaMarker || m.name.toLowerCase().includes(filterCriteriaMarker.toLowerCase())))
                         .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''))
-                        .map(m => <option key={m?.id} value={m?.name || ''} />)
+                        .map(m => m).slice().sort((a:any,b:any) => (a?.name || '').localeCompare(b?.name || '', undefined, { sensitivity: 'base' })).map(m => <option key={m?.id} value={m?.name || ''} />)
                       }
                     </datalist>
                   </div>
@@ -2026,7 +2033,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                   style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}}
                                 />
                                 <datalist id="edit-criteria-markers-list">
-                                  {labMarkers.map(m => <option key={m.id} value={m.name} />)}
+                                  {(labMarkers || []).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(m => <option key={m.id} value={m.name} />)}
                                 </datalist>
                               </td>
                               <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.min_value || ''} onChange={e => setEditData({...editData, min_value: e.target.value})} style={{width:'80px',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
@@ -2044,7 +2051,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               <td style={{padding:8}}>
                                 <select value={editData.tag_to_apply || ''} onChange={e => setEditData({...editData, tag_to_apply: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}}>
                                   <option value="">(none)</option>
-                                  {allowedTags.map(t => <option key={t} value={t}>{t}</option>)}
+                                  {(allowedTags || []).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                               </td>
                               <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
@@ -2147,7 +2154,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       />
                       <div style={{position:'absolute',right:8,pointerEvents:'none',color:theme.text,fontSize:12}}>▼</div>
                       <datalist id="search-resource-types-list">
-                        {Array.from(new Set(resourceTypes.filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))).sort().map(t => <option key={t} value={t} />)}
+                        {Array.from(new Set(resourceTypes.filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))).sort((a,b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' })).map(t => <option key={t} value={t} />)}
                       </datalist>
                     </div>
                   </div>
@@ -2177,10 +2184,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </tr>
                   </thead>
                   <tbody>
-                    {(sortColumn ? sortData(resourceTypes
-                      .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
-                      .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
-                      .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))
+                    {(
+                      sortColumn ? sortData(resourceTypes
+                        .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
+                        .map(name => ({name})), 'name').map(obj => obj.name)
+                      : (resourceTypes || []).filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })) )
                       .map(rt => (
                       <tr key={rt} style={{borderTop:`1px solid ${theme.borderColor}`,cursor:'pointer'}} onClick={() => { setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }}>
                         <td style={{padding:8}}><strong>{rt}</strong></td>
@@ -2207,10 +2215,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
               ) : (
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
-                {(sortColumn ? sortData(resourceTypes
-                  .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
-                  .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
-                  .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))).map(rt => (
+                {(
+                  sortColumn ? sortData(resourceTypes
+                    .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
+                    .map(name => ({name})), 'name').map(obj => obj.name)
+                  : (resourceTypes || []).filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })) ).map(rt => (
                   <div key={rt} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
                     <h5 style={{margin:'0 0 12px 0',fontSize:16,fontWeight:600}}>{rt}</h5>
                     <div style={{display:'flex',gap:8,justifyContent:'center'}}>
@@ -2428,11 +2437,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
               ) : (
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
-                {labMarkers
+                {(labMarkers || [])
                   .filter(m => 
                     (!filterLabMarkerName || m.name === filterLabMarkerName)
                     && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
-                  )
+                  ).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
                   .map(m => (
                   <div key={m.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%'}}>
                     {editingId === m.id ? (
@@ -2558,13 +2567,16 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       </tr>
                     </thead>
                     <tbody>
-                      {categories.map(cat => (
+                      {(categories || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(cat => (
                         <tr key={cat.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
                           <td style={{padding:12,color:theme.text}}>{cat.name}</td>
                           <td style={{padding:12,color:theme.textMuted}}>{cat.description || '-'}</td>
                           <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
                             <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end',height:'100%'}}>
-                              <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit category ${cat.name}`}>
+                              <button onClick={() => {
+                                  const tagsForCat = (Object.keys(tagsMeta || {})).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(cat.name))
+                                  setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || '', tags: tagsForCat}); setIsEditingCategory(true); setCategoryModalOpen(true)
+                                }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit category ${cat.name}`}>
                                 ✎
                               </button>
                               <button onClick={async () => {
@@ -2590,7 +2602,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               ) : (
                 <>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
-                  {categories.map(cat => {
+                  {(categories || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(cat => {
                     const description = cat.description || 'No description'
                     const titleTooLong = cat.name.length > 25
                     const descriptionTooLong = description.length > 85
@@ -2602,7 +2614,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           {titleTooLong ? (
                             <>
                               {cat.name.substring(0, 22)}…{' '}
-                              <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
+                              <button onClick={() => {
+                                  const tagsForCat = (Object.keys(tagsMeta || {})).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(cat.name))
+                                  setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || '', tags: tagsForCat}); setIsEditingCategory(true); setCategoryModalOpen(true)
+                                }} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
                                 more
                               </button>
                             </>
@@ -2615,13 +2630,19 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             {description}
                           </span>
                           {descriptionTooLong && (
-                            <span onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={{position:'absolute',bottom:0,right:0,background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
+                            <span onClick={() => {
+                                const tagsForCat = (Object.keys(tagsMeta || {})).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(cat.name))
+                                setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || '', tags: tagsForCat}); setIsEditingCategory(true); setCategoryModalOpen(true)
+                              }} style={{position:'absolute',bottom:0,right:0,background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
                               more
                             </span>
                           )}
                         </p>
                         <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
-                          <button onClick={() => {setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || ''}); setIsEditingCategory(true); setCategoryModalOpen(true)}} style={cardButtonStyles.edit as any} {...getButtonHoverHandlers(false)}>
+                          <button onClick={() => {
+                              const tagsForCat = (Object.keys(tagsMeta || {})).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(cat.name))
+                              setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || '', tags: tagsForCat}); setIsEditingCategory(true); setCategoryModalOpen(true)
+                            }} style={cardButtonStyles.edit as any} {...getButtonHoverHandlers(false)}>
                             ✎ Edit
                           </button>
                           <button onClick={async () => {
@@ -2662,6 +2683,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.text}}>{categoryModalData.name}</p>
                 <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Description:</p>
                 <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.text,whiteSpace:'pre-wrap'}}>{categoryModalData.description || 'No description'}</p>
+                <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Tags:</p>
+                <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.text}}>{(Object.keys(tagsMeta || {}).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(categoryModalData.name)).join(', ')) || 'No tags'}</p>
                 <div style={{display:'flex',gap:8}}>
                   <button onClick={() => setIsEditingCategory(true)} style={{flex:1,background:'#3b82f6',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>
                     Edit
@@ -2686,12 +2709,49 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Name:</label>
                 <input autoFocus type="text" value={categoryEditForm.name || ''} onChange={e => setCategoryEditForm({...categoryEditForm, name: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,marginBottom:16}} />
                 <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Description:</label>
-                <textarea value={categoryEditForm.description || ''} onChange={e => setCategoryEditForm({...categoryEditForm, description: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,minHeight:'150px',fontFamily:'inherit',marginBottom:16,flex:1}} />
+                <textarea value={categoryEditForm.description || ''} onChange={e => setCategoryEditForm({...categoryEditForm, description: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,minHeight:'150px',fontFamily:'inherit',marginBottom:12,flex:1}} />
+                <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Tags:</label>
+                <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>
+                  {(allowedTags || []).map((t: string) => {
+                    const checked = Array.isArray(categoryEditForm.tags) && (categoryEditForm.tags || []).includes(t)
+                    return (
+                      <label key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background: checked ? '#2563eb' : theme.bg, color: checked ? '#fff' : theme.text, cursor:'pointer'}}>
+                        <input type="checkbox" checked={checked} onChange={(e) => {
+                          if (e.target.checked) setCategoryEditForm({...categoryEditForm, tags: Array.from(new Set([...(categoryEditForm.tags || []), t]))})
+                          else setCategoryEditForm({...categoryEditForm, tags: (categoryEditForm.tags || []).filter((x: string) => x !== t)})
+                        }} style={{marginRight:6}} />
+                        {t}
+                      </label>
+                    )
+                  })}
+                </div>
                 <div style={{display:'flex',gap:8,marginTop:'auto'}}>
                   <button onClick={async () => {
                     if (!categoryEditForm.name?.trim()) return alert('Category name required')
                     try {
-                      await fetchJson(`/api/admin/categories/${encodeURIComponent(categoryModalData.id)}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: categoryEditForm.name.trim(), description: categoryEditForm.description?.trim() || '' }) })
+                      // Update category name/description first
+                      const newName = categoryEditForm.name.trim()
+                      await fetchJson(`/api/admin/categories/${encodeURIComponent(categoryModalData.id)}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: newName, description: categoryEditForm.description?.trim() || '' }) })
+
+                      // Update tag<->category mappings for tags that changed
+                      const desiredTags = Array.isArray(categoryEditForm.tags) ? categoryEditForm.tags : []
+                      const categoryName = newName
+                      await Promise.all((allowedTags || []).map(async (tagName: string) => {
+                        try {
+                          const existing = Array.isArray((tagsMeta as any)[tagName]?.categories) ? (tagsMeta as any)[tagName].categories : []
+                          const shouldHave = desiredTags.includes(tagName)
+                          const newCategories = shouldHave ? Array.from(new Set([...(existing || []), categoryName])) : (existing || []).filter((c: string) => c !== categoryName)
+                          const sortedExisting = (existing || []).slice().sort((a,b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' }))
+                          const sortedNew = (newCategories || []).slice().sort((a,b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' }))
+                          if (JSON.stringify(sortedExisting) !== JSON.stringify(sortedNew)) {
+                            await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(tagName)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: tagName, categories: newCategories }) })
+                          }
+                        } catch (err) {
+                          console.error('Failed to update tag categories for', tagName, err)
+                        }
+                      }))
+
+                      await loadTags()
                       await loadCategories()
                       setCategoryModalOpen(false)
                       setIsEditingCategory(false)
@@ -2738,7 +2798,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   />
                   <select value={tagCreateCategory} onChange={e => setTagCreateCategory(e.target.value)} style={{width:180,flexShrink:0,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text,fontSize:14}}>
                     <option value="">(no category)</option>
-                    {categories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                    {(categories || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                   </select>
                   <button className="btn-primary" onClick={async () => {
                     if (!tagInput.trim()) return
@@ -2763,7 +2823,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
                     />
                     <datalist id="search-tags-list">
-                      {Array.from(new Set(allowedTags.filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase())))).sort().map(t => <option key={t} value={t} />)}
+                      {Array.from(new Set(allowedTags.filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase())))).sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(t => <option key={t} value={t} />)}
                     </datalist>
                   </div>
                   <button
@@ -2793,10 +2853,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </tr>
                   </thead>
                   <tbody>
-                    {(sortColumn ? sortData(allowedTags
-                      .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
-                      .map(name => ({name})), 'name').map(obj => obj.name) : allowedTags
-                      .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))).map(t => {
+                    {(
+                      sortColumn ? sortData(allowedTags
+                        .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
+                        .map(name => ({name})), 'name').map(obj => obj.name)
+                      : (allowedTags || []).filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase())).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                    ).map(t => {
                       const usageCount = getTagUsageCount(t)
                       return (
                         <tr key={t} style={styles.tableRow}>
@@ -2825,10 +2887,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
               ) : (
               <div style={{display:'grid',gridTemplateColumns:'repeat(4, 1fr)',gap:12}}>
-                {(sortColumn ? sortData(allowedTags
-                  .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
-                  .map(name => ({name})), 'name').map(obj => obj.name) : allowedTags
-                  .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))).map(t => {
+                {(
+                  sortColumn ? sortData(allowedTags
+                    .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
+                    .map(name => ({name})), 'name').map(obj => obj.name)
+                  : (allowedTags || []).filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase())).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                ).map(t => {
                   const usageCount = getTagUsageCount(t)
                   const titleTooLong = t.length > 30
                   return (
@@ -2854,7 +2918,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           />
                           <select value={(editData.categories && editData.categories[0]) || ''} onChange={e => setEditData({...editData, categories: e.target.value ? [e.target.value] : []})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,fontSize:14}}>
                             <option value="">(no category)</option>
-                            {categories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                            {(categories || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                           </select>
                           <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
                             <button className="btn-ghost" onClick={async () => {
@@ -2936,7 +3000,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                      tagSearchContext === 'edit' ? (resourceModalOpen && isEditingResource ? !(resourceEditForm.tags || []).includes(t) : !(editData.tags || []).includes(t)) :
                      tagSearchContext === 'filter-type' ? !filterTypes.includes(t) :
                      !filterTags.includes(t))
-                })
+                }).slice().sort((a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
                 .map((t: string) => {
                   const isFilterContext = tagSearchContext === 'filter-type' || tagSearchContext === 'filter-tag'
                   const count = tagSearchContext === 'filter-type' ? getResourceTypeCount(t) : getTagCount(t)
@@ -3049,7 +3113,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
             <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Categories</label>
             <div style={{marginBottom:12,maxHeight:220,overflowY:'auto',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'2px 8px 6px 8px',background:theme.bg,flex:1}}>
-              {categories.map((c:any) => (
+              {(categories || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map((c:any) => (
                 <label key={c.id} style={{display:'flex',alignItems:'center',gap:8,padding:'0 6px',marginBottom:3,cursor:'pointer',color:theme.text,lineHeight:1.1}}>
                   <input type="checkbox" checked={(tagEditForm.categories || []).includes(c.name)} onChange={e => {
                     const checked = e.target.checked
