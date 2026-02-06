@@ -185,7 +185,7 @@ function AppContent() {
   return (
     <ProtectedRoute>
       <Layout currentPage={currentPage} onNavigate={handleNavigate} onLogout={() => { window.location.hash = '#/login' }}>
-        {currentPage === 'home' && <Dashboard recentResources={data.resources.slice(0, 3)} bookmarkedCount={2} onNavigate={handleNavigate} />}
+        {currentPage === 'home' && <Dashboard userEmail={user?.email} userName={user?.name} recentResources={data.resources.slice(0, 3)} bookmarkedCount={2} onNavigate={handleNavigate} />}
         {currentPage === 'resources' && <Resources />}
         {currentPage === 'labs' && <Labs />}
         {currentPage === 'profile' && <Profile userEmail={user?.email} userName={user?.name} />}

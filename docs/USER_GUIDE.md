@@ -396,9 +396,11 @@ Toggle between views using the view mode button.
 Use the search box to find tags by name. Start typing to see matching tags.
 
 #### Edit a Tag
+Note: Tags may now be assigned to one or more categories. When editing a tag you'll use a modal to change the tag name and select its categories.
+
 1. Click **"Edit"** on the tag (or click the tag name)
-2. Modify the tag name
-3. Click **"Save"**
+2. In the **Edit Tag** modal, modify the tag name and check/uncheck one or more categories to assign
+3. Click **"Save"** to confirm changes
 
 #### Delete a Tag
 1. Click **"Delete"** on any tag

@@ -11,3 +11,9 @@
 - Tenant RLS: enable & validate in staging; backfill tenant_id where required.
 - Hosted uploads: presigned URL flow + preview UI + retention policy.
 - CI: split E2E into dedicated job and stabilise remote runs.
+
+## 2026-02-05 — dev
+- Introduced many-to-many mapping between `tags` and `categories` via new join table `tag_categories`.
+- Added migrations: `20260205_add_category_to_tags.sql`, `20260206_create_tag_categories_table.sql` and idempotent seed `20260207_seed_cardiometabolic.sql`.
+- Backend: admin tag endpoints now accept/return `categories: string[]` and manage `tag_categories` where available (keeps legacy fallbacks).
+- Frontend: Admin UI — tag edit now opens a modal, tags can be assigned categories, tag create/send flows updated; lab marker edits moved to modal for consistency.

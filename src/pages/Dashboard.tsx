@@ -5,16 +5,20 @@ import { useResults } from '../context/ResultsContext'
 
 interface DashboardProps {
   userEmail?: string
+  userName?: string
   recentResources?: Array<{ title: string; type: string }>
   latestLabDate?: string
   bookmarkedCount?: number
   onNavigate?: (page: string) => void
 }
 
-export default function Dashboard({ userEmail = 'user@example.com', recentResources = [], latestLabDate, bookmarkedCount = 0, onNavigate }: DashboardProps) {
+export default function Dashboard({ userEmail = '', userName = '', recentResources = [], latestLabDate, bookmarkedCount = 0, onNavigate }: DashboardProps) {
   const { theme } = useTheme()
   const { applicableTags, recommendedResources, loading, error } = useEvaluation()
   const { results } = useResults()
+
+  // Get first name from full name
+  const firstName = userName?.split(' ')[0] || ''
 
   const statCard = (label: string, value: string | number, icon: string) => (
     <div
@@ -36,7 +40,7 @@ export default function Dashboard({ userEmail = 'user@example.com', recentResour
   return (
     <div>
       <div style={{ marginBottom: 32 }}>
-        <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Welcome back</h2>
+        <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Welcome back{firstName ? `, ${firstName}` : ''}</h2>
         <p style={{ color: theme.textMuted, margin: 0 }}>{userEmail}</p>
       </div>
 

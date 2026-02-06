@@ -372,7 +372,7 @@ app.get('/api/admin/audit', async (req, res) => {
   }
 });
 
-// ADMIN: list known tags (preferred: persistent `tags` table; fallback: derive from resources & logic_rules)
+// ADMIN: list known tags (preferred: persistent `tags` table with optional categories via join table; fallback: derive from resources & logic_rules)
 app.get('/api/admin/tags', async (req, res) => {
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
   const incomingKey = req.header('x-backend-api-key') || '';
@@ -380,12 +380,63 @@ app.get('/api/admin/tags', async (req, res) => {
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     // try persistent tags table first
-    const { data: tagsData, error: tagsErr } = await sb.from('tags').select('name');
-    if (!tagsErr && Array.isArray(tagsData) && tagsData.length > 0) {
-      return res.status(200).json(Array.from(new Set(tagsData.map(t => t.name))).sort());
+    let tagsData = null
+    try {
+      tagsData = await sb.from('tags').select('name,category_id');
+    } catch (err) {
+      tagsData = null
     }
 
-    // fallback: derive tags from resources and logic_rules
+    if (tagsData && Array.isArray(tagsData.data) && tagsData.data.length > 0) {
+      const raw = tagsData.data;
+      const names = raw.map(r => r.name).filter(Boolean);
+
+      // attempt to resolve many-to-many associations from tag_categories
+      let tagToCatIds = {};
+      try {
+        const { data: tcs, error: tcErr } = await sb.from('tag_categories').select('tag_name,category_id').in('tag_name', names);
+        if (!tcErr && Array.isArray(tcs)) {
+          tcs.forEach(row => {
+            if (!row) return;
+            const t = row.tag_name;
+            tagToCatIds[t] = tagToCatIds[t] || [];
+            if (row.category_id && !tagToCatIds[t].includes(row.category_id)) tagToCatIds[t].push(row.category_id);
+          })
+        }
+      } catch (err) {
+        // tag_categories may not exist yet; ignore
+        tagToCatIds = {};
+      }
+
+      // collect all category ids we need to map to names
+      const allCatIds = Array.from(new Set(Object.values(tagToCatIds).flat().filter(Boolean)));
+      let catMap = {};
+      if (allCatIds.length > 0) {
+        try {
+          const { data: cats } = await sb.from('categories').select('id,name').in('id', allCatIds);
+          catMap = (cats || []).reduce((acc, c) => (acc[c.id] = c.name, acc), {});
+        } catch (err) {
+          catMap = {};
+        }
+      }
+
+      // Build output: prefer many-to-many categories if available, else fall back to single category_id
+      const out = raw.map(r => {
+        const tagName = r.name;
+        const catIds = tagToCatIds[tagName] || [];
+        if (catIds.length > 0) {
+          return { name: tagName, categories: catIds.map(id => catMap[id] || null).filter(Boolean) };
+        }
+        // fall back to legacy category_id column
+        if (r.category_id) {
+          return { name: tagName, categories: [(catMap[r.category_id] || null)].filter(Boolean) };
+        }
+        return { name: tagName, categories: [] };
+      });
+      return res.status(200).json(out);
+    }
+
+    // fallback: derive tags from resources and logic_rules (legacy behaviour)
     const [{ data: resources }, { data: logic_rules }] = await Promise.all([
       sb.from('resources').select('tags'),
       sb.from('logic_rules').select('tag_to_apply')
@@ -400,40 +451,67 @@ app.get('/api/admin/tags', async (req, res) => {
   }
 });
 
-// ADMIN: create a tag (server-side persistent when possible; always logs an audit entry)
+// ADMIN: create a tag (server-side persistent when possible; accepts optional category_name or categories[])
 app.post('/api/admin/tags', async (req, res) => {
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
   const incomingKey = req.header('x-backend-api-key') || '';
   if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
   const name = (req.body && req.body.name || '').toString().trim();
+  const category_name = (req.body && (req.body.category_name || req.body.category) || '').toString().trim();
+  const categoriesArr = Array.isArray(req.body && req.body.categories) ? req.body.categories.map(String).filter(Boolean) : [];
   if (!name) return res.status(400).json({ error: 'missing-name' });
+  const allCategoryNames = categoriesArr.length > 0 ? categoriesArr : (category_name ? [category_name] : []);
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    // attempt to insert into tags table; if missing, fall back to logging an audit row so tag is discoverable
-    let inserted = false
+    let inserted = false;
     try {
-      const { error: insErr } = await sb.from('tags').insert([{ name }]);
-      if (!insErr) inserted = true
+      // upsert tag in tags table for backwards compatibility
+      const payload = { name };
+      if (category_name) {
+        const { data: cats } = await sb.from('categories').select('id').ilike('name', category_name).limit(1);
+        if (cats && cats.length > 0) payload.category_id = cats[0].id;
+      }
+      const { error: insErr } = await sb.from('tags').upsert([payload]);
+      if (!insErr) inserted = true;
+
+      // handle many-to-many categories when provided
+      if (allCategoryNames.length > 0) {
+        const orClause = allCategoryNames.map(n => `name.ilike.${n}`).join(',');
+        try {
+          const { data: resolvedCats } = await sb.from('categories').select('id,name').or(orClause).limit(100);
+          const nameToId = (resolvedCats || []).reduce((acc, c) => (acc[c.name] = c.id, acc), {});
+          const inserts = [];
+          allCategoryNames.forEach(catName => {
+            const id = nameToId[catName] || nameToId[Object.keys(nameToId).find(k => k.toLowerCase() === (catName || '').toLowerCase())];
+            if (id) inserts.push({ tag_name: name, category_id: id });
+          });
+          if (inserts.length > 0) {
+            try {
+              const { error: tcErr } = await sb.from('tag_categories').insert(inserts);
+              if (tcErr) console.warn('tag_categories-insert-warn', tcErr);
+            } catch (err) { console.warn('tag_categories-insert-ex', err) }
+          }
+        } catch (err) { console.warn('resolve-cats-ex', err) }
+      }
     } catch (err) {
-      // tags table may not exist; ignore and continue
-      console.warn('tags-insert-fallback', err)
+      console.warn('tags-insert-fallback', err);
     }
 
     try {
-      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'create_tag', p_target_table: 'tags', p_target_id: null, p_details: { name, persisted: inserted } });
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'create_tag', p_target_table: 'tags', p_target_id: null, p_details: { name, categories: allCategoryNames, persisted: inserted } });
       if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
     } catch (err) {
       console.warn('admin-audit-exception', err)
     }
 
-    return res.status(200).json({ name, persisted: inserted });
+    return res.status(200).json({ name, categories: allCategoryNames, persisted: inserted });
   } catch (err) {
     console.error('admin-create-tag-error', err);
     return res.status(500).json({ error: 'server_error', detail: String(err) });
   }
 });
 
-// ADMIN: rename a tag (update catalog + propagate to resources and logic_rules)
+// ADMIN: rename or update a tag (update catalog + propagate to resources and logic_rules). Accepts new_name and/or category_name
 app.patch('/api/admin/tags/:name', async (req, res) => {
   console.log('PATCH /api/admin/tags/:name called');
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
@@ -442,6 +520,8 @@ app.patch('/api/admin/tags/:name', async (req, res) => {
   if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
   const oldName = req.params.name;
   const newName = (req.body && req.body.new_name || '').toString().trim();
+  const category_name = (req.body && (req.body.category_name || req.body.category) || '').toString().trim();
+  const categoriesArr = Array.isArray(req.body && req.body.categories) ? req.body.categories.map(String).filter(Boolean) : (req.body && req.body.categories && typeof req.body.categories === 'string' ? [req.body.categories] : []);
   console.log('PATCH tags:', { oldName, newName, bodyReceived: !!req.body, bodyContent: req.body });
   if (!oldName || !newName) {
     console.log('Missing params - returning 400');
@@ -460,11 +540,40 @@ app.patch('/api/admin/tags/:name', async (req, res) => {
       // guard for older PGs
       console.warn('pg_sleep-not-available', err);
     }
-    // Try to update tags table if present
+    // Try to update tags table if present and replace tag_categories entries
     try {
-      const { error: upErr } = await sb.from('tags').upsert([{ name: newName }]);
+      // upsert new name into tags table
+      const upsertPayload = { name: newName };
+      // if a single category_name provided, set legacy category_id for compatibility
+      if (category_name) {
+        const { data: cats } = await sb.from('categories').select('id').ilike('name', category_name).limit(1);
+        if (cats && cats.length > 0) upsertPayload.category_id = cats[0].id;
+      } else if (categoriesArr.length === 1) {
+        const { data: cats } = await sb.from('categories').select('id').ilike('name', categoriesArr[0]).limit(1);
+        if (cats && cats.length > 0) upsertPayload.category_id = cats[0].id;
+      }
+      const { error: upErr } = await sb.from('tags').upsert([upsertPayload]);
       if (upErr) console.warn('tags-upsert-warn', upErr)
       await sb.from('tags').delete().eq('name', oldName);
+
+      // replace tag_categories entries for this tag: delete old, insert new
+      try { await sb.from('tag_categories').delete().eq('tag_name', oldName); } catch (err) { /* ignore if table missing */ }
+      const allCategoryNames = categoriesArr.length > 0 ? categoriesArr : (category_name ? [category_name] : []);
+      if (allCategoryNames.length > 0) {
+        const orClause = allCategoryNames.map(n => `name.ilike.${n}`).join(',')
+        try {
+          const { data: resolvedCats } = await sb.from('categories').select('id,name').or(orClause).limit(100);
+          const nameToId = (resolvedCats || []).reduce((acc, c) => (acc[c.name] = c.id, acc), {});
+          const inserts = [];
+          allCategoryNames.forEach(catName => {
+            const id = nameToId[catName] || nameToId[Object.keys(nameToId).find(k => k.toLowerCase() === (catName || '').toLowerCase())];
+            if (id) inserts.push({ tag_name: newName, category_id: id });
+          });
+          if (inserts.length > 0) {
+            try { const { error: tcErr } = await sb.from('tag_categories').insert(inserts); if (tcErr) console.warn('tag_categories-insert-warn', tcErr); } catch (err) { console.warn('tag_categories-insert-ex', err) }
+          }
+        } catch (err) { console.warn('resolve-cats-ex', err) }
+      }
     } catch (err) {
       console.warn('tags-propagation-fallback', err)
     }
@@ -486,7 +595,7 @@ app.patch('/api/admin/tags/:name', async (req, res) => {
       if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
     } catch (err) { console.warn('admin-audit-exception', err) }
 
-    return res.status(200).json({ oldName, newName });
+    return res.status(200).json({ oldName, newName, category: category_name || null });
   } catch (err) {
     console.error('admin-rename-tag-error', err);
     return res.status(500).json({ error: 'server_error', detail: String(err) });
@@ -591,6 +700,12 @@ app.delete('/api/admin/tags/:name', async (req, res) => {
     // delete any logic_rules that reference this tag
     const { error: lrErr } = await sb.from('logic_rules').delete().eq('tag_to_apply', name);
     if (lrErr) console.warn('logic_rules-delete-failed', lrErr);
+    // delete tag_categories entries
+    try {
+      await sb.from('tag_categories').delete().eq('tag_name', name);
+    } catch (err) {
+      // ignore if table missing
+    }
     // delete from tags table if present
     try {
       await sb.from('tags').delete().eq('name', name);

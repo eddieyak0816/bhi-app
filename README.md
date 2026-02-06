@@ -48,11 +48,15 @@ Testing & DB
 - Database Migrations: Run SQL migrations in Supabase Dashboard → SQL Editor:
   - `db/migrations/20260128_create_categories_table.sql` (creates categories table + default categories)
   - `db/migrations/20260128_create_health_goals_table_v2.sql` (creates health_goals table + default health goals)
+  - New (2026-02-05): `db/migrations/20260205_add_category_to_tags.sql` (adds optional `category_id` to `tags` for rollout)
+  - New (2026-02-06): `db/migrations/20260206_create_tag_categories_table.sql` (creates `tag_categories(tag_name, category_id)` join table for many-to-many mapping)
+  - Seed (2026-02-07): `db/migrations/20260207_seed_cardiometabolic.sql` (idempotent seed that creates "Cardiometabolic Health" category and maps HsCRP, Fasting glucose, Fasting insulin, Triglycerides)
 
 CI & deployment notes
 - Add `DATABASE_URL` to GitHub Secrets so the schema validator can run in CI.
 - CI enforces presence of `ASSISTANT_PREFERENCES.md` in PRs via `.github/workflows/assistant-preferences-check.yml`.
 - To run the admin E2E locally: `npx playwright test tests/admin.spec.ts` (use `--debug` to open the headed runner).
+ - Notes for admins/developers: The Admin UI now supports assigning multiple categories per tag and editing tags in a modal. After running the three new migrations above you can seed the example "Cardiometabolic Health" mappings by running the seed file in Supabase SQL Editor.
 - Netlify: Auto-deploys on push to main branch. Build command: `npm run build`, publish directory: `dist/`
 - Render: Auto-deploys backend on push to main branch. Requires env variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY`, `BACKEND_API_KEY`, `SUPABASE_SERVICE_ROLE`
 

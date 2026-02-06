@@ -14,9 +14,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [type, setType] = useState('video')
   // tag-manager state
   const [allowedTags, setAllowedTags] = useState<string[]>([])
+  const [tagsMeta, setTagsMeta] = useState<Record<string, { categories?: string[] }>>({})
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
+  const [tagCreateCategory, setTagCreateCategory] = useState<string>('')
 
   // criteria / logic_rules state
   const [labMarkers, setLabMarkers] = useState<Array<any>>([])
@@ -91,6 +93,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [categoryEditForm, setCategoryEditForm] = useState<any>({})
   const [isEditingCategory, setIsEditingCategory] = useState(false)
   const [categoryDescription, setCategoryDescription] = useState<string>('')
+  // Tag edit modal state
+  const [tagModalOpen, setTagModalOpen] = useState(false)
+  const [tagModalOriginalName, setTagModalOriginalName] = useState<string | null>(null)
+  const [tagEditForm, setTagEditForm] = useState<{name?: string; categories?: string[]}>({})
+  // Marker edit modal state
+  const [markerModalOpen, setMarkerModalOpen] = useState(false)
+  const [markerModalOriginalId, setMarkerModalOriginalId] = useState<string | null>(null)
+  const [markerEditForm, setMarkerEditForm] = useState<{name?: string; unit?: string; min_normal?: number | null; max_normal?: number | null}>({})
   // health goal modal state
   const [healthGoalModalOpen, setHealthGoalModalOpen] = useState(false)
   const [healthGoalModalData, setHealthGoalModalData] = useState<any>(null)
@@ -305,6 +315,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       setLogicRules((body && body.logic_rules) || [])
       setLabMarkers((body && body.lab_markers) || [])
     } catch (err) {
+      // Ignore aborts (expected when controller is cancelled, e.g. React StrictMode double-invoke in dev)
+      if (err && (err.name === 'AbortError' || controller.signal.aborted)) return
       console.error('load admin content failed', err)
       if (!controller.signal.aborted) alert('Failed to load admin content — ' + ((err as any)?.message || 'check server logs'))
     } finally {
@@ -341,7 +353,19 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       if (!res.ok || controller.signal.aborted) return
       const body = await res.json()
       if (controller.signal.aborted) return
-      setAllowedTags(Array.isArray(body) ? body.map(String) : [])
+      // support legacy array-of-strings OR new array-of-objects {name, categories: string[]}
+      if (Array.isArray(body) && body.length > 0 && typeof body[0] === 'object' && body[0] !== null) {
+        const objs: Array<any> = body
+        const names = objs.map(o => String(o.name || '')).filter(Boolean)
+        setAllowedTags(names)
+        const meta: Record<string, any> = {}
+        objs.forEach(o => { if (o && o.name) meta[String(o.name)] = { categories: Array.isArray(o.categories) ? o.categories : (o.category ? [o.category] : []) } })
+        setTagsMeta(meta)
+      } else {
+        const names = Array.isArray(body) ? body.map(String) : []
+        setAllowedTags(names)
+        setTagsMeta({})
+      }
     } catch (err) {
       if (!controller.signal.aborted) console.error('loadTags', err)
     } finally {
@@ -464,7 +488,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     if (!allowedTags.includes(clean)) setAllowedTags(prev => Array.from(new Set([...prev, clean])))
     setSelectedTags(prev => prev.includes(clean) ? prev : [...prev, clean])
     try {
-      const res = await fetch(apiUrl('/api/admin/tags'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify({ name: clean }) })
+      const payload: any = { name: clean }
+      if (tagCreateCategory) payload.categories = [tagCreateCategory]
+      const res = await fetch(apiUrl('/api/admin/tags'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify(payload) })
       if (!res.ok) {
         console.warn('addTag: server rejected tag creation', await res.text().catch(() => res.status))
         return { name: clean, persisted: false }
@@ -2316,8 +2342,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
                               <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button onClick={() => {
-                                  setEditingId(m.id)
-                                  setEditData({name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal})
+                                  setMarkerModalOriginalId(m.id)
+                                  setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal })
+                                  setMarkerModalOpen(true)
                                 }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
                                 <button onClick={async () => {
                                   if (!confirm(`Delete marker "${m.name}"?`)) return
@@ -2381,7 +2408,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         {m.min_normal !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Min: {m.min_normal}</p>}
                         {m.max_normal !== null && <p style={{margin:'0 0 12px 0',fontSize:12,color:theme.text}}>Max: {m.max_normal}</p>}
                         <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
-                          <button onClick={() => {setEditingId(m.id); setEditData({name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal})}} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                          <button onClick={() => { setEditingId(null); setMarkerModalOriginalId(m.id); setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal }); setMarkerModalOpen(true) }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
                           <button onClick={async () => {
                             if (!confirm(`Delete marker "${m.name}"?`)) return
                             try {
@@ -2634,8 +2661,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         }
                       }
                     }}
-                    style={{flex:1,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                    style={{flex:3,minWidth:360,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
                   />
+                  <select value={tagCreateCategory} onChange={e => setTagCreateCategory(e.target.value)} style={{width:180,flexShrink:0,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                    <option value="">(no category)</option>
+                    {categories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  </select>
                   <button className="btn-primary" onClick={async () => {
                     if (!tagInput.trim()) return
                     await addTag(tagInput.trim())
@@ -2700,7 +2731,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:12,fontSize:12,color:theme.textMuted}}>Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
                           <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
                             <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                              <button onClick={() => {setEditingId(`tag-${t}`); setEditData({name: t})}} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit tag ${t}`}>✎</button>
+                              <button onClick={() => { setTagModalOriginalName(t); setTagEditForm({ name: t, categories: tagsMeta[t]?.categories || [] }); setTagModalOpen(true) }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit tag ${t}`}>✎</button>
                               <button onClick={async () => {
                                 if (!confirm(`Delete tag "${t}"?`)) return
                                 try {
@@ -2748,10 +2779,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             autoFocus
                             style={{width:'100%',padding:'8px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,fontWeight:500}}
                           />
+                          <select value={(editData.categories && editData.categories[0]) || ''} onChange={e => setEditData({...editData, categories: e.target.value ? [e.target.value] : []})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                            <option value="">(no category)</option>
+                            {categories.map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                          </select>
                           <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
                             <button className="btn-ghost" onClick={async () => {
                               try {
-                                const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name.trim() }) })
+                                const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name.trim(), categories: editData.categories || undefined }) })
                                 if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                                 await loadTags()
                                 await load()
@@ -2769,10 +2804,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <div style={{fontSize:12,color:'#666',marginBottom:12}}>
                             Used in <span style={{fontWeight:600,color:'#1F2937'}}>{usageCount || 0}</span> {usageCount === 1 ? 'place' : 'places'}
                           </div>
+                          {tagsMeta[t] && Array.isArray(tagsMeta[t].categories) && tagsMeta[t].categories.length > 0 && (
+                            <div style={{fontSize:12,color:theme.textMuted,marginBottom:12}}>Category: <span style={{fontWeight:600,color:theme.text}}>{tagsMeta[t].categories.join(', ')}</span></div>
+                          )}
                           <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
                             <button onClick={() => {
-                              setEditingId(`tag-${t}`)
-                              setEditData({name: t})
+                              setTagModalOriginalName(t)
+                              setTagEditForm({ name: t, categories: tagsMeta[t]?.categories || [] })
+                              setTagModalOpen(true)
                             }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
                             <button onClick={async () => {
                               if (!confirm(`Delete tag "${t}"? This will remove it from resources and delete any criteria referencing it.`)) return
@@ -2924,6 +2963,95 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+      {/* Tag Edit Modal */}
+      {tagModalOpen && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
+          <div style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,maxWidth:600,width:'90%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
+            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>Edit Tag</h3>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Name</label>
+            <input value={tagEditForm.name || ''} onChange={e => setTagEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
+
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Categories</label>
+            <div style={{marginBottom:12,maxHeight:220,overflowY:'auto',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:8,background:theme.bg}}>
+              {categories.map((c:any) => (
+                <label key={c.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 4px',cursor:'pointer',color:theme.text}}>
+                  <input type="checkbox" checked={(tagEditForm.categories || []).includes(c.name)} onChange={e => {
+                    const checked = e.target.checked
+                    setTagEditForm(prev => {
+                      const current = Array.isArray(prev.categories) ? prev.categories.slice() : []
+                      if (checked) {
+                        if (!current.includes(c.name)) current.push(c.name)
+                      } else {
+                        const idx = current.indexOf(c.name)
+                        if (idx !== -1) current.splice(idx,1)
+                      }
+                      return {...prev, categories: current}
+                    })
+                  }} />
+                  <span style={{flex:1}}>{c.name}</span>
+                </label>
+              ))}
+              {categories.length === 0 && <div style={{color:theme.textMuted}}>No categories available</div>}
+            </div>
+
+            <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
+              <button className="btn-ghost" onClick={async () => {
+                try {
+                  const payload: any = { new_name: (tagEditForm.name || '').trim(), categories: tagEditForm.categories }
+                  const nameToPatch = tagModalOriginalName || (tagEditForm.name || '').trim()
+                  const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(nameToPatch)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify(payload) })
+                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                  await loadTags()
+                  await load()
+                  setTagModalOpen(false)
+                  setTagModalOriginalName(null)
+                } catch (err) {
+                  alert('Save tag failed — ' + ((err as any)?.message || 'check server logs'))
+                }
+              }} style={{color:'#16a34a',fontSize:16}}>✓</button>
+              <button className="btn-ghost" onClick={() => { setTagModalOpen(false); setTagModalOriginalName(null) }} style={{color:'#dc2626',fontSize:16}}>⊘</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Marker Edit Modal */}
+      {markerModalOpen && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
+          <div style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,maxWidth:560,width:'90%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
+            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>Edit Lab Marker</h3>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Name</label>
+            <input value={markerEditForm.name || ''} onChange={e => setMarkerEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Unit</label>
+            <input value={markerEditForm.unit || ''} onChange={e => setMarkerEditForm(prev => ({...prev, unit: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
+            <div style={{display:'flex',gap:8,marginBottom:12}}>
+              <div style={{flex:1}}>
+                <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:6}}>Min Value</label>
+                <input type="number" value={markerEditForm.min_normal ?? ''} onChange={e => setMarkerEditForm(prev => ({...prev, min_normal: e.target.value ? Number(e.target.value) : null}))} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text}} />
+              </div>
+              <div style={{flex:1}}>
+                <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:6}}>Max Value</label>
+                <input type="number" value={markerEditForm.max_normal ?? ''} onChange={e => setMarkerEditForm(prev => ({...prev, max_normal: e.target.value ? Number(e.target.value) : null}))} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text}} />
+              </div>
+            </div>
+            <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
+              <button className="btn-ghost" onClick={async () => {
+                try {
+                  const id = markerModalOriginalId
+                  if (!id) throw new Error('Missing marker id')
+                  const res = await fetch(apiUrl(`/api/admin/lab-markers/${id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: markerEditForm.name, unit: markerEditForm.unit, min_normal: markerEditForm.min_normal, max_normal: markerEditForm.max_normal }) })
+                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                  await load()
+                  setMarkerModalOpen(false)
+                  setMarkerModalOriginalId(null)
+                } catch (err) {
+                  alert('Save marker failed — ' + ((err as any)?.message || 'check server logs'))
+                }
+              }} style={{color:'#16a34a',fontSize:16}}>✓</button>
+              <button className="btn-ghost" onClick={() => { setMarkerModalOpen(false); setMarkerModalOriginalId(null) }} style={{color:'#dc2626',fontSize:16}}>⊘</button>
+            </div>
           </div>
         </div>
       )}

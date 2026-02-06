@@ -42,6 +42,13 @@ Buttons & microcopy
 - Back button: Back
 - Finish onboarding: All set
 
+Tag Edit Modal
+- Heading: Edit Tag
+- Name field placeholder: Tag name
+- Categories label: Categories (check one or more)
+- Save button: Save
+- Cancel button: Cancel
+
 Tone: friendly, short, and clear. Use simple words and short sentences.
 
 Assistant interaction: when users ask the assistant for help in the app, prefer single-step guidance — one command or one specific next action. Keep UI messages succinct and action-oriented.

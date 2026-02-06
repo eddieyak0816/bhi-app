@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BHI App - Enterprise Development Roadmap</title>
+  <style>
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-tertiary: #21262d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --accent-blue: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-orange: #d29922;
+      --accent-red: #f85149;
+      --accent-purple: #a371f7;
+      --accent-pink: #db61a2;
+      --border-color: #30363d;
+      --border-subtle: #21262d;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 100vh;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      padding: 24px 0;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    nav h1 {
+      font-size: 20px;
+      padding: 0 24px 16px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      color: var(--accent-blue);
+    }
+
+    nav ul {
+      list-style: none;
+    }
+
+    nav ul li a {
+      display: block;
+      padding: 10px 24px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    nav ul li a:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    nav ul li a.section-header {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 16px;
+      pointer-events: none;
+    }
+
+    /* Main Content */
+    main {
+      margin-left: 280px;
+      padding: 40px 60px;
+      max-width: 1200px;
+    }
+
+    section {
+      margin-bottom: 60px;
+      scroll-margin-top: 40px;
+    }
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    h3 {
+      font-size: 20px;
+      margin: 32px 0 16px;
+      color: var(--accent-blue);
+    }
+
+    h4 {
+      font-size: 16px;
+      margin: 24px 0 12px;
+      color: var(--text-primary);
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .card h4 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    /* Status Badges */
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .badge-complete { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+    .badge-in-progress { background: rgba(210, 153, 34, 0.2); color: var(--accent-orange); }
+    .badge-planned { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+    .badge-critical { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+    .badge-high { background: rgba(219, 97, 162, 0.2); color: var(--accent-pink); }
+    .badge-medium { background: rgba(163, 113, 247, 0.2); color: var(--accent-purple); }
+
+    /* Priority Indicators */
+    .priority {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .priority-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .priority-critical .priority-dot { background: var(--accent-red); }
+    .priority-high .priority-dot { background: var(--accent-orange); }
+    .priority-medium .priority-dot { background: var(--accent-blue); }
+
+    /* Expert Cards */
+    .expert-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .expert-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .expert-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      background: var(--bg-tertiary);
+    }
+
+    .expert-info h4 {
+      margin: 0 0 4px;
+      font-size: 18px;
+    }
+
+    .expert-info p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .expert-recommendations {
+      margin-top: 16px;
+    }
+
+    .expert-recommendations ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .expert-recommendations li {
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      border-left: 3px solid var(--accent-blue);
+    }
+
+    /* Feature Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    /* Score Card */
+    .score-card {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 32px;
+    }
+
+    .score-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-orange), var(--accent-red));
+    }
+
+    .score-details h3 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      color: var(--text-primary);
+    }
+
+    .score-details p {
+      margin: 0;
+      color: var(--text-secondary);
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: var(--bg-tertiary);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    td {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* Code blocks */
+    code {
+      background: var(--bg-tertiary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 13px;
+      color: var(--accent-pink);
+    }
+
+    pre {
+      background: var(--bg-tertiary);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+
+    pre code {
+      padding: 0;
+      background: none;
+    }
+
+    /* Alert boxes */
+    .alert {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .alert-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .alert-critical {
+      background: rgba(248, 81, 73, 0.1);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+    }
+
+    .alert-warning {
+      background: rgba(210, 153, 34, 0.1);
+      border: 1px solid rgba(210, 153, 34, 0.3);
+    }
+
+    .alert-info {
+      background: rgba(88, 166, 255, 0.1);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+    }
+
+    .alert-success {
+      background: rgba(63, 185, 80, 0.1);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+    }
+
+    /* Checklist */
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+
+    .checklist li {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .checklist li:last-child {
+      border-bottom: none;
+    }
+
+    .check-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+
+    .check-done {
+      background: var(--accent-green);
+      color: white;
+    }
+
+    .check-pending {
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border-color);
+    }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 32px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border-color);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-bottom: 32px;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -28px;
+      top: 4px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      border: 2px solid var(--bg-primary);
+    }
+
+    .timeline-item.complete::before {
+      background: var(--accent-green);
+    }
+
+    .timeline-phase {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      nav {
+        width: 240px;
+      }
+      main {
+        margin-left: 240px;
+        padding: 32px 40px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        display: none;
+      }
+      main {
+        margin-left: 0;
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <h1>BHI Enterprise Roadmap</h1>
+    <ul>
+      <li><a href="#overview">Executive Overview</a></li>
+      <li><a class="section-header">Current State</a></li>
+      <li><a href="#readiness">Production Readiness</a></li>
+      <li><a href="#blockers">Critical Blockers</a></li>
+      <li><a href="#security">Security Analysis</a></li>
+      <li><a class="section-header">Expert Recommendations</a></li>
+      <li><a href="#architect">Software Architect</a></li>
+      <li><a href="#security-expert">Security Expert</a></li>
+      <li><a href="#database">Database Expert</a></li>
+      <li><a href="#ux">UX Expert</a></li>
+      <li><a href="#devops">DevOps Expert</a></li>
+      <li><a href="#business">Business Analyst</a></li>
+      <li><a class="section-header">New Features</a></li>
+      <li><a href="#affiliates">Affiliate Products</a></li>
+      <li><a href="#video">Video Uploads</a></li>
+      <li><a href="#multi-links">Multiple Links</a></li>
+      <li><a href="#analytics">Click Tracking</a></li>
+      <li><a href="#reports">Admin Reports</a></li>
+      <li><a href="#user-reports">User Reports</a></li>
+      <li><a class="section-header">Implementation</a></li>
+      <li><a href="#phase1">Phase 1: Foundation</a></li>
+      <li><a href="#phase2">Phase 2: Features</a></li>
+      <li><a href="#phase3">Phase 3: Enterprise</a></li>
+      <li><a href="#database-schema">Database Schema</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <!-- Executive Overview -->
+    <section id="overview">
+      <h2>Executive Overview</h2>
+      <p>The BHI (Balanced Health Institute) App is a health tracking platform designed for corporate wellness programs. It enables employees to track lab results, access health resources, and receive personalized recommendations based on their health markers.</p>
+
+      <div class="score-card">
+        <div class="score-circle">6/10</div>
+        <div class="score-details">
+          <h3>Production Readiness Score</h3>
+          <p>The app has solid foundations but requires critical infrastructure work before enterprise deployment. Key areas needing attention: database migrations, security hardening, and scalability improvements.</p>
+        </div>
+      </div>
+
+      <h3>Current Architecture</h3>
+      <div class="card">
+        <table>
+          <tr>
+            <th>Component</th>
+            <th>Technology</th>
+            <th>Status</th>
+          </tr>
+          <tr>
+            <td>Frontend</td>
+            <td>React 18 + TypeScript + Vite</td>
+            <td><span class="badge badge-complete">Solid</span></td>
+          </tr>
+          <tr>
+            <td>Backend</td>
+            <td>Supabase (PostgreSQL + Auth + Storage)</td>
+            <td><span class="badge badge-in-progress">Needs RLS</span></td>
+          </tr>
+          <tr>
+            <td>State Management</td>
+            <td>React Context API</td>
+            <td><span class="badge badge-complete">Working</span></td>
+          </tr>
+          <tr>
+            <td>Authentication</td>
+            <td>Supabase Auth (Email + Google OAuth)</td>
+            <td><span class="badge badge-complete">Implemented</span></td>
+          </tr>
+          <tr>
+            <td>Hosting</td>
+            <td>Not yet deployed</td>
+            <td><span class="badge badge-planned">Pending</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>Key Metrics</h3>
+      <div class="feature-grid">
+        <div class="card">
+          <h4>17</h4>
+          <p>Planned Features</p>
+        </div>
+        <div class="card">
+          <h4>6</h4>
+          <p>Completed Features</p>
+        </div>
+        <div class="card">
+          <h4>4</h4>
+          <p>In Progress</p>
+        </div>
+        <div class="card">
+          <h4>7</h4>
+          <p>Not Started</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Production Readiness -->
+    <section id="readiness">
+      <h2>Production Readiness Assessment</h2>
+
+      <div class="alert alert-warning">
+        <span class="alert-icon">⚠️</span>
+        <div>
+          <strong>Not Production Ready</strong>
+          <p style="margin: 8px 0 0;">The application requires several critical fixes before it can be safely deployed to production for enterprise use.</p>
+        </div>
+      </div>
+
+      <h3>What's Working Well</h3>
+      <ul class="checklist">
+        <li>
+          <span class="check-icon check-done">✓</span>
+          <div>
+            <strong>Authentication System</strong>
+            <p>Email/password and Google OAuth authentication fully functional with role-based access control.</p>
+          </div>
+        </li>
+        <li>
+          <span class="check-icon check-done">✓</span>
+          <div>
+            <strong>Resource Management</strong>
+            <p>Full CRUD operations for health resources with categorization by type and tags.</p>
+          </div>
+        </li>
+        <li>
+          <span class="check-icon check-done">✓</span>
+          <div>
+            <strong>Admin Panel</strong>
+            <p>Comprehensive admin interface for managing resources, categories, and health goals.</p>
+          </div>
+        </li>
+        <li>
+          <span class="check-icon check-done">✓</span>
+          <div>
+            <strong>Theme System</strong>
+            <p>Dark/light mode with persistent preference storage.</p>
+          </div>
+        </li>
+        <li>
+          <span class="check-icon check-done">✓</span>
+          <div>
+            <strong>User Preferences</strong>
+            <p>Profile page with health goals and interests selection.</p>
+          </div>
+        </li>
+      </ul>
+
+      <h3>Needs Improvement</h3>
+      <ul class="checklist">
+        <li>
+          <span class="check-icon check-pending"></span>
+          <div>
+            <strong>Database Migrations</strong>
+            <p>No migration files exist. Database schema changes are not version controlled.</p>
+          </div>
+        </li>
+        <li>
+          <span class="check-icon check-pending"></span>
+          <div>
+            <strong>Row Level Security (RLS)</strong>
+            <p>RLS policies need to be implemented for all tables to ensure data isolation.</p>
+          </div>
+        </li>
+        <li>
+          <span class="check-icon check-pending"></span>
+          <div>
+            <strong>Error Handling</strong>
+            <p>No global error boundary. Failed API calls need better user feedback.</p>
+          </div>
+        </li>
+        <li>
+          <span class="check-icon check-pending"></span>
+          <div>
+            <strong>Testing</strong>
+            <p>No test files found. Unit and integration tests needed.</p>
+          </div>
+        </li>
+        <li>
+          <span class="check-icon check-pending"></span>
+          <div>
+            <strong>Monitoring</strong>
+            <p>No application monitoring or error tracking in place.</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Critical Blockers -->
+    <section id="blockers">
+      <h2>Critical Blockers</h2>
+
+      <div class="alert alert-critical">
+        <span class="alert-icon">🚨</span>
+        <div>
+          <strong>Must Fix Before Production</strong>
+          <p style="margin: 8px 0 0;">These issues pose security risks or could cause data loss in a production environment.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h4>1. Missing Database Migrations</h4>
+          <span class="badge badge-critical">Critical</span>
+        </div>
+        <p>The <code>supabase/migrations/</code> directory exists but contains no migration files. This means:</p>
+        <ul style="margin-left: 20px; color: var(--text-secondary);">
+          <li>Database schema is not version controlled</li>
+          <li>Cannot reliably recreate the database</li>
+          <li>Risk of schema drift between environments</li>
+          <li>No rollback capability for schema changes</li>
+        </ul>
+        <h4 style="margin-top: 16px;">Recommended Fix:</h4>
+        <pre><code># Generate migrations from existing database
+supabase db diff --schema public -f initial_schema
+
+# Or create migration files manually for each table:
+# - users, resources, health_goals, resource_types
+# - lab_markers, logic_rules, user_preferences</code></pre>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h4>2. Row Level Security (RLS) Not Enforced</h4>
+          <span class="badge badge-critical">Critical</span>
+        </div>
+        <p>Without RLS policies, any authenticated user can potentially access or modify any data in the database.</p>
+        <h4 style="margin-top: 16px;">Required RLS Policies:</h4>
+        <pre><code>-- Example: Users can only read their own data
+CREATE POLICY "Users can read own profile"
+  ON users FOR SELECT
+  USING (auth.uid() = id);
+
+-- Example: Only admins can modify resources
+CREATE POLICY "Admins can manage resources"
+  ON resources FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE id = auth.uid()
+      AND role IN ('admin', 'super_admin')
+    )
+  );</code></pre>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h4>3. API Keys in Client Code</h4>
+          <span class="badge badge-high">High</span>
+        </div>
+        <p>Supabase anon key is exposed in client-side code. While this is expected for Supabase, it emphasizes the need for proper RLS policies.</p>
+        <h4 style="margin-top: 16px;">Mitigation:</h4>
+        <ul style="margin-left: 20px; color: var(--text-secondary);">
+          <li>Implement strict RLS policies (see above)</li>
+          <li>Use Edge Functions for sensitive operations</li>
+          <li>Consider API rate limiting</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h4>4. No Input Validation</h4>
+          <span class="badge badge-high">High</span>
+        </div>
+        <p>Form inputs lack comprehensive validation. Risk of invalid data being stored.</p>
+        <h4 style="margin-top: 16px;">Recommended Libraries:</h4>
+        <ul style="margin-left: 20px; color: var(--text-secondary);">
+          <li><code>zod</code> - TypeScript-first schema validation</li>
+          <li><code>react-hook-form</code> - Form handling with validation</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Security Analysis -->
+    <section id="security">
+      <h2>Security Analysis</h2>
+
+      <div class="card">
+        <h4>Authentication Security</h4>
+        <table>
+          <tr>
+            <th>Feature</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+          <tr>
+            <td>Password Authentication</td>
+            <td><span class="badge badge-complete">Implemented</span></td>
+            <td>Using Supabase Auth</td>
+          </tr>
+          <tr>
+            <td>OAuth (Google)</td>
+            <td><span class="badge badge-complete">Implemented</span></td>
+            <td>Working correctly</td>
+          </tr>
+          <tr>
+            <td>Session Management</td>
+            <td><span class="badge badge-complete">Implemented</span></td>
+            <td>Auto-refresh tokens</td>
+          </tr>
+          <tr>
+            <td>Role-Based Access</td>
+            <td><span class="badge badge-in-progress">Partial</span></td>
+            <td>Frontend only, needs backend enforcement</td>
+          </tr>
+          <tr>
+            <td>Password Reset</td>
+            <td><span class="badge badge-planned">Not Tested</span></td>
+            <td>Supabase provides this</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h4>Data Security</h4>
+        <table>
+          <tr>
+            <th>Feature</th>
+            <th>Status</th>
+            <th>Priority</th>
+          </tr>
+          <tr>
+            <td>Row Level Security</td>
+            <td><span class="badge badge-critical">Missing</span></td>
+            <td>Critical</td>
+          </tr>
+          <tr>
+            <td>Input Sanitization</td>
+            <td><span class="badge badge-in-progress">Partial</span></td>
+            <td>High</td>
+          </tr>
+          <tr>
+            <td>Data Encryption at Rest</td>
+            <td><span class="badge badge-complete">Supabase</span></td>
+            <td>Handled by Supabase</td>
+          </tr>
+          <tr>
+            <td>HTTPS</td>
+            <td><span class="badge badge-complete">Supabase</span></td>
+            <td>Handled by Supabase</td>
+          </tr>
+          <tr>
+            <td>Audit Logging</td>
+            <td><span class="badge badge-planned">Missing</span></td>
+            <td>Medium</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- Expert: Software Architect -->
+    <section id="architect">
+      <h2>Expert Recommendations</h2>
+
+      <div class="expert-card">
+        <div class="expert-header">
+          <div class="expert-avatar">🏗️</div>
+          <div class="expert-info">
+            <h4>Dr. Sarah Chen</h4>
+            <p>Enterprise Software Architect • 20+ years experience • Former AWS Principal Architect</p>
+          </div>
+        </div>
+        <div class="expert-recommendations">
+          <p>"The BHI app has a solid React foundation, but needs architectural improvements for enterprise scale. Here are my key recommendations:"</p>
+          <ul>
+            <li><strong>Implement a proper routing solution.</strong> The current hash-based routing works but limits SEO and deep linking capabilities. Migrate to React Router v6 with proper route guards.</li>
+            <li><strong>Add a service layer abstraction.</strong> Currently, components directly call Supabase. Create a service layer (e.g., <code>ResourceService</code>, <code>UserService</code>) to decouple data fetching from UI components.</li>
+            <li><strong>Implement proper state management.</strong> As the app grows, React Context will become unwieldy. Consider Zustand or TanStack Query for server state management.</li>
+            <li><strong>Add Error Boundaries.</strong> A single unhandled error can crash the entire app. Implement error boundaries around major sections (navigation, content, modals).</li>
+            <li><strong>Create a component library.</strong> Extract common UI patterns into a design system. This ensures consistency and speeds up development.</li>
+            <li><strong>Add lazy loading for routes.</strong> Use React.lazy() and Suspense to code-split routes. This improves initial load time significantly.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expert: Security -->
+    <section id="security-expert">
+      <div class="expert-card">
+        <div class="expert-header">
+          <div class="expert-avatar">🔐</div>
+          <div class="expert-info">
+            <h4>Marcus Williams, CISSP</h4>
+            <p>Chief Security Officer • Healthcare Security Specialist • HIPAA Compliance Expert</p>
+          </div>
+        </div>
+        <div class="expert-recommendations">
+          <p>"Healthcare applications require the highest security standards. Given the sensitive nature of health data, here are critical security measures:"</p>
+          <ul>
+            <li><strong>HIPAA Compliance Framework.</strong> Even if not legally required for this use case, following HIPAA guidelines builds trust. Implement audit logging, access controls, and data encryption policies.</li>
+            <li><strong>Row Level Security is non-negotiable.</strong> Every table must have RLS policies. A user should never be able to see another user's health data, period.</li>
+            <li><strong>Implement Content Security Policy (CSP).</strong> Add strict CSP headers to prevent XSS attacks. This is especially important for a health app where data integrity is critical.</li>
+            <li><strong>Add rate limiting.</strong> Protect authentication endpoints and API routes from brute force attacks. Supabase provides some protection, but add application-level limits too.</li>
+            <li><strong>Implement audit logging.</strong> Track all data access and modifications. This is essential for compliance and security incident investigation.</li>
+            <li><strong>Regular security assessments.</strong> Schedule quarterly penetration tests and code security reviews before each major release.</li>
+            <li><strong>Data retention policies.</strong> Define how long user data is kept and implement automated deletion for inactive accounts.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expert: Database -->
+    <section id="database">
+      <div class="expert-card">
+        <div class="expert-header">
+          <div class="expert-avatar">🗄️</div>
+          <div class="expert-info">
+            <h4>Dr. Raj Patel</h4>
+            <p>Database Architect • PostgreSQL Core Contributor • Performance Optimization Expert</p>
+          </div>
+        </div>
+        <div class="expert-recommendations">
+          <p>"PostgreSQL is an excellent choice via Supabase. Here's how to optimize for scale:"</p>
+          <ul>
+            <li><strong>Create proper indexes.</strong> Add indexes on frequently queried columns: <code>resources.type</code>, <code>resources.tags</code> (GIN index for array), <code>user_preferences.user_id</code>.</li>
+            <li><strong>Implement database migrations.</strong> Use Supabase migrations or a tool like Prisma Migrate. Never modify production schema directly.</li>
+            <li><strong>Add foreign key constraints.</strong> Ensure referential integrity between tables. This prevents orphaned records and maintains data consistency.</li>
+            <li><strong>Implement soft deletes.</strong> Instead of <code>DELETE</code>, use <code>deleted_at</code> timestamps. This allows data recovery and maintains audit trails.</li>
+            <li><strong>Partition large tables.</strong> As user data grows, partition tables like <code>click_events</code> by date for query performance.</li>
+            <li><strong>Use materialized views for reports.</strong> Complex analytics queries should use materialized views refreshed periodically, not hit live tables.</li>
+            <li><strong>Connection pooling.</strong> Ensure Supabase connection pooling is properly configured. Use PgBouncer settings for high-concurrency scenarios.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expert: UX -->
+    <section id="ux">
+      <div class="expert-card">
+        <div class="expert-header">
+          <div class="expert-avatar">🎨</div>
+          <div class="expert-info">
+            <h4>Emily Rodriguez</h4>
+            <p>UX Director • Health App Specialist • Accessibility Advocate • Former Apple Health Team</p>
+          </div>
+        </div>
+        <div class="expert-recommendations">
+          <p>"Health apps require exceptional UX to ensure user engagement and data accuracy. Here are my recommendations:"</p>
+          <ul>
+            <li><strong>Add loading states and skeletons.</strong> Users should never see blank screens. Implement skeleton loaders for every data fetch operation.</li>
+            <li><strong>Improve mobile experience.</strong> The current layout isn't optimized for mobile. Health apps are frequently used on phones - make this a priority.</li>
+            <li><strong>Add micro-interactions.</strong> Success/error states should have subtle animations. This provides feedback without being distracting.</li>
+            <li><strong>Implement accessibility (a11y).</strong> Add ARIA labels, keyboard navigation, and screen reader support. Many health app users have accessibility needs.</li>
+            <li><strong>Create an onboarding flow.</strong> Guide new users through setting up their profile and understanding the app's value proposition.</li>
+            <li><strong>Add data visualization.</strong> Health data is better understood visually. Implement charts for lab trends over time.</li>
+            <li><strong>Gamification elements.</strong> Health goals should have progress indicators, streaks, and achievements to drive engagement.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expert: DevOps -->
+    <section id="devops">
+      <div class="expert-card">
+        <div class="expert-header">
+          <div class="expert-avatar">⚙️</div>
+          <div class="expert-info">
+            <h4>Alex Kim</h4>
+            <p>DevOps Lead • SRE Specialist • CI/CD Expert • Former Google SRE</p>
+          </div>
+        </div>
+        <div class="expert-recommendations">
+          <p>"Operational excellence is crucial for enterprise applications. Here's how to build a robust deployment pipeline:"</p>
+          <ul>
+            <li><strong>Set up CI/CD pipeline.</strong> Use GitHub Actions for automated testing and deployment. Every PR should run linting, type checking, and tests.</li>
+            <li><strong>Implement staging environment.</strong> Never deploy directly to production. Create a staging environment that mirrors production.</li>
+            <li><strong>Add application monitoring.</strong> Integrate Sentry for error tracking and DataDog or New Relic for performance monitoring.</li>
+            <li><strong>Implement feature flags.</strong> Use a service like LaunchDarkly or a simple database-backed system to enable gradual rollouts.</li>
+            <li><strong>Set up alerting.</strong> Configure alerts for error spikes, API latency, and database connection issues.</li>
+            <li><strong>Implement blue-green deployments.</strong> This allows instant rollback if issues are detected after deployment.</li>
+            <li><strong>Document runbooks.</strong> Create operational documentation for common issues and incident response procedures.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expert: Business -->
+    <section id="business">
+      <div class="expert-card">
+        <div class="expert-header">
+          <div class="expert-avatar">📊</div>
+          <div class="expert-info">
+            <h4>Jennifer Walsh, MBA</h4>
+            <p>Business Analyst • Healthcare SaaS Expert • GTM Strategy Consultant</p>
+          </div>
+        </div>
+        <div class="expert-recommendations">
+          <p>"To succeed in the corporate wellness market, the app needs features that demonstrate ROI to enterprise clients:"</p>
+          <ul>
+            <li><strong>Multi-tenant architecture.</strong> Enterprise clients need data isolation. Each company's data must be completely separate from others.</li>
+            <li><strong>Admin dashboard with analytics.</strong> Company admins need aggregate health metrics (anonymized) to demonstrate program effectiveness.</li>
+            <li><strong>SSO integration.</strong> Large enterprises require SAML/OIDC integration with their identity providers (Okta, Azure AD, etc.).</li>
+            <li><strong>White-labeling capabilities.</strong> Allow companies to customize branding, colors, and logos for their employees.</li>
+            <li><strong>Compliance reporting.</strong> Generate reports showing participation rates, engagement metrics, and health improvement trends.</li>
+            <li><strong>API for integrations.</strong> HR systems, fitness trackers, and EHR systems should be able to integrate via a documented API.</li>
+            <li><strong>Tiered pricing model.</strong> Create clear pricing tiers based on features and user count to simplify enterprise sales.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature: Affiliate Products -->
+    <section id="affiliates">
+      <h2>New Feature: Affiliate Products</h2>
+
+      <div class="card">
+        <div class="card-header">
+          <h4>Feature Overview</h4>
+          <span class="badge badge-planned">Planned</span>
+        </div>
+        <p>Enable monetization through affiliate partnerships with nutritional product companies. Admins can add affiliate links to resources, and the system tracks clicks for commission reporting.</p>
+
+        <h4>Database Schema</h4>
+        <pre><code>CREATE TABLE affiliate_products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  affiliate_url TEXT NOT NULL,
+  affiliate_partner VARCHAR(100), -- e.g., 'Amazon', 'iHerb', 'Thorne'
+  commission_rate DECIMAL(5,2),
+  image_url TEXT,
+  category VARCHAR(100),
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE resource_affiliate_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  resource_id UUID REFERENCES resources(id) ON DELETE CASCADE,
+  affiliate_product_id UUID REFERENCES affiliate_products(id) ON DELETE CASCADE,
+  display_order INT DEFAULT 0,
+  custom_description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);</code></pre>
+
+        <h4>Implementation Notes</h4>
+        <ul style="margin-left: 20px; color: var(--text-secondary);">
+          <li>Add affiliate link management to Admin panel</li>
+          <li>Display affiliate products on resource detail pages</li>
+          <li>Track clicks through a redirect endpoint for commission verification</li>
+          <li>Create affiliate performance dashboard for admins</li>
+          <li>Ensure FTC compliance with proper disclosure language</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Feature: Video Uploads -->
+    <section id="video">
+      <h2>New Feature: Video Uploads</h2>
+
+      <div class="card">
+        <div class="card-header">
+          <h4>Feature Overview</h4>
+          <span class="badge badge-planned">Planned</span>
+        </div>
+        <p>Allow admins to upload educational videos directly to the platform, in addition to linking YouTube videos. Videos will be stored in Supabase Storage with streaming support.</p>
+
+        <h4>Database Schema</h4>
+        <pre><code>CREATE TABLE resource_videos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  resource_id UUID REFERENCES resources(id) ON DELETE CASCADE,
+  video_type VARCHAR(20) NOT NULL, -- 'upload', 'youtube', 'vimeo'
+
+  -- For uploaded videos
+  storage_path TEXT,
+  file_size BIGINT,
+  duration_seconds INT,
+  thumbnail_path TEXT,
+
+  -- For external videos
+  external_url TEXT,
+  external_id VARCHAR(100), -- YouTube video ID
+
+  title VARCHAR(255),
+  description TEXT,
+  display_order INT DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);</code></pre>
+
+        <h4>Technical Considerations</h4>
+        <ul style="margin-left: 20px; color: var(--text-secondary);">
+          <li><strong>Storage costs:</strong> Video files are large. Consider implementing file size limits (e.g., 500MB)</li>
+          <li><strong>Transcoding:</strong> Use a service like MUX or Cloudflare Stream for adaptive bitrate streaming</li>
+          <li><strong>Thumbnails:</strong> Generate thumbnail previews automatically on upload</li>
+          <li><strong>Progress tracking:</strong> Track video watch progress for engagement analytics</li>
+          <li><strong>Captions:</strong> Support SRT/VTT caption uploads for accessibility</li>
+        </ul>
+
+        <h4>Recommended Architecture</h4>
+        <pre><code>Upload Flow:
+1. User selects video file
+2. Frontend chunks file and uploads to Supabase Storage
+3. Trigger Edge Function on upload complete
+4. Edge Function sends video to transcoding service
+5. Transcoding service creates HLS playlist
+6. Store playlist URL in resource_videos table
+7. Frontend uses video.js or hls.js for playback</code></pre>
+      </div>
+    </section>
+
+    <!-- Feature: Multiple Links -->
+    <section id="multi-links">
+      <h2>New Feature: Multiple Links per Resource</h2>
+
+      <div class="card">
+        <div class="card-header">
+          <h4>Feature Overview</h4>
+          <span class="badge badge-planned">Planned</span>
+        </div>
+        <p>Allow resources to have multiple associated links with different purposes (article, study, purchase, video, etc.). This provides users with comprehensive access to all relevant materials.</p>
+
+        <h4>Database Schema</h4>
+        <pre><code>CREATE TABLE resource_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  resource_id UUID REFERENCES resources(id) ON DELETE CASCADE,
+  url TEXT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  link_type VARCHAR(50) NOT NULL, -- 'article', 'study', 'video', 'purchase', 'download', 'external'
+  description TEXT,
+  is_primary BOOLEAN DEFAULT false,
+  display_order INT DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Link types reference table
+CREATE TABLE link_types (
+  id VARCHAR(50) PRIMARY KEY,
+  label VARCHAR(100) NOT NULL,
+  icon VARCHAR(50), -- Icon identifier for UI
+  display_order INT DEFAULT 0
+);
+
+INSERT INTO link_types (id, label, icon, display_order) VALUES
+  ('article', 'Article', 'document', 1),
+  ('study', 'Research Study', 'academic', 2),
+  ('video', 'Video', 'play', 3),
+  ('purchase', 'Purchase', 'cart', 4),
+  ('download', 'Download', 'download', 5),
+  ('external', 'External Link', 'link', 6);</code></pre>
+
+        <h4>UI Design</h4>
+        <ul style="margin-left: 20px; color: var(--text-secondary);">
+          <li>Show primary link prominently on resource card</li>
+          <li>Expandable section showing all links grouped by type</li>
+          <li>Admin interface with drag-and-drop reordering</li>
+          <li>Link validation on save (check if URL is reachable)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Feature: Click Tracking -->
+    <section id="analytics">
+      <h2>New Feature: Click Tracking & Analytics</h2>
+
+      <div class="card">
+        <div class="card-header">
+          <h4>Feature Overview</h4>
+          <span class="badge badge-planned">Planned</span>
+        </div>
+        <p>Track user interactions with resources and links. This data powers admin reports and helps identify the most valuable content. Access to analytics is restricted to admin and super_admin roles.</p>
+
+        <h4>Database Schema</h4>
+        <pre><code>CREATE TABLE click_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  resource_id UUID REFERENCES resources(id),
+  link_id UUID REFERENCES resource_links(id),
+  affiliate_product_id UUID REFERENCES affiliate_products(id),
+  event_type VARCHAR(50) NOT NULL, -- 'view', 'click', 'bookmark', 'share'
+  metadata JSONB, -- Additional context (device, referrer, etc.)
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for efficient querying
+CREATE INDEX idx_click_events_user ON click_events(user_id);
+CREATE INDEX idx_click_events_resource ON click_events(resource_id);
+CREATE INDEX idx_click_events_created ON click_events(created_at);
+CREATE INDEX idx_click_events_type ON click_events(event_type);
+
+-- Partitioning by month for large datasets
+CREATE TABLE click_events_2024_01 PARTITION OF click_events
+  FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');</code></pre>
+
+        <h4>Privacy Considerations</h4>
+        <ul style="margin-left: 20px; color: var(--text-secondary);">
+          <li>Implement data retention policy (e.g., delete after 2 years)</li>
+          <li>Allow users to opt-out of tracking in their profile</li>
+          <li>Anonymize data for aggregate reports</li>
+          <li>Comply with GDPR/CCPA data subject requests</li>
+        </ul>
+
+        <h4>Analytics Dashboard Features</h4>
+        <ul style="margin-left: 20px; color: var(--text-secondary);">
+          <li>Most viewed resources (daily/weekly/monthly)</li>
+          <li>Click-through rates by resource type</li>
+          <li>Affiliate link performance</li>
+          <li>User engagement trends</li>
+          <li>Export data as CSV/Excel</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Feature: Admin Reports -->
+    <section id="reports">
+      <h2>New Feature: Admin Reports</h2>
+
+      <div class="card">
+        <div class="card-header">
+          <h4>Feature Overview</h4>
+          <span class="badge badge-planned">Planned</span>
+        </div>
+        <p>Comprehensive reporting dashboard for admins and super_admins with role-based access to different report types.</p>
+
+        <h4>Report Types by Role</h4>
+        <table>
+          <tr>
+            <th>Report</th>
+            <th>Admin</th>
+            <th>Super Admin</th>
+          </tr>
+          <tr>
+            <td>Resource Performance</td>
+            <td>✓</td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>User Engagement (Aggregate)</td>
+            <td>✓</td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>Affiliate Revenue</td>
+            <td>✓</td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>Individual User Activity</td>
+            <td>—</td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>System Health</td>
+            <td>—</td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>Audit Logs</td>
+            <td>—</td>
+            <td>✓</td>
+          </tr>
+        </table>
+
+        <h4>Implementation Approach</h4>
+        <pre><code>-- Materialized view for resource performance
+CREATE MATERIALIZED VIEW mv_resource_performance AS
+SELECT
+  r.id,
+  r.title,
+  r.type,
+  COUNT(DISTINCT ce.user_id) as unique_viewers,
+  COUNT(ce.id) FILTER (WHERE ce.event_type = 'view') as views,
+  COUNT(ce.id) FILTER (WHERE ce.event_type = 'click') as clicks,
+  COUNT(ce.id) FILTER (WHERE ce.event_type = 'bookmark') as bookmarks,
+  ROUND(
+    COUNT(ce.id) FILTER (WHERE ce.event_type = 'click')::NUMERIC /
+    NULLIF(COUNT(ce.id) FILTER (WHERE ce.event_type = 'view'), 0) * 100,
+    2
+  ) as click_through_rate
+FROM resources r
+LEFT JOIN click_events ce ON r.id = ce.resource_id
+GROUP BY r.id, r.title, r.type;
+
+-- Refresh daily via cron
+SELECT cron.schedule('refresh-reports', '0 2 * * *',
+  'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_resource_performance');</code></pre>
+      </div>
+    </section>
+
+    <!-- Feature: User Reports -->
+    <section id="user-reports">
+      <h2>New Feature: User Reports & History</h2>
+
+      <div class="card">
+        <div class="card-header">
+          <h4>Feature Overview</h4>
+          <span class="badge badge-planned">Planned</span>
+        </div>
+        <p>Users can view their own activity history, including resources viewed, bookmarks, and progress towards health goals.</p>
+
+        <h4>User-Facing Features</h4>
+        <ul style="margin-left: 20px; color: var(--text-secondary);">
+          <li><strong>Resource History:</strong> List of all resources the user has viewed, with timestamps</li>
+          <li><strong>Bookmarks:</strong> Saved resources for easy access</li>
+          <li><strong>Recently Viewed:</strong> Quick access to recently accessed content</li>
+          <li><strong>Progress Dashboard:</strong> Visual representation of health goal progress</li>
+          <li><strong>Lab Results Trends:</strong> Charts showing how lab values have changed over time</li>
+        </ul>
+
+        <h4>Database Schema</h4>
+        <pre><code>CREATE TABLE user_bookmarks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  resource_id UUID REFERENCES resources(id) ON DELETE CASCADE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, resource_id)
+);
+
+CREATE TABLE user_resource_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  resource_id UUID REFERENCES resources(id) ON DELETE CASCADE,
+  last_viewed_at TIMESTAMPTZ DEFAULT NOW(),
+  view_count INT DEFAULT 1,
+  UNIQUE(user_id, resource_id)
+);
+
+-- Trigger to update history on view
+CREATE OR REPLACE FUNCTION update_resource_history()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO user_resource_history (user_id, resource_id, last_viewed_at, view_count)
+  VALUES (NEW.user_id, NEW.resource_id, NOW(), 1)
+  ON CONFLICT (user_id, resource_id)
+  DO UPDATE SET
+    last_viewed_at = NOW(),
+    view_count = user_resource_history.view_count + 1;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;</code></pre>
+
+        <h4>Privacy Controls</h4>
+        <ul style="margin-left: 20px; color: var(--text-secondary);">
+          <li>Users can clear their history</li>
+          <li>Option to disable history tracking</li>
+          <li>Data export functionality (GDPR compliance)</li>
+          <li>Account deletion removes all history</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Phase 1: Foundation -->
+    <section id="phase1">
+      <h2>Implementation Roadmap</h2>
+
+      <h3>Phase 1: Foundation (Weeks 1-4)</h3>
+      <div class="alert alert-info">
+        <span class="alert-icon">📋</span>
+        <div>
+          <strong>Focus: Security & Infrastructure</strong>
+          <p style="margin: 8px 0 0;">Complete all critical security fixes and establish proper development workflows before adding new features.</p>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-phase">Week 1-2</div>
+          <h4>Database & Security</h4>
+          <ul class="checklist">
+            <li><span class="check-icon check-pending"></span>Create database migrations for all existing tables</li>
+            <li><span class="check-icon check-pending"></span>Implement RLS policies for all tables</li>
+            <li><span class="check-icon check-pending"></span>Add foreign key constraints</li>
+            <li><span class="check-icon check-pending"></span>Create database indexes</li>
+            <li><span class="check-icon check-pending"></span>Set up audit logging table</li>
+          </ul>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-phase">Week 3-4</div>
+          <h4>Development Infrastructure</h4>
+          <ul class="checklist">
+            <li><span class="check-icon check-pending"></span>Set up CI/CD pipeline with GitHub Actions</li>
+            <li><span class="check-icon check-pending"></span>Add ESLint and Prettier configuration</li>
+            <li><span class="check-icon check-pending"></span>Create staging environment</li>
+            <li><span class="check-icon check-pending"></span>Add error tracking (Sentry)</li>
+            <li><span class="check-icon check-pending"></span>Implement global error boundary</li>
+            <li><span class="check-icon check-pending"></span>Set up basic test framework (Vitest)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Phase 2: Features -->
+    <section id="phase2">
+      <h3>Phase 2: Core Features (Weeks 5-12)</h3>
+      <div class="alert alert-info">
+        <span class="alert-icon">🚀</span>
+        <div>
+          <strong>Focus: User-Requested Features</strong>
+          <p style="margin: 8px 0 0;">Implement the new features you've requested while maintaining code quality.</p>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-phase">Week 5-6</div>
+          <h4>Multiple Links & Click Tracking</h4>
+          <ul class="checklist">
+            <li><span class="check-icon check-pending"></span>Create resource_links table and migration</li>
+            <li><span class="check-icon check-pending"></span>Create click_events table with partitioning</li>
+            <li><span class="check-icon check-pending"></span>Build link management UI in Admin</li>
+            <li><span class="check-icon check-pending"></span>Implement click tracking service</li>
+            <li><span class="check-icon check-pending"></span>Update resource cards to show multiple links</li>
+          </ul>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-phase">Week 7-8</div>
+          <h4>Affiliate Products</h4>
+          <ul class="checklist">
+            <li><span class="check-icon check-pending"></span>Create affiliate_products table</li>
+            <li><span class="check-icon check-pending"></span>Build affiliate management UI</li>
+            <li><span class="check-icon check-pending"></span>Implement affiliate link tracking</li>
+            <li><span class="check-icon check-pending"></span>Add FTC disclosure component</li>
+            <li><span class="check-icon check-pending"></span>Create affiliate performance dashboard</li>
+          </ul>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-phase">Week 9-10</div>
+          <h4>Video Upload System</h4>
+          <ul class="checklist">
+            <li><span class="check-icon check-pending"></span>Set up Supabase Storage bucket for videos</li>
+            <li><span class="check-icon check-pending"></span>Implement chunked upload for large files</li>
+            <li><span class="check-icon check-pending"></span>Create video player component</li>
+            <li><span class="check-icon check-pending"></span>Add thumbnail generation</li>
+            <li><span class="check-icon check-pending"></span>Build video management UI in Admin</li>
+          </ul>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-phase">Week 11-12</div>
+          <h4>Reporting System</h4>
+          <ul class="checklist">
+            <li><span class="check-icon check-pending"></span>Create materialized views for reports</li>
+            <li><span class="check-icon check-pending"></span>Build admin analytics dashboard</li>
+            <li><span class="check-icon check-pending"></span>Implement user history page</li>
+            <li><span class="check-icon check-pending"></span>Add bookmarks functionality</li>
+            <li><span class="check-icon check-pending"></span>Create CSV export functionality</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Phase 3: Enterprise -->
+    <section id="phase3">
+      <h3>Phase 3: Enterprise Ready (Weeks 13-20)</h3>
+      <div class="alert alert-info">
+        <span class="alert-icon">🏢</span>
+        <div>
+          <strong>Focus: Scale & Enterprise Features</strong>
+          <p style="margin: 8px 0 0;">Prepare the application for enterprise customers with multi-tenancy, SSO, and advanced features.</p>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-phase">Week 13-15</div>
+          <h4>Multi-Tenancy</h4>
+          <ul class="checklist">
+            <li><span class="check-icon check-pending"></span>Design tenant isolation strategy</li>
+            <li><span class="check-icon check-pending"></span>Add organization/company tables</li>
+            <li><span class="check-icon check-pending"></span>Implement tenant-aware RLS policies</li>
+            <li><span class="check-icon check-pending"></span>Create organization admin dashboard</li>
+            <li><span class="check-icon check-pending"></span>Build employee invitation system</li>
+          </ul>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-phase">Week 16-17</div>
+          <h4>SSO Integration</h4>
+          <ul class="checklist">
+            <li><span class="check-icon check-pending"></span>Implement SAML authentication</li>
+            <li><span class="check-icon check-pending"></span>Add Okta integration</li>
+            <li><span class="check-icon check-pending"></span>Add Azure AD integration</li>
+            <li><span class="check-icon check-pending"></span>Create SSO configuration UI for admins</li>
+            <li><span class="check-icon check-pending"></span>Implement JIT user provisioning</li>
+          </ul>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-phase">Week 18-19</div>
+          <h4>White Labeling</h4>
+          <ul class="checklist">
+            <li><span class="check-icon check-pending"></span>Create theme customization system</li>
+            <li><span class="check-icon check-pending"></span>Add logo upload functionality</li>
+            <li><span class="check-icon check-pending"></span>Implement custom domain support</li>
+            <li><span class="check-icon check-pending"></span>Build branding configuration UI</li>
+          </ul>
+        </div>
+
+        <div class="timeline-item complete">
+          <div class="timeline-phase">Week 20</div>
+          <h4>Launch Preparation</h4>
+          <ul class="checklist">
+            <li><span class="check-icon check-pending"></span>Performance optimization</li>
+            <li><span class="check-icon check-pending"></span>Security audit</li>
+            <li><span class="check-icon check-pending"></span>Load testing</li>
+            <li><span class="check-icon check-pending"></span>Documentation completion</li>
+            <li><span class="check-icon check-pending"></span>Production deployment</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Database Schema Overview -->
+    <section id="database-schema">
+      <h2>Complete Database Schema</h2>
+
+      <div class="card">
+        <h4>Entity Relationship Overview</h4>
+        <pre><code>┌─────────────────────────────────────────────────────────────────────┐
+│                         CORE ENTITIES                                │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────┐     ┌───────────────┐     ┌──────────────┐            │
+│  │  users   │────▶│ user_prefs    │     │  resources   │            │
+│  └──────────┘     └───────────────┘     └──────┬───────┘            │
+│       │                                        │                     │
+│       │           ┌───────────────┐           │                     │
+│       └──────────▶│ click_events  │◀──────────┘                     │
+│                   └───────────────┘                                  │
+│                                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                        NEW ENTITIES                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────┐     ┌─────────────────────┐                       │
+│  │  resources   │────▶│  resource_links     │                       │
+│  └──────┬───────┘     └─────────────────────┘                       │
+│         │                                                            │
+│         │             ┌─────────────────────┐                       │
+│         └────────────▶│  resource_videos    │                       │
+│         │             └─────────────────────┘                       │
+│         │                                                            │
+│         │             ┌─────────────────────┐     ┌───────────────┐ │
+│         └────────────▶│resource_affiliates  │────▶│affiliate_prods│ │
+│                       └─────────────────────┘     └───────────────┘ │
+│                                                                      │
+│  ┌──────────┐         ┌─────────────────────┐                       │
+│  │  users   │────────▶│  user_bookmarks     │                       │
+│  └──────────┘         └─────────────────────┘                       │
+│                                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                     ENTERPRISE ENTITIES                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌───────────────┐    ┌─────────────────┐    ┌──────────────────┐  │
+│  │ organizations │───▶│ org_members     │───▶│     users        │  │
+│  └───────┬───────┘    └─────────────────┘    └──────────────────┘  │
+│          │                                                           │
+│          │            ┌─────────────────┐                           │
+│          └───────────▶│  org_settings   │  (white-label, SSO)      │
+│                       └─────────────────┘                           │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘</code></pre>
+      </div>
+
+      <div class="card">
+        <h4>Full Migration Script (Phase 2 Features)</h4>
+        <pre><code>-- Migration: Add Phase 2 Features
+-- Run this after Phase 1 is complete
+
+-- 1. Resource Links (Multiple links per resource)
+CREATE TABLE resource_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+  url TEXT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  link_type VARCHAR(50) NOT NULL DEFAULT 'external',
+  description TEXT,
+  is_primary BOOLEAN DEFAULT false,
+  display_order INT DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_resource_links_resource ON resource_links(resource_id);
+
+-- 2. Click Events (Analytics tracking)
+CREATE TABLE click_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  resource_id UUID REFERENCES resources(id) ON DELETE SET NULL,
+  link_id UUID REFERENCES resource_links(id) ON DELETE SET NULL,
+  event_type VARCHAR(50) NOT NULL,
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+) PARTITION BY RANGE (created_at);
+
+-- Create initial partitions
+CREATE TABLE click_events_2024_q1 PARTITION OF click_events
+  FOR VALUES FROM ('2024-01-01') TO ('2024-04-01');
+CREATE TABLE click_events_2024_q2 PARTITION OF click_events
+  FOR VALUES FROM ('2024-04-01') TO ('2024-07-01');
+CREATE TABLE click_events_2024_q3 PARTITION OF click_events
+  FOR VALUES FROM ('2024-07-01') TO ('2024-10-01');
+CREATE TABLE click_events_2024_q4 PARTITION OF click_events
+  FOR VALUES FROM ('2024-10-01') TO ('2025-01-01');
+
+CREATE INDEX idx_click_events_user ON click_events(user_id);
+CREATE INDEX idx_click_events_resource ON click_events(resource_id);
+CREATE INDEX idx_click_events_created ON click_events(created_at DESC);
+
+-- 3. Affiliate Products
+CREATE TABLE affiliate_products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  affiliate_url TEXT NOT NULL,
+  affiliate_partner VARCHAR(100),
+  commission_rate DECIMAL(5,2),
+  image_url TEXT,
+  category VARCHAR(100),
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE resource_affiliate_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+  affiliate_product_id UUID NOT NULL REFERENCES affiliate_products(id) ON DELETE CASCADE,
+  display_order INT DEFAULT 0,
+  custom_description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(resource_id, affiliate_product_id)
+);
+
+-- 4. Resource Videos
+CREATE TABLE resource_videos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+  video_type VARCHAR(20) NOT NULL CHECK (video_type IN ('upload', 'youtube', 'vimeo')),
+  storage_path TEXT,
+  file_size BIGINT,
+  duration_seconds INT,
+  thumbnail_path TEXT,
+  external_url TEXT,
+  external_id VARCHAR(100),
+  title VARCHAR(255),
+  description TEXT,
+  display_order INT DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_resource_videos_resource ON resource_videos(resource_id);
+
+-- 5. User Bookmarks
+CREATE TABLE user_bookmarks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, resource_id)
+);
+
+CREATE INDEX idx_user_bookmarks_user ON user_bookmarks(user_id);
+
+-- 6. User Resource History
+CREATE TABLE user_resource_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+  last_viewed_at TIMESTAMPTZ DEFAULT NOW(),
+  view_count INT DEFAULT 1,
+  UNIQUE(user_id, resource_id)
+);
+
+CREATE INDEX idx_user_history_user ON user_resource_history(user_id);
+CREATE INDEX idx_user_history_viewed ON user_resource_history(last_viewed_at DESC);
+
+-- 7. RLS Policies for new tables
+ALTER TABLE resource_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE click_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE affiliate_products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resource_affiliate_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resource_videos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_bookmarks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_resource_history ENABLE ROW LEVEL SECURITY;
+
+-- Resource links: Anyone can read, admins can write
+CREATE POLICY "Anyone can read resource links"
+  ON resource_links FOR SELECT USING (true);
+CREATE POLICY "Admins can manage resource links"
+  ON resource_links FOR ALL USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+  );
+
+-- Click events: Users can insert own events, admins can read all
+CREATE POLICY "Users can insert own click events"
+  ON click_events FOR INSERT WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
+CREATE POLICY "Admins can read all click events"
+  ON click_events FOR SELECT USING (
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+  );
+
+-- User bookmarks: Users can only access their own
+CREATE POLICY "Users manage own bookmarks"
+  ON user_bookmarks FOR ALL USING (auth.uid() = user_id);
+
+-- User history: Users can only access their own
+CREATE POLICY "Users access own history"
+  ON user_resource_history FOR ALL USING (auth.uid() = user_id);
+
+-- 8. Materialized view for reports
+CREATE MATERIALIZED VIEW mv_resource_performance AS
+SELECT
+  r.id,
+  r.title,
+  r.type,
+  COUNT(DISTINCT ce.user_id) as unique_viewers,
+  COUNT(ce.id) FILTER (WHERE ce.event_type = 'view') as views,
+  COUNT(ce.id) FILTER (WHERE ce.event_type = 'click') as clicks,
+  COUNT(ce.id) FILTER (WHERE ce.event_type = 'bookmark') as bookmarks
+FROM resources r
+LEFT JOIN click_events ce ON r.id = ce.resource_id
+WHERE ce.created_at > NOW() - INTERVAL '30 days'
+GROUP BY r.id, r.title, r.type;
+
+CREATE UNIQUE INDEX idx_mv_resource_perf ON mv_resource_performance(id);</code></pre>
+      </div>
+    </section>
+
+    <footer style="margin-top: 80px; padding: 40px 0; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-muted);">
+      <p>BHI App Enterprise Development Roadmap</p>
+      <p style="font-size: 12px; margin-top: 8px;">Generated February 2026 • Document Version 1.0</p>
+    </footer>
+  </main>
+
+  <script>
+    // Smooth scroll for navigation
+    document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Highlight current section in nav
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('nav a[href^="#"]');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (scrollY >= sectionTop - 100) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.style.background = '';
+        link.style.color = 'var(--text-secondary)';
+        if (link.getAttribute('href') === `#${current}`) {
+          link.style.background = 'var(--bg-tertiary)';
+          link.style.color = 'var(--text-primary)';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

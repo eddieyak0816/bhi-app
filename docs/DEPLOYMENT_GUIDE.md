@@ -100,6 +100,27 @@ The following tables are missing from Supabase and need to be created:
    - Profile sections should show options
    - Admin tabs should display data
 
+   ## New migrations (February 2026)
+
+   We added a small rollout to support many-to-many mappings between `tags` and `categories` so admins can assign multiple categories to a single tag.
+
+   Run these additional migrations in order after the core migrations above:
+
+   1. `db/migrations/20260205_add_category_to_tags.sql` — adds an optional `category_id` column to `tags` (safe, nullable, backfills names)
+   2. `db/migrations/20260206_create_tag_categories_table.sql` — creates the `tag_categories(tag_name, category_id)` join table and backfills from `tags.category_id`
+   3. `db/migrations/20260207_seed_cardiometabolic.sql` — idempotent seed that creates "Cardiometabolic Health" and maps HsCRP, Fasting glucose, Fasting insulin, Triglycerides into the join table
+
+   After running the seed, verify mappings with a query:
+
+   ```sql
+   SELECT tc.tag_name, c.name as category_name
+   FROM tag_categories tc
+   JOIN categories c ON c.id = tc.category_id
+   WHERE lower(c.name) = 'cardiometabolic health';
+   ```
+
+   If you plan to apply indexes/constraints, run them on staging after verifying data and API behavior.
+
 ---
 
 ## Making Updates to the App
