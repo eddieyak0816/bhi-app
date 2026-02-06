@@ -562,37 +562,41 @@ app.post('/api/admin/tags', async (req, res) => {
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     let inserted = false;
-    try {
-      // upsert tag in tags table for backwards compatibility
-      const payload = { name };
-      if (category_name) {
-        const { data: cats } = await sb.from('categories').select('id').ilike('name', category_name).limit(1);
-        if (cats && cats.length > 0) payload.category_id = cats[0].id;
+    
+    // insert tag in tags table (no upsert to enforce unique constraint on duplicates)
+    const payload = { name };
+    if (category_name) {
+      const { data: cats } = await sb.from('categories').select('id').ilike('name', category_name).limit(1);
+      if (cats && cats.length > 0) payload.category_id = cats[0].id;
+    }
+    const { error: insErr } = await sb.from('tags').insert([payload]);
+    if (insErr) {
+      console.warn('tags-insert-error', insErr);
+      if (insErr.code === '23505') {
+        return res.status(409).json({ error: 'db_error', detail: insErr });
       }
-      const { error: insErr } = await sb.from('tags').upsert([payload]);
-      if (!insErr) inserted = true;
+      throw insErr;
+    }
+    inserted = true;
 
-      // handle many-to-many categories when provided
-      if (allCategoryNames.length > 0) {
-        const orClause = allCategoryNames.map(n => `name.ilike.${n}`).join(',');
-        try {
-          const { data: resolvedCats } = await sb.from('categories').select('id,name').or(orClause).limit(100);
-          const nameToId = (resolvedCats || []).reduce((acc, c) => (acc[c.name] = c.id, acc), {});
-          const inserts = [];
-          allCategoryNames.forEach(catName => {
-            const id = nameToId[catName] || nameToId[Object.keys(nameToId).find(k => k.toLowerCase() === (catName || '').toLowerCase())];
-            if (id) inserts.push({ tag_name: name, category_id: id });
-          });
-          if (inserts.length > 0) {
-            try {
-              const { error: tcErr } = await sb.from('tag_categories').insert(inserts);
-              if (tcErr) console.warn('tag_categories-insert-warn', tcErr);
-            } catch (err) { console.warn('tag_categories-insert-ex', err) }
-          }
-        } catch (err) { console.warn('resolve-cats-ex', err) }
-      }
-    } catch (err) {
-      console.warn('tags-insert-fallback', err);
+    // handle many-to-many categories when provided
+    if (allCategoryNames.length > 0) {
+      const orClause = allCategoryNames.map(n => `name.ilike.${n}`).join(',');
+      try {
+        const { data: resolvedCats } = await sb.from('categories').select('id,name').or(orClause).limit(100);
+        const nameToId = (resolvedCats || []).reduce((acc, c) => (acc[c.name] = c.id, acc), {});
+        const inserts = [];
+        allCategoryNames.forEach(catName => {
+          const id = nameToId[catName] || nameToId[Object.keys(nameToId).find(k => k.toLowerCase() === (catName || '').toLowerCase())];
+          if (id) inserts.push({ tag_name: name, category_id: id });
+        });
+        if (inserts.length > 0) {
+          try {
+            const { error: tcErr } = await sb.from('tag_categories').insert(inserts);
+            if (tcErr) console.warn('tag_categories-insert-warn', tcErr);
+          } catch (err) { console.warn('tag_categories-insert-ex', err) }
+        }
+      } catch (err) { console.warn('resolve-cats-ex', err) }
     }
 
     try {
@@ -620,16 +624,12 @@ app.patch('/api/admin/tags/:name', async (req, res) => {
   const newName = (req.body && req.body.new_name || '').toString().trim();
   const category_name = (req.body && (req.body.category_name || req.body.category) || '').toString().trim();
   const categoriesArr = Array.isArray(req.body && req.body.categories) ? req.body.categories.map(String).filter(Boolean) : (req.body && req.body.categories && typeof req.body.categories === 'string' ? [req.body.categories] : []);
-  console.log('PATCH tags:', { oldName, newName, bodyReceived: !!req.body, bodyContent: req.body });
+  console.log('PATCH tags:', { oldName, newName, bodyReceived: !!req.body, bodyContent: req.body, categoriesArr });
   if (!oldName || !newName) {
     console.log('Missing params - returning 400');
     return res.status(400).json({ error: 'missing-params' });
   }
-  // If no actual change, just return success
-  if (oldName === newName) {
-    console.log('No change - names are identical, returning success');
-    return res.status(200).json({ oldName, newName });
-  }
+  
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     try {
@@ -638,24 +638,39 @@ app.patch('/api/admin/tags/:name', async (req, res) => {
       // guard for older PGs
       console.warn('pg_sleep-not-available', err);
     }
+    
+    const nameChanged = oldName !== newName;
+    
     // Try to update tags table if present and replace tag_categories entries
     try {
-      // upsert new name into tags table
-      const upsertPayload = { name: newName };
-      // if a single category_name provided, set legacy category_id for compatibility
-      if (category_name) {
-        const { data: cats } = await sb.from('categories').select('id').ilike('name', category_name).limit(1);
-        if (cats && cats.length > 0) upsertPayload.category_id = cats[0].id;
-      } else if (categoriesArr.length === 1) {
-        const { data: cats } = await sb.from('categories').select('id').ilike('name', categoriesArr[0]).limit(1);
-        if (cats && cats.length > 0) upsertPayload.category_id = cats[0].id;
+      if (nameChanged) {
+        // Rename: insert new name into tags table (fail if duplicate, like POST)
+        const insertPayload = { name: newName };
+        // if a single category_name provided, set legacy category_id for compatibility
+        if (category_name) {
+          const { data: cats } = await sb.from('categories').select('id').ilike('name', category_name).limit(1);
+          if (cats && cats.length > 0) insertPayload.category_id = cats[0].id;
+        } else if (categoriesArr.length === 1) {
+          const { data: cats } = await sb.from('categories').select('id').ilike('name', categoriesArr[0]).limit(1);
+          if (cats && cats.length > 0) insertPayload.category_id = cats[0].id;
+        }
+        const { error: insErr } = await sb.from('tags').insert([insertPayload]);
+        if (insErr) {
+          console.warn('tags-insert-error', insErr);
+          if (insErr.code === '23505') {
+            return res.status(409).json({ error: 'db_error', detail: insErr });
+          }
+          throw insErr;
+        }
+        await sb.from('tags').delete().eq('name', oldName);
       }
-      const { error: upErr } = await sb.from('tags').upsert([upsertPayload]);
-      if (upErr) console.warn('tags-upsert-warn', upErr)
-      await sb.from('tags').delete().eq('name', oldName);
 
-      // replace tag_categories entries for this tag: delete old, insert new
+      // replace tag_categories entries for this tag: delete old and new, then insert based on provided categories
       try { await sb.from('tag_categories').delete().eq('tag_name', oldName); } catch (err) { /* ignore if table missing */ }
+      if (nameChanged) {
+        try { await sb.from('tag_categories').delete().eq('tag_name', newName); } catch (err) { /* ignore if table missing */ }
+      }
+      
       const allCategoryNames = categoriesArr.length > 0 ? categoriesArr : (category_name ? [category_name] : []);
       if (allCategoryNames.length > 0) {
         const orClause = allCategoryNames.map(n => `name.ilike.${n}`).join(',')
@@ -676,20 +691,24 @@ app.patch('/api/admin/tags/:name', async (req, res) => {
       console.warn('tags-propagation-fallback', err)
     }
 
-    // Propagate to resources: replace array element oldName -> newName
-    try {
-      const { error: resErr } = await sb.rpc('replace_resource_tag', { p_old: oldName, p_new: newName });
-      if (resErr) console.warn('replace_resource_tag failed', resErr);
-    } catch (err) {
-      console.warn('replace_resource_tag exception', err);
+    // Propagate to resources and logic_rules only if name changed
+    if (nameChanged) {
+      // Propagate to resources: replace array element oldName -> newName
+      try {
+        const { error: resErr } = await sb.rpc('replace_resource_tag', { p_old: oldName, p_new: newName });
+        if (resErr) console.warn('replace_resource_tag failed', resErr);
+      } catch (err) {
+        console.warn('replace_resource_tag exception', err);
+      }
+
+      // Propagate to logic_rules
+      const { error: lrErr } = await sb.from('logic_rules').update({ tag_to_apply: newName }).eq('tag_to_apply', oldName);
+      if (lrErr) console.warn('logic_rules-propagate-failed', lrErr);
     }
 
-    // Propagate to logic_rules
-    const { error: lrErr } = await sb.from('logic_rules').update({ tag_to_apply: newName }).eq('tag_to_apply', oldName);
-    if (lrErr) console.warn('logic_rules-propagate-failed', lrErr);
-
     try {
-      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'rename_tag', p_target_table: 'tags', p_target_id: null, p_details: { oldName, newName } });
+      const action = nameChanged ? 'rename_tag' : 'update_tag_categories';
+      const { error: auditErr } = await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: action, p_target_table: 'tags', p_target_id: null, p_details: { oldName, newName, categories: categoriesArr } });
       if (auditErr) console.warn('admin-audit-rpc-error', auditErr)
     } catch (err) { console.warn('admin-audit-exception', err) }
 

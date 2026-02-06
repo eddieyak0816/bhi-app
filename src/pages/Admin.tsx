@@ -296,17 +296,18 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
   // Format error messages to be user-friendly
   function formatErrorMessage(error: any, itemType: string = 'item'): string {
-    const msg = String(error?.message || error || 'Unknown error')
+    const msg = String(error?.message || error?.error || error || 'Unknown error')
+    const detailMsg = error?.detail?.message || error?.detail || ''
     const body = (error as any)?.body || ''
-    const fullText = (msg + ' ' + body).toLowerCase()
+    const fullText = (msg + ' ' + detailMsg + ' ' + body).toLowerCase()
     
     // Detect duplicate/unique constraint violations
-    if (fullText.includes('duplicate') || fullText.includes('unique') || fullText.includes('already exists')) {
+    if (fullText.includes('duplicate') || fullText.includes('unique') || fullText.includes('already exists') || fullText.includes('23505')) {
       return `A ${itemType} with this name already exists. Please use a different name.`
     }
     
     // Detect foreign key constraint violations
-    if (fullText.includes('foreign key') || fullText.includes('constraint')) {
+    if (fullText.includes('foreign key') || fullText.includes('constraint') || fullText.includes('23503')) {
       return `Cannot perform this action: this ${itemType} is still in use. Please remove all references first.`
     }
     
@@ -317,6 +318,29 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     
     // Generic fallback
     return `Failed to save ${itemType}. Please check your input and try again.`
+  }
+
+  // Focus trap handler for modals - keeps Tab within modal
+  const handleModalKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Tab') {
+      const focusableElements = (e.currentTarget as HTMLDivElement).querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+      
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    }
   }
 
   // Separate controllers for each async function to prevent cross-interference
@@ -342,7 +366,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       setLabMarkers((body && body.lab_markers) || [])
     } catch (err) {
       // Ignore aborts (expected when controller is cancelled, e.g. React StrictMode double-invoke in dev)
-      if (err && (err.name === 'AbortError' || controller.signal.aborted)) return
+      if (err && ((err as any)?.name === 'AbortError' || controller.signal.aborted)) return
       console.error('load admin content failed', err)
       if (!controller.signal.aborted) alert('Failed to load admin content — ' + ((err as any)?.message || 'check server logs'))
     } finally {
@@ -378,6 +402,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       const res = await fetch(apiUrl('/api/admin/tags'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}, signal: controller.signal })
       if (!res.ok || controller.signal.aborted) return
       const body = await res.json()
+      console.log('[loadTags] Raw response from server:', body)
       if (controller.signal.aborted) return
       // support legacy array-of-strings OR new array-of-objects {name, categories: string[]}
       if (Array.isArray(body) && body.length > 0 && typeof body[0] === 'object' && body[0] !== null) {
@@ -386,8 +411,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         setAllowedTags(names)
         const meta: Record<string, any> = {}
         objs.forEach(o => { if (o && o.name) meta[String(o.name)] = { categories: Array.isArray(o.categories) ? o.categories : (o.category ? [o.category] : []) } })
+        console.log('[loadTags] Parsed tagsMeta:', meta)
         setTagsMeta(meta)
       } else {
+        console.log('[loadTags] Using legacy string array format')
         const names = Array.isArray(body) ? body.map(String) : []
         setAllowedTags(names)
         setTagsMeta({})
@@ -501,21 +528,34 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   async function addTag(name: string) {
     const clean = (name || '').toString().trim()
     if (!clean) return null
-    if (!allowedTags.includes(clean)) setAllowedTags(prev => Array.from(new Set([...prev, clean])))
-    setSelectedTags(prev => prev.includes(clean) ? prev : [...prev, clean])
+    
+    console.log('[addTag] Attempting to add tag:', clean)
+    console.log('[addTag] Current allowed tags:', allowedTags)
+    
     try {
       const payload: any = { name: clean }
       if (tagCreateCategory) payload.categories = [tagCreateCategory]
+      console.log('[addTag] Sending payload:', payload)
+      
       const res = await fetch(apiUrl('/api/admin/tags'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify(payload) })
+      console.log('[addTag] Response status:', res.status)
+      
       if (!res.ok) {
-        console.warn('addTag: server rejected tag creation', await res.text().catch(() => res.status))
+        const errorData = await res.json().catch(() => ({}))
+        console.log('[addTag] Error response data:', errorData)
+        alert(formatErrorMessage(errorData, 'tag'))
+        console.warn('addTag: server rejected tag creation', { status: res.status, errorData })
         return { name: clean, persisted: false }
       }
       const body = await res.json().catch(() => ({}))
+      console.log('[addTag] Success response:', body)
       await loadTags()
+      setTagInput('')
       return body
     } catch (err) {
-      console.error('addTag', err)
+      console.error('[addTag] Exception caught:', err)
+      alert(formatErrorMessage(err, 'tag'))
+      console.error('addTag error:', err)
       return { name: clean, persisted: false }
     }
   }
@@ -768,7 +808,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         setResourceEditForm(prev => ({...prev, tags: (prev.tags || []).includes(tag) ? prev.tags : [...(prev.tags || []), tag]}))
       } else {
         // Editing resource in table (inline)
-        setEditData(prev => ({...prev, tags: prev.tags.includes(tag) ? prev.tags : [...(prev.tags || []), tag]}))
+        setEditData(prev => {
+          const tags = (prev as any)?.tags || []
+          return {
+            ...prev,
+            tags: tags.includes(tag) ? tags : [...tags, tag]
+          }
+        })
       }
     } else if (tagSearchContext === 'filter-type') {
       setFilterTypes(prev => prev.includes(tag) ? prev : [...prev, tag])
@@ -788,7 +834,13 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         setResourceEditForm(prev => ({...prev, categories: (prev.categories || []).includes(category) ? prev.categories : [...(prev.categories || []), category]}))
       } else {
         // Editing resource in table (inline)
-        setEditData(prev => ({...prev, categories: prev.categories.includes(category) ? prev.categories : [...(prev.categories || []), category]}))
+        setEditData(prev => {
+          const categories = (prev as any)?.categories || []
+          return {
+            ...prev,
+            categories: categories.includes(category) ? categories : [...categories, category]
+          }
+        })
       }
     } else if (categorySearchContext === 'filter') {
       setFilterCategories(prev => prev.includes(category) ? prev : [...prev, category])
@@ -1364,16 +1416,19 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
       {/* Resource Modal */}
       {resourceModalOpen && resourceModalData && (
-        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
-          <div style={{background:theme.bg,borderRadius:8,padding:24,width:'67.5%',maxWidth:2400,height:'60%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
-            {console.log('Resource modal rendering:', {isEditingResource, resourceModalData, resourceEditForm})}
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
+        <div onKeyDown={(e) => { if (e.key === 'Escape') { setResourceModalOpen(false); setIsEditingResource(false) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
+          <div onKeyDown={handleModalKeyDown} style={{background:theme.bg,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:4}}>
               {!isEditingResource ? (
-                <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{resourceModalData.title}</h3>
+                <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Resource</h3>
               ) : (
-                <input value={resourceEditForm.title || ''} onChange={e => setResourceEditForm({...resourceEditForm, title: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:16}} />
+                <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Resource</h3>
               )}
               <button onClick={() => { setResourceModalOpen(false); setIsEditingResource(false) }} tabIndex={-1} style={{position:'absolute',top:-5,right:-5,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
+            </div>
+            <div style={{marginBottom:16,paddingBottom:12,borderBottom:`1px solid ${theme.borderColor}`}}>
+              <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Title:</p>
+              <p style={{margin:0,fontSize:16,fontWeight:600,color:theme.text}}>{resourceModalData.title}</p>
             </div>
             {!isEditingResource ? (
               <>
@@ -1430,7 +1485,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   <div style={{flex:1,minWidth:0,paddingRight:12}}>
                     <div style={{marginBottom:12}}>
                       <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Type</label>
-                      <select value={resourceEditForm.type || ''} onChange={e => setResourceEditForm({...resourceEditForm, type: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box',width:'100%'}}>
+                      <select autoFocus value={resourceEditForm.type || ''} onChange={e => setResourceEditForm({...resourceEditForm, type: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box',width:'100%'}}>
                         <option value="">Select a type</option>
                         {resourceTypes.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
@@ -1501,14 +1556,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
       {/* Resource Type Modal */}
       {resourceTypeModalOpen && resourceTypeModalData && (
-        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
-          <div style={{background:theme.bg,borderRadius:8,padding:24,width:'67.5%',maxWidth:2400,height:'60%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
-              {!isEditingResourceType ? (
-                <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{resourceTypeModalData.name}</h3>
-              ) : (
-                <input value={resourceTypeEditForm.name || ''} onChange={e => setResourceTypeEditForm({...resourceTypeEditForm, name: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:16}} />
-              )}
+        <div onKeyDown={(e) => { if (e.key === 'Escape') { setResourceTypeModalOpen(false); setIsEditingResourceType(false) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
+          <div onKeyDown={handleModalKeyDown} style={{background:theme.bg,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:4}}>
+              <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Resource Type</h3>
               <button onClick={() => { setResourceTypeModalOpen(false); setIsEditingResourceType(false) }} tabIndex={-1} style={{position:'absolute',top:-5,right:-5,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
             </div>
             {!isEditingResourceType ? (
@@ -1520,7 +1571,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </div>
                 </div>
                 <div style={{display:'flex',gap:8,marginTop:'auto'}}>
-                  <button onClick={() => { setIsEditingResourceType(true); setResourceTypeEditForm({name: resourceTypeModalData.name}) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>✎ Edit</button>
+                  <button onClick={() => { setIsEditingResourceType(true); setResourceTypeEditForm({name: resourceTypeModalData.name}) }} style={{flex:1,background:'#3b82f6',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>✎ Edit</button>
                   <button onClick={async () => {
                     if (!confirm('Delete this resource type?')) return
                     try {
@@ -1531,7 +1582,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     } catch (err) {
                       alert('Delete resource type failed — ' + ((err as any)?.message || 'check server logs'))
                     }
-                  }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444'}}>✕ Delete</button>
+                  }} style={{flex:1,background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444',fontWeight:600}}>✕ Delete</button>
                 </div>
               </>
             ) : (
@@ -1545,7 +1596,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </div>
                   </div>
                 </div>
-                <div style={{display:'flex',gap:12,marginTop:'auto',borderTop:`1px solid ${theme.borderColor}`,paddingTop:16}}>
+                <div style={{display:'flex',gap:8,marginTop:'auto',borderTop:`1px solid ${theme.borderColor}`,paddingTop:16}}>
                   <button type="button" onClick={async () => {
                     try {
                       if (!resourceTypeEditForm.name || !resourceTypeEditForm.name.toString().trim()) return alert('Name required')
@@ -1566,8 +1617,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       console.error('Save resource type error', err)
                       alert('Save failed — ' + ((err as any)?.message || 'check server logs'))
                     }
-                  }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'12px 16px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
-                  <button onClick={() => { setIsEditingResourceType(false); setResourceTypeModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'12px 16px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
+                  }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
+                  <button onClick={() => { setIsEditingResourceType(false); setResourceTypeModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
                 </div>
               </>
             )}
@@ -1699,33 +1750,34 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Health Goal Modal */}
               {healthGoalModalOpen && healthGoalModalData && (
-                <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
-                  <div style={{background:theme.bg,borderRadius:8,padding:24,width:'67.5%',maxWidth:2400,height:'60%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
-                      {!isEditingHealthGoal ? (
-                        <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>{healthGoalModalData.name}</h3>
-                      ) : (
-                        <input value={healthGoalEditForm.name || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, name: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:16}} />
-                      )}
-                      <button onClick={() => { setHealthGoalModalOpen(false); setIsEditingHealthGoal(false) }} tabIndex={-1} style={{position:'absolute',top:-5,right:-5,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
-                    </div>
+                <div onKeyDown={(e) => { if (e.key === 'Escape') { setHealthGoalModalOpen(false); setIsEditingHealthGoal(false) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
+                  <div onKeyDown={handleModalKeyDown} style={{background:theme.bg,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:4}}>
+                    <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Health Goal</h3>
+                    <button onClick={() => { setHealthGoalModalOpen(false); setIsEditingHealthGoal(false) }} tabIndex={-1} style={{position:'absolute',top:-5,right:-5,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
+                  </div>
                     {!isEditingHealthGoal ? (
                       <>
                         <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.textMuted,whiteSpace:'pre-wrap',flex:1}}>{healthGoalModalData.description || 'No description'}</p>
-                        <div style={{display:'flex',gap:8,marginTop:'auto'}}>
-                          <button onClick={() => { setIsEditingHealthGoal(true); setHealthGoalEditForm({name: healthGoalModalData.name, description: healthGoalModalData.description || ''}) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>✎ Edit</button>
+        <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+                          <button onClick={() => { setIsEditingHealthGoal(true); setHealthGoalEditForm({name: healthGoalModalData.name, description: healthGoalModalData.description || ''}) }} style={{flex:1,background:'#3b82f6',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>
+                            Edit
+                          </button>
                           <button onClick={async () => {
                             if (!confirm('Delete this health goal?')) return
                             await supabase.from('health_goals').delete().eq('id', healthGoalModalData.id)
                             await loadHealthGoals()
                             setHealthGoalModalOpen(false)
-                          }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444'}}>✕</button>
+                          }} style={{flex:1,background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444',fontWeight:600}}>Delete</button>
                         </div>
                       </>
                     ) : (
                       <>
-                        <textarea value={healthGoalEditForm.description || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, description: e.target.value})} style={{width:'100%',minHeight:120,padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,flex:1}} />
-                        <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+                        <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Name</label>
+                        <input autoFocus type="text" value={healthGoalEditForm.name || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, name: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,marginBottom:12}} />
+                        <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Description</label>
+                        <textarea value={healthGoalEditForm.description || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, description: e.target.value})} style={{width:'100%',minHeight:120,padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,flex:1,fontFamily:'inherit'}} />
+                        <div style={{display:'flex',gap:8}}>
                           <button type="button" onClick={async () => {
                             console.log('HealthGoal Save clicked', { id: healthGoalModalData?.id, form: healthGoalEditForm })
                             try {
@@ -1739,8 +1791,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               console.error('Save health goal error', err)
                               alert('Save failed — ' + ((err as any)?.message || 'check server logs'))
                             }
-                          }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff'}}>Save</button>
-                          <button onClick={() => { setIsEditingHealthGoal(false); setHealthGoalModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>Cancel</button>
+                          }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
+                          <button onClick={() => { setIsEditingHealthGoal(false); setHealthGoalModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
                         </div>
                       </>
                     )}
@@ -2173,7 +2225,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
                   .map(name => ({name})), 'name').map(obj => obj.name) : resourceTypes
                   .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))).map(rt => (
-                  <div key={rt} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',cursor:'pointer'}} onClick={() => { setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }}>
+                  <div key={rt} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
                     <h5 style={{margin:'0 0 12px 0',fontSize:16,fontWeight:600}}>{rt}</h5>
                     <div style={{display:'flex',gap:8,justifyContent:'center'}}>
                       <button onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} style={cardButtonStyles.edit as any} {...getButtonHoverHandlers(false)}>✎ Edit</button>
@@ -2493,7 +2545,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Categories Grid */}
               <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Categories ({categories.length})</h3>
+                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Categories</h3>
                 <button onClick={() => toggleViewMode('categories')} title={viewMode.categories === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.categories === 'card' ? '📋' : '🗂️'}</button>
               </div>
 
@@ -2612,9 +2664,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
       {/* Category Edit Modal - Outside categories view */}
       {categoryModalOpen && categoryModalData && (
-        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
-          <div style={{background:theme.bg,borderRadius:8,padding:24,maxWidth:700,width:'90%',maxHeight:'85vh',overflow:'auto',border:`1px solid ${theme.borderColor}`}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:16}}>
+        <div onKeyDown={(e) => { if (e.key === 'Escape') { setCategoryModalOpen(false); setIsEditingCategory(false) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
+          <div onKeyDown={handleModalKeyDown} style={{background:theme.bg,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`,display:'flex',flexDirection:'column'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:4}}>
               <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Category</h3>
               <button onClick={() => {setCategoryModalOpen(false); setIsEditingCategory(false)}} style={{background:'transparent',border:'none',fontSize:24,cursor:'pointer',color:theme.text,padding:0}}>✕</button>
             </div>
@@ -2638,7 +2690,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       console.error('Delete category error:', err)
                       alert('Delete failed — ' + ((err as any)?.message || 'check server logs'))
                     }
-                  }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444',fontWeight:600}}>
+                  }} style={{flex:1,background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444',fontWeight:600}}>
                     Delete
                   </button>
                 </div>
@@ -2646,10 +2698,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             ) : (
               <>
                 <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Name:</label>
-                <input type="text" value={categoryEditForm.name || ''} onChange={e => setCategoryEditForm({...categoryEditForm, name: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,marginBottom:16}} />
+                <input autoFocus type="text" value={categoryEditForm.name || ''} onChange={e => setCategoryEditForm({...categoryEditForm, name: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,marginBottom:16}} />
                 <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Description:</label>
-                <textarea value={categoryEditForm.description || ''} onChange={e => setCategoryEditForm({...categoryEditForm, description: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,minHeight:'150px',fontFamily:'inherit',marginBottom:16}} />
-                <div style={{display:'flex',gap:8}}>
+                <textarea value={categoryEditForm.description || ''} onChange={e => setCategoryEditForm({...categoryEditForm, description: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,minHeight:'150px',fontFamily:'inherit',marginBottom:16,flex:1}} />
+                <div style={{display:'flex',gap:8,marginTop:'auto'}}>
                   <button onClick={async () => {
                     if (!categoryEditForm.name?.trim()) return alert('Category name required')
                     try {
@@ -2664,7 +2716,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>
                     Save
                   </button>
-                  <button onClick={() => setIsEditingCategory(false)} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>
+                  <button onClick={() => { setIsEditingCategory(false); setCategoryModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>
                     Cancel
                   </button>
                 </div>
@@ -2740,7 +2792,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
               {/* Tags Grid */}
               <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Categories</h3>
+                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Tags</h3>
                 <button onClick={() => toggleViewMode('tags')} title={viewMode.tags === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.tags === 'table' ? '🗂️' : '📋'}</button>
               </div>
 
@@ -2766,7 +2818,14 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:12,fontSize:12,color:theme.textMuted}}>Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
                           <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
                             <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                              <button onClick={() => { setTagModalOriginalName(t); setTagEditForm({ name: t, categories: tagsMeta[t]?.categories || [] }); setTagModalOpen(true) }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit tag ${t}`}>✎</button>
+                              <button onClick={() => { 
+                                console.log('[Edit Tag] Clicked for tag:', t)
+                                console.log('[Edit Tag] tagsMeta:', tagsMeta)
+                                console.log('[Edit Tag] Categories for this tag:', tagsMeta[t]?.categories)
+                                setTagModalOriginalName(t); 
+                                setTagEditForm({ name: t, categories: tagsMeta[t]?.categories || [] }); 
+                                setTagModalOpen(true) 
+                              }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit tag ${t}`}>✎</button>
                               <button onClick={async () => {
                                 if (!confirm(`Delete tag "${t}"?`)) return
                                 try {
@@ -3003,26 +3062,30 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       )}
       {/* Tag Edit Modal */}
       {tagModalOpen && (
-        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
-          <div style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,maxWidth:600,width:'90%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
-            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>Edit Tag</h3>
+        <div onKeyDown={(e) => { if (e.key === 'Escape') { setTagModalOpen(false); setTagModalOriginalName(null); setTagEditForm({}) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
+          <div onKeyDown={handleModalKeyDown} style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',display:'flex',flexDirection:'column'}}>
+            <h3 style={{marginTop:0,marginBottom:4,color:theme.text}}>Edit Tag</h3>
             <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Name</label>
-            <input value={tagEditForm.name || ''} onChange={e => setTagEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
+            <input autoFocus value={tagEditForm.name || ''} onChange={e => setTagEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
 
             <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Categories</label>
-            <div style={{marginBottom:12,maxHeight:220,overflowY:'auto',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:8,background:theme.bg}}>
+            <div style={{marginBottom:12,maxHeight:220,overflowY:'auto',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:8,background:theme.bg,flex:1}}>
               {categories.map((c:any) => (
                 <label key={c.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 4px',cursor:'pointer',color:theme.text}}>
                   <input type="checkbox" checked={(tagEditForm.categories || []).includes(c.name)} onChange={e => {
                     const checked = e.target.checked
+                    console.log('[Tag Checkbox] Category:', c.name, 'Checked:', checked)
+                    console.log('[Tag Checkbox] Current form state before:', tagEditForm)
                     setTagEditForm(prev => {
                       const current = Array.isArray(prev.categories) ? prev.categories.slice() : []
+                      console.log('[Tag Checkbox] Current categories array:', current)
                       if (checked) {
                         if (!current.includes(c.name)) current.push(c.name)
                       } else {
                         const idx = current.indexOf(c.name)
                         if (idx !== -1) current.splice(idx,1)
                       }
+                      console.log('[Tag Checkbox] New categories array:', current)
                       return {...prev, categories: current}
                     })
                   }} />
@@ -3032,33 +3095,51 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               {categories.length === 0 && <div style={{color:theme.textMuted}}>No categories available</div>}
             </div>
 
-            <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
-              <button className="btn-ghost" onClick={async () => {
+            <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+              <button onClick={async () => {
                 try {
-                  const payload: any = { new_name: (tagEditForm.name || '').trim(), categories: tagEditForm.categories }
+                  const payload: any = { new_name: (tagEditForm.name || '').trim(), categories: tagEditForm.categories || [] }
                   const nameToPatch = tagModalOriginalName || (tagEditForm.name || '').trim()
+                  console.log('[Tag PATCH] Original name:', tagModalOriginalName)
+                  console.log('[Tag PATCH] Form state:', tagEditForm)
+                  console.log('[Tag PATCH] Payload:', payload)
+                  console.log('[Tag PATCH] URL:', `/api/admin/tags/${encodeURIComponent(nameToPatch)}`)
+                  
                   const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(nameToPatch)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify(payload) })
-                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                  console.log('[Tag PATCH] Response status:', res.status)
+                  
+                  if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}))
+                    console.log('[Tag PATCH] Error response:', errorData)
+                    alert(formatErrorMessage(errorData, 'tag'))
+                    console.warn('tag PATCH error:', errorData)
+                    return
+                  }
+                  const responseBody = await res.json().catch(() => ({}))
+                  console.log('[Tag PATCH] Success response:', responseBody)
                   await loadTags()
                   await load()
                   setTagModalOpen(false)
                   setTagModalOriginalName(null)
+                  setTagEditForm({})
                 } catch (err) {
-                  alert('Save tag failed — ' + ((err as any)?.message || 'check server logs'))
+                  console.error('[Tag PATCH] Exception:', err)
+                  alert(formatErrorMessage(err, 'tag'))
+                  console.error('tag PATCH error:', err)
                 }
-              }} style={{color:'#16a34a',fontSize:16}}>✓</button>
-              <button className="btn-ghost" onClick={() => { setTagModalOpen(false); setTagModalOriginalName(null) }} style={{color:'#dc2626',fontSize:16}}>⊘</button>
+              }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
+              <button onClick={() => { setTagModalOpen(false); setTagModalOriginalName(null); setTagEditForm({}) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
             </div>
           </div>
         </div>
       )}
       {/* Marker Edit Modal */}
       {markerModalOpen && (
-        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
-          <div style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,maxWidth:560,width:'90%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
-            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>Edit Lab Marker</h3>
+        <div onKeyDown={(e) => { if (e.key === 'Escape') { setMarkerModalOpen(false); setMarkerModalOriginalId(null) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
+          <div onKeyDown={handleModalKeyDown} style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',display:'flex',flexDirection:'column'}}>
+            <h3 style={{marginTop:0,marginBottom:4,color:theme.text}}>Edit Lab Marker</h3>
             <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Name</label>
-            <input value={markerEditForm.name || ''} onChange={e => setMarkerEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
+            <input autoFocus value={markerEditForm.name || ''} onChange={e => setMarkerEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
             <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Unit</label>
             <input value={markerEditForm.unit || ''} onChange={e => setMarkerEditForm(prev => ({...prev, unit: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
             <div style={{display:'flex',gap:8,marginBottom:12}}>
@@ -3071,8 +3152,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 <input type="number" value={markerEditForm.max_normal ?? ''} onChange={e => setMarkerEditForm(prev => ({...prev, max_normal: e.target.value ? Number(e.target.value) : null}))} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text}} />
               </div>
             </div>
-            <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
-              <button className="btn-ghost" onClick={async () => {
+            <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+              <button onClick={async () => {
                 try {
                   const id = markerModalOriginalId
                   if (!id) throw new Error('Missing marker id')
@@ -3084,8 +3165,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 } catch (err) {
                   alert('Save marker failed — ' + ((err as any)?.message || 'check server logs'))
                 }
-              }} style={{color:'#16a34a',fontSize:16}}>✓</button>
-              <button className="btn-ghost" onClick={() => { setMarkerModalOpen(false); setMarkerModalOriginalId(null) }} style={{color:'#dc2626',fontSize:16}}>⊘</button>
+              }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
+              <button onClick={() => { setMarkerModalOpen(false); setMarkerModalOriginalId(null) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
             </div>
           </div>
         </div>
