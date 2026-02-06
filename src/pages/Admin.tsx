@@ -294,6 +294,31 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     return res.json().catch(() => null)
   }
 
+  // Format error messages to be user-friendly
+  function formatErrorMessage(error: any, itemType: string = 'item'): string {
+    const msg = String(error?.message || error || 'Unknown error')
+    const body = (error as any)?.body || ''
+    const fullText = (msg + ' ' + body).toLowerCase()
+    
+    // Detect duplicate/unique constraint violations
+    if (fullText.includes('duplicate') || fullText.includes('unique') || fullText.includes('already exists')) {
+      return `A ${itemType} with this name already exists. Please use a different name.`
+    }
+    
+    // Detect foreign key constraint violations
+    if (fullText.includes('foreign key') || fullText.includes('constraint')) {
+      return `Cannot perform this action: this ${itemType} is still in use. Please remove all references first.`
+    }
+    
+    // Detect missing required fields
+    if (fullText.includes('not null') || fullText.includes('missing') || fullText.includes('required')) {
+      return `Please fill in all required fields (name is required).`
+    }
+    
+    // Generic fallback
+    return `Failed to save ${itemType}. Please check your input and try again.`
+  }
+
   // Separate controllers for each async function to prevent cross-interference
   const loadControllerRef = React.useRef<AbortController | null>(null)
   const loadAuditControllerRef = React.useRef<AbortController | null>(null)
@@ -1573,7 +1598,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       setNewTypeName('')
                       await loadHealthGoals()
                     } catch (err) {
-                      alert('Create goal failed — ' + ((err as any)?.message || 'check server logs'))
+                      alert(formatErrorMessage(err, 'health goal'))
                     }
                   }}>Add Goal</button>
                 </div>
@@ -2061,7 +2086,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       await loadResourceTypes()
                       setNewTypeName('')
                     } catch (err) {
-                      alert('Create type failed — ' + ((err as any)?.message || 'check server logs'))
+                      alert(formatErrorMessage(err, 'resource type'))
                     }
                   }}>Add Type</button>
                 </div>
@@ -2459,7 +2484,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       await loadCategories()
                     } catch (err) {
                       console.error('Create category error:', err)
-                      alert('Create category failed — ' + ((err as any)?.message || 'check server logs'))
+                      alert(formatErrorMessage(err, 'category'))
+
                     }
                   }}>Add Category</button>
                 </div>
