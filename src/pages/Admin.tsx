@@ -402,7 +402,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       const res = await fetch(apiUrl('/api/admin/tags'), { headers: DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}, signal: controller.signal })
       if (!res.ok || controller.signal.aborted) return
       const body = await res.json()
-      console.log('[loadTags] Raw response from server:', body)
       if (controller.signal.aborted) return
       // support legacy array-of-strings OR new array-of-objects {name, categories: string[]}
       if (Array.isArray(body) && body.length > 0 && typeof body[0] === 'object' && body[0] !== null) {
@@ -411,10 +410,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         setAllowedTags(names)
         const meta: Record<string, any> = {}
         objs.forEach(o => { if (o && o.name) meta[String(o.name)] = { categories: Array.isArray(o.categories) ? o.categories : (o.category ? [o.category] : []) } })
-        console.log('[loadTags] Parsed tagsMeta:', meta)
         setTagsMeta(meta)
       } else {
-        console.log('[loadTags] Using legacy string array format')
         const names = Array.isArray(body) ? body.map(String) : []
         setAllowedTags(names)
         setTagsMeta({})
@@ -528,32 +525,21 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   async function addTag(name: string) {
     const clean = (name || '').toString().trim()
     if (!clean) return null
-    
-    console.log('[addTag] Attempting to add tag:', clean)
-    console.log('[addTag] Current allowed tags:', allowedTags)
-    
     try {
       const payload: any = { name: clean }
       if (tagCreateCategory) payload.categories = [tagCreateCategory]
-      console.log('[addTag] Sending payload:', payload)
-      
       const res = await fetch(apiUrl('/api/admin/tags'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify(payload) })
-      console.log('[addTag] Response status:', res.status)
-      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        console.log('[addTag] Error response data:', errorData)
         alert(formatErrorMessage(errorData, 'tag'))
         console.warn('addTag: server rejected tag creation', { status: res.status, errorData })
         return { name: clean, persisted: false }
       }
       const body = await res.json().catch(() => ({}))
-      console.log('[addTag] Success response:', body)
       await loadTags()
       setTagInput('')
       return body
     } catch (err) {
-      console.error('[addTag] Exception caught:', err)
       alert(formatErrorMessage(err, 'tag'))
       console.error('addTag error:', err)
       return { name: clean, persisted: false }
@@ -1274,9 +1260,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                 + Add Category
                               </button>
                               {editingCategoriesDropdownOpen && (
-                                <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
+                                <div style={{position:'absolute',top:'100%',left:0,marginTop:0,background:theme.card,border:`1px solid ${theme.borderColor}`,borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,0.15)',zIndex:10,minWidth:200,maxHeight:300,overflowY:'auto'}}>
                                   {(categories || []).filter((c: any) => c.is_active && !(editData.categories || []).includes(c.name)).map((c: any) => (
-                                    <label key={c.id} style={{display:'block',padding:'8px 12px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'2px solid ' + theme.borderLight}}>
+                                    <label key={c.id} style={{display:'block',padding:'4px 8px',cursor:'pointer',color:theme.text,userSelect:'none',borderBottom:'1px solid ' + theme.borderLight}}>
                                       <input
                                         type="checkbox"
                                         checked={(editData.categories || []).includes(c.name)}
@@ -1288,7 +1274,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                           }
                                           setEditingCategoriesDropdownOpen(false)
                                         }}
-                                        style={{marginRight:8}}
+                                        style={{marginRight:4}}
                                       />
                                       {c.name}
                                     </label>
@@ -2818,14 +2804,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <td style={{padding:12,fontSize:12,color:theme.textMuted}}>Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
                           <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
                             <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                              <button onClick={() => { 
-                                console.log('[Edit Tag] Clicked for tag:', t)
-                                console.log('[Edit Tag] tagsMeta:', tagsMeta)
-                                console.log('[Edit Tag] Categories for this tag:', tagsMeta[t]?.categories)
-                                setTagModalOriginalName(t); 
-                                setTagEditForm({ name: t, categories: tagsMeta[t]?.categories || [] }); 
-                                setTagModalOpen(true) 
-                              }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit tag ${t}`}>✎</button>
+                              <button onClick={() => { setTagModalOriginalName(t); setTagEditForm({ name: t, categories: tagsMeta[t]?.categories || [] }); setTagModalOpen(true) }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit tag ${t}`}>✎</button>
                               <button onClick={async () => {
                                 if (!confirm(`Delete tag "${t}"?`)) return
                                 try {
@@ -3069,23 +3048,19 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             <input autoFocus value={tagEditForm.name || ''} onChange={e => setTagEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
 
             <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Categories</label>
-            <div style={{marginBottom:12,maxHeight:220,overflowY:'auto',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:8,background:theme.bg,flex:1}}>
+            <div style={{marginBottom:12,maxHeight:220,overflowY:'auto',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'2px 8px 6px 8px',background:theme.bg,flex:1}}>
               {categories.map((c:any) => (
-                <label key={c.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 4px',cursor:'pointer',color:theme.text}}>
+                <label key={c.id} style={{display:'flex',alignItems:'center',gap:8,padding:'0 6px',marginBottom:3,cursor:'pointer',color:theme.text,lineHeight:1.1}}>
                   <input type="checkbox" checked={(tagEditForm.categories || []).includes(c.name)} onChange={e => {
                     const checked = e.target.checked
-                    console.log('[Tag Checkbox] Category:', c.name, 'Checked:', checked)
-                    console.log('[Tag Checkbox] Current form state before:', tagEditForm)
                     setTagEditForm(prev => {
                       const current = Array.isArray(prev.categories) ? prev.categories.slice() : []
-                      console.log('[Tag Checkbox] Current categories array:', current)
                       if (checked) {
                         if (!current.includes(c.name)) current.push(c.name)
                       } else {
                         const idx = current.indexOf(c.name)
                         if (idx !== -1) current.splice(idx,1)
                       }
-                      console.log('[Tag Checkbox] New categories array:', current)
                       return {...prev, categories: current}
                     })
                   }} />
@@ -3100,30 +3075,19 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 try {
                   const payload: any = { new_name: (tagEditForm.name || '').trim(), categories: tagEditForm.categories || [] }
                   const nameToPatch = tagModalOriginalName || (tagEditForm.name || '').trim()
-                  console.log('[Tag PATCH] Original name:', tagModalOriginalName)
-                  console.log('[Tag PATCH] Form state:', tagEditForm)
-                  console.log('[Tag PATCH] Payload:', payload)
-                  console.log('[Tag PATCH] URL:', `/api/admin/tags/${encodeURIComponent(nameToPatch)}`)
-                  
                   const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(nameToPatch)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify(payload) })
-                  console.log('[Tag PATCH] Response status:', res.status)
-                  
                   if (!res.ok) {
                     const errorData = await res.json().catch(() => ({}))
-                    console.log('[Tag PATCH] Error response:', errorData)
                     alert(formatErrorMessage(errorData, 'tag'))
                     console.warn('tag PATCH error:', errorData)
                     return
                   }
-                  const responseBody = await res.json().catch(() => ({}))
-                  console.log('[Tag PATCH] Success response:', responseBody)
                   await loadTags()
                   await load()
                   setTagModalOpen(false)
                   setTagModalOriginalName(null)
                   setTagEditForm({})
                 } catch (err) {
-                  console.error('[Tag PATCH] Exception:', err)
                   alert(formatErrorMessage(err, 'tag'))
                   console.error('tag PATCH error:', err)
                 }
