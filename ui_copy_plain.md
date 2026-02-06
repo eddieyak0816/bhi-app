@@ -12,7 +12,7 @@ Onboarding screens
 2) Privacy
    - Short text: Your numbers stay on your device. We do not save them.
 3) How to use
-   - Short text: Enter a test name (example: Vitamin D), type the number, then tap "See resources." 
+  - Short text: Enter a test name (example: Vitamin D), type the number, then tap "See library." 
 
 Lab input form labels & hints
 - Label: Test name
@@ -23,7 +23,7 @@ Lab input form labels & hints
 - Privacy note (small): You chose to enter this. It is not saved.
 
 Results screen
-- Title: Learning resources
+ - Title: Learning library
 - Subtitle: These are educational—talk to your doctor for medical advice.
 - Section headings: Short videos | Articles | Experts
 - Empty state: No matches found. Try a different test name or number.

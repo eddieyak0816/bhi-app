@@ -13,6 +13,7 @@ import Results from './pages/Results'
 import Admin from './pages/Admin'
 import Dashboard from './pages/Dashboard'
 import Resources from './pages/ResourcesPage'
+import Categories from './pages/CategoriesPage'
 import Labs from './pages/LabsPage'
 import Profile from './pages/ProfilePage'
 import { loadSampleData, SampleData } from './sample-data'
@@ -24,6 +25,8 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState<string>(() => {
     // Initialize from hash immediately so page survives reload
     const hash = window.location.hash.slice(2) // strip '#/'
+    // Accept legacy 'resources' route and normalize to 'library'
+    if (hash === 'resources') return 'library'
     return hash || 'home'
   })
   const [showOnboard, setShowOnboard] = useState(() => {
@@ -107,7 +110,8 @@ function AppContent() {
   // Listen for hash changes (browser back/forward, manual URL edits)
   useEffect(() => {
     const handleHashChange = () => {
-      const route = (window.location.hash.slice(2)) || 'home' // strip '#/'
+      let route = (window.location.hash.slice(2)) || 'home' // strip '#/'
+      if (route === 'resources') route = 'library' // normalize legacy
       if (route === 'login' || route === 'signup') {
         setCurrentRoute(route)
       } else if (isAuthenticated) {
@@ -128,7 +132,8 @@ function AppContent() {
       window.location.hash = '#/login'
     } else {
       // Auth just resolved — read the intended page from the hash
-      const route = (window.location.hash.slice(2)) || 'home'
+      let route = (window.location.hash.slice(2)) || 'home'
+      if (route === 'resources') route = 'library'
       if (route === 'login' || route === 'signup') {
         // Was on a pre-auth page; go home
         setCurrentRoute('home')
@@ -186,7 +191,8 @@ function AppContent() {
     <ProtectedRoute>
       <Layout currentPage={currentPage} onNavigate={handleNavigate} onLogout={() => { window.location.hash = '#/login' }}>
         {currentPage === 'home' && <Dashboard userEmail={user?.email} userName={user?.name} recentResources={data.resources.slice(0, 3)} bookmarkedCount={2} onNavigate={handleNavigate} />}
-        {currentPage === 'resources' && <Resources />}
+        {(currentPage === 'resources' || currentPage === 'library') && <Resources />}
+        {currentPage === 'categories' && <Categories />}
         {currentPage === 'labs' && <Labs />}
         {currentPage === 'profile' && <Profile userEmail={user?.email} userName={user?.name} />}
         {currentPage === 'admin' && <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} />}

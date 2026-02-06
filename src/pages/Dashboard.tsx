@@ -54,6 +54,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
         }}
       >
         {statCard('Bookmarked Resources', bookmarkedCount, '🔖')}
+          {statCard('Bookmarked Library', bookmarkedCount, '🔖')}
         {statCard('Lab Results', results.length, '⚗️')}
         {statCard('Health Insights', applicableTags.length, '💡')}
         {statCard('Recommendations', recommendedResources.length, '📚')}
@@ -256,9 +257,9 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
               fontWeight: 600,
               cursor: 'pointer',
             }}
-            onClick={() => onNavigate?.('resources')}
+            onClick={() => onNavigate?.('library')}
           >
-            🔍 Browse Resources
+            🔍 Browse Library
           </button>
           <button
             style={{

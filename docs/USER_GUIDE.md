@@ -58,12 +58,13 @@ A theme toggle button (sun/moon icon) appears in the top-right corner of every s
 
 ## Navigation
 
-The app has five main sections accessible from the top navigation bar:
+The app has six main sections accessible from the top navigation bar:
 
 | Tab | Purpose |
 |-----|---------|
 | **Home** | Dashboard with quick stats and personalized recommendations |
-| **Resources** | Browse all health education materials |
+| **Library** | Browse all health education materials (formerly "Resources") |
+| **Categories** | Browse health categories and jump to the Library filtered by a category |
 | **Lab Results** | Enter and view your lab test results |
 | **Profile** | Manage your account settings and preferences |
 | **Admin** | Content management (admin users only) |
@@ -75,23 +76,23 @@ The app has five main sections accessible from the top navigation bar:
 The dashboard provides an overview of your activity:
 
 ### Stats Cards
-- **Bookmarked Resources** - Number of resources you've saved
+- **Bookmarked Library** - Number of library items you've saved
 - **Lab Results** - Number of lab results you've entered
 - **Health Insights** - Categories derived from your lab results
-- **Recommendations** - Resources matched to your health profile
+- **Recommendations** - Library items matched to your health profile
 
 ### Personalized Recommendations
-If you've entered lab results, the dashboard shows resources specifically matched to your health insights. These are prioritized based on how many of your categories match the resource.
+If you've entered lab results, the dashboard shows library items specifically matched to your health insights. These are prioritized based on how many of your categories match the item.
 
 ### Quick Actions
 Shortcut buttons to:
 - Log new lab results
-- Browse resources
+- Browse the library
 - Edit your profile
 
 ---
 
-## Resources
+## Library
 
 Browse the library of health education materials.
 
@@ -101,23 +102,23 @@ Browse the library of health education materials.
 
 Toggle between views using the grid/list button.
 
-### Filtering Resources
+### Filtering Library
 
-**Search** - Type keywords to find resources by title or description
+**Search** - Type keywords to find library items by title or description
 
 **Type Filter** - Filter by resource type (e.g., video, article, guide)
 
 **Category Filter** - Filter by health categories
 
-### Resource Cards
+### Library Cards
 
-Each resource displays:
+Each library item displays:
 - **Type** - The format of the resource
 - **Title** - Resource name
 - **Description** - Brief summary
-- **Categories** - Health categories (categories matching your profile are highlighted)
+-- **Categories** - Health categories (categories matching your profile are highlighted)
 
-### Resource Actions
+### Library Actions
 
 - **Bookmark** - Save to your bookmarks (stored locally)
 - **Open** - Visit the external resource link
@@ -159,10 +160,10 @@ You can:
 The app uses "logic rules" to match your lab values to health categories:
 - Each lab marker has defined ranges (min/max values)
 - When your result falls within a range, the associated category is applied to your profile
-- Resources with matching categories are recommended to you
+- Library items with matching categories are recommended to you
 
 ### Example
-If you enter a Vitamin D level of 25 ng/mL, and a rule exists for "Low Vitamin D" (0-29), you'll receive the "Low Vitamin D" category. Resources tagged with that category will then be recommended on your dashboard.
+If you enter a Vitamin D level of 25 ng/mL, and a rule exists for "Low Vitamin D" (0-29), you'll receive the "Low Vitamin D" category. Library items tagged with that category will then be recommended on your dashboard.
 
 ---
 
@@ -257,9 +258,9 @@ The Admin section has 8 management tabs. Here's what each one does:
 
 ---
 
-### Managing Resources
+### Managing Library Items
 
-Resources are the health education materials that users browse and receive as recommendations. Each resource has a type, title, URL, and is associated with categories and tags.
+Library items are the health education materials that users browse and receive as recommendations. Each item has a type, title, URL, and is associated with categories and tags.
 
 #### Creating a Resource
 

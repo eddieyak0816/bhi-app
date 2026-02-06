@@ -108,6 +108,15 @@ export default function Resources() {
     mountedRef.current = true
     loadResources()
 
+    // If navigated from Categories page, a category name may be stored in localStorage
+    try {
+      const cat = localStorage.getItem('bhi-filter-category')
+      if (cat) {
+        setFilterTag(cat)
+        localStorage.removeItem('bhi-filter-category')
+      }
+    } catch {}
+
     return () => {
       mountedRef.current = false
       try { loadControllerRef.current?.abort() } catch {}
@@ -176,7 +185,7 @@ export default function Resources() {
   return (
     <div>
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Resources</h2>
+        <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Library</h2>
         <p style={{ color: theme.textMuted, margin: 0 }}>Explore health articles, guides, and recommendations</p>
       </div>
 
@@ -214,7 +223,7 @@ export default function Resources() {
             <div style={{ marginBottom: 16 }}>
               <input
                 type="text"
-                placeholder="Search resources..."
+                placeholder="Search library..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 style={{

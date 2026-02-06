@@ -15,7 +15,8 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
 
   const navItems = [
     { id: 'home', label: 'Home' },
-    { id: 'resources', label: 'Resources' },
+    { id: 'library', label: 'Library' },
+    { id: 'categories', label: 'Categories' },
     { id: 'labs', label: 'Lab Results' },
     { id: 'profile', label: 'Profile' },
     ...(isAdmin ? [{ id: 'admin', label: 'Admin' }] : []),

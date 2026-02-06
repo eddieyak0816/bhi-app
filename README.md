@@ -33,6 +33,7 @@ Quick start (Windows — PowerShell)
 
 Non-developer demo (one-click)
 - No setup: run `npm ci && npm run dev` and open `http://localhost:3000`. Try: Enter lab → Vitamin D → value `25` → See resources.
+ - No setup: run `npm ci && npm run dev` and open `http://localhost:3000`. Try: Enter lab → Vitamin D → value `25` → See library.
 - To save a demo result (opt-in): check **Save result for later** and click **Save** (consent required).
 - Admin (dev-only): click **Admin** in the header (requires `BACKEND_API_KEY` in `.env.server` or `x-backend-api-key` header).
 
@@ -51,6 +52,8 @@ Testing & DB
   - New (2026-02-05): `db/migrations/20260205_add_category_to_tags.sql` (adds optional `category_id` to `tags` for rollout)
   - New (2026-02-06): `db/migrations/20260206_create_tag_categories_table.sql` (creates `tag_categories(tag_name, category_id)` join table for many-to-many mapping)
   - Seed (2026-02-07): `db/migrations/20260207_seed_cardiometabolic.sql` (idempotent seed that creates "Cardiometabolic Health" category and maps HsCRP, Fasting glucose, Fasting insulin, Triglycerides)
+   - Frontend (2026-02-05): UI rename — "Resources" menu and page header changed to **Library** for clarity.
+   - Frontend (2026-02-06): Added a user-facing **Categories** page (`#/categories`) to browse categories and jump to Library filtered by category.
 
 CI & deployment notes
 - Add `DATABASE_URL` to GitHub Secrets so the schema validator can run in CI.

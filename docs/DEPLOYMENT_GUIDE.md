@@ -48,7 +48,7 @@ Database (Supabase) — PostgreSQL
 
 1. **Visit the site** → https://gleaming-praline-ba5b42.netlify.app/
 2. **Create account or login** → Supabase authentication
-3. **Browse resources** → Fetched from Supabase database
+3. **Browse the library** → Fetched from Supabase database
 4. **Enter lab results** → Saved in Supabase (optional)
 5. **Use admin features** → Backend API handles resource management
 
@@ -65,7 +65,7 @@ The following tables are missing from Supabase and need to be created:
 - `health_goals` (for user health goal preferences)
 
 **Impact:** These pages will show "Loading..." until tables are created:
-- Resources tab (entire page)
+- Library tab (entire page)
 - Profile → Health Goals section
 - Profile → Preferred Resource Types section
 - Admin → Categories tab
@@ -96,7 +96,7 @@ The following tables are missing from Supabase and need to be created:
 
 5. **Verify**
    - Refresh the app in your browser
-   - Resources page should now load
+   - Library page should now load
    - Profile sections should show options
    - Admin tabs should display data
 
