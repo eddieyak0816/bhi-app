@@ -1989,37 +1989,46 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       </tr>
                     </thead>
                     <tbody>
-                      {(sortColumn ? sortData(logicRules
-                        .filter(l => {
-                          const markerId = filterCriteriaMarker ? labMarkers.find(m => m.name === filterCriteriaMarker)?.id : null
-                          if (filterCriteriaMarker && (!markerId || l.marker_id !== markerId)) return false
-                          if (filterCriteriaTag && l.tag_to_apply !== filterCriteriaTag) return false
-                          if (filterCriteriaValueType && filterCriteriaOperator && filterCriteriaValue) {
-                            const val = parseFloat(filterCriteriaValue)
-                            const fieldValue = filterCriteriaValueType === 'min' ? l.min_value : l.max_value
-                            if (filterCriteriaOperator === '<' && !(fieldValue < val)) return false
-                            if (filterCriteriaOperator === '>' && !(fieldValue > val)) return false
-                            if (filterCriteriaOperator === '=' && !(fieldValue === val)) return false
-                            if (filterCriteriaOperator === '<=' && !(fieldValue <= val)) return false
-                            if (filterCriteriaOperator === '>=' && !(fieldValue >= val)) return false
-                          }
-                          return true
-                        }), sortColumn) : logicRules
-                        .filter(l => {
-                          const markerId = filterCriteriaMarker ? labMarkers.find(m => m.name === filterCriteriaMarker)?.id : null
-                          if (filterCriteriaMarker && (!markerId || l.marker_id !== markerId)) return false
-                          if (filterCriteriaTag && l.tag_to_apply !== filterCriteriaTag) return false
-                          if (filterCriteriaValueType && filterCriteriaOperator && filterCriteriaValue) {
-                            const val = parseFloat(filterCriteriaValue)
-                            const fieldValue = filterCriteriaValueType === 'min' ? l.min_value : l.max_value
-                            if (filterCriteriaOperator === '<' && !(fieldValue < val)) return false
-                            if (filterCriteriaOperator === '>' && !(fieldValue > val)) return false
-                            if (filterCriteriaOperator === '=' && !(fieldValue === val)) return false
-                            if (filterCriteriaOperator === '<=' && !(fieldValue <= val)) return false
-                            if (filterCriteriaOperator === '>=' && !(fieldValue >= val)) return false
-                          }
-                          return true
-                        })).map(l => (
+                      {(
+                        sortColumn ? sortData(logicRules
+                          .filter(l => {
+                            const markerId = filterCriteriaMarker ? labMarkers.find(m => m.name === filterCriteriaMarker)?.id : null
+                            if (filterCriteriaMarker && (!markerId || l.marker_id !== markerId)) return false
+                            if (filterCriteriaTag && l.tag_to_apply !== filterCriteriaTag) return false
+                            if (filterCriteriaValueType && filterCriteriaOperator && filterCriteriaValue) {
+                              const val = parseFloat(filterCriteriaValue)
+                              const fieldValue = filterCriteriaValueType === 'min' ? l.min_value : l.max_value
+                              if (filterCriteriaOperator === '<' && !(fieldValue < val)) return false
+                              if (filterCriteriaOperator === '>' && !(fieldValue > val)) return false
+                              if (filterCriteriaOperator === '=' && !(fieldValue === val)) return false
+                              if (filterCriteriaOperator === '<=' && !(fieldValue <= val)) return false
+                              if (filterCriteriaOperator === '>=' && !(fieldValue >= val)) return false
+                            }
+                            return true
+                          }), sortColumn)
+                        : (logicRules || [])
+                          .filter(l => {
+                            const markerId = filterCriteriaMarker ? labMarkers.find(m => m.name === filterCriteriaMarker)?.id : null
+                            if (filterCriteriaMarker && (!markerId || l.marker_id !== markerId)) return false
+                            if (filterCriteriaTag && l.tag_to_apply !== filterCriteriaTag) return false
+                            if (filterCriteriaValueType && filterCriteriaOperator && filterCriteriaValue) {
+                              const val = parseFloat(filterCriteriaValue)
+                              const fieldValue = filterCriteriaValueType === 'min' ? l.min_value : l.max_value
+                              if (filterCriteriaOperator === '<' && !(fieldValue < val)) return false
+                              if (filterCriteriaOperator === '>' && !(fieldValue > val)) return false
+                              if (filterCriteriaOperator === '=' && !(fieldValue === val)) return false
+                              if (filterCriteriaOperator === '<=' && !(fieldValue <= val)) return false
+                              if (filterCriteriaOperator === '>=' && !(fieldValue >= val)) return false
+                            }
+                            return true
+                          }).slice().sort((a,b) => {
+                            const aName = (labMarkers.find(m => m.id === a.marker_id)?.name || '')
+                            const bName = (labMarkers.find(m => m.id === b.marker_id)?.name || '')
+                            const cmp = aName.localeCompare(bName, undefined, { sensitivity: 'base' })
+                            if (cmp !== 0) return cmp
+                            return (a.tag_to_apply || '').localeCompare(b.tag_to_apply || '', undefined, { sensitivity: 'base' })
+                          })
+                      ).map(l => (
                         <tr key={l.id} data-id={l.id} style={{borderTop:`1px solid ${theme.borderColor}`}}>
                           {editingId === l.id ? (
                             <>
@@ -2364,15 +2373,17 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     </tr>
                   </thead>
                   <tbody>
-                    {(sortColumn ? sortData(labMarkers
-                      .filter(m => 
-                        (!filterLabMarkerName || m.name === filterLabMarkerName)
-                        && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
-                      ), sortColumn) : labMarkers
-                      .filter(m => 
-                        (!filterLabMarkerName || m.name === filterLabMarkerName)
-                        && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
-                      )).map(m => (
+                    {(
+                      sortColumn ? sortData(labMarkers
+                        .filter(m => 
+                          (!filterLabMarkerName || m.name === filterLabMarkerName)
+                          && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                        ), sortColumn) : (labMarkers || [])
+                        .filter(m => 
+                          (!filterLabMarkerName || m.name === filterLabMarkerName)
+                          && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                        ).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+                    ).map(m => (
                       <tr key={m.id} style={{borderTop:`1px solid ${theme.borderColor}`}}>
                         {editingId === m.id ? (
                           <>
