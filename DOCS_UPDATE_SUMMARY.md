@@ -157,3 +157,28 @@ The USER_GUIDE already accurately reflects what's implemented and ready for user
 ---
 
 *Updated: January 28, 2026*
+
+---
+
+## Admin UI Update (2026-02-06)
+
+Summary of work applied on 2026-02-06:
+
+- Implemented category↔tag many-to-many editing via the Admin UI and backend migrations.
+- Added tag checklist to the Category edit modal; saves update `tags` metadata and persist category lists on tags.
+- Alphabetized most Admin lists and card views using case-insensitive `localeCompare` when no explicit `sortColumn` is active.
+- Fixed a runtime crash on the Health Goals page related to tag rendering.
+- Tightened vertical spacing in Categories UI and made newly-selected categories prepend to selection lists.
+
+Verification steps:
+
+1. Run the dev server: `npm run dev` and ensure backend is running for Admin endpoints.
+2. Open Admin → Categories: create a category, edit it, toggle tags, and save. Confirm tag chips show on cards.
+3. Open Admin → Tags: confirm tags list shows associated categories.
+4. Open Admin tabs (Resources, Tags, Categories, Markers, Goals) and verify alphabetical ordering when no column sort is set.
+
+Notes:
+- If `sortColumn` is active in a table view, that sort takes precedence over default alphabetical ordering.
+- Full runtime verification requires starting the dev server and backend; see `README.md` for local dev instructions.
+
+*Updated: February 6, 2026*

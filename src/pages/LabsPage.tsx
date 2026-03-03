@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import { useResults } from '../context/ResultsContext'
+import { useEvaluation } from '../context/EvaluationContext'
 
 interface LabMarker {
   id: string
@@ -14,6 +15,7 @@ interface LabMarker {
 export default function Labs() {
   const { theme } = useTheme()
   const { results, addResult, removeResult, getResultsForMarker } = useResults()
+  const { bhasResult } = useEvaluation()
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [labMarkers, setLabMarkers] = useState<LabMarker[]>([])
@@ -378,6 +380,7 @@ export default function Labs() {
                   <th style={{ padding: 12, textAlign: 'right', fontSize: 13, fontWeight: 600, color: theme.text }}>Value</th>
                   <th style={{ padding: 12, textAlign: 'left', fontSize: 13, fontWeight: 600, color: theme.text }}>Range</th>
                   <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Status</th>
+                  <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>BHAS Score</th>
                   <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Action</th>
                 </tr>
               </thead>
@@ -385,6 +388,17 @@ export default function Labs() {
                 {filteredResults.map((result, i) => {
                   const status = getStatusColor(result.value, result.minNormal, result.maxNormal)
                   const isNormal = result.value >= result.minNormal && result.value <= result.maxNormal
+                  const markerScore = bhasResult?.markerScores.find(
+                    m => m.markerName.toLowerCase() === result.markerName.toLowerCase()
+                  )
+                  const scoreBg =
+                    markerScore?.score === 1   ? 'rgba(16, 185, 129, 0.12)' :
+                    markerScore?.score === 0.5 ? 'rgba(245, 158, 11, 0.12)' :
+                                                 'rgba(239, 68, 68, 0.12)'
+                  const scoreColor =
+                    markerScore?.score === 1   ? '#10B981' :
+                    markerScore?.score === 0.5 ? '#D97706' :
+                                                 '#EF4444'
                   return (
                     <tr key={result.id} style={{ borderTop: i > 0 ? `1.5px solid ${theme.borderColor}` : 'none' }}>
                       <td style={{ padding: 12, fontSize: 13 }}>{result.date}</td>
@@ -408,6 +422,25 @@ export default function Labs() {
                         >
                           {isNormal ? 'Normal' : 'Out of Range'}
                         </span>
+                      </td>
+                      <td style={{ padding: 12, textAlign: 'center', fontSize: 13 }}>
+                        {markerScore ? (
+                          <span
+                            style={{
+                              background: scoreBg,
+                              color: scoreColor,
+                              padding: '4px 10px',
+                              borderRadius: 4,
+                              fontSize: 12,
+                              fontWeight: 700,
+                            }}
+                            title={markerScore.tag || 'No matching rule'}
+                          >
+                            {markerScore.score} — {markerScore.label}
+                          </span>
+                        ) : (
+                          <span style={{ color: theme.textMuted, fontSize: 12 }}>—</span>
+                        )}
                       </td>
                       <td style={{ padding: 12, textAlign: 'center' }}>
                         <button

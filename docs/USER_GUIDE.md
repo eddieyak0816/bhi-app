@@ -258,6 +258,24 @@ The Admin section has 8 management tabs. Here's what each one does:
 
 ---
 
+### Recent Admin UI changes (2026-02-06)
+
+Admins: recent UX and backend updates you should know about:
+
+- Category ↔ Tag editing: When editing a Category you'll now see a checklist of Tags; toggling Tags will persist the mapping server-side.
+- Alphabetical ordering: Most Admin lists and card grids now display items in case-insensitive alphabetical order unless a specific column sort is active.
+- Category selection: Category pickers now prepend newly-selected categories so they appear first among selected items.
+- UI polish & Bugfix: Vertical spacing in Categories lists tightened; Health Goals tag rendering crash fixed.
+
+Verification:
+
+1. Open Admin → Categories. Edit a category and toggle tags in the modal, then save. Confirm the category card shows the selected tag chips.
+2. Open Admin table/card views and confirm items are listed alphabetically when no table sort is active.
+
+---
+
+---
+
 ### Managing Library Items
 
 Library items are the health education materials that users browse and receive as recommendations. Each item has a type, title, URL, and is associated with categories and tags.

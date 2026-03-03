@@ -71,6 +71,19 @@ What I built (short)
 - Playwright smoke test and CI schema validator (already added).
 - Admin UI for managing resources, tags, categories, health goals, and lab markers.
 
+## Recent Admin UI updates (2026-02-06)
+
+Summary of recent changes applied to the Admin UI and related flows:
+
+- Category ↔ Tag management: Categories can now be edited to select multiple Tags (many-to-many mapping), and Tags can include associated Categories. Backend migrations and a join table (`tag_categories`) support this behavior.
+- Alphabetical consistency: Most Admin list and card views (Resources, Tags, Categories, Resource Types, Lab Markers, Health Goals, Criteria) now use case-insensitive alphabetical ordering when no explicit column sort is active.
+- Category edit UX: Editing a Category presents a tag checklist in the modal; changes persist back to the server and update tag↔category mappings.
+- UI polish: Vertical spacing in the Categories checkbox list and category cards was tightened for a denser layout.
+- Selection behavior: When picking categories from any picker, newly-selected categories are prepended so they appear first among selected chips.
+- Health Goals fix: Resolved a runtime crash when opening Health Goals cards and ensured their tag chips display correctly.
+
+If you want a live verification, run the dev server locally and open the Admin tab to exercise creating/editing items and confirming alphabetical placement.
+
 Next (I recommend)
 - Run database migrations in Supabase (see "Testing & DB" section above) — this fixes "Loading" states on Resources, Profile, and Admin pages
 - Provide `DATABASE_URL` as a GitHub secret so CI can run the DB validator

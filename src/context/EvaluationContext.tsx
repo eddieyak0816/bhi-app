@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useResults } from './ResultsContext'
-import { evaluateUserTags, getRecommendedResources, type LogicRule, type Resource } from '../utils/evaluateRules'
+import { evaluateUserTags, getRecommendedResources, calculateBhasScore, type LogicRule, type Resource, type BhasResult } from '../utils/evaluateRules'
 import { supabase } from '../lib/supabase'
 
 interface EvaluationContextType {
   applicableTags: string[]
   recommendedResources: Resource[]
+  bhasResult: BhasResult | null
   loading: boolean
   error: string | null
   reevaluate: () => Promise<void>
@@ -17,6 +18,7 @@ export function EvaluationProvider({ children }: { children: React.ReactNode }) 
   const { results } = useResults()
   const [applicableTags, setApplicableTags] = useState<string[]>([])
   const [recommendedResources, setRecommendedResources] = useState<Resource[]>([])
+  const [bhasResult, setBhasResult] = useState<BhasResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,6 +26,7 @@ export function EvaluationProvider({ children }: { children: React.ReactNode }) 
     if (results.length === 0) {
       setApplicableTags([])
       setRecommendedResources([])
+      setBhasResult(null)
       return
     }
 
@@ -68,6 +71,9 @@ export function EvaluationProvider({ children }: { children: React.ReactNode }) 
       const tags = evaluateUserTags(results, rules)
       setApplicableTags(tags)
 
+      // Calculate BHAS score
+      setBhasResult(calculateBhasScore(results, rules))
+
       // Get recommended resources
       const recommended = getRecommendedResources(tags, resources)
       setRecommendedResources(recommended)
@@ -90,6 +96,7 @@ export function EvaluationProvider({ children }: { children: React.ReactNode }) 
       value={{
         applicableTags,
         recommendedResources,
+        bhasResult,
         loading,
         error,
         reevaluate,

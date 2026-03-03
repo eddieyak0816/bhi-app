@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BHI App – Implementation Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      color: white;
+      padding: 36px 40px 28px;
+    }
+    header h1 { font-size: 1.9em; font-weight: 700; margin-bottom: 6px; }
+    header p  { opacity: 0.85; font-size: 0.95em; }
+    .last-updated { opacity: 0.7; font-size: 0.85em; margin-top: 6px; }
+
+    /* ── Stats bar ── */
+    .stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      background: white;
+      padding: 20px 40px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.95em;
+      font-weight: 600;
+    }
+    .stat-done    { background: #d1fae5; color: #065f46; }
+    .stat-partial { background: #fef3c7; color: #92400e; }
+    .stat-todo    { background: #fee2e2; color: #991b1b; }
+    .stat-total   { background: #dbeafe; color: #1e40af; }
+    .stat .num { font-size: 1.6em; font-weight: 800; }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 20px 40px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      align-items: center;
+    }
+    .controls label { font-weight: 600; font-size: 0.9em; color: #475569; margin-right: 4px; }
+    .filter-btn {
+      padding: 7px 16px;
+      border: 2px solid #cbd5e1;
+      background: white;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.875em;
+      font-weight: 600;
+      color: #475569;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+    .filter-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+    .filter-btn.f-done    { --ac: #10b981; }
+    .filter-btn.f-done.active    { background: #10b981; border-color: #10b981; }
+    .filter-btn.f-partial { --ac: #f59e0b; }
+    .filter-btn.f-partial.active { background: #f59e0b; border-color: #f59e0b; }
+    .filter-btn.f-todo    { --ac: #ef4444; }
+    .filter-btn.f-todo.active    { background: #ef4444; border-color: #ef4444; }
+
+    /* ── Main layout ── */
+    main { padding: 32px 40px; }
+
+    /* ── Phase section ── */
+    .phase {
+      margin-bottom: 40px;
+    }
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .phase-badge {
+      background: #1e3a8a;
+      color: white;
+      font-size: 0.8em;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .phase-title { font-size: 1.15em; font-weight: 700; color: #1e293b; }
+    .phase-desc  { font-size: 0.9em; color: #64748b; margin-top: 2px; }
+    .phase-progress {
+      margin-left: auto;
+      font-size: 0.85em;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    /* ── Item rows ── */
+    .items { display: flex; flex-direction: column; gap: 10px; }
+
+    .item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: white;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px 20px;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); border-color: #94a3b8; }
+    .item.hidden { display: none; }
+
+    .item.done    { border-left: 4px solid #10b981; }
+    .item.partial { border-left: 4px solid #f59e0b; }
+    .item.todo    { border-left: 4px solid #ef4444; }
+
+    .item-num {
+      min-width: 28px;
+      height: 28px;
+      background: #f1f5f9;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78em;
+      font-weight: 700;
+      color: #64748b;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .item-body { flex: 1; }
+    .item-title { font-weight: 600; font-size: 0.98em; color: #1e293b; margin-bottom: 4px; }
+    .item-note  { font-size: 0.875em; color: #64748b; line-height: 1.45; }
+
+    .item-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .status-done    { background: #d1fae5; color: #065f46; }
+    .status-partial { background: #fef3c7; color: #92400e; }
+    .status-todo    { background: #fee2e2; color: #991b1b; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 28px 40px;
+      color: #94a3b8;
+      font-size: 0.85em;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    @media (max-width: 640px) {
+      header, .stats, .controls, main { padding-left: 20px; padding-right: 20px; }
+      .item { flex-wrap: wrap; }
+      .item-status { order: -1; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>BHI App — Implementation Tracker</h1>
+  <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
+  <p class="last-updated">Last updated: 2026-03-02 (Phase 2 partial) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+</header>
+
+<!-- Stats bar (counts kept in sync manually or via Ctrl+F) -->
+<div class="stats">
+  <div class="stat stat-done">    <span class="num" id="cnt-done">9</span>  Built / Done</div>
+  <div class="stat stat-partial"> <span class="num" id="cnt-partial">8</span>  Partial</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">13</span>  Not Built</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">30</span>  Total Items</div>
+</div>
+
+<!-- Filter controls -->
+<div class="controls">
+  <label>Show:</label>
+  <button class="filter-btn active" onclick="filter('all', this)">All</button>
+  <button class="filter-btn f-done"    onclick="filter('done', this)">Built</button>
+  <button class="filter-btn f-partial" onclick="filter('partial', this)">Partial</button>
+  <button class="filter-btn f-todo"    onclick="filter('todo', this)">Not Built</button>
+</div>
+
+<main>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE 1 – ALREADY DONE
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="1">
+    <div class="phase-header">
+      <span class="phase-badge">Phase 1</span>
+      <div>
+        <div class="phase-title">Foundation — Already Built</div>
+        <div class="phase-desc">Core infrastructure, admin tooling, and the individual user experience</div>
+      </div>
+      <div class="phase-progress">4 / 4 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item done" data-status="done">
+        <div class="item-num">1</div>
+        <div class="item-body">
+          <div class="item-title">Core infrastructure — auth, database, routing</div>
+          <div class="item-note">Supabase PostgreSQL with 11+ tables, RLS policies, Supabase Auth (email/password, JWT), role-based access (user / admin / super_admin), hash-based routing, protected routes.</div>
+        </div>
+        <span class="item-status status-done">✅ Built</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">2</div>
+        <div class="item-body">
+          <div class="item-title">Admin CMS — resources, tags, categories, logic rules</div>
+          <div class="item-note">Full CRUD for resources, tags, categories, lab markers, health goals, and logic rules. Bulk delete, audit log, modal-based editing, alphabetical sorting.</div>
+        </div>
+        <span class="item-status status-done">✅ Built</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">3</div>
+        <div class="item-body">
+          <div class="item-title">Resource library &amp; personalized recommendations</div>
+          <div class="item-note">Browse/search/filter resources by type, tag, category, and keyword. Grid/list view. Bookmarking. Tag-to-resource matching drives recommendations on the dashboard.</div>
+        </div>
+        <span class="item-status status-done">✅ Built</span>
+      </div>
+
+      <div class="item partial" data-status="partial">
+        <div class="item-num">4</div>
+        <div class="item-body">
+          <div class="item-title">Individual user lab input &amp; evaluation</div>
+          <div class="item-note">Manual lab value entry for cardiometabolic markers + Vitamin D. Logic rules engine evaluates values and applies tags. User lab values stored via RPC with RLS. No structured upload workflow or date-based enforcement yet.</div>
+        </div>
+        <span class="item-status status-partial">🔶 Partial</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE 2 – COMPLETE INDIVIDUAL USER EXPERIENCE
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="2">
+    <div class="phase-header">
+      <span class="phase-badge">Phase 2</span>
+      <div>
+        <div class="phase-title">Complete the Individual User Experience</div>
+        <div class="phase-desc">BHAS score rollup, missing metrics, biometrics, reminders, and consent</div>
+      </div>
+      <div class="phase-progress">3 / 6 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item done" data-status="done">
+        <div class="item-num">5</div>
+        <div class="item-body">
+          <div class="item-title">BHAS scoring rollup — total score per user</div>
+          <div class="item-note">calculateBhasScore() added to evaluateRules.ts. Scores each marker (Optimal=1, Improvement=0.5, Out of range=0), rolls up totalScore, maxPossible, and percentage. Exposed via EvaluationContext. Dashboard shows a BHAS % banner with per-marker colour-coded chips.</div>
+        </div>
+        <span class="item-status status-done">✅ Built</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">6</div>
+        <div class="item-body">
+          <div class="item-title">Metric scores surfaced in UI (0 / 0.5 / 1 per marker)</div>
+          <div class="item-note">LabsPage now shows a BHAS Score column in the results table with colour-coded badges (green=1 Optimal, amber=0.5 Improvement, red=0 Out of Range). Hovering reveals the tag that fired. Dashboard BHAS banner shows per-marker chips.</div>
+        </div>
+        <span class="item-status status-done">✅ Built</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">7</div>
+        <div class="item-body">
+          <div class="item-title">Vitamin B12 lab marker + logic rules</div>
+          <div class="item-note">Migration 20260302_add_vitamin_b12.sql adds the lab marker (300–900 pg/mL normal), four tags (Deficient_B12, Low_Normal_B12, Adequate_B12, Excess_B12), and four logic rules covering the full range. Tags mapped to Nutrition category. BHAS scoring already includes B12 tags in OPTIMAL_TAGS and IMPROVEMENT_TAGS sets.</div>
+        </div>
+        <span class="item-status status-done">✅ Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">8</div>
+        <div class="item-body">
+          <div class="item-title">Biometric data collection — waist circumference, grip strength</div>
+          <div class="item-note">No biometric input module exists. Needed for a complete BHAS score. Should include clinician/verifier attestation fields.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">9</div>
+        <div class="item-body">
+          <div class="item-title">Data update frequency tracking — biannual reminders</div>
+          <div class="item-note">No date-based enforcement or reminder system. Labs should be flagged as stale after ~6 months and users prompted to update.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item partial" data-status="partial">
+        <div class="item-num">10</div>
+        <div class="item-body">
+          <div class="item-title">Optional public profile / opt-in consent page</div>
+          <div class="item-note">Consent logic is referenced in the codebase but no public profile page or formal opt-in consent flow is built. Required for any public-facing or national comparison features.</div>
+        </div>
+        <span class="item-status status-partial">🔶 Partial</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE 3 – DATA VERIFICATION & INTEGRITY
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="3">
+    <div class="phase-header">
+      <span class="phase-badge">Phase 3</span>
+      <div>
+        <div class="phase-title">Data Verification &amp; Integrity</div>
+        <div class="phase-desc">AI PDF extraction, provider NPI verification, and direct lab API integrations</div>
+      </div>
+      <div class="phase-progress">0 / 3 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">11</div>
+        <div class="item-body">
+          <div class="item-title">AI lab PDF upload &amp; extraction (preferred verification method)</div>
+          <div class="item-note">User uploads a lab PDF → AI extracts values → flags anomalies → admin approves → approved metrics stored. Highest-impact data input improvement. Technically feasible with Claude/GPT vision APIs.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">12</div>
+        <div class="item-body">
+          <div class="item-title">Provider verification workflow — NPI, credential, signature, date</div>
+          <div class="item-note">Clinician or nurse enters and attests metric values. Requires NPI (National Provider Identifier) lookup, credential fields, digital signature, and date stamp. No verifier fields exist in the schema yet. Required for HSA documentation and corporate trust.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">13</div>
+        <div class="item-body">
+          <div class="item-title">Direct lab API integrations — Labcorp, Quest, Mako, Rhythm</div>
+          <div class="item-note">Secure API pull from certified lab vendors. Automates data entry and eliminates manual input errors. Depends on lab partner agreements and API access being established.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE 4 – CORPORATE PORTAL
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="4">
+    <div class="phase-header">
+      <span class="phase-badge">Phase 4</span>
+      <div>
+        <div class="phase-title">Corporate Portal</div>
+        <div class="phase-desc">Employer orgs, de-identification, team assignment (Fire / Water / Wind / Earth), and team scoring</div>
+      </div>
+      <div class="phase-progress">0 / 5 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">14</div>
+        <div class="item-body">
+          <div class="item-title">Corporate org structure — employers &amp; assigned users</div>
+          <div class="item-note">No corporate organization model exists. Need new DB tables: organizations, org_memberships. Foundation for all corporate features. Employers should not see PHI.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item partial" data-status="partial">
+        <div class="item-num">15</div>
+        <div class="item-body">
+          <div class="item-title">Unique username system + admin identity mapping</div>
+          <div class="item-note">Users currently identified by email only. Need a separate display username for de-identification. Admin-only mapping (username ↔ real identity) needs explicit UI. Role infrastructure exists.</div>
+        </div>
+        <span class="item-status status-partial">🔶 Partial</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">16</div>
+        <div class="item-body">
+          <div class="item-title">De-identified employer view — no PHI visible to employer</div>
+          <div class="item-note">Employer portal that shows only de-identified usernames, team data, and aggregate scores. PHI (name, email, individual labs) must be hidden. Depends on org structure + username system.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">17</div>
+        <div class="item-body">
+          <div class="item-title">Auto team assignment — Fire, Water, Wind, Earth</div>
+          <div class="item-note">Corporate users assigned permanently to one of four teams. Assignment logic TBD (random, score-balanced, manual?). Depends on corporate user model being in place.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">18</div>
+        <div class="item-body">
+          <div class="item-title">Team scoring display — average score, % optimal, ranking, trends</div>
+          <div class="item-note">Dashboard view showing each team's average BHAS score, % of members at optimal per metric, overall team ranking, and improvement over time. Depends on team assignment + BHAS rollup both being complete.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE 5 – ANALYTICS & REPORTING
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="5">
+    <div class="phase-header">
+      <span class="phase-badge">Phase 5</span>
+      <div>
+        <div class="phase-title">Analytics &amp; Reporting</div>
+        <div class="phase-desc">Population benchmarks, corporate dashboards, insurance reports, and exportable outputs</div>
+      </div>
+      <div class="phase-progress">0 / 4 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">19</div>
+        <div class="item-body">
+          <div class="item-title">Anonymous national comparison benchmarks</div>
+          <div class="item-note">Allows public users to compare their scores against anonymized national averages. Requires sufficient user data volume and careful de-identification of aggregates.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">20</div>
+        <div class="item-body">
+          <div class="item-title">Corporate analytics dashboard — population averages, risk distribution, team comparisons</div>
+          <div class="item-note">Employer-facing dashboard showing aggregate health trends, % optimal per metric across the org, risk distribution, and team head-to-head comparisons. Depends on corporate portal being fully built.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">21</div>
+        <div class="item-body">
+          <div class="item-title">Insurance negotiation reports</div>
+          <div class="item-note">Formatted population health reports intended to support employer insurance negotiations. Depends on corporate analytics module being complete.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">22</div>
+        <div class="item-body">
+          <div class="item-title">Exportable reports — user and corporate</div>
+          <div class="item-note">PDF or CSV export of individual user health summaries and corporate aggregate reports. Depends on analytics being complete.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE 6 – MONETIZATION & HSA AUTOMATION
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="6">
+    <div class="phase-header">
+      <span class="phase-badge">Phase 6</span>
+      <div>
+        <div class="phase-title">Monetization &amp; HSA Reimbursement Automation</div>
+        <div class="phase-desc">Payment gate, medical necessity document generation, and HSA bank submission</div>
+      </div>
+      <div class="phase-progress">0 / 3 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">23</div>
+        <div class="item-body">
+          <div class="item-title">Payment / subscription system — HSA feature paywall</div>
+          <div class="item-note">HSA reimbursement automation is a paid feature for public users. Requires payment processor integration (e.g. Stripe). Must be in place before the HSA feature can be gated.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item partial" data-status="partial">
+        <div class="item-num">24</div>
+        <div class="item-body">
+          <div class="item-title">HSA reimbursement automation — detect → document → form → submit</div>
+          <div class="item-note">
+            Workflow: detect non-optimal metrics (partial — rules engine does this) → generate medical necessity document → attach verified labs → populate HSA form → submit to HSA bank.<br>
+            HSA = Health Savings Account (tax-advantaged account for medical expenses). Document generation, form population, and bank submission are all not yet built. Requires verified lab data from Phase 3.
+          </div>
+        </div>
+        <span class="item-status status-partial">🔶 Partial</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">25</div>
+        <div class="item-body">
+          <div class="item-title">HSA bank connection</div>
+          <div class="item-note">Integration with HSA bank APIs to submit reimbursement claims directly. Requires HSA automation workflow (item 24) to be complete first.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE 7 – FUTURE / NICE TO HAVE
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="7">
+    <div class="phase-header">
+      <span class="phase-badge">Phase 7</span>
+      <div>
+        <div class="phase-title">Future &amp; Nice-to-Have</div>
+        <div class="phase-desc">Device integrations, advanced metrics, and clinical workflow items</div>
+      </div>
+      <div class="phase-progress">0 / 5 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">26</div>
+        <div class="item-body">
+          <div class="item-title">CGM device integrations (continuous glucose monitors)</div>
+          <div class="item-note">Real-time glucose data from wearable devices. Requires device manufacturer partnerships and API agreements.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">27</div>
+        <div class="item-body">
+          <div class="item-title">VO2 Max calculator</div>
+          <div class="item-note">Cardiorespiratory fitness metric. Would be entered as a verified biometric (requires clinician or certified fitness professional attestation).</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">28</div>
+        <div class="item-body">
+          <div class="item-title">Advanced care planning status</div>
+          <div class="item-note">Tracks whether a user has completed advance care planning (e.g. living will, healthcare proxy). Clinical workflow definition needed before building.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">29</div>
+        <div class="item-body">
+          <div class="item-title">Insulin usage tracking (Type 1 diabetes)</div>
+          <div class="item-note">Boolean or quantitative field to track insulin dependency. Affects BHAS scoring and HSA documentation for Type 1 diabetics.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">30</div>
+        <div class="item-body">
+          <div class="item-title">Acute care visit tracking</div>
+          <div class="item-note">Records ER or urgent care visits. Relevant to corporate risk reporting and insurance negotiation reports.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-02 &nbsp;·&nbsp;
+  Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
+  Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
+</footer>
+
+<script>
+  function filter(status, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.item').forEach(item => {
+      if (status === 'all') {
+        item.classList.remove('hidden');
+      } else {
+        const match = item.dataset.status === status;
+        item.classList.toggle('hidden', !match);
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
