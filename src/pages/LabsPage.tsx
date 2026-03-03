@@ -4,6 +4,13 @@ import { useTheme } from '../context/ThemeContext'
 import { useResults } from '../context/ResultsContext'
 import { useEvaluation } from '../context/EvaluationContext'
 
+// Tags that represent the optimal/normal range for BHAS scoring
+const OPTIMAL_TAGS = new Set([
+  'Adequate_VitD', 'Normal_Glucose', 'Desirable_Cholesterol', 'Good_HDL',
+  'Optimal_LDL', 'Normal_Triglycerides', 'Normal_BP_Systolic', 'Normal_BP_Diastolic',
+  'Normal D', 'Adequate_B12', 'Normal_B12',
+])
+
 interface LabMarker {
   id: string
   name: string
@@ -20,6 +27,8 @@ export default function Labs() {
   const [showForm, setShowForm] = useState(false)
   const [labMarkers, setLabMarkers] = useState<LabMarker[]>([])
   const [loadingMarkers, setLoadingMarkers] = useState(true)
+  // Map of marker_id -> { min, max } derived from optimal logic rules
+  const [optimalRanges, setOptimalRanges] = useState<Record<string, { min: number; max: number }>>({})
   const [formData, setFormData] = useState({
     markerName: '',
     value: '',
@@ -28,22 +37,30 @@ export default function Labs() {
     maxNormal: '',
   })
 
-  // Fetch lab markers from Supabase
+  // Fetch lab markers and optimal ranges from logic_rules in one go
   useEffect(() => {
     async function fetchMarkers() {
       try {
-        const { data, error } = await supabase
-          .from('lab_markers')
-          .select('id, name, unit, min_normal, max_normal')
-          .order('name')
-        
-        if (error) throw error
-        if (data) {
-          setLabMarkers(data as LabMarker[])
+        const [markersRes, rulesRes] = await Promise.all([
+          supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal').order('name'),
+          supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
+        ])
+
+        if (markersRes.error) throw markersRes.error
+        if (markersRes.data) setLabMarkers(markersRes.data as LabMarker[])
+
+        // Build optimal range map from logic rules
+        if (rulesRes.data) {
+          const ranges: Record<string, { min: number; max: number }> = {}
+          for (const rule of rulesRes.data) {
+            if (OPTIMAL_TAGS.has(rule.tag_to_apply)) {
+              ranges[rule.marker_id] = { min: rule.min_value, max: rule.max_value }
+            }
+          }
+          setOptimalRanges(ranges)
         }
       } catch (err) {
         console.error('Error fetching lab markers:', err)
-        // Fallback to empty array if fetch fails
         setLabMarkers([])
       } finally {
         setLoadingMarkers(false)
@@ -92,12 +109,13 @@ export default function Labs() {
   }
 
   const handleSelectCommonMarker = (marker: LabMarker) => {
+    const optimal = optimalRanges[marker.id]
     setFormData(prev => ({
       ...prev,
       markerName: marker.name,
       unit: marker.unit || '',
-      minNormal: String(marker.min_normal || 0),
-      maxNormal: String(marker.max_normal || 100),
+      minNormal: optimal ? String(optimal.min) : String(marker.min_normal || 0),
+      maxNormal: optimal ? String(optimal.max) : String(marker.max_normal || 100),
     }))
   }
 
