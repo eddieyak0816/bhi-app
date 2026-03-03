@@ -9,6 +9,7 @@ const OPTIMAL_TAGS = new Set([
   'Adequate_VitD', 'Normal_Glucose', 'Desirable_Cholesterol', 'Good_HDL',
   'Optimal_LDL', 'Normal_Triglycerides', 'Normal_BP_Systolic', 'Normal_BP_Diastolic',
   'Normal D', 'Adequate_B12', 'Normal_B12',
+  'Optimal_Waist_Male', 'Optimal_Waist_Female', 'Optimal_Grip',
 ])
 
 interface LabMarker {

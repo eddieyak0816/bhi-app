@@ -185,14 +185,14 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-02 (Phase 2 partial) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-02 (Phase 2 — biometrics built) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar (counts kept in sync manually or via Ctrl+F) -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">9</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">10</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">8</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">13</span>  Not Built</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">12</span>  Not Built</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">30</span>  Total Items</div>
 </div>
 
@@ -270,7 +270,7 @@
         <div class="phase-title">Complete the Individual User Experience</div>
         <div class="phase-desc">BHAS score rollup, missing metrics, biometrics, reminders, and consent</div>
       </div>
-      <div class="phase-progress">3 / 6 done</div>
+      <div class="phase-progress">4 / 6 done</div>
     </div>
     <div class="items">
 
@@ -278,7 +278,7 @@
         <div class="item-num">5</div>
         <div class="item-body">
           <div class="item-title">BHAS scoring rollup — total score per user</div>
-          <div class="item-note">calculateBhasScore() added to evaluateRules.ts. Scores each marker (Optimal=1, Improvement=0.5, Out of range=0), rolls up totalScore, maxPossible, and percentage. Exposed via EvaluationContext. Dashboard shows a BHAS % banner with per-marker colour-coded chips.</div>
+          <div class="item-note">calculateBhasScore() added to evaluateRules.ts. Scores each marker (Optimal=1, Improvement=0.5, Out of range=0), rolls up totalScore, maxPossible, and percentage. Exposed via EvaluationContext. Dashboard shows a BHAS % banner with per-marker colour-coded chips. <strong>Fix applied:</strong> insert_medical_criteria.sql corrected to use 'Fasting Glucose' (not 'Blood Glucose'), duplicate/triplicate rules cleaned from DB, scoring verified live in app.</div>
         </div>
         <span class="item-status status-done">✅ Built</span>
       </div>
@@ -287,7 +287,7 @@
         <div class="item-num">6</div>
         <div class="item-body">
           <div class="item-title">Metric scores surfaced in UI (0 / 0.5 / 1 per marker)</div>
-          <div class="item-note">LabsPage now shows a BHAS Score column in the results table with colour-coded badges (green=1 Optimal, amber=0.5 Improvement, red=0 Out of Range). Hovering reveals the tag that fired. Dashboard BHAS banner shows per-marker chips.</div>
+          <div class="item-note">LabsPage now shows a BHAS Score column in the results table with colour-coded badges (green=1 Optimal, amber=0.5 Improvement, red=0 Out of Range). Hovering reveals the tag that fired. Dashboard BHAS banner shows per-marker chips. <strong>Fix applied:</strong> Min Normal / Max Normal fields in the lab entry form now derive values from the optimal logic rule for each marker (Criteria tab) rather than lab_markers table. Optimal ranges pre-loaded at mount so marker buttons always respond instantly.</div>
         </div>
         <span class="item-status status-done">✅ Built</span>
       </div>
@@ -301,13 +301,13 @@
         <span class="item-status status-done">✅ Built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">8</div>
         <div class="item-body">
           <div class="item-title">Biometric data collection — waist circumference, grip strength</div>
-          <div class="item-note">No biometric input module exists. Needed for a complete BHAS score. Should include clinician/verifier attestation fields.</div>
+          <div class="item-note">Sex field + Biometrics section added to Profile page. Saves to profiles table (sex, waist_circumference, waist_unit, grip_strength, age). Waist Circumference (Male/Female) and Grip Strength lab markers added with sex-specific logic rules. BHAS scoring includes biometric optimal/improvement tags. DB migrations: 20260302_add_biometrics_to_profiles.sql, 20260302_add_biometric_markers.sql.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built</span>
       </div>
 
       <div class="item todo" data-status="todo">

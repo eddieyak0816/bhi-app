@@ -46,14 +46,18 @@ Troubleshooting (common)
 Testing & DB
 - Seed sample data (optional): `DATABASE_URL="<pg_url>" npm run seed:db`
 - Dev-only inspection endpoint: set `ENABLE_DEV_ENDPOINT=true` in `.env.server` then call `GET /api/dev/user-lab-values` with header `x-backend-api-key: foo`.
-- Database Migrations: Run SQL migrations in Supabase Dashboard → SQL Editor:
-  - `db/migrations/20260128_create_categories_table.sql` (creates categories table + default categories)
-  - `db/migrations/20260128_create_health_goals_table_v2.sql` (creates health_goals table + default health goals)
-  - New (2026-02-05): `db/migrations/20260205_add_category_to_tags.sql` (adds optional `category_id` to `tags` for rollout)
-  - New (2026-02-06): `db/migrations/20260206_create_tag_categories_table.sql` (creates `tag_categories(tag_name, category_id)` join table for many-to-many mapping)
-  - Seed (2026-02-07): `db/migrations/20260207_seed_cardiometabolic.sql` (idempotent seed that creates "Cardiometabolic Health" category and maps HsCRP, Fasting glucose, Fasting insulin, Triglycerides)
-   - Frontend (2026-02-05): UI rename — "Resources" menu and page header changed to **Library** for clarity.
-   - Frontend (2026-02-06): Added a user-facing **Categories** page (`#/categories`) to browse categories and jump to Library filtered by category.
+- Database Migrations: Run SQL migrations in Supabase Dashboard → SQL Editor **in this order**:
+  - `db/migrations/20260128_create_categories_table.sql` — creates categories table + default categories
+  - `db/migrations/20260128_create_health_goals_table_v2.sql` — creates health_goals table + default health goals
+  - `db/migrations/20260120_add_logic_rules_id_optional.sql` — adds `id` UUID primary key to logic_rules
+  - `db/migrations/20260125_add_operator_column.sql` — adds `operator` column to logic_rules
+  - `db/migrations/20260205_add_category_to_tags.sql` — adds optional `category_id` to tags
+  - `db/migrations/20260206_create_tag_categories_table.sql` — creates `tag_categories` join table
+  - `db/migrations/20260207_seed_cardiometabolic.sql` — seeds "Cardiometabolic Health" category
+  - `db/migrations/20260302_add_vitamin_b12.sql` — adds Vitamin B12 marker + logic rules
+  - `db/migrations/20260302_add_biometrics_to_profiles.sql` — adds sex, waist, grip fields to profiles
+  - `db/migrations/20260302_add_biometric_markers.sql` — adds Waist Circumference + Grip Strength markers
+  - `db/insert_medical_criteria.sql` — inserts all logic rules for the 8 core blood markers (idempotent, run after migrations above)
 
 CI & deployment notes
 - Add `DATABASE_URL` to GitHub Secrets so the schema validator can run in CI.
@@ -64,12 +68,12 @@ CI & deployment notes
 - Render: Auto-deploys backend on push to main branch. Requires env variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY`, `BACKEND_API_KEY`, `SUPABASE_SERVICE_ROLE`
 
 What I built (short)
-- React + Vite frontend (stateless lab input).
-- Client-only tag mapping (no lab numbers saved by default).
-- Supabase wiring for live data (read-only in this flow).
-- Opt-in storage scaffold for user lab values (disabled by default; backend + RLS required to enable).
-- Playwright smoke test and CI schema validator (already added).
-- Admin UI for managing resources, tags, categories, health goals, and lab markers.
+- React + Vite frontend with Supabase auth, RLS, and live data.
+- Admin CMS: resources, tags, categories, logic rules (criteria), lab markers, health goals.
+- User lab input with BHAS scoring (Optimal/Improvement/Out of Range per marker, rolled up to a % score).
+- Logic rules engine: marker value → tag → resource recommendations.
+- Profile page: saves name, age, sex, waist circumference, grip strength to Supabase.
+- Playwright smoke test and CI schema validator.
 
 ## Recent Admin UI updates (2026-02-06)
 
@@ -85,13 +89,13 @@ Summary of recent changes applied to the Admin UI and related flows:
 If you want a live verification, run the dev server locally and open the Admin tab to exercise creating/editing items and confirming alphabetical placement.
 
 Next (I recommend)
-- Run database migrations in Supabase (see "Testing & DB" section above) — this fixes "Loading" states on Resources, Profile, and Admin pages
+- Run all database migrations listed above in order (see "Testing & DB" section)
+- See `IMPLEMENTATION_TRACKER.html` for full phase-by-phase build status (open in browser)
+- See `DEVELOPER_REQUIREMENTS.md` for the full feature specification
+- Phase 2 remaining: biannual lab reminder tracking (item 9), public profile/consent page (item 10)
+- Phase 3 next: lab PDF upload + AI extraction, provider verification workflow
 - Provide `DATABASE_URL` as a GitHub secret so CI can run the DB validator
-- To enable opt-in storage: add these secrets to GitHub (do NOT paste them here):
-  - `BACKEND_API_KEY` (short secret for the frontend to call the server in dev)
-  - `SUPABASE_SERVICE_ROLE` (server-only; never expose to browser)
-- Run the backend locally for testing: `BACKEND_API_KEY=foo SUPABASE_SERVICE_ROLE=<service_role> VITE_SUPABASE_URL=<url> npm run dev:server`
-- Dev-only: to inspect recent opt-in saves locally, set `ENABLE_DEV_ENDPOINT=true` in `.env.server` and restart the backend; then call `GET /api/dev/user-lab-values` with the header `x-backend-api-key: foo`.
+- Backend secrets needed: `BACKEND_API_KEY`, `SUPABASE_SERVICE_ROLE` (never expose to browser)
 
 For help
 - See DEVELOPER_STATUS.md for current development status and blockers

@@ -55,6 +55,10 @@ const OPTIMAL_TAGS = new Set([
   // B12 (added in migration)
   'Adequate_B12',
   'Normal_B12',
+  // Biometrics (added in migration)
+  'Optimal_Waist_Male',
+  'Optimal_Waist_Female',
+  'Optimal_Grip',
 ])
 
 /**
@@ -74,6 +78,10 @@ const IMPROVEMENT_TAGS = new Set([
   'Stage1_Hypertension_Diastolic',
   // B12
   'Low_Normal_B12',
+  // Biometrics
+  'Borderline_Waist_Male',
+  'Borderline_Waist_Female',
+  'Low_Normal_Grip',
 ])
 
 function tagToScore(tag: string): BhasScore {

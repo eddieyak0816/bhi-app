@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
-import { directFetch } from '../lib/supabase'
+import { directFetch, supabase } from '../lib/supabase'
 
 interface ProfilePageProps {
   userEmail?: string
@@ -26,12 +26,18 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
   const [formData, setFormData] = useState({
     fullName: displayName,
     email: displayEmail,
-    age: '49',
+    age: '',
+    sex: '' as 'male' | 'female' | 'other' | '',
+    waistCircumference: '',
+    waistUnit: 'in' as 'in' | 'cm',
+    gripStrength: '',
     healthGoals: [] as string[],
     preferredResourceTypes: [] as string[],
     notificationsEnabled: true,
     emailUpdates: false,
   })
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const [healthGoals, setHealthGoals] = useState<HealthGoal[]>([])
   const [resourceTypes, setResourceTypes] = useState<string[]>([])
@@ -47,6 +53,48 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
       email: displayEmail,
     }))
   }, [displayName, displayEmail])
+
+  // Load saved profile fields from Supabase
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('profiles')
+      .select('name, age, sex, waist_circumference, waist_unit, grip_strength')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (!data) return
+        setFormData(prev => ({
+          ...prev,
+          fullName: data.name || prev.fullName,
+          age: data.age != null ? String(data.age) : '',
+          sex: data.sex || '',
+          waistCircumference: data.waist_circumference != null ? String(data.waist_circumference) : '',
+          waistUnit: data.waist_unit || 'in',
+          gripStrength: data.grip_strength != null ? String(data.grip_strength) : '',
+        }))
+      })
+  }, [user?.id])
+
+  const handleSave = async () => {
+    if (!user?.id) return
+    setSaving(true)
+    setSaveMessage(null)
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        name: formData.fullName,
+        age: formData.age ? parseInt(formData.age) : null,
+        sex: formData.sex || null,
+        waist_circumference: formData.waistCircumference ? parseFloat(formData.waistCircumference) : null,
+        waist_unit: formData.waistUnit,
+        grip_strength: formData.gripStrength ? parseFloat(formData.gripStrength) : null,
+      })
+      .eq('id', user.id)
+    setSaving(false)
+    setSaveMessage(error ? { type: 'error', text: error.message } : { type: 'success', text: 'Profile saved.' })
+    setTimeout(() => setSaveMessage(null), 3000)
+  }
 
   // Load health goals and resource types using direct fetch (more reliable)
   const loadOptions = async (retryCount = 0) => {
@@ -187,6 +235,84 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
             placeholder="Enter your age"
             style={inputStyle}
           />
+        </div>
+        <div>
+          <label style={labelStyle}>Sex</label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            {(['male', 'female', 'other'] as const).map(s => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setFormData({ ...formData, sex: s })}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  border: `1.5px solid ${formData.sex === s ? theme.blue : theme.borderColor}`,
+                  borderRadius: 6,
+                  background: formData.sex === s ? theme.blue : theme.bg,
+                  color: formData.sex === s ? '#fff' : theme.text,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Biometrics */}
+      <div style={sectionStyle}>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>Biometrics</h3>
+        <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
+          Used for BHAS scoring. Waist thresholds vary by sex — set your sex above first.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={labelStyle}>Waist Circumference</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="number"
+                step="0.1"
+                value={formData.waistCircumference}
+                onChange={e => setFormData({ ...formData, waistCircumference: e.target.value })}
+                placeholder={formData.waistUnit === 'in' ? 'e.g. 34' : 'e.g. 86'}
+                style={{ ...inputStyle, marginBottom: 0, flex: 1, fontSize: 16 }}
+              />
+              <select
+                value={formData.waistUnit}
+                onChange={e => setFormData({ ...formData, waistUnit: e.target.value as 'in' | 'cm' })}
+                style={{
+                  padding: '10px 6px',
+                  border: `1.5px solid ${theme.borderColor}`,
+                  borderRadius: 6,
+                  fontSize: 13,
+                  background: theme.bg,
+                  color: theme.text,
+                  cursor: 'pointer',
+                  width: 52,
+                  flexShrink: 0,
+                }}
+              >
+                <option value="in">in</option>
+                <option value="cm">cm</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Grip Strength (kg)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={formData.gripStrength}
+              onChange={e => setFormData({ ...formData, gripStrength: e.target.value })}
+              placeholder="e.g. 38"
+              style={{ ...inputStyle, marginBottom: 0 }}
+            />
+          </div>
         </div>
       </div>
 
@@ -338,24 +464,43 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
         </label>
       </div>
 
+      {/* Save feedback */}
+      {saveMessage && (
+        <div style={{
+          padding: '12px 16px',
+          borderRadius: 6,
+          marginBottom: 12,
+          fontSize: 14,
+          fontWeight: 600,
+          background: saveMessage.type === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+          color: saveMessage.type === 'success' ? '#10B981' : '#EF4444',
+          border: `1.5px solid ${saveMessage.type === 'success' ? '#10B981' : '#EF4444'}`,
+        }}>
+          {saveMessage.type === 'success' ? '✓ ' : '✕ '}{saveMessage.text}
+        </div>
+      )}
+
       {/* Actions */}
       <div style={{ display: 'flex', gap: 12 }}>
         <button
+          onClick={handleSave}
+          disabled={saving}
           style={{
-            background: theme.blue,
+            background: saving ? theme.borderColor : theme.blue,
             color: '#fff',
             border: 'none',
             borderRadius: 6,
             padding: '12px 24px',
             fontSize: 14,
             fontWeight: 600,
-            cursor: 'pointer',
+            cursor: saving ? 'not-allowed' : 'pointer',
             flex: 1,
           }}
         >
-          Save Changes
+          {saving ? 'Saving…' : 'Save Changes'}
         </button>
         <button
+          onClick={() => setSaveMessage(null)}
           style={{
             background: 'transparent',
             color: theme.text,
