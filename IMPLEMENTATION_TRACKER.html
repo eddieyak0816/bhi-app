@@ -185,13 +185,13 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-02 (Phase 2 — biannual lab reminders built) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-03 (Phase 2 complete — public profile / consent built) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar (counts kept in sync manually or via Ctrl+F) -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">11</span>  Built / Done</div>
-  <div class="stat stat-partial"> <span class="num" id="cnt-partial">8</span>  Partial</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">12</span>  Built / Done</div>
+  <div class="stat stat-partial"> <span class="num" id="cnt-partial">7</span>  Partial</div>
   <div class="stat stat-todo">    <span class="num" id="cnt-todo">11</span>  Not Built</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">30</span>  Total Items</div>
 </div>
@@ -270,7 +270,7 @@
         <div class="phase-title">Complete the Individual User Experience</div>
         <div class="phase-desc">BHAS score rollup, missing metrics, biometrics, reminders, and consent</div>
       </div>
-      <div class="phase-progress">5 / 6 done</div>
+      <div class="phase-progress">6 / 6 done</div>
     </div>
     <div class="items">
 
@@ -319,13 +319,13 @@
         <span class="item-status status-done">✅ Built</span>
       </div>
 
-      <div class="item partial" data-status="partial">
+      <div class="item done" data-status="done">
         <div class="item-num">10</div>
         <div class="item-body">
           <div class="item-title">Optional public profile / opt-in consent page</div>
-          <div class="item-note">Consent logic is referenced in the codebase but no public profile page or formal opt-in consent flow is built. Required for any public-facing or national comparison features.</div>
+          <div class="item-note">Profile page has a Privacy toggle (is_public saved to profiles table). Consent page (#/consent) explains what is shared (HIPAA-safe: name, BHAS %, tags only — no raw values). Public profile preview at #/public-profile. Developer reminder banners in place pending access-control decision (anyone vs. logged-in only).</div>
         </div>
-        <span class="item-status status-partial">🔶 Partial</span>
+        <span class="item-status status-done">✅ Built</span>
       </div>
 
     </div>

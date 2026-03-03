@@ -16,6 +16,8 @@ import Resources from './pages/ResourcesPage'
 import Categories from './pages/CategoriesPage'
 import Labs from './pages/LabsPage'
 import Profile from './pages/ProfilePage'
+import ConsentPage from './pages/ConsentPage'
+import PublicProfilePage from './pages/PublicProfilePage'
 import { loadSampleData, SampleData } from './sample-data'
 import { supabase } from './lib/supabase'
 
@@ -194,7 +196,9 @@ function AppContent() {
         {(currentPage === 'resources' || currentPage === 'library') && <Resources />}
         {currentPage === 'categories' && <Categories />}
         {currentPage === 'labs' && <Labs />}
-        {currentPage === 'profile' && <Profile userEmail={user?.email} userName={user?.name} />}
+        {currentPage === 'profile' && <Profile userEmail={user?.email} userName={user?.name} onNavigate={handleNavigate} />}
+        {currentPage === 'consent' && <ConsentPage onNavigate={handleNavigate} />}
+        {currentPage === 'public-profile' && <PublicProfilePage onNavigate={handleNavigate} />}
         {currentPage === 'admin' && <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} />}
       </Layout>
     </ProtectedRoute>

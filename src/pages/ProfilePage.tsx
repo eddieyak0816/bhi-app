@@ -6,6 +6,7 @@ import { directFetch, supabase } from '../lib/supabase'
 interface ProfilePageProps {
   userEmail?: string
   userName?: string
+  onNavigate?: (page: string) => void
 }
 
 interface HealthGoal {
@@ -15,7 +16,7 @@ interface HealthGoal {
   is_active: boolean
 }
 
-export default function Profile({ userEmail, userName }: ProfilePageProps) {
+export default function Profile({ userEmail, userName, onNavigate }: ProfilePageProps) {
   const { theme } = useTheme()
   const { user } = useAuth()
 
@@ -36,6 +37,7 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
     notificationsEnabled: true,
     emailUpdates: false,
   })
+  const [isPublic, setIsPublic] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
@@ -59,7 +61,7 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
     if (!user?.id) return
     supabase
       .from('profiles')
-      .select('name, age, sex, waist_circumference, waist_unit, grip_strength')
+      .select('name, age, sex, waist_circumference, waist_unit, grip_strength, is_public')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
@@ -73,6 +75,7 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
           waistUnit: data.waist_unit || 'in',
           gripStrength: data.grip_strength != null ? String(data.grip_strength) : '',
         }))
+        setIsPublic(data.is_public ?? false)
       })
   }, [user?.id])
 
@@ -89,6 +92,7 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
         waist_circumference: formData.waistCircumference ? parseFloat(formData.waistCircumference) : null,
         waist_unit: formData.waistUnit,
         grip_strength: formData.gripStrength ? parseFloat(formData.gripStrength) : null,
+        is_public: isPublic,
       })
       .eq('id', user.id)
     setSaving(false)
@@ -513,6 +517,63 @@ export default function Profile({ userEmail, userName }: ProfilePageProps) {
           }}
         >
           Cancel
+        </button>
+      </div>
+
+      {/* Privacy / Public Profile */}
+      <div style={sectionStyle}>
+        <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 600 }}>Privacy</h3>
+        <label
+          style={{ display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', marginBottom: 12 }}
+        >
+          <div
+            onClick={() => setIsPublic(v => !v)}
+            style={{
+              width: 48,
+              height: 26,
+              borderRadius: 13,
+              background: isPublic ? '#10B981' : theme.borderColor,
+              position: 'relative',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'background 0.2s',
+            }}
+          >
+            <div
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: '#fff',
+                position: 'absolute',
+                top: 3,
+                left: isPublic ? 25 : 3,
+                transition: 'left 0.2s',
+              }}
+            />
+          </div>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>
+              {isPublic ? 'Profile is public' : 'Profile is private'}
+            </div>
+            <div style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
+              Share your BHAS score and health tags — no raw values or personal details are ever shared.
+            </div>
+          </div>
+        </label>
+        <button
+          onClick={() => onNavigate?.('consent')}
+          style={{
+            background: 'transparent',
+            color: theme.blue,
+            border: 'none',
+            padding: 0,
+            fontSize: 13,
+            cursor: 'pointer',
+            textDecoration: 'underline',
+          }}
+        >
+          Learn more about what is shared
         </button>
       </div>
 

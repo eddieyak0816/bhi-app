@@ -46,6 +46,13 @@
 - `src/components/StaleLabBanner.tsx`: amber warning banner shown when latest lab result is >180 days old.
 - Banner wired into `Dashboard.tsx` (above stats grid) and `LabsPage.tsx` (above marker list).
 
+**Public Profile / Opt-in Consent (Phase 2 item 10)**
+- Migration `db/migrations/20260302_add_public_profile.sql`: adds `is_public boolean default false` to `profiles` table.
+- `ProfilePage.tsx`: new Privacy section with toggle to enable/disable public profile; loads and saves `is_public`; "Learn more" link to consent page.
+- `src/pages/ConsentPage.tsx` (`#/consent`): explains what is shared publicly (HIPAA-safe — name, BHAS %, tags only; no raw values, no email, no biometrics); toggle reads/writes `profiles.is_public` directly; developer action-required banner re: access-control decision.
+- `src/pages/PublicProfilePage.tsx` (`#/public-profile`): self-preview of public profile showing name, BHAS score %, health tags (underscore-stripped), last updated month/year; developer decision-needed banner for access rules; private state shows lock message.
+- **Phase 2 complete (6/6).**
+
 ## 2026-02-07 — dev
 
 ## 2026-02-06 — dev
