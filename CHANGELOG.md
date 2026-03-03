@@ -39,6 +39,13 @@
 - Profile page: added Sex toggle (Male/Female/Other), Biometrics section (waist + grip), saves/loads from Supabase. Save Changes button now functional.
 - BHAS scoring updated with biometric optimal/improvement tags in `evaluateRules.ts` and `LabsPage.tsx`.
 
+**Biannual Lab Reminders (Phase 2 item 9)**
+- Migration `db/migrations/20260302_create_user_lab_results.sql`: new `user_lab_results` table with RLS (per-user rows, references `auth.users`). Lab results are now fully persisted to Supabase — cross-device sync enabled.
+- `ResultsContext.tsx` rewritten to load results from Supabase on mount, insert on `addResult`, delete on `removeResult`/`clearAllResults`. localStorage retained as a cache. Exposes `latestLabDate: string | null`.
+- `src/utils/staleCheck.ts`: `STALE_DAYS = 180`, `isLabDataStale()`, `daysSinceLastLab()`.
+- `src/components/StaleLabBanner.tsx`: amber warning banner shown when latest lab result is >180 days old.
+- Banner wired into `Dashboard.tsx` (above stats grid) and `LabsPage.tsx` (above marker list).
+
 ## 2026-02-07 — dev
 
 ## 2026-02-06 — dev

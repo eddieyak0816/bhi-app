@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import { useAuth } from './AuthContext'
 
 export interface UserLabResult {
   id: string
@@ -12,42 +14,122 @@ export interface UserLabResult {
 
 interface ResultsContextType {
   results: UserLabResult[]
-  addResult: (result: Omit<UserLabResult, 'id'>) => void
-  removeResult: (id: string) => void
+  latestLabDate: string | null
+  addResult: (result: Omit<UserLabResult, 'id'>) => Promise<void>
+  removeResult: (id: string) => Promise<void>
   getResultsForMarker: (markerName: string) => UserLabResult[]
   getLatestResults: () => UserLabResult[]
-  clearAllResults: () => void
+  clearAllResults: () => Promise<void>
 }
 
 const ResultsContext = createContext<ResultsContextType | undefined>(undefined)
 
 const STORAGE_KEY = 'bhi-user-lab-results'
 
+function rowToResult(row: any): UserLabResult {
+  return {
+    id: row.id,
+    markerName: row.marker_name,
+    value: Number(row.value),
+    unit: row.unit ?? '',
+    date: row.date,
+    minNormal: row.min_normal != null ? Number(row.min_normal) : 0,
+    maxNormal: row.max_normal != null ? Number(row.max_normal) : 0,
+  }
+}
+
 export function ResultsProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
+
   const [results, setResults] = useState<UserLabResult[]>(() => {
     if (typeof window === 'undefined') return []
     const saved = localStorage.getItem(STORAGE_KEY)
     return saved ? JSON.parse(saved) : []
   })
 
+  // Sync localStorage cache whenever results change
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(results))
   }, [results])
 
-  const addResult = (result: Omit<UserLabResult, 'id'>) => {
-    const newResult: UserLabResult = {
-      ...result,
-      id: `${result.markerName}-${Date.now()}`,
+  // Load results from Supabase when user is available
+  useEffect(() => {
+    if (!user?.id) return
+
+    async function fetchResults() {
+      const { data, error } = await supabase
+        .from('user_lab_results')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('date', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching user lab results:', error)
+        return
+      }
+
+      if (data) {
+        setResults(data.map(rowToResult))
+      }
     }
-    setResults(prev => [newResult, ...prev])
+
+    fetchResults()
+  }, [user?.id])
+
+  const addResult = async (result: Omit<UserLabResult, 'id'>) => {
+    if (!user?.id) {
+      // Not logged in — fall back to localStorage-only (offline mode)
+      const newResult: UserLabResult = {
+        ...result,
+        id: `${result.markerName}-${Date.now()}`,
+      }
+      setResults(prev => [newResult, ...prev])
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('user_lab_results')
+      .insert({
+        user_id: user.id,
+        marker_name: result.markerName,
+        value: result.value,
+        unit: result.unit,
+        date: result.date,
+        min_normal: result.minNormal,
+        max_normal: result.maxNormal,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error saving lab result:', error)
+      return
+    }
+
+    setResults(prev => [rowToResult(data), ...prev])
   }
 
-  const removeResult = (id: string) => {
+  const removeResult = async (id: string) => {
+    if (user?.id) {
+      const { error } = await supabase
+        .from('user_lab_results')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id)
+
+      if (error) {
+        console.error('Error deleting lab result:', error)
+        return
+      }
+    }
+
     setResults(prev => prev.filter(r => r.id !== id))
   }
 
   const getResultsForMarker = (markerName: string) => {
-    return results.filter(r => r.markerName === markerName).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    return results
+      .filter(r => r.markerName === markerName)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   }
 
   const getLatestResults = () => {
@@ -58,15 +140,38 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
         latestByMarker.set(result.markerName, result)
       }
     })
-    return Array.from(latestByMarker.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    return Array.from(latestByMarker.values()).sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    )
   }
 
-  const clearAllResults = () => {
+  const clearAllResults = async () => {
+    if (user?.id) {
+      const { error } = await supabase
+        .from('user_lab_results')
+        .delete()
+        .eq('user_id', user.id)
+
+      if (error) {
+        console.error('Error clearing lab results:', error)
+        return
+      }
+    }
+
     setResults([])
   }
 
+  // Derive the most recent lab date across all results
+  const latestLabDate: string | null = results.length > 0
+    ? results.reduce((latest, r) => {
+        return new Date(r.date) > new Date(latest) ? r.date : latest
+      }, results[0].date)
+    : null
+
   return (
-    <ResultsContext.Provider value={{ results, addResult, removeResult, getResultsForMarker, getLatestResults, clearAllResults }}>
+    <ResultsContext.Provider
+      value={{ results, latestLabDate, addResult, removeResult, getResultsForMarker, getLatestResults, clearAllResults }}
+    >
       {children}
     </ResultsContext.Provider>
   )

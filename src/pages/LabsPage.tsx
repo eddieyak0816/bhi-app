@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import { useResults } from '../context/ResultsContext'
 import { useEvaluation } from '../context/EvaluationContext'
+import StaleLabBanner from '../components/StaleLabBanner'
 
 // Tags that represent the optimal/normal range for BHAS scoring
 const OPTIMAL_TAGS = new Set([
@@ -22,7 +23,7 @@ interface LabMarker {
 
 export default function Labs() {
   const { theme } = useTheme()
-  const { results, addResult, removeResult, getResultsForMarker } = useResults()
+  const { results, latestLabDate, addResult, removeResult, getResultsForMarker } = useResults()
   const { bhasResult } = useEvaluation()
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -122,6 +123,8 @@ export default function Labs() {
 
   return (
     <div>
+      <StaleLabBanner latestLabDate={latestLabDate} />
+
       {/* Privacy Disclaimer */}
       <div
         style={{

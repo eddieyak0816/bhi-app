@@ -185,14 +185,14 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-02 (Phase 2 — biometrics built) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-02 (Phase 2 — biannual lab reminders built) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar (counts kept in sync manually or via Ctrl+F) -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">10</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">11</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">8</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">12</span>  Not Built</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">11</span>  Not Built</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">30</span>  Total Items</div>
 </div>
 
@@ -270,7 +270,7 @@
         <div class="phase-title">Complete the Individual User Experience</div>
         <div class="phase-desc">BHAS score rollup, missing metrics, biometrics, reminders, and consent</div>
       </div>
-      <div class="phase-progress">4 / 6 done</div>
+      <div class="phase-progress">5 / 6 done</div>
     </div>
     <div class="items">
 
@@ -310,13 +310,13 @@
         <span class="item-status status-done">✅ Built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">9</div>
         <div class="item-body">
           <div class="item-title">Data update frequency tracking — biannual reminders</div>
-          <div class="item-note">No date-based enforcement or reminder system. Labs should be flagged as stale after ~6 months and users prompted to update.</div>
+          <div class="item-note">Lab results persisted to Supabase user_lab_results table (per-user, RLS). Results older than 180 days trigger an amber stale-data banner on Dashboard and Labs page. STALE_DAYS constant in src/utils/staleCheck.ts.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built</span>
       </div>
 
       <div class="item partial" data-status="partial">

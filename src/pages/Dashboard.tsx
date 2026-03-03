@@ -2,20 +2,20 @@ import React from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useEvaluation } from '../context/EvaluationContext'
 import { useResults } from '../context/ResultsContext'
+import StaleLabBanner from '../components/StaleLabBanner'
 
 interface DashboardProps {
   userEmail?: string
   userName?: string
   recentResources?: Array<{ title: string; type: string }>
-  latestLabDate?: string
   bookmarkedCount?: number
   onNavigate?: (page: string) => void
 }
 
-export default function Dashboard({ userEmail = '', userName = '', recentResources = [], latestLabDate, bookmarkedCount = 0, onNavigate }: DashboardProps) {
+export default function Dashboard({ userEmail = '', userName = '', recentResources = [], bookmarkedCount = 0, onNavigate }: DashboardProps) {
   const { theme } = useTheme()
   const { applicableTags, recommendedResources, bhasResult, loading, error } = useEvaluation()
-  const { results } = useResults()
+  const { results, latestLabDate } = useResults()
 
   // Get first name from full name
   const firstName = userName?.split(' ')[0] || ''
@@ -43,6 +43,8 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
         <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Welcome back{firstName ? `, ${firstName}` : ''}</h2>
         <p style={{ color: theme.textMuted, margin: 0 }}>{userEmail}</p>
       </div>
+
+      <StaleLabBanner latestLabDate={latestLabDate} onNavigate={onNavigate} />
 
       {/* Stats Section */}
       <div
