@@ -1033,9 +1033,10 @@ app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
   const crypto = require('crypto');
   const fileHash = crypto.createHash('sha256').update(req.file.buffer).digest('hex');
 
-  // ── Step 2: Check for duplicate (hash or accession number) ────────────────
+  // ── Step 2: Check for hash duplicate (store warning, proceed with extraction) ──
   // user_id is passed as a header from the frontend (non-sensitive — just the Supabase UUID)
   const userId = req.header('x-user-id') || '';
+  let earlyDuplicateWarning = null;
   if (userId && SERVICE_ROLE) {
     const supaAdmin = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: existing } = await supaAdmin
@@ -1047,13 +1048,12 @@ app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
 
     if (existing) {
       const uploadedDate = new Date(existing.uploaded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-      console.info('extract-labs: duplicate detected (hash match)', existing.id);
-      return res.status(200).json({
+      console.info('extract-labs: hash duplicate detected, will still extract results', existing.id);
+      earlyDuplicateWarning = {
         duplicate: true,
         duplicate_reason: 'file',
         duplicate_detail: `This exact file was already uploaded on ${uploadedDate}${existing.filename ? ' as "' + existing.filename + '"' : ''}.`,
-        results: [],
-      });
+      };
     }
   }
 
@@ -1193,7 +1193,7 @@ ${pdfText}`;
 
       console.info(`extract-labs: ${results.length} markers via Gemini key ${i + 1}`);
       await recordUpload(userId, fileHash, meta, req.file.originalname);
-      return res.status(200).json({ results, meta });
+      return res.status(200).json({ results, meta, ...earlyDuplicateWarning });
     } catch (err) {
       const is429 = err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('RESOURCE_EXHAUSTED'));
       console.warn(`extract-labs: Gemini key ${i + 1} failed${is429 ? ' (quota)' : ''}:`, err.message);
@@ -1231,7 +1231,7 @@ ${pdfText}`;
         const { meta, results } = parseAIResponse(orText);
         console.info(`extract-labs: ${results.length} markers via OpenRouter (${orModel})`);
         await recordUpload(userId, fileHash, meta, req.file.originalname);
-        return res.status(200).json({ results, meta });
+        return res.status(200).json({ results, meta, ...earlyDuplicateWarning });
       } catch (orErr) {
         console.warn(`extract-labs: OpenRouter model ${orModel} threw:`, orErr.message);
       }
@@ -1255,7 +1255,7 @@ ${pdfText}`;
         const { meta, results } = parseAIResponse(groqText);
         console.info(`extract-labs: ${results.length} markers via Groq`);
         await recordUpload(userId, fileHash, meta, req.file.originalname);
-        return res.status(200).json({ results, meta });
+        return res.status(200).json({ results, meta, ...earlyDuplicateWarning });
       }
       console.warn('extract-labs: Groq error', groqResult.status, groqResult.body);
     } catch (groqErr) {
