@@ -13,11 +13,13 @@
     "start:server": "NODE_ENV=production node server/index.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@supabase/supabase-js": "^2.32.0",
     "body-parser": "^2.2.2",
     "cors": "^2.8.5",
     "dotenv": "^16.1.4",
     "express": "^4.18.2",
+    "multer": "^2.1.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "uuid": "^13.0.0"

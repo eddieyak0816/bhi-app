@@ -12,6 +12,7 @@ export default function ConsentPage({ onNavigate }: ConsentPageProps) {
   const { user } = useAuth()
 
   const [isPublic, setIsPublic] = useState(false)
+  const [publicId, setPublicId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
@@ -19,11 +20,14 @@ export default function ConsentPage({ onNavigate }: ConsentPageProps) {
     if (!user?.id) return
     supabase
       .from('profiles')
-      .select('is_public')
+      .select('is_public, public_id')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
-        if (data) setIsPublic(data.is_public ?? false)
+        if (data) {
+          setIsPublic(data.is_public ?? false)
+          setPublicId(data.public_id ?? null)
+        }
       })
   }, [user?.id])
 
@@ -105,6 +109,32 @@ export default function ConsentPage({ onNavigate }: ConsentPageProps) {
           }}
         >
           Your actual lab values, email address, age, and biometric measurements are never shared.
+        </div>
+      </div>
+
+      {/* Public ID */}
+      <div style={sectionStyle}>
+        <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 600 }}>Your Public ID</h3>
+        <div style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 8 }}>
+          {publicId ?? '—'}
+        </div>
+        <p style={{ fontSize: 13, color: theme.textMuted, margin: '0 0 12px 0' }}>
+          This randomly generated token is the only identifier ever shown publicly alongside your health data. Your real name is never used.
+        </p>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 12,
+            background: 'rgba(217,119,6,0.08)',
+            border: '1px solid #D97706',
+            borderRadius: 4,
+            padding: '5px 10px',
+          }}
+        >
+          <span style={{ color: '#D97706', fontWeight: 700 }}>Coming soon</span>
+          <span style={{ color: theme.text }}>— Changing your Public ID requires a signed HIPAA authorization form.</span>
         </div>
       </div>
 

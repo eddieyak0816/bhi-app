@@ -192,7 +192,7 @@ If user metrics show non-optimal health:
 |--------|--------|-------|
 | Labcorp / Quest / Mako / Rhythm API integrations | ❌ Not built | No lab API connections exist |
 | Provider-verified entries (NPI/license) | ❌ Not built | No verifier workflow in system |
-| AI-verified lab PDF upload | ❌ Not built | No PDF upload or AI extraction built |
+| AI-verified lab PDF upload | 🔶 In Progress | Google Gemini API selected; server endpoint + upload UI in progress |
 | Biometric verification by clinician | ❌ Not built | No biometric entry or verification workflow |
 | CGM device integrations | ❌ Not built | Noted as future |
 | VO2 Max calculator | ❌ Not built | Noted as future |
@@ -205,7 +205,7 @@ If user metrics show non-optimal health:
 |--------|--------|-------|
 | Secure API pull from certified labs | ❌ Not built | |
 | Provider verification (NPI, signature, date) | ❌ Not built | No verifier fields in schema |
-| AI PDF upload → extract → flag → approve → store | ❌ Not built | Preferred method; not yet implemented |
+| AI PDF upload → extract → flag → approve → store | 🔶 In Progress | Google Gemini API; server endpoint + upload UI in progress |
 
 ---
 

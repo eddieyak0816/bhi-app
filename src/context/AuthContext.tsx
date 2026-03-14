@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { generatePublicId } from '../utils/publicId'
 
 export type UserRole = 'user' | 'admin' | 'super_admin'
 
@@ -246,9 +247,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data?.user) {
-        // Profile is automatically created by the on_auth_user_created trigger
-        // No need to manually create it here - the trigger handles it
-        
+        // Profile is automatically created by the on_auth_user_created trigger.
+        // Assign a system-generated public_id (HIPAA-safe de-identified token).
+        // Retry a few times in case the trigger hasn't fired yet.
+        const publicId = generatePublicId()
+        for (let i = 0; i < 3; i++) {
+          const { error: pidError } = await supabase
+            .from('profiles')
+            .update({ public_id: publicId })
+            .eq('id', data.user.id)
+            .is('public_id', null)
+          if (!pidError) break
+          await new Promise(r => setTimeout(r, 400))
+        }
+
         setUser({
           id: data.user.id,
           email,

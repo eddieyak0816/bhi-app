@@ -1,9 +1,23 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import { useResults } from '../context/ResultsContext'
 import { useEvaluation } from '../context/EvaluationContext'
 import StaleLabBanner from '../components/StaleLabBanner'
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4242'
+const BACKEND_KEY = import.meta.env.VITE_BACKEND_API_KEY || ''
+
+interface ExtractedRow {
+  name: string
+  value: number | string
+  unit: string
+  min_normal: number | null
+  max_normal: number | null
+  flag: string | null
+  include: boolean       // user can deselect rows they don't want to save
+  matchedMarkerId?: string
+}
 
 // Tags that represent the optimal/normal range for BHAS scoring
 const OPTIMAL_TAGS = new Set([
@@ -38,6 +52,66 @@ export default function Labs() {
     minNormal: '',
     maxNormal: '',
   })
+
+  // PDF upload state
+  const [pdfUploading, setPdfUploading] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
+  const [extractedRows, setExtractedRows] = useState<ExtractedRow[] | null>(null)
+  const [savingExtracted, setSavingExtracted] = useState(false)
+  const pdfInputRef = useRef<HTMLInputElement>(null)
+
+  const handlePdfUpload = async (file: File) => {
+    setPdfError(null)
+    setExtractedRows(null)
+    setPdfUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('pdf', file)
+      const res = await fetch(`${BACKEND_URL}/api/extract-labs`, {
+        method: 'POST',
+        headers: { 'x-backend-api-key': BACKEND_KEY },
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setPdfError(data.message || data.error || 'Extraction failed. Please try again.')
+        return
+      }
+      // Match extracted names to known lab markers (case-insensitive substring match)
+      const rows: ExtractedRow[] = (data.results || []).map((r: any) => {
+        const matched = labMarkers.find(m =>
+          m.name.toLowerCase().includes(r.name.toLowerCase()) ||
+          r.name.toLowerCase().includes(m.name.toLowerCase())
+        )
+        return { ...r, include: true, matchedMarkerId: matched?.id }
+      })
+      setExtractedRows(rows)
+    } catch (err: any) {
+      setPdfError('Could not reach the server. Make sure the backend is running.')
+    } finally {
+      setPdfUploading(false)
+    }
+  }
+
+  const handleSaveExtracted = () => {
+    if (!extractedRows) return
+    setSavingExtracted(true)
+    const toSave = extractedRows.filter(r => r.include && r.value !== '' && r.value !== null)
+    for (const row of toSave) {
+      const matched = labMarkers.find(m => m.id === row.matchedMarkerId)
+      const optimal = row.matchedMarkerId ? optimalRanges[row.matchedMarkerId] : null
+      addResult({
+        markerName: matched?.name || String(row.name),
+        value: parseFloat(String(row.value)),
+        unit: row.unit || matched?.unit || '',
+        date: new Date().toISOString().split('T')[0],
+        minNormal: row.min_normal ?? optimal?.min ?? matched?.min_normal ?? 0,
+        maxNormal: row.max_normal ?? optimal?.max ?? matched?.max_normal ?? 100,
+      })
+    }
+    setExtractedRows(null)
+    setSavingExtracted(false)
+  }
 
   // Fetch lab markers and optimal ranges from logic_rules in one go
   useEffect(() => {
@@ -147,8 +221,8 @@ export default function Labs() {
         <p style={{ color: theme.textMuted, margin: 0 }}>Track your health markers and see personalized resources</p>
       </div>
 
-      {/* Add New Result Button */}
-      <div style={{ marginBottom: 24 }}>
+      {/* Add New Result Button + Upload PDF Button */}
+      <div style={{ marginBottom: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         <button
           onClick={() => setShowForm(!showForm)}
           style={{
@@ -164,7 +238,194 @@ export default function Labs() {
         >
           {showForm ? '✕ Cancel' : '+ Log New Result'}
         </button>
+
+        <button
+          onClick={() => pdfInputRef.current?.click()}
+          disabled={pdfUploading}
+          style={{
+            background: pdfUploading ? theme.bgSecondary : 'transparent',
+            color: theme.blue,
+            border: `1.5px solid ${theme.blue}`,
+            borderRadius: 6,
+            padding: '12px 16px',
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: pdfUploading ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {pdfUploading ? 'Extracting...' : 'Upload Lab PDF'}
+        </button>
+        <input
+          ref={pdfInputRef}
+          type="file"
+          accept="application/pdf"
+          style={{ display: 'none' }}
+          onChange={e => {
+            const file = e.target.files?.[0]
+            if (file) handlePdfUpload(file)
+            e.target.value = ''
+          }}
+        />
       </div>
+
+      {/* PDF extraction error */}
+      {pdfError && (
+        <div style={{
+          background: 'rgba(239,68,68,0.08)',
+          border: '1.5px solid #EF4444',
+          borderRadius: 8,
+          padding: '12px 16px',
+          marginBottom: 20,
+          color: '#EF4444',
+          fontSize: 14,
+        }}>
+          {pdfError}
+        </div>
+      )}
+
+      {/* PDF extraction review table */}
+      {extractedRows && (
+        <div style={{
+          background: theme.card,
+          border: `1.5px solid ${theme.borderColor}`,
+          borderRadius: 8,
+          padding: 20,
+          marginBottom: 24,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Review Extracted Labs</h3>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: theme.textMuted }}>
+                Review the values Gemini extracted from your PDF. Uncheck any you don't want to save, then click Save.
+              </p>
+            </div>
+            <button
+              onClick={() => setExtractedRows(null)}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: theme.textMuted, fontSize: 18 }}
+            >✕</button>
+          </div>
+
+          {extractedRows.length === 0 ? (
+            <p style={{ color: theme.textMuted, fontSize: 14 }}>No numeric lab values were found in this PDF.</p>
+          ) : (
+            <>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: theme.bgSecondary, borderBottom: `1.5px solid ${theme.borderColor}` }}>
+                      <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 600 }}>Save</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600 }}>Lab Name</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600 }}>Matched Marker</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>Value</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600 }}>Unit</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 600 }}>Flag</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600 }}>Ref Range</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {extractedRows.map((row, i) => {
+                      const matched = labMarkers.find(m => m.id === row.matchedMarkerId)
+                      return (
+                        <tr key={i} style={{
+                          borderTop: `1px solid ${theme.borderColor}`,
+                          opacity: row.include ? 1 : 0.4,
+                        }}>
+                          <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                            <input
+                              type="checkbox"
+                              checked={row.include}
+                              onChange={e => setExtractedRows(rows => rows!.map((r, j) =>
+                                j === i ? { ...r, include: e.target.checked } : r
+                              ))}
+                            />
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>{row.name}</td>
+                          <td style={{ padding: '8px 12px', color: matched ? theme.blue : theme.textMuted }}>
+                            {matched ? matched.name : <span style={{ fontSize: 12 }}>No match — will save as-is</span>}
+                          </td>
+                          <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>
+                            <input
+                              type="number"
+                              value={row.value}
+                              onChange={e => setExtractedRows(rows => rows!.map((r, j) =>
+                                j === i ? { ...r, value: e.target.value } : r
+                              ))}
+                              style={{
+                                width: 80,
+                                padding: '4px 6px',
+                                border: `1px solid ${theme.borderColor}`,
+                                borderRadius: 4,
+                                background: theme.bg,
+                                color: theme.text,
+                                fontSize: 13,
+                                textAlign: 'right',
+                              }}
+                            />
+                          </td>
+                          <td style={{ padding: '8px 12px', color: theme.textMuted }}>{row.unit}</td>
+                          <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                            {row.flag ? (
+                              <span style={{
+                                background: row.flag.startsWith('H') ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)',
+                                color: row.flag.startsWith('H') ? '#EF4444' : '#3B82F6',
+                                padding: '2px 8px',
+                                borderRadius: 4,
+                                fontWeight: 700,
+                                fontSize: 12,
+                              }}>{row.flag}</span>
+                            ) : (
+                              <span style={{ color: '#10B981', fontSize: 12, fontWeight: 600 }}>Normal</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '8px 12px', color: theme.textMuted, fontSize: 12 }}>
+                            {row.min_normal != null && row.max_normal != null
+                              ? `${row.min_normal} – ${row.max_normal}`
+                              : '—'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setExtractedRows(null)}
+                  style={{
+                    background: 'transparent',
+                    color: theme.textMuted,
+                    border: `1.5px solid ${theme.borderColor}`,
+                    borderRadius: 6,
+                    padding: '10px 20px',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Discard
+                </button>
+                <button
+                  onClick={handleSaveExtracted}
+                  disabled={savingExtracted || !extractedRows.some(r => r.include)}
+                  style={{
+                    background: theme.blue,
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '10px 20px',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {savingExtracted ? 'Saving...' : `Save ${extractedRows.filter(r => r.include).length} Result(s)`}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Add Result Form */}
       {showForm && (

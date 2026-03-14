@@ -38,6 +38,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     emailUpdates: false,
   })
   const [isPublic, setIsPublic] = useState(false)
+  const [publicId, setPublicId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
@@ -61,7 +62,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     if (!user?.id) return
     supabase
       .from('profiles')
-      .select('name, age, sex, waist_circumference, waist_unit, grip_strength, is_public')
+      .select('name, age, sex, waist_circumference, waist_unit, grip_strength, is_public, public_id')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
@@ -76,6 +77,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
           gripStrength: data.grip_strength != null ? String(data.grip_strength) : '',
         }))
         setIsPublic(data.is_public ?? false)
+        setPublicId(data.public_id ?? null)
       })
   }, [user?.id])
 
@@ -523,6 +525,43 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
       {/* Privacy / Public Profile */}
       <div style={sectionStyle}>
         <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 600 }}>Privacy</h3>
+
+        {/* Public ID display */}
+        <div
+          style={{
+            background: theme.bg,
+            border: `1.5px solid ${theme.borderColor}`,
+            borderRadius: 6,
+            padding: '12px 14px',
+            marginBottom: 16,
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 600, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+            Your Public ID
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>
+            {publicId ?? '—'}
+          </div>
+          <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 8 }}>
+            This randomly generated ID is the only identifier ever shown alongside your health data. Your real name is never shared.
+          </div>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              color: theme.textMuted,
+              background: 'rgba(217,119,6,0.08)',
+              border: '1px solid #D97706',
+              borderRadius: 4,
+              padding: '4px 10px',
+            }}
+          >
+            <span style={{ color: '#D97706', fontWeight: 700 }}>Coming soon</span>
+            — Changing your Public ID requires a signed HIPAA authorization form.
+          </div>
+        </div>
         <label
           style={{ display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', marginBottom: 12 }}
         >

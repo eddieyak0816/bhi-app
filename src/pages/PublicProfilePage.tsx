@@ -22,16 +22,18 @@ export default function PublicProfilePage({ onNavigate }: PublicProfilePageProps
   const { latestLabDate } = useResults()
 
   const [isPublic, setIsPublic] = useState<boolean | null>(null)
+  const [publicId, setPublicId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user?.id) return
     supabase
       .from('profiles')
-      .select('is_public')
+      .select('is_public, public_id')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
         setIsPublic(data?.is_public ?? false)
+        setPublicId(data?.public_id ?? null)
       })
   }, [user?.id])
 
@@ -67,7 +69,7 @@ export default function PublicProfilePage({ onNavigate }: PublicProfilePageProps
             <li>Anyone with a link (no login required)</li>
             <li>Logged-in BHI users only</li>
           </ul>
-          Implement access rules and a per-user public URL (e.g. <code>/u/username</code>) before enabling this in production.
+          Implement access rules and a per-user public URL (e.g. <code>/u/{publicId ?? 'BHI-XXXX-XXXX'}</code>) before enabling this in production.
         </div>
       </div>
 
@@ -113,12 +115,13 @@ export default function PublicProfilePage({ onNavigate }: PublicProfilePageProps
             padding: 28,
           }}
         >
+          {/* Public ID — shown instead of real name */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
-              {user?.name || 'BHI Member'}
+            <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 4, fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+              {publicId ?? '—'}
             </div>
             <div style={{ fontSize: 13, color: theme.textMuted }}>
-              Balanced Health Institute Member
+              Balanced Health Institute Member · De-identified public ID
             </div>
           </div>
 

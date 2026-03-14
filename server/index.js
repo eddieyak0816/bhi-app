@@ -10,6 +10,11 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Multer: store uploaded PDFs in memory (max 10 MB)
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const app = express();
 app.use(cors());
@@ -990,6 +995,86 @@ app.post('/api/admin/logic-rules/delete-by-attrs', async (req, res) => {
   } catch (err) {
     console.error('admin-delete-logic-rule-by-attrs-exception', err);
     return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── PDF Lab Extraction via Google Gemini ────────────────────────────────────
+// POST /api/extract-labs
+// Accepts a multipart PDF upload, sends it to Gemini, returns extracted lab values as JSON.
+// Auth: same x-backend-api-key header as other protected endpoints.
+app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
+  if (!BACKEND_API_KEY || !SUPABASE_URL) {
+    return res.status(501).json({ error: 'backend-disabled' });
+  }
+
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+  if (!GEMINI_API_KEY) {
+    console.error('extract-labs: GEMINI_API_KEY not configured');
+    return res.status(501).json({ error: 'gemini-not-configured' });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'no-file', message: 'Upload a PDF file with field name "pdf".' });
+  }
+
+  if (req.file.mimetype !== 'application/pdf') {
+    return res.status(400).json({ error: 'invalid-file-type', message: 'Only PDF files are accepted.' });
+  }
+
+  console.info('POST /api/extract-labs', { filename: req.file.originalname, size: req.file.size });
+
+  try {
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    const pdfPart = {
+      inlineData: {
+        data: req.file.buffer.toString('base64'),
+        mimeType: 'application/pdf',
+      },
+    };
+
+    const prompt = `You are a medical lab report parser. Extract all lab test results from this PDF.
+
+Return ONLY a valid JSON array with no extra text, markdown, or code fences. Each element must have:
+- "name": the lab test name as it appears on the report (string)
+- "value": the numeric result value (number)
+- "unit": the unit of measurement (string, e.g. "mg/dL", "ng/mL", "pg/mL", "%")
+- "min_normal": lower bound of the lab's reference range if shown (number or null)
+- "max_normal": upper bound of the lab's reference range if shown (number or null)
+- "flag": any abnormal flag shown (string: "H", "L", "HH", "LL", or null if normal/not shown)
+
+Only include tests with a numeric result. Skip non-numeric results (e.g. "Positive", "Detected"). Skip patient demographics. If you cannot find any lab values, return an empty array [].`;
+
+    const result = await model.generateContent([prompt, pdfPart]);
+    const text = result.response.text().trim();
+
+    // Strip markdown code fences if Gemini wraps the response
+    const cleaned = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+
+    let extracted;
+    try {
+      extracted = JSON.parse(cleaned);
+    } catch (parseErr) {
+      console.error('extract-labs: failed to parse Gemini response', cleaned);
+      return res.status(502).json({ error: 'parse-error', raw: cleaned });
+    }
+
+    if (!Array.isArray(extracted)) {
+      return res.status(502).json({ error: 'unexpected-format', raw: cleaned });
+    }
+
+    console.info('extract-labs: extracted', extracted.length, 'markers');
+    return res.status(200).json({ results: extracted });
+
+  } catch (err) {
+    console.error('extract-labs-error', err);
+    return res.status(500).json({ error: 'server_error', message: err.message });
   }
 });
 
