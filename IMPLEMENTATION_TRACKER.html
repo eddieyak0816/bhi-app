@@ -185,7 +185,7 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-13 (Features 11, 11a, 11b complete — AI PDF extraction, duplicate detection, New Marker Wizard) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-13 (Features 11, 11a, 11b, 12 complete — AI PDF extraction, duplicate detection, New Marker Wizard, Provider Verification) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar (counts kept in sync manually or via Ctrl+F) -->
@@ -372,13 +372,13 @@
         <span class="item-status status-done">✅ Built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">12</div>
         <div class="item-body">
           <div class="item-title">Provider verification workflow — NPI, credential, signature, date</div>
-          <div class="item-note">Clinician or nurse enters and attests metric values. Requires NPI (National Provider Identifier) lookup, credential fields, digital signature, and date stamp. No verifier fields exist in the schema yet. Required for HSA documentation and corporate trust.</div>
+          <div class="item-note">Migration adds verification_type, verifier_name, verifier_credential, verifier_npi, verifier_signature, verified_at to user_lab_results. Labs page: optional "Add Provider Verification" section collects verifier details + typed-name attestation. Results table shows Provider/PDF/Self badge with hover tooltip (name, credential, NPI, date). ResultsContext persists and loads all verification fields.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built</span>
       </div>
 
       <div class="item todo" data-status="todo">

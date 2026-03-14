@@ -2,6 +2,14 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 
+export interface ProviderVerification {
+  verifierName: string
+  verifierCredential: string
+  verifierNpi: string
+  verifierSignature: string
+  verifiedAt: string  // ISO date string YYYY-MM-DD
+}
+
 export interface UserLabResult {
   id: string
   markerName: string
@@ -10,6 +18,8 @@ export interface UserLabResult {
   date: string
   minNormal: number
   maxNormal: number
+  verificationType?: 'self' | 'provider' | 'pdf'
+  verification?: ProviderVerification | null
 }
 
 interface ResultsContextType {
@@ -27,6 +37,7 @@ const ResultsContext = createContext<ResultsContextType | undefined>(undefined)
 const STORAGE_KEY = 'bhi-user-lab-results'
 
 function rowToResult(row: any): UserLabResult {
+  const hasVerification = row.verification_type === 'provider' && row.verifier_name
   return {
     id: row.id,
     markerName: row.marker_name,
@@ -35,6 +46,14 @@ function rowToResult(row: any): UserLabResult {
     date: row.date,
     minNormal: row.min_normal != null ? Number(row.min_normal) : 0,
     maxNormal: row.max_normal != null ? Number(row.max_normal) : 0,
+    verificationType: row.verification_type ?? 'self',
+    verification: hasVerification ? {
+      verifierName: row.verifier_name,
+      verifierCredential: row.verifier_credential ?? '',
+      verifierNpi: row.verifier_npi ?? '',
+      verifierSignature: row.verifier_signature ?? '',
+      verifiedAt: row.verified_at ?? '',
+    } : null,
   }
 }
 
@@ -87,22 +106,33 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
+    const row: Record<string, any> = {
+      user_id: user.id,
+      marker_name: result.markerName,
+      value: result.value,
+      unit: result.unit,
+      date: result.date,
+      min_normal: result.minNormal,
+      max_normal: result.maxNormal,
+      verification_type: result.verificationType ?? 'self',
+    }
+    if (result.verificationType === 'provider' && result.verification) {
+      row.verifier_name = result.verification.verifierName
+      row.verifier_credential = result.verification.verifierCredential || null
+      row.verifier_npi = result.verification.verifierNpi || null
+      row.verifier_signature = result.verification.verifierSignature || null
+      row.verified_at = result.verification.verifiedAt || null
+    }
+
     const { data, error } = await supabase
       .from('user_lab_results')
-      .insert({
-        user_id: user.id,
-        marker_name: result.markerName,
-        value: result.value,
-        unit: result.unit,
-        date: result.date,
-        min_normal: result.minNormal,
-        max_normal: result.maxNormal,
-      })
+      .insert(row)
       .select()
       .single()
 
     if (error) {
       console.error('Error saving lab result:', error)
+      alert('Save failed: ' + (error.message || error.code || JSON.stringify(error)))
       return
     }
 

@@ -5,6 +5,7 @@ import { useResults } from '../context/ResultsContext'
 import { useEvaluation } from '../context/EvaluationContext'
 import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
+import type { ProviderVerification } from '../context/ResultsContext'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4242'
 const BACKEND_KEY = import.meta.env.VITE_BACKEND_API_KEY || ''
@@ -62,6 +63,16 @@ export default function Labs() {
   const [extractedRows, setExtractedRows] = useState<ExtractedRow[] | null>(null)
   const [savingExtracted, setSavingExtracted] = useState(false)
   const pdfInputRef = useRef<HTMLInputElement>(null)
+
+  // Provider verification state (for manual entry form)
+  const [showVerification, setShowVerification] = useState(false)
+  const [verificationForm, setVerificationForm] = useState<ProviderVerification>({
+    verifierName: '',
+    verifierCredential: '',
+    verifierNpi: '',
+    verifierSignature: '',
+    verifiedAt: new Date().toISOString().split('T')[0],
+  })
 
   const handlePdfUpload = async (file: File) => {
     setPdfError(null)
@@ -171,6 +182,18 @@ export default function Labs() {
       return
     }
 
+    // Validate provider verification if enabled
+    if (showVerification) {
+      if (!verificationForm.verifierName.trim()) {
+        alert('Verifier name is required for provider-verified entries.')
+        return
+      }
+      if (!verificationForm.verifierSignature.trim()) {
+        alert('Provider signature (typed full name) is required.')
+        return
+      }
+    }
+
     const selectedMarkerData = labMarkers.find(m => m.name === formData.markerName)
     const minNormal = parseFloat(formData.minNormal) || selectedMarkerData?.min_normal || 0
     const maxNormal = parseFloat(formData.maxNormal) || selectedMarkerData?.max_normal || 100
@@ -182,15 +205,13 @@ export default function Labs() {
       date: new Date().toISOString().split('T')[0],
       minNormal,
       maxNormal,
+      verificationType: showVerification ? 'provider' : 'self',
+      verification: showVerification ? { ...verificationForm } : null,
     })
 
-    setFormData({
-      markerName: '',
-      value: '',
-      unit: '',
-      minNormal: '',
-      maxNormal: '',
-    })
+    setFormData({ markerName: '', value: '', unit: '', minNormal: '', maxNormal: '' })
+    setShowVerification(false)
+    setVerificationForm({ verifierName: '', verifierCredential: '', verifierNpi: '', verifierSignature: '', verifiedAt: new Date().toISOString().split('T')[0] })
     setShowForm(false)
   }
 
@@ -535,7 +556,7 @@ export default function Labs() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 8 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Your Value</label>
                   <input
@@ -594,23 +615,85 @@ export default function Labs() {
                   />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                  <button
-                    onClick={handleAddResult}
-                    style={{
-                      background: theme.blue,
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 6,
-                      padding: '10px 16px',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      width: '100%',
-                    }}
-                  >
-                    Save Result
-                  </button>
+                  {/* placeholder — Save button moved below verification section */}
                 </div>
+              </div>
+
+              {/* Provider Verification toggle */}
+              <div style={{ marginBottom: 16 }}>
+                <button
+                  onClick={() => setShowVerification(v => !v)}
+                  style={{ background: 'transparent', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, padding: '8px 14px', fontSize: 13, cursor: 'pointer', color: showVerification ? theme.blue : theme.textMuted, fontWeight: 600 }}
+                >
+                  {showVerification ? '▾ Provider Verified' : '▸ Add Provider Verification (optional)'}
+                </button>
+                {showVerification && (
+                  <div style={{ marginTop: 12, padding: 16, background: 'rgba(59,130,246,0.05)', border: `1.5px solid ${theme.blue}`, borderRadius: 8 }}>
+                    <p style={{ margin: '0 0 12px', fontSize: 13, color: theme.textMuted }}>
+                      A clinician, nurse, or fitness professional entered and attests to this value.
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: theme.textMuted }}>Verifier Name *</label>
+                        <input
+                          placeholder="e.g. Dr. Jane Smith"
+                          value={verificationForm.verifierName}
+                          onChange={e => setVerificationForm(v => ({ ...v, verifierName: e.target.value }))}
+                          style={{ width: '100%', padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: theme.textMuted }}>Credential</label>
+                        <input
+                          placeholder="e.g. MD, RN, CSCS"
+                          value={verificationForm.verifierCredential}
+                          onChange={e => setVerificationForm(v => ({ ...v, verifierCredential: e.target.value }))}
+                          style={{ width: '100%', padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: theme.textMuted }}>NPI Number</label>
+                        <input
+                          placeholder="10-digit NPI (optional)"
+                          value={verificationForm.verifierNpi}
+                          onChange={e => setVerificationForm(v => ({ ...v, verifierNpi: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                          style={{ width: '100%', padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: theme.textMuted }}>Date Verified</label>
+                        <input
+                          type="date"
+                          value={verificationForm.verifiedAt}
+                          onChange={e => setVerificationForm(v => ({ ...v, verifiedAt: e.target.value }))}
+                          style={{ width: '100%', padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: theme.textMuted }}>Provider Signature (type full name to attest) *</label>
+                      <input
+                        placeholder="Full name of verifying provider"
+                        value={verificationForm.verifierSignature}
+                        onChange={e => setVerificationForm(v => ({ ...v, verifierSignature: e.target.value }))}
+                        style={{ width: '100%', padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box', fontStyle: 'italic' }}
+                      />
+                      <p style={{ margin: '4px 0 0', fontSize: 11, color: theme.textMuted }}>
+                        By typing your full name you attest that the value above was measured and is accurate to the best of your knowledge.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Save button */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={handleAddResult}
+                  style={{ background: theme.blue, color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Save Result
+                </button>
               </div>
             </>
             )}
@@ -689,6 +772,7 @@ export default function Labs() {
                   <th style={{ padding: 12, textAlign: 'left', fontSize: 13, fontWeight: 600, color: theme.text }}>Range</th>
                   <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Status</th>
                   <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>BHAS Score</th>
+                  <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Verified</th>
                   <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Action</th>
                 </tr>
               </thead>
@@ -748,6 +832,20 @@ export default function Labs() {
                           </span>
                         ) : (
                           <span style={{ color: theme.textMuted, fontSize: 12 }}>—</span>
+                        )}
+                      </td>
+                      <td style={{ padding: 12, textAlign: 'center', fontSize: 12 }}>
+                        {result.verificationType === 'provider' && result.verification ? (
+                          <span
+                            title={`Verified by ${result.verification.verifierName}${result.verification.verifierCredential ? ', ' + result.verification.verifierCredential : ''}${result.verification.verifierNpi ? ' (NPI: ' + result.verification.verifierNpi + ')' : ''} on ${result.verification.verifiedAt}`}
+                            style={{ background: 'rgba(16,185,129,0.12)', color: '#059669', borderRadius: 4, padding: '3px 8px', fontWeight: 700, cursor: 'default' }}
+                          >
+                            Provider
+                          </span>
+                        ) : result.verificationType === 'pdf' ? (
+                          <span style={{ background: 'rgba(59,130,246,0.1)', color: '#2563eb', borderRadius: 4, padding: '3px 8px', fontWeight: 700 }}>PDF</span>
+                        ) : (
+                          <span style={{ color: theme.textMuted }}>Self</span>
                         )}
                       </td>
                       <td style={{ padding: 12, textAlign: 'center' }}>

@@ -97,8 +97,14 @@
 - On success the modal closes and the Lab Markers list refreshes automatically.
 - Developer note displayed in Step 3: after wizard completion, add the Optimal tag to `OPTIMAL_TAGS` and Improvement tag to `IMPROVEMENT_TAGS` in `src/utils/evaluateRules.ts` for BHAS scoring (requires code change + redeploy).
 
+**Provider Verification Workflow (Feature 12 — Complete)**
+- Migration `db/migrations/20260313_add_provider_verification.sql`: adds `verification_type` (`self` | `provider` | `pdf`), `verifier_name`, `verifier_credential`, `verifier_npi`, `verifier_signature`, `verified_at` columns to `user_lab_results`.
+- `ResultsContext.tsx`: extended `UserLabResult` with `verificationType` and `verification: ProviderVerification | null`. `addResult` persists verification fields to Supabase when type is `'provider'`. `rowToResult` hydrates them on load.
+- `LabsPage.tsx`: "Add Provider Verification (optional)" toggle below the value fields — expands to a form collecting verifier name, credential, NPI (digits-only, max 10), date verified, and a typed-name signature with attestation text. Name and signature required if verification is enabled.
+- Results table: new "Verified" column shows colour-coded badge — green "Provider" (hoverable tooltip with verifier name/credential/NPI/date), blue "PDF", grey "Self".
+
 **Planned — Next**
-- Feature 12: Provider verification workflow (NPI, credential, signature, date).
+- Feature 13: Direct lab API integrations (Labcorp, Quest, Mako, Rhythm).
 
 ## 2026-02-07 — dev
 
