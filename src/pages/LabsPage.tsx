@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import { useResults } from '../context/ResultsContext'
 import { useEvaluation } from '../context/EvaluationContext'
+import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4242'
@@ -37,6 +38,7 @@ interface LabMarker {
 
 export default function Labs() {
   const { theme } = useTheme()
+  const { user } = useAuth()
   const { results, latestLabDate, addResult, removeResult, getResultsForMarker } = useResults()
   const { bhasResult } = useEvaluation()
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
@@ -56,26 +58,34 @@ export default function Labs() {
   // PDF upload state
   const [pdfUploading, setPdfUploading] = useState(false)
   const [pdfError, setPdfError] = useState<string | null>(null)
+  const [pdfDuplicateWarning, setPdfDuplicateWarning] = useState<string | null>(null)
   const [extractedRows, setExtractedRows] = useState<ExtractedRow[] | null>(null)
   const [savingExtracted, setSavingExtracted] = useState(false)
   const pdfInputRef = useRef<HTMLInputElement>(null)
 
   const handlePdfUpload = async (file: File) => {
     setPdfError(null)
+    setPdfDuplicateWarning(null)
     setExtractedRows(null)
     setPdfUploading(true)
     try {
       const formData = new FormData()
       formData.append('pdf', file)
+      const headers: Record<string, string> = { 'x-backend-api-key': BACKEND_KEY }
+      if (user?.id) headers['x-user-id'] = user.id
       const res = await fetch(`${BACKEND_URL}/api/extract-labs`, {
         method: 'POST',
-        headers: { 'x-backend-api-key': BACKEND_KEY },
+        headers,
         body: formData,
       })
       const data = await res.json()
       if (!res.ok) {
         setPdfError(data.message || data.error || 'Extraction failed. Please try again.')
         return
+      }
+      // Show duplicate warning but still show results so user can choose to proceed or discard
+      if (data.duplicate) {
+        setPdfDuplicateWarning(data.duplicate_detail || 'This PDF appears to have been uploaded before.')
       }
       // Match extracted names to known lab markers (case-insensitive substring match)
       const rows: ExtractedRow[] = (data.results || []).map((r: any) => {
@@ -267,6 +277,21 @@ export default function Labs() {
           }}
         />
       </div>
+
+      {/* PDF duplicate warning */}
+      {pdfDuplicateWarning && (
+        <div style={{
+          background: 'rgba(245,158,11,0.08)',
+          border: '1.5px solid #F59E0B',
+          borderRadius: 8,
+          padding: '12px 16px',
+          marginBottom: 12,
+          color: '#92400E',
+          fontSize: 14,
+        }}>
+          <strong>Possible duplicate:</strong> {pdfDuplicateWarning} You can still save the results below if this is intentional.
+        </div>
+      )}
 
       {/* PDF extraction error */}
       {pdfError && (

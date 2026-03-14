@@ -1029,7 +1029,35 @@ app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
 
   console.info('POST /api/extract-labs', { filename: req.file.originalname, size: req.file.size });
 
-  // ── Step 1: Extract text from PDF ─────────────────────────────────────────
+  // ── Step 1: Compute SHA-256 hash for duplicate detection ──────────────────
+  const crypto = require('crypto');
+  const fileHash = crypto.createHash('sha256').update(req.file.buffer).digest('hex');
+
+  // ── Step 2: Check for duplicate (hash or accession number) ────────────────
+  // user_id is passed as a header from the frontend (non-sensitive — just the Supabase UUID)
+  const userId = req.header('x-user-id') || '';
+  if (userId && SERVICE_ROLE) {
+    const supaAdmin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const { data: existing } = await supaAdmin
+      .from('lab_pdf_uploads')
+      .select('id, accession_num, collection_date, filename, uploaded_at')
+      .eq('user_id', userId)
+      .eq('file_hash', fileHash)
+      .maybeSingle();
+
+    if (existing) {
+      const uploadedDate = new Date(existing.uploaded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      console.info('extract-labs: duplicate detected (hash match)', existing.id);
+      return res.status(200).json({
+        duplicate: true,
+        duplicate_reason: 'file',
+        duplicate_detail: `This exact file was already uploaded on ${uploadedDate}${existing.filename ? ' as "' + existing.filename + '"' : ''}.`,
+        results: [],
+      });
+    }
+  }
+
+  // ── Step 3: Extract text from PDF ─────────────────────────────────────────
   let pdfText = '';
   try {
     const pdfParse = require('pdf-parse');
@@ -1047,25 +1075,65 @@ app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
 
   const prompt = `You are a medical lab report parser. Extract all lab test results from the following lab report text.
 
-Return ONLY a valid JSON array with no extra text, markdown, or code fences. Each element must have:
-- "name": the lab test name as it appears on the report (string)
-- "value": the numeric result value (number)
-- "unit": the unit of measurement (string, e.g. "mg/dL", "ng/mL", "pg/mL", "%")
-- "min_normal": lower bound of the lab's reference range if shown (number or null)
-- "max_normal": upper bound of the lab's reference range if shown (number or null)
-- "flag": any abnormal flag shown (string: "H", "L", "HH", "LL", or null if normal/not shown)
+Also extract these report metadata fields if present (return null if not found):
+- "accession_num": the lab accession or specimen number (string, e.g. "LW-2026031300482")
+- "collection_date": the specimen collection date in ISO format YYYY-MM-DD (string, e.g. "2026-03-13")
 
-Only include tests with a numeric result. Skip non-numeric results (e.g. "Positive", "Detected"). Skip patient demographics. If you cannot find any lab values, return an empty array [].
+Return a single JSON object (not an array) with two keys:
+1. "meta": an object with "accession_num" and "collection_date"
+2. "results": an array of lab test objects, each with:
+   - "name": the lab test name as it appears on the report (string)
+   - "value": the numeric result value (number)
+   - "unit": the unit of measurement (string, e.g. "mg/dL", "ng/mL", "pg/mL", "%")
+   - "min_normal": lower bound of the lab's reference range if shown (number or null)
+   - "max_normal": upper bound of the lab's reference range if shown (number or null)
+   - "flag": any abnormal flag shown (string: "H", "L", "HH", "LL", or null if normal/not shown)
+
+Only include tests with a numeric result. Skip non-numeric results (e.g. "Positive", "Detected"). Skip patient demographics. If you cannot find any lab values, return an empty results array.
 
 Lab report text:
 ${pdfText}`;
 
-  // Helper: parse and validate JSON array from AI response text
+  // Helper: parse AI response — expects { meta, results } object
   function parseAIResponse(raw) {
     const cleaned = raw.trim().replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
     const parsed = JSON.parse(cleaned);
-    if (!Array.isArray(parsed)) throw new Error('Response is not an array');
-    return parsed;
+    // Support both new { meta, results } shape and legacy plain array
+    if (Array.isArray(parsed)) return { meta: {}, results: parsed };
+    if (parsed && Array.isArray(parsed.results)) return parsed;
+    throw new Error('Unexpected response shape');
+  }
+
+  // Helper: record a successful upload in lab_pdf_uploads (best-effort, non-blocking)
+  async function recordUpload(userId, fileHash, meta, filename) {
+    if (!userId || !SERVICE_ROLE) return;
+    try {
+      const supaAdmin = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+      // Accession-number duplicate check (same report, different file/scan)
+      if (meta.accession_num) {
+        const { data: existing } = await supaAdmin
+          .from('lab_pdf_uploads')
+          .select('id, uploaded_at, filename')
+          .eq('user_id', userId)
+          .eq('accession_num', meta.accession_num)
+          .maybeSingle();
+        if (existing) {
+          console.info('extract-labs: accession duplicate found but proceeding (user was not pre-warned — hash was different)');
+        }
+      }
+
+      await supaAdmin.from('lab_pdf_uploads').insert({
+        user_id: userId,
+        file_hash: fileHash,
+        accession_num: meta.accession_num || null,
+        collection_date: meta.collection_date || null,
+        filename: filename || null,
+      });
+      console.info('extract-labs: upload recorded in lab_pdf_uploads');
+    } catch (err) {
+      console.warn('extract-labs: failed to record upload (non-fatal):', err.message);
+    }
   }
 
   // Helper: POST JSON to any OpenAI-compatible endpoint, returns { status, body }
@@ -1084,7 +1152,7 @@ ${pdfText}`;
     });
   }
 
-  // ── Step 2: Try Gemini keys (still send PDF natively — most accurate) ──────
+  // ── Step 4: Try Gemini keys ────────────────────────────────────────────────
   const geminiKeys = [
     process.env.GEMINI_API_KEY,
     process.env.GEMINI_API_KEY_2,
@@ -1098,11 +1166,34 @@ ${pdfText}`;
       console.info(`extract-labs: trying Gemini key ${i + 1} of ${geminiKeys.length}`);
       const genAI = new GoogleGenerativeAI(geminiKeys[i]);
       const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-      // Send extracted text (not raw PDF) — works on all quota tiers
       const result = await model.generateContent(prompt);
-      const extracted = parseAIResponse(result.response.text());
-      console.info(`extract-labs: ${extracted.length} markers via Gemini key ${i + 1}`);
-      return res.status(200).json({ results: extracted });
+      const { meta, results } = parseAIResponse(result.response.text());
+
+      // Check accession-number duplicate before returning
+      if (userId && meta.accession_num && SERVICE_ROLE) {
+        const supaAdmin = createClient(SUPABASE_URL, SERVICE_ROLE);
+        const { data: existing } = await supaAdmin
+          .from('lab_pdf_uploads')
+          .select('id, uploaded_at, filename')
+          .eq('user_id', userId)
+          .eq('accession_num', meta.accession_num)
+          .maybeSingle();
+        if (existing) {
+          const uploadedDate = new Date(existing.uploaded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          console.info('extract-labs: duplicate detected (accession match)', meta.accession_num);
+          return res.status(200).json({
+            duplicate: true,
+            duplicate_reason: 'accession',
+            duplicate_detail: `Accession #${meta.accession_num} was already uploaded on ${uploadedDate}${existing.filename ? ' as "' + existing.filename + '"' : ''}.`,
+            results,
+            meta,
+          });
+        }
+      }
+
+      console.info(`extract-labs: ${results.length} markers via Gemini key ${i + 1}`);
+      await recordUpload(userId, fileHash, meta, req.file.originalname);
+      return res.status(200).json({ results, meta });
     } catch (err) {
       const is429 = err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('RESOURCE_EXHAUSTED'));
       console.warn(`extract-labs: Gemini key ${i + 1} failed${is429 ? ' (quota)' : ''}:`, err.message);
@@ -1110,7 +1201,7 @@ ${pdfText}`;
     }
   }
 
-  // ── Step 3: OpenRouter fallback (text → any free model) ───────────────────
+  // ── Step 5: OpenRouter fallback (text → any free model) ───────────────────
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
   if (OPENROUTER_API_KEY) {
     const orModels = [
@@ -1137,16 +1228,17 @@ ${pdfText}`;
         }
         const orJson = JSON.parse(orResult.body);
         const orText = orJson.choices?.[0]?.message?.content || '';
-        const extracted = parseAIResponse(orText);
-        console.info(`extract-labs: ${extracted.length} markers via OpenRouter (${orModel})`);
-        return res.status(200).json({ results: extracted });
+        const { meta, results } = parseAIResponse(orText);
+        console.info(`extract-labs: ${results.length} markers via OpenRouter (${orModel})`);
+        await recordUpload(userId, fileHash, meta, req.file.originalname);
+        return res.status(200).json({ results, meta });
       } catch (orErr) {
         console.warn(`extract-labs: OpenRouter model ${orModel} threw:`, orErr.message);
       }
     }
   }
 
-  // ── Step 4: Groq fallback (text → llama free tier) ────────────────────────
+  // ── Step 6: Groq fallback (text → llama free tier) ────────────────────────
   const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
   if (GROQ_API_KEY) {
     try {
@@ -1160,9 +1252,10 @@ ${pdfText}`;
       if (groqResult.status === 200) {
         const groqJson = JSON.parse(groqResult.body);
         const groqText = groqJson.choices?.[0]?.message?.content || '';
-        const extracted = parseAIResponse(groqText);
-        console.info(`extract-labs: ${extracted.length} markers via Groq`);
-        return res.status(200).json({ results: extracted });
+        const { meta, results } = parseAIResponse(groqText);
+        console.info(`extract-labs: ${results.length} markers via Groq`);
+        await recordUpload(userId, fileHash, meta, req.file.originalname);
+        return res.status(200).json({ results, meta });
       }
       console.warn('extract-labs: Groq error', groqResult.status, groqResult.body);
     } catch (groqErr) {
