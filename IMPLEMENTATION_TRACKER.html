@@ -185,15 +185,15 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-03 (Phase 2 complete + HIPAA public ID system built) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-13 (Feature 11 complete — AI PDF lab extraction live; duplicate detection + New Marker Wizard planned) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar (counts kept in sync manually or via Ctrl+F) -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">12</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">13</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">7</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">11</span>  Not Built</div>
-  <div class="stat stat-total">   <span class="num" id="cnt-total">30</span>  Total Items</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">12</span>  Not Built</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">32</span>  Total Items</div>
 </div>
 
 <!-- Filter controls -->
@@ -341,17 +341,35 @@
         <div class="phase-title">Data Verification &amp; Integrity</div>
         <div class="phase-desc">AI PDF extraction, provider NPI verification, and direct lab API integrations</div>
       </div>
-      <div class="phase-progress">0 / 3 done — 1 in progress</div>
+      <div class="phase-progress">1 / 5 done — 2 planned</div>
     </div>
     <div class="items">
 
-      <div class="item partial" data-status="partial">
+      <div class="item done" data-status="done">
         <div class="item-num">11</div>
         <div class="item-body">
           <div class="item-title">AI lab PDF upload &amp; extraction (preferred verification method)</div>
-          <div class="item-note">User uploads a lab PDF → AI extracts values → flags anomalies → admin approves → approved metrics stored. Highest-impact data input improvement. Using Google Gemini API (gemini-2.0-flash). In progress: server endpoint + upload UI on LabsPage.</div>
+          <div class="item-note">User uploads a lab PDF → server extracts text via pdf-parse → AI parses lab values → user reviews in a table → confirmed results saved to app. AI provider cascade: Gemini (up to 5 keys, auto-rotates on 429) → OpenRouter (3 free models) → Groq. Fuzzy marker name matching links extracted values to known app markers for BHAS scoring. Reference range priority: PDF → app optimal logic rule → lab_markers fallback. "Upload Lab PDF" button on Labs page.</div>
         </div>
-        <span class="item-status status-partial">🔶 In Progress</span>
+        <span class="item-status status-done">✅ Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">11a</div>
+        <div class="item-body">
+          <div class="item-title">PDF duplicate detection — hash + accession number + collection date</div>
+          <div class="item-note">AI extracts accession number and collection date alongside lab values. Server computes SHA-256 hash of the file. New <code>lab_pdf_uploads</code> table stores hash, accession number, collection date, user ID, and upload timestamp. On upload: checks for matching hash (exact file re-upload) OR matching accession number (same lab, rescanned). If duplicate found, warns user with original upload date before showing the review table.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">11b</div>
+        <div class="item-body">
+          <div class="item-title">New Marker Wizard in Admin — guided marker + logic rules creation</div>
+          <div class="item-note">Guided 3-step flow in the Admin panel: (1) create marker (name, unit), (2) define logic rules (optimal range, improvement range, out-of-range) with auto-suggested tag names, (3) confirm and save marker + rules + tags in one transaction. Eliminates current fragmented workflow where admins must manually navigate between Lab Markers, Criteria, and Tags tabs and know their relationships.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
       </div>
 
       <div class="item todo" data-status="todo">
@@ -602,7 +620,7 @@
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-02 &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-13 &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
 </footer>

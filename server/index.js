@@ -1,8 +1,12 @@
 // Load server env from .env.server when present (safe local dev)
 try {
-  require('dotenv').config({ path: '.env.server' });
+  const path = require('path');
+  const envPath = path.resolve(__dirname, '..', '.env.server');
+  const result = require('dotenv').config({ path: envPath });
+  console.info('[env] loaded from:', envPath, result.error ? 'FAILED: ' + result.error.message : 'OK');
+  console.info('[env] GEMINI_API_KEY present:', !!process.env.GEMINI_API_KEY);
 } catch (err) {
-  // dotenv not installed or file missing; proceed with process.env
+  console.error('[env] dotenv failed:', err.message);
 }
 
 const express = require('express');
@@ -998,9 +1002,12 @@ app.post('/api/admin/logic-rules/delete-by-attrs', async (req, res) => {
   }
 });
 
-// ── PDF Lab Extraction via Google Gemini ────────────────────────────────────
+// ── PDF Lab Extraction ───────────────────────────────────────────────────────
 // POST /api/extract-labs
-// Accepts a multipart PDF upload, sends it to Gemini, returns extracted lab values as JSON.
+// Extracts text from the PDF with pdf-parse, then tries providers in order:
+//   1. Gemini keys (native PDF via inline data)
+//   2. OpenRouter (text-based, any free model)
+//   3. Groq (text-based, llama free tier)
 // Auth: same x-backend-api-key header as other protected endpoints.
 app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
   if (!BACKEND_API_KEY || !SUPABASE_URL) {
@@ -1010,12 +1017,6 @@ app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
   const incomingKey = req.header('x-backend-api-key') || '';
   if (!incomingKey || incomingKey !== BACKEND_API_KEY) {
     return res.status(403).json({ error: 'forbidden' });
-  }
-
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-  if (!GEMINI_API_KEY) {
-    console.error('extract-labs: GEMINI_API_KEY not configured');
-    return res.status(501).json({ error: 'gemini-not-configured' });
   }
 
   if (!req.file) {
@@ -1028,18 +1029,23 @@ app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
 
   console.info('POST /api/extract-labs', { filename: req.file.originalname, size: req.file.size });
 
+  // ── Step 1: Extract text from PDF ─────────────────────────────────────────
+  let pdfText = '';
   try {
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const pdfParse = require('pdf-parse');
+    const parsed = await pdfParse(req.file.buffer);
+    pdfText = parsed.text || '';
+    console.info(`extract-labs: extracted ${pdfText.length} chars of text from PDF`);
+  } catch (pdfErr) {
+    console.error('extract-labs: pdf-parse failed', pdfErr.message);
+    return res.status(422).json({ error: 'pdf-parse-failed', message: 'Could not extract text from this PDF.' });
+  }
 
-    const pdfPart = {
-      inlineData: {
-        data: req.file.buffer.toString('base64'),
-        mimeType: 'application/pdf',
-      },
-    };
+  if (!pdfText.trim()) {
+    return res.status(422).json({ error: 'empty-pdf', message: 'No text found in this PDF. It may be a scanned image — please upload a text-based PDF.' });
+  }
 
-    const prompt = `You are a medical lab report parser. Extract all lab test results from this PDF.
+  const prompt = `You are a medical lab report parser. Extract all lab test results from the following lab report text.
 
 Return ONLY a valid JSON array with no extra text, markdown, or code fences. Each element must have:
 - "name": the lab test name as it appears on the report (string)
@@ -1049,33 +1055,123 @@ Return ONLY a valid JSON array with no extra text, markdown, or code fences. Eac
 - "max_normal": upper bound of the lab's reference range if shown (number or null)
 - "flag": any abnormal flag shown (string: "H", "L", "HH", "LL", or null if normal/not shown)
 
-Only include tests with a numeric result. Skip non-numeric results (e.g. "Positive", "Detected"). Skip patient demographics. If you cannot find any lab values, return an empty array [].`;
+Only include tests with a numeric result. Skip non-numeric results (e.g. "Positive", "Detected"). Skip patient demographics. If you cannot find any lab values, return an empty array [].
 
-    const result = await model.generateContent([prompt, pdfPart]);
-    const text = result.response.text().trim();
+Lab report text:
+${pdfText}`;
 
-    // Strip markdown code fences if Gemini wraps the response
-    const cleaned = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
-
-    let extracted;
-    try {
-      extracted = JSON.parse(cleaned);
-    } catch (parseErr) {
-      console.error('extract-labs: failed to parse Gemini response', cleaned);
-      return res.status(502).json({ error: 'parse-error', raw: cleaned });
-    }
-
-    if (!Array.isArray(extracted)) {
-      return res.status(502).json({ error: 'unexpected-format', raw: cleaned });
-    }
-
-    console.info('extract-labs: extracted', extracted.length, 'markers');
-    return res.status(200).json({ results: extracted });
-
-  } catch (err) {
-    console.error('extract-labs-error', err);
-    return res.status(500).json({ error: 'server_error', message: err.message });
+  // Helper: parse and validate JSON array from AI response text
+  function parseAIResponse(raw) {
+    const cleaned = raw.trim().replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+    const parsed = JSON.parse(cleaned);
+    if (!Array.isArray(parsed)) throw new Error('Response is not an array');
+    return parsed;
   }
+
+  // Helper: POST JSON to any OpenAI-compatible endpoint, returns { status, body }
+  function postJSON(hostname, path, headers, bodyObj) {
+    return new Promise((resolve, reject) => {
+      const https = require('https');
+      const bodyStr = JSON.stringify(bodyObj);
+      const req = https.request({ hostname, path, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr), ...headers } }, (resp) => {
+        let data = '';
+        resp.on('data', (chunk) => { data += chunk; });
+        resp.on('end', () => resolve({ status: resp.statusCode, body: data }));
+      });
+      req.on('error', reject);
+      req.write(bodyStr);
+      req.end();
+    });
+  }
+
+  // ── Step 2: Try Gemini keys (still send PDF natively — most accurate) ──────
+  const geminiKeys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+    process.env.GEMINI_API_KEY_4,
+    process.env.GEMINI_API_KEY_5,
+  ].filter(Boolean);
+
+  for (let i = 0; i < geminiKeys.length; i++) {
+    try {
+      console.info(`extract-labs: trying Gemini key ${i + 1} of ${geminiKeys.length}`);
+      const genAI = new GoogleGenerativeAI(geminiKeys[i]);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      // Send extracted text (not raw PDF) — works on all quota tiers
+      const result = await model.generateContent(prompt);
+      const extracted = parseAIResponse(result.response.text());
+      console.info(`extract-labs: ${extracted.length} markers via Gemini key ${i + 1}`);
+      return res.status(200).json({ results: extracted });
+    } catch (err) {
+      const is429 = err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('RESOURCE_EXHAUSTED'));
+      console.warn(`extract-labs: Gemini key ${i + 1} failed${is429 ? ' (quota)' : ''}:`, err.message);
+      if (!is429) break;
+    }
+  }
+
+  // ── Step 3: OpenRouter fallback (text → any free model) ───────────────────
+  const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
+  if (OPENROUTER_API_KEY) {
+    const orModels = [
+      'meta-llama/llama-4-scout:free',
+      'qwen/qwen2.5-vl-72b-instruct:free',
+      'mistralai/mistral-small-3.1-24b-instruct:free',
+    ];
+    for (const orModel of orModels) {
+      try {
+        console.info(`extract-labs: trying OpenRouter model ${orModel}`);
+        const orResult = await postJSON(
+          'openrouter.ai',
+          '/api/v1/chat/completions',
+          { 'Authorization': `Bearer ${OPENROUTER_API_KEY}`, 'HTTP-Referer': 'https://bhi-app.com', 'X-Title': 'BHI Lab Extractor' },
+          { model: orModel, messages: [{ role: 'user', content: prompt }] }
+        );
+        if (orResult.status === 404 || orResult.status === 400) {
+          console.warn(`extract-labs: OpenRouter model ${orModel} not available (${orResult.status})`);
+          continue;
+        }
+        if (orResult.status !== 200) {
+          console.warn(`extract-labs: OpenRouter model ${orModel} error ${orResult.status}:`, orResult.body);
+          continue;
+        }
+        const orJson = JSON.parse(orResult.body);
+        const orText = orJson.choices?.[0]?.message?.content || '';
+        const extracted = parseAIResponse(orText);
+        console.info(`extract-labs: ${extracted.length} markers via OpenRouter (${orModel})`);
+        return res.status(200).json({ results: extracted });
+      } catch (orErr) {
+        console.warn(`extract-labs: OpenRouter model ${orModel} threw:`, orErr.message);
+      }
+    }
+  }
+
+  // ── Step 4: Groq fallback (text → llama free tier) ────────────────────────
+  const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
+  if (GROQ_API_KEY) {
+    try {
+      console.info('extract-labs: trying Groq');
+      const groqResult = await postJSON(
+        'api.groq.com',
+        '/openai/v1/chat/completions',
+        { 'Authorization': `Bearer ${GROQ_API_KEY}` },
+        { model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], temperature: 0.1 }
+      );
+      if (groqResult.status === 200) {
+        const groqJson = JSON.parse(groqResult.body);
+        const groqText = groqJson.choices?.[0]?.message?.content || '';
+        const extracted = parseAIResponse(groqText);
+        console.info(`extract-labs: ${extracted.length} markers via Groq`);
+        return res.status(200).json({ results: extracted });
+      }
+      console.warn('extract-labs: Groq error', groqResult.status, groqResult.body);
+    } catch (groqErr) {
+      console.error('extract-labs: Groq threw:', groqErr.message);
+    }
+  }
+
+  console.error('extract-labs: all providers exhausted');
+  return res.status(429).json({ error: 'quota-exhausted', message: 'All AI providers are unavailable. Try again later or add a GROQ_API_KEY to .env.server.' });
 });
 
 const PORT = process.env.PORT || 4242;

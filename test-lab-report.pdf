@@ -1,0 +1,202 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 7022 >>
+stream
+0.161 0.384 0.608 rg
+0 730 612 62 re f
+1 1 1 rg
+BT /F2 22 Tf 36 758 Td (LabWorks Diagnostics) Tj ET
+BT /F1 9 Tf 36 745 Td (Clinical Laboratory Services  |  CLIA# 99D1234567  |  1400 Medical Center Dr, Suite 300, Chicago, IL 60601) Tj ET
+BT /F1 9 Tf 36 734 Td (Tel: (312) 555-0100  |  Fax: (312) 555-0199  |  www.labworksdiag.com) Tj ET
+0 0 0 rg
+BT /F2 13 Tf 36 710 Td (COMPREHENSIVE METABOLIC & LIPID PANEL REPORT) Tj ET
+0.5 w 36 706 m 576 706 l S
+0.941 0.961 0.988 rg
+36 630 255 68 re f
+0 0 0 rg
+BT /F2 9 Tf 44 691 Td (PATIENT INFORMATION) Tj ET
+BT /F1 9 Tf 44 679 Td (Name:) Tj ET
+BT /F2 9 Tf 80 679 Td (Doe, John) Tj ET
+BT /F1 9 Tf 44 668 Td (DOB:) Tj ET
+BT /F2 9 Tf 75 668 Td (01/15/1980  \(Age: 46\)) Tj ET
+BT /F1 9 Tf 44 657 Td (Gender:) Tj ET
+BT /F2 9 Tf 82 657 Td (Male) Tj ET
+BT /F1 9 Tf 44 646 Td (Patient ID:) Tj ET
+BT /F2 9 Tf 90 646 Td (PT-20260313-004821) Tj ET
+BT /F1 9 Tf 44 635 Td (Ordering Provider:) Tj ET
+BT /F2 9 Tf 120 635 Td (Dr. Sarah Mitchell, MD) Tj ET
+0.941 0.961 0.988 rg
+303 630 273 68 re f
+0 0 0 rg
+BT /F2 9 Tf 311 691 Td (SPECIMEN INFORMATION) Tj ET
+BT /F1 9 Tf 311 679 Td (Accession #:) Tj ET
+BT /F2 9 Tf 375 679 Td (LW-2026031300482) Tj ET
+BT /F1 9 Tf 311 668 Td (Collected:) Tj ET
+BT /F2 9 Tf 360 668 Td (03/13/2026  07:42 AM) Tj ET
+BT /F1 9 Tf 311 657 Td (Received:) Tj ET
+BT /F2 9 Tf 357 657 Td (03/13/2026  09:15 AM) Tj ET
+BT /F1 9 Tf 311 646 Td (Reported:) Tj ET
+BT /F2 9 Tf 357 646 Td (03/13/2026  02:30 PM) Tj ET
+BT /F1 9 Tf 311 635 Td (Specimen Type:) Tj ET
+BT /F2 9 Tf 385 635 Td (Serum / Whole Blood) Tj ET
+BT /F2 9 Tf 36 622 Td (** FASTING SPECIMEN - 12-hour fast confirmed by patient **) Tj ET
+0.5 w 36 618 m 576 618 l S
+0.161 0.384 0.608 rg
+36 600 540 14 re f
+1 1 1 rg
+BT /F2 9 Tf 40 604 Td (GLUCOSE) Tj ET
+0 0 0 rg
+BT /F2 8 Tf 40 590 Td (Test Name) Tj ET
+BT /F2 8 Tf 270 590 Td (Result) Tj ET
+BT /F2 8 Tf 340 590 Td (Flag) Tj ET
+BT /F2 8 Tf 380 590 Td (Reference Range) Tj ET
+BT /F2 8 Tf 490 590 Td (Units) Tj ET
+0.3 w 36 587 m 576 587 l S
+BT /F1 9 Tf 40 577 Td (Fasting Glucose) Tj ET
+BT /F1 9 Tf 270 577 Td (98) Tj ET
+BT /F1 9 Tf 380 577 Td (70 - 99) Tj ET
+BT /F1 9 Tf 490 577 Td (mg/dL) Tj ET
+0.2 w 36 573 m 576 573 l S
+0.161 0.384 0.608 rg
+36 558 540 14 re f
+1 1 1 rg
+BT /F2 9 Tf 40 562 Td (LIPID PANEL) Tj ET
+0 0 0 rg
+BT /F2 8 Tf 40 547 Td (Test Name) Tj ET
+BT /F2 8 Tf 270 547 Td (Result) Tj ET
+BT /F2 8 Tf 340 547 Td (Flag) Tj ET
+BT /F2 8 Tf 380 547 Td (Reference Range) Tj ET
+BT /F2 8 Tf 490 547 Td (Units) Tj ET
+0.3 w 36 544 m 576 544 l S
+BT /F1 9 Tf 40 534 Td (Total Cholesterol) Tj ET
+BT /F1 9 Tf 270 534 Td (215) Tj ET
+0.8 0 0 rg
+BT /F2 9 Tf 340 534 Td (H) Tj ET
+0 0 0 rg
+BT /F1 9 Tf 380 534 Td (0 - 199) Tj ET
+BT /F1 9 Tf 490 534 Td (mg/dL) Tj ET
+0.2 w 36 530 m 576 530 l S
+BT /F1 9 Tf 40 519 Td (HDL Cholesterol) Tj ET
+BT /F1 9 Tf 270 519 Td (52) Tj ET
+BT /F1 9 Tf 380 519 Td (40 - 60) Tj ET
+BT /F1 9 Tf 490 519 Td (mg/dL) Tj ET
+0.2 w 36 515 m 576 515 l S
+BT /F1 9 Tf 40 504 Td (LDL Cholesterol) Tj ET
+BT /F1 9 Tf 270 504 Td (142) Tj ET
+0.8 0 0 rg
+BT /F2 9 Tf 340 504 Td (H) Tj ET
+0 0 0 rg
+BT /F1 9 Tf 380 504 Td (0 - 99) Tj ET
+BT /F1 9 Tf 490 504 Td (mg/dL) Tj ET
+0.2 w 36 500 m 576 500 l S
+BT /F1 9 Tf 40 489 Td (Triglycerides) Tj ET
+BT /F1 9 Tf 270 489 Td (88) Tj ET
+BT /F1 9 Tf 380 489 Td (0 - 149) Tj ET
+BT /F1 9 Tf 490 489 Td (mg/dL) Tj ET
+0.2 w 36 485 m 576 485 l S
+BT /F1 7.5 Tf 40 476 Td (LDL calculated by Friedewald equation. If Triglycerides >400 mg/dL, LDL result is invalid.) Tj ET
+0.161 0.384 0.608 rg
+36 462 540 14 re f
+1 1 1 rg
+BT /F2 9 Tf 40 466 Td (VITAMINS & MICRONUTRIENTS) Tj ET
+0 0 0 rg
+BT /F2 8 Tf 40 449 Td (Test Name) Tj ET
+BT /F2 8 Tf 270 449 Td (Result) Tj ET
+BT /F2 8 Tf 340 449 Td (Flag) Tj ET
+BT /F2 8 Tf 380 449 Td (Reference Range) Tj ET
+BT /F2 8 Tf 490 449 Td (Units) Tj ET
+0.3 w 36 446 m 576 446 l S
+BT /F1 9 Tf 40 436 Td (Vitamin D, 25-OH Total) Tj ET
+BT /F1 9 Tf 270 436 Td (28) Tj ET
+0 0 0.75 rg
+BT /F2 9 Tf 340 436 Td (L) Tj ET
+0 0 0 rg
+BT /F1 9 Tf 380 436 Td (30 - 100) Tj ET
+BT /F1 9 Tf 490 436 Td (ng/mL) Tj ET
+0.2 w 36 432 m 576 432 l S
+BT /F1 9 Tf 40 421 Td (Vitamin B12 \(Cobalamin\)) Tj ET
+BT /F1 9 Tf 270 421 Td (450) Tj ET
+BT /F1 9 Tf 380 421 Td (300 - 900) Tj ET
+BT /F1 9 Tf 490 421 Td (pg/mL) Tj ET
+0.2 w 36 417 m 576 417 l S
+0.161 0.384 0.608 rg
+36 407 540 14 re f
+1 1 1 rg
+BT /F2 9 Tf 40 411 Td (CARDIOVASCULAR - BLOOD PRESSURE) Tj ET
+0 0 0 rg
+BT /F2 8 Tf 40 394 Td (Test Name) Tj ET
+BT /F2 8 Tf 270 394 Td (Result) Tj ET
+BT /F2 8 Tf 340 394 Td (Flag) Tj ET
+BT /F2 8 Tf 380 394 Td (Reference Range) Tj ET
+BT /F2 8 Tf 490 394 Td (Units) Tj ET
+0.3 w 36 391 m 576 391 l S
+BT /F1 9 Tf 40 381 Td (Blood Pressure Systolic) Tj ET
+BT /F1 9 Tf 270 381 Td (118) Tj ET
+BT /F1 9 Tf 380 381 Td (90 - 120) Tj ET
+BT /F1 9 Tf 490 381 Td (mmHg) Tj ET
+0.2 w 36 377 m 576 377 l S
+BT /F1 9 Tf 40 366 Td (Blood Pressure Diastolic) Tj ET
+BT /F1 9 Tf 270 366 Td (76) Tj ET
+BT /F1 9 Tf 380 366 Td (60 - 80) Tj ET
+BT /F1 9 Tf 490 366 Td (mmHg) Tj ET
+0.2 w 36 362 m 576 362 l S
+BT /F1 7.5 Tf 40 353 Td (Blood pressure measured via automated sphygmomanometer. Average of 2 readings taken 2 minutes apart.) Tj ET
+0.8 w 36 347 m 576 347 l S
+BT /F2 10 Tf 36 335 Td (RESULT SUMMARY) Tj ET
+1.0 0.973 0.941 rg
+36 268 540 60 re f
+0 0 0 rg
+BT /F2 8.5 Tf 44 321 Td (ABNORMAL RESULTS REQUIRING ATTENTION:) Tj ET
+0.8 0 0 rg
+BT /F1 8.5 Tf 44 309 Td (H  Total Cholesterol: 215 mg/dL  (Reference: 0-199)  - Elevated. Lifestyle modification recommended.) Tj ET
+BT /F1 8.5 Tf 44 298 Td (H  LDL Cholesterol: 142 mg/dL  (Reference: 0-99)  - Significantly elevated. Discuss cardiovascular risk with provider.) Tj ET
+0 0 0.75 rg
+BT /F1 8.5 Tf 44 287 Td (L  Vitamin D, 25-OH: 28 ng/mL  (Reference: 30-100)  - Insufficient. Supplementation advised.) Tj ET
+0 0 0 rg
+BT /F1 8.5 Tf 44 276 Td (All other results are within normal reference ranges.) Tj ET
+0.3 w 36 265 m 576 265 l S
+BT /F2 9 Tf 36 254 Td (CLINICAL NOTES:) Tj ET
+BT /F1 8.5 Tf 36 243 Td (Patient is a 46-year-old male presenting for annual wellness lab panel. No acute symptoms reported. Current medications: None.) Tj ET
+BT /F1 8.5 Tf 36 232 Td (Follow up with ordering provider for lipid management. Vitamin D insufficiency; consider 2000 IU daily supplementation.) Tj ET
+0.8 w 36 108 m 576 108 l S
+0.961 0.961 0.961 rg
+36 60 540 42 re f
+0 0 0 rg
+BT /F2 7.5 Tf 44 95 Td (ELECTRONICALLY VERIFIED AND REPORTED BY:) Tj ET
+BT /F1 7.5 Tf 44 84 Td (Medical Director: James R. Hoffman, MD, FCAP  |  Board Certified Pathologist  |  License #: IL-MD-0048823) Tj ET
+BT /F1 7.5 Tf 44 73 Td (This report has been electronically signed and is valid without a wet signature. Report Date: 03/13/2026.) Tj ET
+BT /F1 7.5 Tf 44 62 Td (For questions: results@labworksdiag.com  |  Confidential - intended solely for the named ordering provider and patient.) Tj ET
+BT /F1 7 Tf 36 48 Td (LabWorks Diagnostics | CLIA# 99D1234567 | CAP Accredited Laboratory | Page 1 of 1) Tj ET
+BT /F1 7 Tf 36 37 Td (Reference ranges based on established clinical guidelines. Results flagged H or L require clinical correlation.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000257 00000 n 
+0000007331 00000 n 
+0000007428 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+7530
+%%EOF

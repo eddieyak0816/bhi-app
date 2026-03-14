@@ -59,6 +59,31 @@
 - `AuthContext.tsx`: on signup, updates the trigger-created profile row with a system-generated `public_id`.
 - `ProfilePage.tsx`, `ConsentPage.tsx`, `PublicProfilePage.tsx`: all display the public token. Real name is never shown publicly. "Change ID" feature shows a "Coming soon — requires signed HIPAA authorization" placeholder.
 
+## 2026-03-13 — dev
+
+### Phase 3: AI PDF Lab Upload & Extraction (Feature 11 — Complete)
+
+**Core feature**
+- `POST /api/extract-labs` endpoint added to `server/index.js`.
+- `pdf-parse@1.1.1` extracts text from uploaded PDF server-side — no vision model required.
+- AI provider cascade: Gemini key 1 → Gemini key 2 → OpenRouter (3 free models) → Groq. Auto-rotates on 429/quota errors.
+- Supports up to 5 Gemini keys (`GEMINI_API_KEY` through `GEMINI_API_KEY_5`), `OPENROUTER_API_KEY`, and `GROQ_API_KEY` in `.env.server`.
+- Frontend (`src/pages/LabsPage.tsx`): "Upload Lab PDF" button opens a hidden file input. Extracted rows shown in a review table with checkboxes, editable values, flag indicators, and ref ranges. User confirms before saving.
+- Fuzzy marker name matching (case-insensitive substring): matched rows use app marker names and BHAS-aware ref ranges; unmatched rows save with freeform names (not BHAS-scored).
+- Reference range priority: PDF-extracted range → app optimal logic rule → lab_markers table fallback.
+- `test-lab-report.pdf` created in project root for end-to-end testing (9 markers: Fasting Glucose, Total Cholesterol, HDL, LDL, Triglycerides, Vitamin D, Vitamin B12, BP Systolic, BP Diastolic).
+- Debug logs added at server startup to confirm env/key loading.
+
+**Infrastructure fixes made during build**
+- `.env.server` `dotenv` path changed to absolute (`path.resolve(__dirname, '..', '.env.server')`) — fixes key-not-found when server is started from any working directory.
+- `.env.local` `VITE_BACKEND_URL` corrected to `http://localhost:4242` for local dev (was pointing to Render production URL).
+- `.env.server` `SUPABASE_SERVICE_ROLE` corrected to the actual JWT (was accidentally set to `BACKEND_API_KEY` value).
+- `pdf-parse` replaced with v1.1.1 (the initially installed version had an incompatible API).
+
+**Planned additions to Feature 11 (next)**
+- PDF duplicate detection: SHA-256 hash + accession number + collection date extracted by AI. New `lab_pdf_uploads` table stores these per user. Warns on re-upload before the review table is shown.
+- New Marker Wizard in Admin: guided 3-step flow to create a marker + logic rules + tags in one transaction (eliminates the current fragmented 3-tab workflow).
+
 ## 2026-02-07 — dev
 
 ## 2026-02-06 — dev
