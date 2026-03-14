@@ -150,6 +150,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [orgAddTeam, setOrgAddTeam] = useState<''|'fire'|'water'|'wind'|'earth'>('')
   const [orgAddError, setOrgAddError] = useState<string | null>(null)
   const [orgAddSaving, setOrgAddSaving] = useState(false)
+  const [assigningTeams, setAssigningTeams] = useState<Record<string, boolean>>({})
+  const [assignTeamsMsg, setAssignTeamsMsg] = useState<Record<string, string | null>>({})
 
   // User identity mapping state (Feature 15)
   const [allUsers, setAllUsers] = useState<Array<{id: string; name: string; email: string; username: string|null; public_id: string|null; role: string; created_at: string}>>([])
@@ -563,6 +565,32 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       await loadOrgs()
     } catch (err) {
       console.error('removeOrgMember', err)
+    }
+  }
+
+  // Feature 17: auto-assign unassigned members to teams (balanced)
+  async function assignTeams(orgId: string) {
+    setAssigningTeams(prev => ({ ...prev, [orgId]: true }))
+    setAssignTeamsMsg(prev => ({ ...prev, [orgId]: null }))
+    try {
+      const res = await fetch(apiUrl(`/api/admin/organizations/${orgId}/assign-teams`), {
+        method: 'POST',
+        headers: authHeaders()
+      })
+      const body = await res.json()
+      if (!res.ok) {
+        setAssignTeamsMsg(prev => ({ ...prev, [orgId]: body.error || 'Assignment failed.' }))
+        return
+      }
+      const msg = body.assigned === 0
+        ? 'No unassigned members.'
+        : `Assigned ${body.assigned} member${body.assigned !== 1 ? 's' : ''} to teams.`
+      setAssignTeamsMsg(prev => ({ ...prev, [orgId]: msg }))
+      await loadOrgMembers(orgId)
+    } catch {
+      setAssignTeamsMsg(prev => ({ ...prev, [orgId]: 'Network error.' }))
+    } finally {
+      setAssigningTeams(prev => ({ ...prev, [orgId]: false }))
     }
   }
 
@@ -3721,11 +3749,24 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:theme.text,textDecoration:'none',display:'inline-block'}}
                       >Employer View</a>
                       <button
+                        onClick={() => assignTeams(org.id)}
+                        disabled={!!assigningTeams[org.id]}
+                        title="Assign unassigned members to teams (balanced)"
+                        style={{background:'transparent',border:`1px solid #7c3aed`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:'#7c3aed',opacity:assigningTeams[org.id]?0.6:1,whiteSpace:'nowrap'}}
+                      >{assigningTeams[org.id] ? 'Assigning…' : 'Auto-assign Teams'}</button>
+                      <button
                         onClick={() => deleteOrg(org.id)}
                         style={{background:'transparent',border:'1px solid #dc2626',borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:'#dc2626'}}
                       >Delete</button>
                     </div>
                   </div>
+
+                  {/* Auto-assign feedback */}
+                  {assignTeamsMsg[org.id] && (
+                    <div style={{padding:'6px 16px',fontSize:12,borderTop:`1px solid ${theme.borderColor}`,color:assignTeamsMsg[org.id]?.includes('error')||assignTeamsMsg[org.id]?.includes('failed')?'#dc2626':'#15803d',background:assignTeamsMsg[org.id]?.includes('error')||assignTeamsMsg[org.id]?.includes('failed')?'#fef2f2':'#f0fdf4'}}>
+                      {assignTeamsMsg[org.id]}
+                    </div>
+                  )}
 
                   {/* Expanded members panel */}
                   {expandedOrgId === org.id && (

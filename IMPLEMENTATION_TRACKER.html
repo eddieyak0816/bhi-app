@@ -185,14 +185,14 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-14 (Features 11, 11a, 11b, 12 complete — AI PDF extraction, duplicate detection, New Marker Wizard, Provider Verification) · 14 built · 3 partial · 15 todo · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-14 (Feature 17 complete — Auto Team Assignment) · 18 built · 2 partial · 12 todo · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar (counts kept in sync manually or via Ctrl+F) -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">14</span>  Built / Done</div>
-  <div class="stat stat-partial"> <span class="num" id="cnt-partial">7</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">11</span>  Not Built</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">18</span>  Built / Done</div>
+  <div class="stat stat-partial"> <span class="num" id="cnt-partial">2</span>  Partial</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">12</span>  Not Built</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">32</span>  Total Items</div>
 </div>
 
@@ -217,7 +217,7 @@
         <div class="phase-title">Foundation — Already Built</div>
         <div class="phase-desc">Core infrastructure, admin tooling, and the individual user experience</div>
       </div>
-      <div class="phase-progress">4 / 4 done</div>
+      <div class="phase-progress">4 / 4 done ✅</div>
     </div>
     <div class="items">
 
@@ -248,13 +248,13 @@
         <span class="item-status status-done">✅ Built</span>
       </div>
 
-      <div class="item partial" data-status="partial">
+      <div class="item done" data-status="done">
         <div class="item-num">4</div>
         <div class="item-body">
           <div class="item-title">Individual user lab input &amp; evaluation</div>
-          <div class="item-note">Manual lab value entry for cardiometabolic markers + Vitamin D. Logic rules engine evaluates values and applies tags. User lab values stored via RPC with RLS. No structured upload workflow or date-based enforcement yet.</div>
+          <div class="item-note">Manual lab value entry for cardiometabolic markers + Vitamin D + B12 + biometrics. Logic rules engine evaluates values and applies tags. User lab values stored in user_lab_results with RLS. AI PDF upload provides structured upload workflow (Feature 11). Stale-data banner enforces biannual update frequency (Feature 9). Provider verification adds clinical attestation (Feature 12).</div>
         </div>
-        <span class="item-status status-partial">🔶 Partial</span>
+        <span class="item-status status-done">✅ Built</span>
       </div>
 
     </div>
@@ -270,7 +270,7 @@
         <div class="phase-title">Complete the Individual User Experience</div>
         <div class="phase-desc">BHAS score rollup, missing metrics, biometrics, reminders, and consent</div>
       </div>
-      <div class="phase-progress">6 / 6 done</div>
+      <div class="phase-progress">6 / 6 done ✅</div>
     </div>
     <div class="items">
 
@@ -341,7 +341,7 @@
         <div class="phase-title">Data Verification &amp; Integrity</div>
         <div class="phase-desc">AI PDF extraction, provider NPI verification, and direct lab API integrations</div>
       </div>
-      <div class="phase-progress">2 / 5 done — 1 planned</div>
+      <div class="phase-progress">4 / 5 done · 1 skipped (Feature 13 — blocked on lab agreements)</div>
     </div>
     <div class="items">
 
@@ -385,9 +385,9 @@
         <div class="item-num">13</div>
         <div class="item-body">
           <div class="item-title">Direct lab API integrations — Labcorp, Quest, Mako, Rhythm</div>
-          <div class="item-note">Secure API pull from certified lab vendors. Automates data entry and eliminates manual input errors. Depends on lab partner agreements and API access being established.</div>
+          <div class="item-note">Secure API pull from certified lab vendors. Automates data entry and eliminates manual input errors. <strong>Skipped</strong> — blocked on lab partner agreements and API access. Will revisit when agreements are in place.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-todo">⏸ Skipped</span>
       </div>
 
     </div>
@@ -403,7 +403,7 @@
         <div class="phase-title">Corporate Portal</div>
         <div class="phase-desc">Employer orgs, de-identification, team assignment (Fire / Water / Wind / Earth), and team scoring</div>
       </div>
-      <div class="phase-progress">0 / 5 done</div>
+      <div class="phase-progress">3 / 5 done</div>
     </div>
     <div class="items">
 
@@ -434,13 +434,13 @@
         <span class="item-status status-done">✅ Complete</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">17</div>
         <div class="item-body">
           <div class="item-title">Auto team assignment — Fire, Water, Wind, Earth</div>
-          <div class="item-note">Corporate users assigned permanently to one of four teams. Assignment logic TBD (random, score-balanced, manual?). Depends on corporate user model being in place.</div>
+          <div class="item-note">Server: POST /api/admin/organizations/:id/assign-teams — greedy-balanced assignment (assigns unassigned members to whichever team has fewest). Existing assignments never overwritten. Returns { assigned, distribution }. Admin UI: "Auto-assign Teams" button (purple) per org in Organizations tab — calls endpoint, shows inline success/error feedback, refreshes member list. 2026-03-14.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Complete</span>
       </div>
 
       <div class="item todo" data-status="todo">
@@ -620,7 +620,7 @@
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-13 &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-14 &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
 </footer>

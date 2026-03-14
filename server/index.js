@@ -1722,6 +1722,57 @@ app.delete('/api/admin/organizations/:id/members/:userId', async (req, res) => {
   }
 });
 
+// POST /api/admin/organizations/:id/assign-teams — auto-assign unassigned members to teams (balanced by count)
+// Strategy: round-robin across fire/water/wind/earth sorted by current team size ascending.
+// Only affects members where team IS NULL. Existing assignments are never changed.
+app.post('/api/admin/organizations/:id/assign-teams', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  const TEAMS = ['fire', 'water', 'wind', 'earth'];
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Fetch all members for this org
+    const { data: members, error: fetchErr } = await sb
+      .from('org_memberships')
+      .select('id, user_id, team')
+      .eq('org_id', id);
+    if (fetchErr) return res.status(500).json({ error: 'db_error', detail: fetchErr });
+
+    const unassigned = members.filter(m => !m.team);
+    if (unassigned.length === 0) {
+      return res.status(200).json({ assigned: 0, message: 'No unassigned members.' });
+    }
+
+    // Count current members per team to seed the balance
+    const counts = { fire: 0, water: 0, wind: 0, earth: 0 };
+    members.filter(m => m.team).forEach(m => { if (counts[m.team] !== undefined) counts[m.team]++; });
+
+    // Assign each unassigned member to the team with the lowest count (greedy balance)
+    const updates = unassigned.map(m => {
+      const minTeam = TEAMS.reduce((a, b) => counts[a] <= counts[b] ? a : b);
+      counts[minTeam]++;
+      return { id: m.id, team: minTeam };
+    });
+
+    // Batch update via individual upserts (Supabase JS v2 doesn't support bulk update with different values per row)
+    const updateResults = await Promise.all(
+      updates.map(u =>
+        sb.from('org_memberships').update({ team: u.team }).eq('id', u.id)
+      )
+    );
+    const failed = updateResults.filter(r => r.error);
+    if (failed.length > 0) {
+      return res.status(500).json({ error: 'partial_failure', failed: failed.map(r => r.error) });
+    }
+
+    return res.status(200).json({ assigned: updates.length, distribution: counts });
+  } catch (err) {
+    console.error('POST /api/admin/organizations/:id/assign-teams error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // DELETE /api/admin/organizations/:id — delete org (cascades memberships)
 app.delete('/api/admin/organizations/:id', async (req, res) => {
   if (!requireAdmin(req, res)) return;

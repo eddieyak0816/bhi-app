@@ -129,6 +129,11 @@
 - `src/App.tsx`: routes `#/employer/*` to EmployerPage, slug parsed from hash path.
 - `src/pages/Admin.tsx` (Organizations tab): "Employer View" link button on each org card → navigates to `#/employer/:slug`.
 
+### Phase 4: Auto Team Assignment (Feature 17 — Complete)
+
+- Server (`server/index.js`): `POST /api/admin/organizations/:id/assign-teams` — greedy-balanced assignment. Counts existing members per team (fire/water/wind/earth), then assigns each unassigned member (team = null) to whichever team has the fewest members at that moment. Returns `{ assigned, distribution }`. Requires `x-backend-api-key`. Existing assignments are never overwritten.
+- `src/pages/Admin.tsx` (Organizations tab): "Auto-assign Teams" button (purple border) added to each org header row. Calls the endpoint, shows inline feedback (green on success, red on error), and refreshes the member list automatically. Per-org loading state prevents double-clicks.
+
 ## 2026-02-07 — dev
 
 ## 2026-02-06 — dev
