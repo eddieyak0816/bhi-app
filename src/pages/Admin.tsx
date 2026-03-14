@@ -33,7 +33,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [markerMinNormal, setMarkerMinNormal] = useState<number | null>(null)
   const [markerMaxNormal, setMarkerMaxNormal] = useState<number | null>(null)
 
-  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit'>('resources')
+  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit' | 'organizations'>('resources')
   // Use global theme context
   const { darkMode, theme: globalTheme } = useTheme()
   // View mode per tab (card or table)
@@ -136,6 +136,29 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   ])
   const [wizardSaving, setWizardSaving] = useState(false)
   const [wizardError, setWizardError] = useState<string | null>(null)
+
+  // Organizations state (Feature 14)
+  const [orgs, setOrgs] = useState<Array<{id: string; name: string; slug: string; created_at: string; member_count: number}>>([])
+  const [orgMembers, setOrgMembers] = useState<Record<string, Array<{id: string; user_id: string; role: string; team: string|null; joined_at: string; username: string|null; public_id: string|null}>>>({})
+  const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null)
+  const [orgCreateName, setOrgCreateName] = useState('')
+  const [orgCreateSlug, setOrgCreateSlug] = useState('')
+  const [orgCreateError, setOrgCreateError] = useState<string | null>(null)
+  const [orgCreateSaving, setOrgCreateSaving] = useState(false)
+  const [orgAddUserId, setOrgAddUserId] = useState('')
+  const [orgAddRole, setOrgAddRole] = useState<'member'|'admin'>('member')
+  const [orgAddTeam, setOrgAddTeam] = useState<''|'fire'|'water'|'wind'|'earth'>('')
+  const [orgAddError, setOrgAddError] = useState<string | null>(null)
+  const [orgAddSaving, setOrgAddSaving] = useState(false)
+
+  // User identity mapping state (Feature 15)
+  const [allUsers, setAllUsers] = useState<Array<{id: string; name: string; email: string; username: string|null; public_id: string|null; role: string; created_at: string}>>([])
+  const [usersLoaded, setUsersLoaded] = useState(false)
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [editingUsernameId, setEditingUsernameId] = useState<string | null>(null)
+  const [editingUsernameVal, setEditingUsernameVal] = useState('')
+  const [usernameOverrideError, setUsernameOverrideError] = useState<string | null>(null)
+  const [usernameOverrideSaving, setUsernameOverrideSaving] = useState(false)
 
   function openWizard() {
     setWizardStep(1)
@@ -453,6 +476,128 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     } finally {
       if (!controller.signal.aborted) setLoading(false)
       if (loadAuditControllerRef.current === controller) loadAuditControllerRef.current = null
+    }
+  }
+
+  // Organizations loaders (Feature 14)
+  async function loadOrgs() {
+    setLoading(true)
+    try {
+      const res = await fetch(apiUrl('/api/admin/organizations'), { headers: authHeaders() })
+      const body = await res.json()
+      setOrgs(body || [])
+    } catch (err) {
+      console.error('loadOrgs', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function loadOrgMembers(orgId: string) {
+    try {
+      const res = await fetch(apiUrl(`/api/admin/organizations/${orgId}/members`), { headers: authHeaders() })
+      const body = await res.json()
+      setOrgMembers(prev => ({ ...prev, [orgId]: body || [] }))
+    } catch (err) {
+      console.error('loadOrgMembers', err)
+    }
+  }
+
+  async function createOrg() {
+    if (!orgCreateName.trim() || !orgCreateSlug.trim()) { setOrgCreateError('Name and slug are required.'); return }
+    setOrgCreateSaving(true); setOrgCreateError(null)
+    try {
+      const res = await fetch(apiUrl('/api/admin/organizations'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ name: orgCreateName.trim(), slug: orgCreateSlug.trim() })
+      })
+      if (res.status === 409) { setOrgCreateError('Slug already in use — choose another.'); return }
+      if (!res.ok) { setOrgCreateError('Server error creating org.'); return }
+      setOrgCreateName(''); setOrgCreateSlug(''); setOrgCreateError(null)
+      await loadOrgs()
+    } catch (err) {
+      setOrgCreateError('Network error.')
+    } finally {
+      setOrgCreateSaving(false)
+    }
+  }
+
+  async function deleteOrg(orgId: string) {
+    if (!confirm('Delete this organization and all its memberships?')) return
+    try {
+      await fetch(apiUrl(`/api/admin/organizations/${orgId}`), { method: 'DELETE', headers: authHeaders() })
+      await loadOrgs()
+      if (expandedOrgId === orgId) setExpandedOrgId(null)
+    } catch (err) {
+      console.error('deleteOrg', err)
+    }
+  }
+
+  async function addOrgMember(orgId: string) {
+    if (!orgAddUserId.trim()) { setOrgAddError('User ID is required.'); return }
+    setOrgAddSaving(true); setOrgAddError(null)
+    try {
+      const res = await fetch(apiUrl(`/api/admin/organizations/${orgId}/members`), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ user_id: orgAddUserId.trim(), role: orgAddRole, team: orgAddTeam || null })
+      })
+      if (res.status === 409) { setOrgAddError('User is already a member.'); return }
+      if (!res.ok) { setOrgAddError('Server error adding member.'); return }
+      setOrgAddUserId(''); setOrgAddRole('member'); setOrgAddTeam('')
+      await loadOrgMembers(orgId)
+      await loadOrgs()
+    } catch (err) {
+      setOrgAddError('Network error.')
+    } finally {
+      setOrgAddSaving(false)
+    }
+  }
+
+  async function removeOrgMember(orgId: string, userId: string) {
+    if (!confirm('Remove this member from the organization?')) return
+    try {
+      await fetch(apiUrl(`/api/admin/organizations/${orgId}/members/${userId}`), { method: 'DELETE', headers: authHeaders() })
+      await loadOrgMembers(orgId)
+      await loadOrgs()
+    } catch (err) {
+      console.error('removeOrgMember', err)
+    }
+  }
+
+  // User identity mapping (Feature 15)
+  async function loadAllUsers() {
+    setUsersLoading(true)
+    try {
+      const res = await fetch(apiUrl('/api/admin/users'), { headers: authHeaders() })
+      const body = await res.json()
+      setAllUsers(body || [])
+      setUsersLoaded(true)
+    } catch (err) {
+      console.error('loadAllUsers', err)
+    } finally {
+      setUsersLoading(false)
+    }
+  }
+
+  async function saveUsernameOverride(userId: string) {
+    if (!editingUsernameVal.trim()) return
+    setUsernameOverrideSaving(true); setUsernameOverrideError(null)
+    try {
+      const res = await fetch(apiUrl(`/api/admin/users/${userId}/username`), {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ username: editingUsernameVal.trim() }),
+      })
+      if (res.status === 409) { setUsernameOverrideError('Username already taken.'); return }
+      if (!res.ok) { setUsernameOverrideError('Server error.'); return }
+      setEditingUsernameId(null); setEditingUsernameVal(''); setUsernameOverrideError(null)
+      await loadAllUsers()
+    } catch {
+      setUsernameOverrideError('Network error.')
+    } finally {
+      setUsernameOverrideSaving(false)
     }
   }
 
@@ -786,6 +931,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     else if (activeTab === 'markers') load()
     else if (activeTab === 'criteria') load()
     else if (activeTab === 'audit') loadAudit()
+    else if (activeTab === 'organizations') loadOrgs()
   }, [activeTab])
 
   useEffect(() => {
@@ -914,6 +1060,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <button className={`tab ${activeTab === 'markers' ? 'active' : ''}`} onClick={() => setActiveTab('markers')} style={{color: activeTab === 'markers' ? '#ffffff' : theme.text}}>Lab Markers</button>
         <button className={`tab ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => setActiveTab('goals')} style={{color: activeTab === 'goals' ? '#ffffff' : theme.text}}>Health Goals</button>
         <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')} style={{color: activeTab === 'criteria' ? '#ffffff' : theme.text}}>Criteria</button>
+        <button className={`tab ${activeTab === 'organizations' ? 'active' : ''}`} onClick={() => setActiveTab('organizations')} style={{color: activeTab === 'organizations' ? '#ffffff' : theme.text}}>Organizations</button>
       </div>
 
       {/* Audit Log hidden in main UI - gated behind secret access */}
@@ -3435,6 +3582,242 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── Organizations Tab (Feature 14) ─────────────────────────── */}
+      {activeTab === 'organizations' && (
+        <div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+            <h3 style={{margin:0,fontSize:16,fontWeight:600,color:theme.text}}>Organizations</h3>
+          </div>
+
+          {/* PHI notice */}
+          <div style={{background:'#fef9c3',border:'1px solid #fde047',borderRadius:6,padding:10,marginBottom:16,fontSize:12,color:'#713f12'}}>
+            <strong>PHI rule:</strong> Employer-facing views must never expose real names, emails, or raw lab values — only de-identified usernames, public IDs, and aggregate scores.
+          </div>
+
+          {/* User Identity Mapping (Feature 15) — admin-only, PHI-bearing */}
+          <div style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,marginBottom:20}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+              <div>
+                <h4 style={{margin:0,fontSize:14,fontWeight:600,color:theme.text}}>User Identity Mapping</h4>
+                <p style={{margin:'4px 0 0 0',fontSize:12,color:theme.textMuted}}>Admin-only view: real name + email ↔ username + public ID. Use this to look up who to add to an org. Never share this view with employers.</p>
+              </div>
+              <button
+                onClick={() => { if (!usersLoaded) loadAllUsers(); else setUsersLoaded(false) }}
+                style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:theme.text}}
+              >{usersLoaded ? 'Hide' : 'Show Users'}</button>
+            </div>
+            {usersLoaded && (
+              usersLoading ? <div style={{color:theme.textMuted,fontSize:13}}>Loading…</div> :
+              allUsers.length === 0 ? <p style={{color:theme.textMuted,fontSize:13}}>No users found.</p> : (
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                  <thead>
+                    <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                      {['Name','Email','Username','Public ID','Role',''].map(h => (
+                        <th key={h} style={{textAlign:'left',padding:'5px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase'}}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allUsers.map(u => (
+                      <tr key={u.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                        <td style={{padding:'6px 8px',color:theme.text}}>{u.name}</td>
+                        <td style={{padding:'6px 8px',color:theme.textMuted}}>{u.email}</td>
+                        <td style={{padding:'6px 8px'}}>
+                          {editingUsernameId === u.id ? (
+                            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                              <input
+                                value={editingUsernameVal}
+                                onChange={e => setEditingUsernameVal(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                                style={{padding:'3px 6px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bg,color:theme.text,fontSize:12,width:130}}
+                              />
+                              <button onClick={() => saveUsernameOverride(u.id)} disabled={usernameOverrideSaving} style={{background:'#2563eb',color:'#fff',border:'none',borderRadius:4,padding:'3px 8px',fontSize:11,cursor:'pointer'}}>Save</button>
+                              <button onClick={() => { setEditingUsernameId(null); setUsernameOverrideError(null) }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'3px 8px',fontSize:11,cursor:'pointer',color:theme.text}}>Cancel</button>
+                            </div>
+                          ) : (
+                            <span style={{fontFamily:'monospace',color:theme.text}}>{u.username || <em style={{color:theme.textMuted}}>not set</em>}</span>
+                          )}
+                        </td>
+                        <td style={{padding:'6px 8px',fontFamily:'monospace',fontSize:11,color:theme.textMuted}}>{u.public_id || '—'}</td>
+                        <td style={{padding:'6px 8px'}}>
+                          <span style={{background:u.role==='admin'||u.role==='super_admin'?'#dbeafe':'#f3f4f6',color:u.role==='admin'||u.role==='super_admin'?'#1d4ed8':'#374151',borderRadius:4,padding:'1px 6px',fontSize:11,fontWeight:600}}>{u.role}</span>
+                        </td>
+                        <td style={{padding:'6px 8px'}}>
+                          <button
+                            onClick={() => { setEditingUsernameId(u.id); setEditingUsernameVal(u.username || ''); setUsernameOverrideError(null) }}
+                            style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'3px 9px',fontSize:11,cursor:'pointer',color:theme.text}}
+                          >Edit Username</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            )}
+            {usernameOverrideError && <p style={{color:'#dc2626',fontSize:12,margin:'8px 0 0 0'}}>{usernameOverrideError}</p>}
+          </div>
+
+          {/* Create org form */}
+          <div style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,marginBottom:20}}>
+            <h4 style={{margin:'0 0 12px 0',fontSize:14,fontWeight:600,color:theme.text}}>Create Organization</h4>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'end'}}>
+              <div>
+                <label style={{display:'block',fontSize:12,color:theme.textMuted,marginBottom:4}}>Name</label>
+                <input
+                  value={orgCreateName}
+                  onChange={e => setOrgCreateName(e.target.value)}
+                  placeholder="Acme Corp"
+                  style={{width:'100%',padding:'8px 10px',borderRadius:6,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:14,boxSizing:'border-box'}}
+                />
+              </div>
+              <div>
+                <label style={{display:'block',fontSize:12,color:theme.textMuted,marginBottom:4}}>Slug (URL-safe)</label>
+                <input
+                  value={orgCreateSlug}
+                  onChange={e => setOrgCreateSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                  placeholder="acme-corp"
+                  style={{width:'100%',padding:'8px 10px',borderRadius:6,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:14,boxSizing:'border-box'}}
+                />
+              </div>
+              <button
+                onClick={createOrg}
+                disabled={orgCreateSaving}
+                style={{background:'#2563eb',color:'#fff',border:'none',borderRadius:6,padding:'8px 18px',fontWeight:600,fontSize:14,cursor:'pointer',opacity:orgCreateSaving?0.6:1,whiteSpace:'nowrap'}}
+              >{orgCreateSaving ? 'Creating…' : '+ Create'}</button>
+            </div>
+            {orgCreateError && <p style={{color:'#dc2626',fontSize:13,margin:'8px 0 0 0'}}>{orgCreateError}</p>}
+          </div>
+
+          {/* Org list */}
+          {loading ? <div style={{color:theme.textMuted}}>Loading…</div> : orgs.length === 0 ? (
+            <p style={{color:theme.textMuted,fontSize:14}}>No organizations yet.</p>
+          ) : (
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+              {orgs.map(org => (
+                <div key={org.id} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,overflow:'hidden'}}>
+                  {/* Org header row */}
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 16px'}}>
+                    <div>
+                      <span style={{fontWeight:600,fontSize:15,color:theme.text}}>{org.name}</span>
+                      <span style={{marginLeft:10,fontSize:12,color:theme.textMuted}}>/{org.slug}</span>
+                      <span style={{marginLeft:12,fontSize:12,color:theme.textMuted}}>{org.member_count} member{org.member_count !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div style={{display:'flex',gap:8}}>
+                      <button
+                        onClick={() => {
+                          if (expandedOrgId === org.id) {
+                            setExpandedOrgId(null)
+                          } else {
+                            setExpandedOrgId(org.id)
+                            loadOrgMembers(org.id)
+                          }
+                        }}
+                        style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:theme.text}}
+                      >{expandedOrgId === org.id ? 'Hide Members' : 'View Members'}</button>
+                      <a
+                        href={`#/employer/${org.slug}`}
+                        style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:theme.text,textDecoration:'none',display:'inline-block'}}
+                      >Employer View</a>
+                      <button
+                        onClick={() => deleteOrg(org.id)}
+                        style={{background:'transparent',border:'1px solid #dc2626',borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:'#dc2626'}}
+                      >Delete</button>
+                    </div>
+                  </div>
+
+                  {/* Expanded members panel */}
+                  {expandedOrgId === org.id && (
+                    <div style={{borderTop:`1px solid ${theme.borderColor}`,padding:'16px'}}>
+                      {/* Add member form */}
+                      <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:12,marginBottom:14}}>
+                        <h5 style={{margin:'0 0 10px 0',fontSize:13,fontWeight:600,color:theme.text}}>Add Member</h5>
+                        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr auto',gap:8,alignItems:'end'}}>
+                          <div>
+                            <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>User ID (auth.users UUID)</label>
+                            <input
+                              value={orgAddUserId}
+                              onChange={e => setOrgAddUserId(e.target.value)}
+                              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                              style={{width:'100%',padding:'6px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13,boxSizing:'border-box'}}
+                            />
+                          </div>
+                          <div>
+                            <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Role</label>
+                            <select
+                              value={orgAddRole}
+                              onChange={e => setOrgAddRole(e.target.value as 'member'|'admin')}
+                              style={{width:'100%',padding:'6px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
+                            >
+                              <option value="member">Member</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Team</label>
+                            <select
+                              value={orgAddTeam}
+                              onChange={e => setOrgAddTeam(e.target.value as ''|'fire'|'water'|'wind'|'earth')}
+                              style={{width:'100%',padding:'6px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
+                            >
+                              <option value="">— none —</option>
+                              <option value="fire">Fire</option>
+                              <option value="water">Water</option>
+                              <option value="wind">Wind</option>
+                              <option value="earth">Earth</option>
+                            </select>
+                          </div>
+                          <button
+                            onClick={() => addOrgMember(org.id)}
+                            disabled={orgAddSaving}
+                            style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',fontWeight:600,fontSize:13,cursor:'pointer',opacity:orgAddSaving?0.6:1,whiteSpace:'nowrap'}}
+                          >Add</button>
+                        </div>
+                        {orgAddError && <p style={{color:'#dc2626',fontSize:12,margin:'6px 0 0 0'}}>{orgAddError}</p>}
+                      </div>
+
+                      {/* Member table */}
+                      {!orgMembers[org.id] ? (
+                        <p style={{color:theme.textMuted,fontSize:13}}>Loading members…</p>
+                      ) : orgMembers[org.id].length === 0 ? (
+                        <p style={{color:theme.textMuted,fontSize:13}}>No members yet.</p>
+                      ) : (
+                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+                          <thead>
+                            <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                              {['Public ID','Username','Role','Team','Joined',''].map(h => (
+                                <th key={h} style={{textAlign:'left',padding:'6px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase'}}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {orgMembers[org.id].map(m => (
+                              <tr key={m.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                                <td style={{padding:'7px 8px',color:theme.text,fontFamily:'monospace',fontSize:12}}>{m.public_id || '—'}</td>
+                                <td style={{padding:'7px 8px',color:theme.text}}>{m.username || '—'}</td>
+                                <td style={{padding:'7px 8px'}}>
+                                  <span style={{background:m.role==='admin'?'#dbeafe':'#f0fdf4',color:m.role==='admin'?'#1d4ed8':'#15803d',borderRadius:4,padding:'2px 7px',fontSize:11,fontWeight:600}}>{m.role}</span>
+                                </td>
+                                <td style={{padding:'7px 8px',color:theme.text,textTransform:'capitalize'}}>{m.team || '—'}</td>
+                                <td style={{padding:'7px 8px',color:theme.textMuted}}>{m.joined_at ? new Date(m.joined_at).toLocaleDateString() : '—'}</td>
+                                <td style={{padding:'7px 8px'}}>
+                                  <button
+                                    onClick={() => removeOrgMember(org.id, m.user_id)}
+                                    style={{background:'transparent',border:'1px solid #dc2626',borderRadius:4,padding:'3px 9px',fontSize:12,cursor:'pointer',color:'#dc2626'}}
+                                  >Remove</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

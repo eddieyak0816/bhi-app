@@ -104,7 +104,30 @@
 - Results table: new "Verified" column shows colour-coded badge — green "Provider" (hoverable tooltip with verifier name/credential/NPI/date), blue "PDF", grey "Self".
 
 **Planned — Next**
-- Feature 13: Direct lab API integrations (Labcorp, Quest, Mako, Rhythm).
+- Feature 13: Direct lab API integrations (Labcorp, Quest, Mako, Rhythm) — skipped (blocked on lab partner agreements).
+
+## 2026-03-14 — dev
+
+### Phase 4: Corporate Org Structure (Feature 14 — Complete)
+
+- Migration `db/migrations/20260314_create_org_structure.sql`: new `organizations` (id, name, slug, created_at) and `org_memberships` (id, org_id, user_id, role: member|admin, team: fire|water|wind|earth, joined_at) tables with full RLS. Org admins can read their org's memberships; members can read their own row; service role has unrestricted write access.
+- Server (`server/index.js`): five new endpoints — `GET /api/admin/organizations`, `POST /api/admin/organizations`, `GET /api/admin/organizations/:id/members`, `POST /api/admin/organizations/:id/members`, `DELETE /api/admin/organizations/:id/members/:userId`, `DELETE /api/admin/organizations/:id`. All require `x-backend-api-key`.
+- PHI rule enforced in `GET .../members`: returns only `username` and `public_id` (BHI-XXXX-XXXX token) — no real name, email, or raw lab values are exposed to employer-facing views.
+- Admin UI (`src/pages/Admin.tsx`): new "Organizations" tab — list orgs with member counts, create org (name + slug), expand org to view de-identified member table, add member (user UUID, role, team), remove member, delete org.
+
+### Phase 4: Username System (Feature 15 — Complete)
+
+- Migration `db/migrations/20260314_add_username.sql`: adds `username text unique` to `profiles`. Backfills existing rows from email prefix (lowercase, non-alphanumeric → underscore, collision suffix). Comment enforces PHI rule.
+- Server (`server/index.js`): four new endpoints — `GET /api/username/check?username=` (public availability check), `PATCH /api/username` (user sets own username, `x-user-id` header), `GET /api/admin/users` (admin-only full identity mapping: name, email, username, public_id, role), `PATCH /api/admin/users/:id/username` (admin override any user's username).
+- `ProfilePage.tsx`: new Username field in Personal Information section — debounced availability check (400 ms), inline status indicator (available/taken/invalid/checking/saved), dedicated "Save Username" button that calls `PATCH /api/username`. Username auto-loaded from profile on mount.
+- `Admin.tsx` (Organizations tab): new "User Identity Mapping" collapsible panel — shows all users with name, email, username, public_id, role. Admin can override any user's username inline. Labelled "admin-only" with a warning never to share with employers.
+
+### Phase 4: De-identified Employer View (Feature 16 — Complete)
+
+- Server (`server/index.js`): `GET /api/employer/:orgSlug` — auth-gated (org admin or app admin via `x-user-id` header). Returns `{ org, members }` with only `username`, `public_id`, `team`, `role`, `joined_at`, `bhas_pct`, `result_count` — no name, email, or raw lab values. BHAS % computed server-side by mirroring the `evaluateRules.ts` scoring logic (OPTIMAL_TAGS + IMPROVEMENT_TAGS sets, operator-aware rule evaluation). Null BHAS for users with no results.
+- `src/pages/EmployerPage.tsx`: new page at `#/employer/:orgSlug`. Loads de-identified member data, shows: PHI notice banner, org name + member count + org-avg BHAS, per-team summary cards (colour-coded fire/water/wind/earth with avg BHAS), full member table sorted by BHAS score descending (username, public_id, team badge, BHAS badge colour-coded green/amber/red, result count, role, joined date).
+- `src/App.tsx`: routes `#/employer/*` to EmployerPage, slug parsed from hash path.
+- `src/pages/Admin.tsx` (Organizations tab): "Employer View" link button on each org card → navigates to `#/employer/:slug`.
 
 ## 2026-02-07 — dev
 

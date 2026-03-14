@@ -18,6 +18,7 @@ import Labs from './pages/LabsPage'
 import Profile from './pages/ProfilePage'
 import ConsentPage from './pages/ConsentPage'
 import PublicProfilePage from './pages/PublicProfilePage'
+import EmployerPage from './pages/EmployerPage'
 import { loadSampleData, SampleData } from './sample-data'
 import { supabase } from './lib/supabase'
 
@@ -200,6 +201,7 @@ function AppContent() {
         {currentPage === 'consent' && <ConsentPage onNavigate={handleNavigate} />}
         {currentPage === 'public-profile' && <PublicProfilePage onNavigate={handleNavigate} />}
         {currentPage === 'admin' && <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} />}
+        {currentPage.startsWith('employer/') && <EmployerPage orgSlug={currentPage.slice('employer/'.length)} onNavigate={handleNavigate} />}
       </Layout>
     </ProtectedRoute>
   )

@@ -407,31 +407,31 @@
     </div>
     <div class="items">
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">14</div>
         <div class="item-body">
           <div class="item-title">Corporate org structure — employers &amp; assigned users</div>
-          <div class="item-note">No corporate organization model exists. Need new DB tables: organizations, org_memberships. Foundation for all corporate features. Employers should not see PHI.</div>
+          <div class="item-note">Migration 20260314_create_org_structure.sql: organizations + org_memberships tables with RLS. Server endpoints: GET/POST /api/admin/organizations, GET/POST /api/admin/organizations/:id/members, DELETE endpoints. Admin UI: Organizations tab with create org, view/add/remove members (de-identified: username + public_id only — no PHI exposed). 2026-03-14.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Complete</span>
       </div>
 
-      <div class="item partial" data-status="partial">
+      <div class="item done" data-status="done">
         <div class="item-num">15</div>
         <div class="item-body">
           <div class="item-title">Unique username system + admin identity mapping</div>
-          <div class="item-note">Users currently identified by email only. Need a separate display username for de-identification. Admin-only mapping (username ↔ real identity) needs explicit UI. Role infrastructure exists.</div>
+          <div class="item-note">Migration 20260314_add_username.sql: username column on profiles (unique, backfilled from email prefix). Server: /api/username/check (availability), PATCH /api/username (user self-set), GET /api/admin/users (full identity map), PATCH /api/admin/users/:id/username (admin override). ProfilePage: username field with debounced check + save. Admin Organizations tab: User Identity Mapping panel (name/email/username/public_id, admin username edit). 2026-03-14.</div>
         </div>
-        <span class="item-status status-partial">🔶 Partial</span>
+        <span class="item-status status-done">✅ Complete</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">16</div>
         <div class="item-body">
           <div class="item-title">De-identified employer view — no PHI visible to employer</div>
-          <div class="item-note">Employer portal that shows only de-identified usernames, team data, and aggregate scores. PHI (name, email, individual labs) must be hidden. Depends on org structure + username system.</div>
+          <div class="item-note">Server: GET /api/employer/:orgSlug (auth-gated to org admins; returns username, public_id, team, BHAS %, result count — no name/email/raw labs). BHAS computed server-side mirroring evaluateRules.ts. EmployerPage.tsx: PHI notice, org header, per-team summary cards (fire/water/wind/earth), member table sorted by BHAS. Admin orgs tab: "Employer View" link per org. 2026-03-14.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Complete</span>
       </div>
 
       <div class="item todo" data-status="todo">

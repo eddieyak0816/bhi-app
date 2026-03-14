@@ -42,6 +42,12 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Username state (Feature 15)
+  const [username, setUsername] = useState('')
+  const [usernameInput, setUsernameInput] = useState('')
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'saving' | 'saved' | 'error'>('idle')
+  const usernameCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const [healthGoals, setHealthGoals] = useState<HealthGoal[]>([])
   const [resourceTypes, setResourceTypes] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -62,7 +68,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     if (!user?.id) return
     supabase
       .from('profiles')
-      .select('name, age, sex, waist_circumference, waist_unit, grip_strength, is_public, public_id')
+      .select('name, age, sex, waist_circumference, waist_unit, grip_strength, is_public, public_id, username')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
@@ -78,6 +84,8 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
         }))
         setIsPublic(data.is_public ?? false)
         setPublicId(data.public_id ?? null)
+        setUsername(data.username ?? '')
+        setUsernameInput(data.username ?? '')
       })
   }, [user?.id])
 
@@ -100,6 +108,52 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     setSaving(false)
     setSaveMessage(error ? { type: 'error', text: error.message } : { type: 'success', text: 'Profile saved.' })
     setTimeout(() => setSaveMessage(null), 3000)
+  }
+
+  // Username: debounced availability check
+  const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
+  function usernameApiUrl(path: string) {
+    return DEV_BACKEND_URL ? `${DEV_BACKEND_URL.replace(/\/$/, '')}${path}` : path
+  }
+
+  function onUsernameInputChange(val: string) {
+    const clean = val.toLowerCase().replace(/[^a-z0-9_]/g, '')
+    setUsernameInput(clean)
+    if (usernameCheckRef.current) clearTimeout(usernameCheckRef.current)
+    if (!clean) { setUsernameStatus('idle'); return }
+    if (clean === username) { setUsernameStatus('idle'); return }
+    if (clean.length < 3) { setUsernameStatus('invalid'); return }
+    setUsernameStatus('checking')
+    usernameCheckRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(usernameApiUrl(`/api/username/check?username=${encodeURIComponent(clean)}`))
+        const body = await res.json()
+        setUsernameStatus(body.available ? 'available' : 'taken')
+      } catch {
+        setUsernameStatus('error')
+      }
+    }, 400)
+  }
+
+  async function saveUsername() {
+    if (!user?.id || !usernameInput || usernameStatus !== 'available') return
+    setUsernameStatus('saving')
+    try {
+      const res = await fetch(usernameApiUrl('/api/username'), {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json', 'x-user-id': user.id },
+        body: JSON.stringify({ username: usernameInput }),
+      })
+      const body = await res.json()
+      if (res.status === 409) { setUsernameStatus('taken'); return }
+      if (!res.ok) { setUsernameStatus('error'); return }
+      setUsername(body.username)
+      setUsernameInput(body.username)
+      setUsernameStatus('saved')
+      setTimeout(() => setUsernameStatus('idle'), 2000)
+    } catch {
+      setUsernameStatus('error')
+    }
   }
 
   // Load health goals and resource types using direct fetch (more reliable)
@@ -231,6 +285,34 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
         <div>
           <label style={labelStyle}>Email</label>
           <input type="email" value={formData.email} disabled style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed' }} />
+        </div>
+        {/* Username (Feature 15) */}
+        <div>
+          <label style={labelStyle}>Username</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              type="text"
+              value={usernameInput}
+              onChange={e => onUsernameInputChange(e.target.value)}
+              placeholder="your_username"
+              maxLength={30}
+              style={{ ...inputStyle, marginBottom: 0, flex: 1, borderColor: usernameStatus === 'available' ? '#16a34a' : usernameStatus === 'taken' || usernameStatus === 'invalid' ? '#dc2626' : undefined }}
+            />
+            <button
+              onClick={saveUsername}
+              disabled={usernameStatus !== 'available'}
+              style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: 13, cursor: usernameStatus === 'available' ? 'pointer' : 'not-allowed', opacity: usernameStatus === 'available' ? 1 : 0.5, whiteSpace: 'nowrap' }}
+            >{usernameStatus === 'saving' ? 'Saving…' : 'Save Username'}</button>
+          </div>
+          <div style={{ fontSize: 12, marginTop: 4, color: usernameStatus === 'available' || usernameStatus === 'saved' ? '#16a34a' : usernameStatus === 'taken' ? '#dc2626' : usernameStatus === 'invalid' ? '#dc2626' : usernameStatus === 'checking' ? '#6b7280' : '#6b7280' }}>
+            {usernameStatus === 'checking' && 'Checking…'}
+            {usernameStatus === 'available' && 'Available'}
+            {usernameStatus === 'taken' && 'Already taken — choose another'}
+            {usernameStatus === 'invalid' && 'At least 3 characters (letters, numbers, underscores)'}
+            {usernameStatus === 'saved' && 'Username saved'}
+            {usernameStatus === 'error' && 'Error — try again'}
+            {usernameStatus === 'idle' && username && <span style={{ color: '#6b7280' }}>Current: <strong>{username}</strong></span>}
+          </div>
         </div>
         <div>
           <label style={labelStyle}>Age</label>

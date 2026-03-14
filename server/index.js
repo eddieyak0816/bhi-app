@@ -1345,5 +1345,397 @@ ${pdfText}`;
   return res.status(429).json({ error: 'quota-exhausted', message: 'All AI providers are unavailable. Try again later or add a GROQ_API_KEY to .env.server.' });
 });
 
+// ── Feature 16: De-identified Employer View ──────────────────────────────────
+
+// Server-side BHAS scoring (mirrors src/utils/evaluateRules.ts)
+const OPTIMAL_TAGS = new Set([
+  'Adequate_VitD','Normal_Glucose','Desirable_Cholesterol','Good_HDL','Optimal_LDL',
+  'Normal_Triglycerides','Normal_BP_Systolic','Normal_BP_Diastolic','Normal D',
+  'Adequate_B12','Normal_B12','Optimal_Waist_Male','Optimal_Waist_Female','Optimal_Grip',
+]);
+const IMPROVEMENT_TAGS = new Set([
+  'Insufficient_VitD','Prediabetic_Glucose','Borderline_High_Cholesterol','Fair_HDL',
+  'Near_Optimal_LDL','Borderline_High_LDL','Borderline_High_Triglycerides',
+  'Elevated_BP_Systolic','Elevated_BP_Diastolic','Stage1_Hypertension_Systolic',
+  'Stage1_Hypertension_Diastolic','Low_Normal_B12','Borderline_Waist_Male',
+  'Borderline_Waist_Female','Low_Normal_Grip',
+]);
+
+function evalRule(value, rule) {
+  const op = rule.operator || 'between';
+  switch (op) {
+    case 'between': return value >= rule.min_value && value <= rule.max_value;
+    case '<':  return value < rule.min_value;
+    case '>':  return value > rule.max_value;
+    case '=':  return value === rule.min_value;
+    case '<=': return value <= rule.min_value;
+    case '>=': return value >= rule.max_value;
+    default: return false;
+  }
+}
+
+function tagToScore(tag) {
+  if (OPTIMAL_TAGS.has(tag)) return 1;
+  if (IMPROVEMENT_TAGS.has(tag)) return 0.5;
+  return 0;
+}
+
+function computeBhasPct(latestResults, logicRules) {
+  // latestResults: [{ marker_name, value }]
+  // logicRules: [{ marker_name, min_value, max_value, operator, tag_to_apply }]
+  if (!latestResults.length) return null;
+  let total = 0;
+  for (const r of latestResults) {
+    const rules = logicRules.filter(lr => lr.marker_name.toLowerCase() === r.marker_name.toLowerCase());
+    const fired = rules.find(lr => evalRule(r.value, lr));
+    total += fired ? tagToScore(fired.tag_to_apply) : 0;
+  }
+  return Math.round((total / latestResults.length) * 100);
+}
+
+// GET /api/employer/:orgSlug — de-identified member list with BHAS scores
+// Accessible by: org admins (role='admin' in org_memberships) and app admins.
+// PHI guarantee: returns username + public_id only — no name, email, or raw lab values.
+app.get('/api/employer/:orgSlug', async (req, res) => {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(501).json({ error: 'backend-disabled' });
+  const requestingUserId = req.header('x-user-id') || '';
+  if (!requestingUserId) return res.status(401).json({ error: 'unauthenticated' });
+
+  const { orgSlug } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Resolve org
+    const { data: org, error: orgErr } = await sb
+      .from('organizations')
+      .select('id, name, slug')
+      .eq('slug', orgSlug)
+      .maybeSingle();
+    if (orgErr) return res.status(500).json({ error: 'db_error' });
+    if (!org) return res.status(404).json({ error: 'org_not_found' });
+
+    // Auth check: requesting user must be an org admin or app admin
+    const { data: requesterProfile } = await sb
+      .from('profiles')
+      .select('role')
+      .eq('id', requestingUserId)
+      .maybeSingle();
+    const isAppAdmin = requesterProfile?.role === 'admin' || requesterProfile?.role === 'super_admin';
+
+    if (!isAppAdmin) {
+      const { data: membership } = await sb
+        .from('org_memberships')
+        .select('role')
+        .eq('org_id', org.id)
+        .eq('user_id', requestingUserId)
+        .maybeSingle();
+      if (!membership || membership.role !== 'admin') {
+        return res.status(403).json({ error: 'not_org_admin' });
+      }
+    }
+
+    // Fetch members (de-identified)
+    const { data: members, error: mErr } = await sb
+      .from('org_memberships')
+      .select('user_id, role, team, joined_at, profiles(username, public_id)')
+      .eq('org_id', org.id);
+    if (mErr) return res.status(500).json({ error: 'db_error' });
+
+    // Fetch logic rules for BHAS computation
+    const { data: logicRules } = await sb
+      .from('logic_rules')
+      .select('marker_id, min_value, max_value, operator, tag_to_apply, lab_markers(name)')
+      .order('marker_id');
+    const rulesWithNames = (logicRules || []).map(r => ({
+      ...r, marker_name: r.lab_markers?.name || '',
+    }));
+
+    // For each member, fetch their latest result per marker and compute BHAS %
+    const memberIds = (members || []).map(m => m.user_id);
+    let latestByUser = {};
+    if (memberIds.length > 0) {
+      // Get latest lab result per (user_id, marker_id) — subquery via RPC not available,
+      // so fetch all and reduce in JS (service role has full access)
+      const { data: allResults } = await sb
+        .from('user_lab_results')
+        .select('user_id, marker_id, value, recorded_at, lab_markers(name)')
+        .in('user_id', memberIds)
+        .order('recorded_at', { ascending: false });
+
+      // Build map: user_id → marker_id → latest { value, marker_name }
+      for (const row of allResults || []) {
+        if (!latestByUser[row.user_id]) latestByUser[row.user_id] = {};
+        if (!latestByUser[row.user_id][row.marker_id]) {
+          latestByUser[row.user_id][row.marker_id] = {
+            value: row.value,
+            marker_name: row.lab_markers?.name || '',
+          };
+        }
+      }
+    }
+
+    // Build response — no PHI (raw values never included)
+    const result = (members || []).map(m => {
+      const userLatest = Object.values(latestByUser[m.user_id] || {});
+      const bhasPct = computeBhasPct(userLatest, rulesWithNames);
+      return {
+        username: m.profiles?.username || null,
+        public_id: m.profiles?.public_id || null,
+        role: m.role,
+        team: m.team,
+        joined_at: m.joined_at,
+        bhas_pct: bhasPct,          // null = no results yet
+        result_count: userLatest.length,
+      };
+    });
+
+    return res.status(200).json({ org: { name: org.name, slug: org.slug }, members: result });
+  } catch (err) {
+    console.error('GET /api/employer/:orgSlug error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── Feature 15: Username System ──────────────────────────────────────────────
+
+// GET /api/username/check?username=foo — public availability check (used by ProfilePage)
+app.get('/api/username/check', async (req, res) => {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(501).json({ error: 'backend-disabled' });
+  const { username } = req.query;
+  if (!username || typeof username !== 'string') return res.status(400).json({ error: 'missing-username' });
+  const clean = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (clean.length < 3) return res.status(400).json({ error: 'too-short', message: 'Username must be at least 3 characters' });
+  if (clean.length > 30) return res.status(400).json({ error: 'too-long', message: 'Username must be 30 characters or fewer' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data } = await sb.from('profiles').select('id').eq('username', clean).maybeSingle();
+    return res.status(200).json({ available: !data, username: clean });
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// PATCH /api/username — user sets their own username (x-user-id header = auth.users UUID)
+app.patch('/api/username', async (req, res) => {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(501).json({ error: 'backend-disabled' });
+  const userId = req.header('x-user-id') || '';
+  if (!userId) return res.status(400).json({ error: 'missing-user-id' });
+  const { username } = req.body || {};
+  if (!username) return res.status(400).json({ error: 'missing-username' });
+  const clean = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (clean.length < 3) return res.status(400).json({ error: 'too-short' });
+  if (clean.length > 30) return res.status(400).json({ error: 'too-long' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('profiles').update({ username: clean }).eq('id', userId);
+    if (error) {
+      if (error.code === '23505') return res.status(409).json({ error: 'taken', message: 'Username already taken' });
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(200).json({ username: clean });
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// GET /api/admin/users — admin-only: full identity mapping (name, email, username, public_id, role)
+// PHI WARNING: intentionally privileged — must NEVER be used in employer-facing views.
+app.get('/api/admin/users', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('profiles')
+      .select('id, name, email, username, public_id, role, created_at')
+      .order('created_at');
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    return res.status(200).json(data || []);
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// PATCH /api/admin/users/:id/username — admin override any user's username
+app.patch('/api/admin/users/:id/username', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  const { username } = req.body || {};
+  if (!username) return res.status(400).json({ error: 'missing-username' });
+  const clean = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (clean.length < 3) return res.status(400).json({ error: 'too-short' });
+  if (clean.length > 30) return res.status(400).json({ error: 'too-long' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('profiles').update({ username: clean }).eq('id', id);
+    if (error) {
+      if (error.code === '23505') return res.status(409).json({ error: 'taken' });
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(200).json({ username: clean });
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── Feature 14: Corporate Org Structure ──────────────────────────────────────
+
+function requireAdmin(req, res) {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) {
+    res.status(501).json({ error: 'backend-disabled' });
+    return false;
+  }
+  const key = req.header('x-backend-api-key') || '';
+  if (!key || key !== BACKEND_API_KEY) {
+    res.status(403).json({ error: 'forbidden' });
+    return false;
+  }
+  return true;
+}
+
+// GET /api/admin/organizations — list all orgs with member counts
+app.get('/api/admin/organizations', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data: orgs, error } = await sb
+      .from('organizations')
+      .select('id, name, slug, created_at')
+      .order('name');
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+
+    // Fetch member counts separately
+    const { data: counts, error: cErr } = await sb
+      .from('org_memberships')
+      .select('org_id')
+      .in('org_id', (orgs || []).map(o => o.id));
+    if (cErr) return res.status(500).json({ error: 'db_error', detail: cErr });
+
+    const countMap = {};
+    for (const row of counts || []) {
+      countMap[row.org_id] = (countMap[row.org_id] || 0) + 1;
+    }
+    const result = (orgs || []).map(o => ({ ...o, member_count: countMap[o.id] || 0 }));
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error('GET /api/admin/organizations error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/organizations — create org
+app.post('/api/admin/organizations', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { name, slug } = req.body || {};
+  if (!name || !slug) return res.status(400).json({ error: 'missing-params', required: ['name', 'slug'] });
+  const slugClean = slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('organizations')
+      .insert({ name, slug: slugClean })
+      .select()
+      .single();
+    if (error) {
+      if (error.code === '23505') return res.status(409).json({ error: 'slug_conflict', message: 'Slug already in use' });
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(201).json(data);
+  } catch (err) {
+    console.error('POST /api/admin/organizations error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// GET /api/admin/organizations/:id/members — list members (de-identified: username/public_id, role, team, joined_at; no email/name/lab values)
+app.get('/api/admin/organizations/:id/members', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('org_memberships')
+      .select('id, user_id, role, team, joined_at, profiles(username, public_id)')
+      .eq('org_id', id)
+      .order('joined_at');
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    // PHI rule: strip anything that could identify the user beyond username/public_id
+    const safe = (data || []).map(m => ({
+      id: m.id,
+      user_id: m.user_id,
+      role: m.role,
+      team: m.team,
+      joined_at: m.joined_at,
+      username: m.profiles?.username || null,
+      public_id: m.profiles?.public_id || null,
+    }));
+    return res.status(200).json(safe);
+  } catch (err) {
+    console.error('GET /api/admin/organizations/:id/members error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/organizations/:id/members — add user to org
+app.post('/api/admin/organizations/:id/members', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  const { user_id, role = 'member', team } = req.body || {};
+  if (!user_id) return res.status(400).json({ error: 'missing-params', required: ['user_id'] });
+  const validRoles = ['member', 'admin'];
+  const validTeams = ['fire', 'water', 'wind', 'earth', null, undefined];
+  if (!validRoles.includes(role)) return res.status(400).json({ error: 'invalid-role' });
+  if (!validTeams.includes(team)) return res.status(400).json({ error: 'invalid-team' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('org_memberships')
+      .insert({ org_id: id, user_id, role, team: team || null })
+      .select()
+      .single();
+    if (error) {
+      if (error.code === '23505') return res.status(409).json({ error: 'already_member' });
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(201).json(data);
+  } catch (err) {
+    console.error('POST /api/admin/organizations/:id/members error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/organizations/:id/members/:userId — remove user from org
+app.delete('/api/admin/organizations/:id/members/:userId', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id, userId } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb
+      .from('org_memberships')
+      .delete()
+      .eq('org_id', id)
+      .eq('user_id', userId);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/organizations/:id/members/:userId error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/organizations/:id — delete org (cascades memberships)
+app.delete('/api/admin/organizations/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('organizations').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/organizations/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));
