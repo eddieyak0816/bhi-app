@@ -1002,6 +1002,84 @@ app.post('/api/admin/logic-rules/delete-by-attrs', async (req, res) => {
   }
 });
 
+// ── New Marker Wizard ─────────────────────────────────────────────────────────
+// POST /api/admin/new-marker-wizard
+// Atomically creates: 1 lab marker + N logic rules + N tags in one request.
+// Body: { name, unit, rules: [{ label, min_value, max_value, tag_name }] }
+// Rules with empty min/max or tag are skipped. At least one rule required.
+app.post('/api/admin/new-marker-wizard', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+
+  const { name, unit, rules } = req.body || {};
+  if (!name || typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: 'missing-name' });
+  if (!Array.isArray(rules) || rules.length === 0) return res.status(400).json({ error: 'missing-rules' });
+
+  const validRules = rules.filter(r =>
+    r && r.tag_name && r.tag_name.trim() &&
+    typeof r.min_value !== 'undefined' && r.min_value !== '' &&
+    typeof r.max_value !== 'undefined' && r.max_value !== ''
+  );
+  if (validRules.length === 0) return res.status(400).json({ error: 'no-valid-rules', message: 'At least one rule with min, max, and tag is required.' });
+
+  const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+  const markerName = name.trim();
+  const markerUnit = (unit || '').trim() || null;
+  let markerId;
+  let createdMarker;
+
+  try {
+    // 1. Create marker (duplicate name → 409)
+    const { data: mData, error: mErr } = await sb.from('lab_markers')
+      .insert([{ id: uuidv4(), name: markerName, unit: markerUnit }])
+      .select('*');
+    if (mErr) {
+      if (mErr.code === '23505') return res.status(409).json({ error: 'duplicate-marker', message: `A marker named "${markerName}" already exists.` });
+      console.error('wizard-marker-insert-error', mErr);
+      return res.status(500).json({ error: 'db_error', detail: mErr });
+    }
+    createdMarker = Array.isArray(mData) ? mData[0] : mData;
+    markerId = createdMarker.id;
+
+    // 2. Create tags (skip duplicates silently)
+    const tagNames = [...new Set(validRules.map(r => r.tag_name.trim()))];
+    for (const tagName of tagNames) {
+      const { error: tErr } = await sb.from('tags').insert([{ name: tagName }]);
+      if (tErr && tErr.code !== '23505') console.warn('wizard-tag-insert-warn', tagName, tErr);
+    }
+
+    // 3. Create logic rules
+    const rulePayloads = validRules.map(r => ({
+      marker_id: markerId,
+      min_value: Number(r.min_value),
+      max_value: Number(r.max_value),
+      tag_to_apply: r.tag_name.trim(),
+      operator: 'between'
+    }));
+    const { data: rulesData, error: rulesErr } = await sb.from('logic_rules')
+      .insert(rulePayloads)
+      .select('id,marker_id,min_value,max_value,tag_to_apply');
+    if (rulesErr) {
+      console.error('wizard-rules-insert-error', rulesErr);
+      // Roll back marker
+      await sb.from('lab_markers').delete().eq('id', markerId);
+      return res.status(500).json({ error: 'db_error', detail: rulesErr });
+    }
+
+    // 4. Audit log
+    try {
+      await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'new_marker_wizard', p_target_table: 'lab_markers', p_target_id: markerId, p_details: { marker: createdMarker, rules: rulesData } });
+    } catch (auditErr) { console.warn('wizard-audit-exception', auditErr); }
+
+    console.info('new-marker-wizard: created marker', markerId, 'with', rulesData.length, 'rules');
+    return res.status(200).json({ marker: createdMarker, rules: rulesData, tags: tagNames });
+  } catch (err) {
+    console.error('new-marker-wizard-exception', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // ── PDF Lab Extraction ───────────────────────────────────────────────────────
 // POST /api/extract-labs
 // Extracts text from the PDF with pdf-parse, then tries providers in order:

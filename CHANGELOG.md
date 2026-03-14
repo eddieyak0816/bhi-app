@@ -80,9 +80,25 @@
 - `.env.server` `SUPABASE_SERVICE_ROLE` corrected to the actual JWT (was accidentally set to `BACKEND_API_KEY` value).
 - `pdf-parse` replaced with v1.1.1 (the initially installed version had an incompatible API).
 
-**Planned additions to Feature 11 (next)**
-- PDF duplicate detection: SHA-256 hash + accession number + collection date extracted by AI. New `lab_pdf_uploads` table stores these per user. Warns on re-upload before the review table is shown.
-- New Marker Wizard in Admin: guided 3-step flow to create a marker + logic rules + tags in one transaction (eliminates the current fragmented 3-tab workflow).
+**PDF Duplicate Detection (Feature 11a — Complete)**
+- Migration `db/migrations/20260313_create_lab_pdf_uploads.sql`: new `lab_pdf_uploads` table (user_id, file_hash, accession_num, collection_date, filename, uploaded_at) with RLS and indexes on (user_id, file_hash) and (user_id, accession_num).
+- Server computes SHA-256 hash of the PDF bytes on every upload. Hash-match duplicates (exact file re-upload) are detected before AI extraction and flagged in the response.
+- AI prompt updated to extract `accession_num` and `collection_date` alongside lab values. Accession-number duplicates (same lab report, different file/scan) are detected after extraction.
+- Both duplicate types return full extracted results so the user can still save if intentional.
+- Frontend shows an amber warning banner above the review table: "Possible duplicate: [detail]. You can still save the results below if this is intentional."
+- `x-user-id` header added to the upload request so the server can scope duplicate checks per user.
+
+**New Marker Wizard (Feature 11b — Complete)**
+- Admin: "+ New Marker Wizard" button on the Lab Markers tab opens a 3-step guided modal.
+- Step 1: Enter marker name (duplicate-checked) and optional unit.
+- Step 2: Define up to 3 scoring rules (Optimal / Improvement / Out of Range) — min value, max value, tag name. Tag names are auto-suggested from the marker name and fully editable. At least the Optimal row is required.
+- Step 3: Review summary (marker, rules, tags) and single "Create All" button saves everything atomically.
+- Server: new `POST /api/admin/new-marker-wizard` endpoint creates marker → tags → logic rules in one request with rollback on rule-insert failure. Returns `{ marker, rules, tags }`.
+- On success the modal closes and the Lab Markers list refreshes automatically.
+- Developer note displayed in Step 3: after wizard completion, add the Optimal tag to `OPTIMAL_TAGS` and Improvement tag to `IMPROVEMENT_TAGS` in `src/utils/evaluateRules.ts` for BHAS scoring (requires code change + redeploy).
+
+**Planned — Next**
+- Feature 12: Provider verification workflow (NPI, credential, signature, date).
 
 ## 2026-02-07 — dev
 

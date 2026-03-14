@@ -124,6 +124,69 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [devKeyOverride, setDevKeyOverride] = useState<string | null>(null)
   function effectiveDevKey() { return devKeyOverride || DEV_BACKEND_KEY }
 
+  // New Marker Wizard state
+  const [wizardOpen, setWizardOpen] = useState(false)
+  const [wizardStep, setWizardStep] = useState(1)
+  const [wizardMarkerName, setWizardMarkerName] = useState('')
+  const [wizardMarkerUnit, setWizardMarkerUnit] = useState('')
+  const [wizardRules, setWizardRules] = useState([
+    { label: 'Optimal', min_value: '', max_value: '', tag_name: '' },
+    { label: 'Improvement', min_value: '', max_value: '', tag_name: '' },
+    { label: 'Out of Range', min_value: '', max_value: '', tag_name: '' }
+  ])
+  const [wizardSaving, setWizardSaving] = useState(false)
+  const [wizardError, setWizardError] = useState<string | null>(null)
+
+  function openWizard() {
+    setWizardStep(1)
+    setWizardMarkerName('')
+    setWizardMarkerUnit('')
+    setWizardRules([
+      { label: 'Optimal', min_value: '', max_value: '', tag_name: '' },
+      { label: 'Improvement', min_value: '', max_value: '', tag_name: '' },
+      { label: 'Out of Range', min_value: '', max_value: '', tag_name: '' }
+    ])
+    setWizardError(null)
+    setWizardOpen(true)
+  }
+
+  function autoSuggestTags(markerName: string) {
+    const base = markerName.trim().replace(/\s+/g, '_')
+    if (!base) return
+    setWizardRules(prev => prev.map((r, i) => {
+      if (r.tag_name) return r // don't overwrite user edits
+      const prefix = i === 0 ? 'Normal' : i === 1 ? 'Borderline' : 'High'
+      return { ...r, tag_name: `${prefix}_${base}` }
+    }))
+  }
+
+  function updateWizardRule(index: number, field: string, value: string) {
+    setWizardRules(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r))
+  }
+
+  async function wizardSave() {
+    setWizardSaving(true)
+    setWizardError(null)
+    try {
+      const res = await fetch(apiUrl('/api/admin/new-marker-wizard'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ name: wizardMarkerName.trim(), unit: wizardMarkerUnit.trim(), rules: wizardRules })
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setWizardError(body.message || body.error || 'Save failed')
+        return
+      }
+      setWizardOpen(false)
+      await load()
+    } catch (err: any) {
+      setWizardError(err.message || 'Save failed')
+    } finally {
+      setWizardSaving(false)
+    }
+  }
+
   // Modal state for tag/category selection with search
   const [tagSearchModalOpen, setTagSearchModalOpen] = useState(false)
   const [tagSearchInput, setTagSearchInput] = useState('')
@@ -2259,9 +2322,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <div>
           {loading ? <div>Loading…</div> : (
             <div>
-              {/* Marker creation form */}
+              {/* New Marker Wizard launch button */}
+              <div style={{marginBottom:12,display:'flex',gap:10,alignItems:'center'}}>
+                <button className="btn-primary" onClick={openWizard} style={{background:'#3D7DCA',color:'#fff',border:'none',borderRadius:6,padding:'8px 18px',fontWeight:600,fontSize:14,cursor:'pointer'}}>+ New Marker Wizard</button>
+                <span style={{color:theme.textMuted,fontSize:13}}>Guided setup: creates a marker, scoring rules, and tags in one step.</span>
+              </div>
+
+              {/* Marker creation form (quick add, no rules) */}
               <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Lab Marker</h3>
+                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Quick Add Marker (no rules)</h3>
                 <div style={{display:'flex',gap:12,alignItems:'center'}}>
                   <input placeholder="Marker name" value={markerName} onChange={e => setMarkerName(e.target.value)} style={{flex:1,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}} />
                   <input placeholder="Unit (optional)" value={markerUnit} onChange={e => setMarkerUnit(e.target.value)} style={{width:120,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
@@ -3207,6 +3276,164 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
               <button onClick={() => { setMarkerModalOpen(false); setMarkerModalOriginalId(null) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ── New Marker Wizard Modal ── */}
+      {wizardOpen && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:10,padding:28,width:560,maxWidth:'95vw',maxHeight:'90vh',overflowY:'auto',position:'relative'}}>
+            <button onClick={() => setWizardOpen(false)} style={{position:'absolute',top:12,right:16,background:'transparent',border:'none',fontSize:20,cursor:'pointer',color:theme.textMuted}}>×</button>
+
+            {/* Step indicator */}
+            <div style={{display:'flex',gap:0,marginBottom:24}}>
+              {[1,2,3].map(n => (
+                <div key={n} style={{flex:1,textAlign:'center',paddingBottom:8,borderBottom:`3px solid ${wizardStep === n ? '#3D7DCA' : wizardStep > n ? '#16a34a' : theme.borderColor}`,fontSize:13,fontWeight:600,color:wizardStep === n ? '#3D7DCA' : wizardStep > n ? '#16a34a' : theme.textMuted}}>
+                  {n === 1 ? 'Step 1 — Create Marker' : n === 2 ? 'Step 2 — Scoring Rules' : 'Step 3 — Review & Save'}
+                </div>
+              ))}
+            </div>
+
+            {/* Step 1 */}
+            {wizardStep === 1 && (
+              <div>
+                <p style={{marginTop:0,marginBottom:16,fontSize:14,color:theme.textMuted}}>Enter a name and optional unit for the new lab marker.</p>
+                <div style={{marginBottom:14}}>
+                  <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Marker Name *</label>
+                  <input
+                    autoFocus
+                    placeholder="e.g. Blood Glucose"
+                    value={wizardMarkerName}
+                    onChange={e => setWizardMarkerName(e.target.value)}
+                    style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}
+                  />
+                </div>
+                <div style={{marginBottom:20}}>
+                  <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Unit (optional)</label>
+                  <input
+                    placeholder="e.g. mg/dL"
+                    value={wizardMarkerUnit}
+                    onChange={e => setWizardMarkerUnit(e.target.value)}
+                    style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}
+                  />
+                </div>
+                {wizardError && <p style={{color:'#dc2626',fontSize:13,marginBottom:12}}>{wizardError}</p>}
+                <div style={{display:'flex',justifyContent:'flex-end'}}>
+                  <button
+                    disabled={!wizardMarkerName.trim()}
+                    onClick={() => {
+                      if (!wizardMarkerName.trim()) return
+                      setWizardError(null)
+                      autoSuggestTags(wizardMarkerName)
+                      setWizardStep(2)
+                    }}
+                    style={{background:'#3D7DCA',color:'#fff',border:'none',borderRadius:6,padding:'8px 20px',fontWeight:600,fontSize:14,cursor:'pointer',opacity:!wizardMarkerName.trim()?0.5:1}}
+                  >Next →</button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2 */}
+            {wizardStep === 2 && (
+              <div>
+                <p style={{marginTop:0,marginBottom:4,fontSize:14,color:theme.textMuted}}>Define scoring rules for <strong style={{color:theme.text}}>{wizardMarkerName}</strong>. At least the Optimal row is required.</p>
+                <p style={{marginTop:0,marginBottom:16,fontSize:12,color:theme.textMuted}}>Rows with empty Min, Max, or Tag will be skipped.</p>
+                <div style={{marginBottom:16}}>
+                  <div style={{display:'grid',gridTemplateColumns:'100px 1fr 1fr 1fr',gap:8,marginBottom:6}}>
+                    <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Label</div>
+                    <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Min Value</div>
+                    <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Max Value</div>
+                    <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Tag Name</div>
+                  </div>
+                  {wizardRules.map((rule, i) => (
+                    <div key={i} style={{display:'grid',gridTemplateColumns:'100px 1fr 1fr 1fr',gap:8,marginBottom:8,alignItems:'center'}}>
+                      <div style={{fontSize:13,fontWeight:600,color:i === 0 ? '#16a34a' : i === 1 ? '#ca8a04' : '#dc2626'}}>{rule.label}</div>
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        value={rule.min_value}
+                        onChange={e => updateWizardRule(i, 'min_value', e.target.value)}
+                        style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        value={rule.max_value}
+                        onChange={e => updateWizardRule(i, 'max_value', e.target.value)}
+                        style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
+                      />
+                      <input
+                        placeholder="Tag name"
+                        value={rule.tag_name}
+                        onChange={e => updateWizardRule(i, 'tag_name', e.target.value)}
+                        style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
+                      />
+                    </div>
+                  ))}
+                </div>
+                {wizardError && <p style={{color:'#dc2626',fontSize:13,marginBottom:12}}>{wizardError}</p>}
+                <div style={{display:'flex',justifyContent:'space-between'}}>
+                  <button onClick={() => setWizardStep(1)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'8px 16px',fontSize:14,cursor:'pointer',color:theme.text}}>← Back</button>
+                  <button
+                    onClick={() => {
+                      const valid = wizardRules.filter(r => r.tag_name.trim() && r.min_value !== '' && r.max_value !== '')
+                      if (valid.length === 0) { setWizardError('Fill in at least the Optimal row (Min, Max, and Tag).'); return }
+                      if (!wizardRules[0].tag_name.trim() || wizardRules[0].min_value === '' || wizardRules[0].max_value === '') {
+                        setWizardError('The Optimal row is required.')
+                        return
+                      }
+                      setWizardError(null)
+                      setWizardStep(3)
+                    }}
+                    style={{background:'#3D7DCA',color:'#fff',border:'none',borderRadius:6,padding:'8px 20px',fontWeight:600,fontSize:14,cursor:'pointer'}}
+                  >Next →</button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3 */}
+            {wizardStep === 3 && (
+              <div>
+                <p style={{marginTop:0,marginBottom:16,fontSize:14,color:theme.textMuted}}>Review what will be created, then click <strong>Create All</strong>.</p>
+                <div style={{background:theme.bgSecondary,borderRadius:8,padding:16,marginBottom:16,border:`1px solid ${theme.borderColor}`}}>
+                  <div style={{marginBottom:10}}>
+                    <span style={{fontSize:12,fontWeight:700,color:theme.textMuted,textTransform:'uppercase'}}>Marker</span>
+                    <div style={{marginTop:4,fontSize:14,color:theme.text}}>
+                      <strong>{wizardMarkerName}</strong>{wizardMarkerUnit ? <span style={{color:theme.textMuted}}> ({wizardMarkerUnit})</span> : null}
+                    </div>
+                  </div>
+                  <div style={{marginBottom:10}}>
+                    <span style={{fontSize:12,fontWeight:700,color:theme.textMuted,textTransform:'uppercase'}}>Scoring Rules</span>
+                    {wizardRules.filter(r => r.tag_name.trim() && r.min_value !== '' && r.max_value !== '').map((r, i) => (
+                      <div key={i} style={{marginTop:4,fontSize:13,color:theme.text}}>
+                        <span style={{fontWeight:600,color:i === 0 ? '#16a34a' : i === 1 ? '#ca8a04' : '#dc2626'}}>{r.label}:</span>{' '}
+                        {r.min_value} – {r.max_value} → <code style={{background:theme.bgTertiary,padding:'1px 4px',borderRadius:3,fontSize:12}}>{r.tag_name}</code>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <span style={{fontSize:12,fontWeight:700,color:theme.textMuted,textTransform:'uppercase'}}>Tags to Create</span>
+                    <div style={{marginTop:4,display:'flex',flexWrap:'wrap',gap:6}}>
+                      {[...new Set(wizardRules.filter(r => r.tag_name.trim()).map(r => r.tag_name.trim()))].map(t => (
+                        <span key={t} style={{background:'#dbeafe',color:'#1d4ed8',borderRadius:4,padding:'2px 8px',fontSize:12,fontWeight:500}}>{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div style={{background:'#fef9c3',border:'1px solid #fde047',borderRadius:6,padding:10,marginBottom:16,fontSize:12,color:'#713f12'}}>
+                  <strong>Developer note:</strong> For BHAS scoring, add the Optimal tag to <code>OPTIMAL_TAGS</code> and the Improvement tag to <code>IMPROVEMENT_TAGS</code> in <code>src/utils/evaluateRules.ts</code> — this requires a code change and redeploy.
+                </div>
+                {wizardError && <p style={{color:'#dc2626',fontSize:13,marginBottom:12}}>{wizardError}</p>}
+                <div style={{display:'flex',justifyContent:'space-between'}}>
+                  <button onClick={() => setWizardStep(2)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'8px 16px',fontSize:14,cursor:'pointer',color:theme.text}}>← Back</button>
+                  <button
+                    disabled={wizardSaving}
+                    onClick={wizardSave}
+                    style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:6,padding:'8px 24px',fontWeight:700,fontSize:14,cursor:'pointer',opacity:wizardSaving?0.6:1}}
+                  >{wizardSaving ? 'Creating…' : 'Create All'}</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

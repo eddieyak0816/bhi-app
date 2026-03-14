@@ -185,14 +185,14 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-13 (Feature 11 complete — AI PDF lab extraction live; duplicate detection + New Marker Wizard planned) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-13 (Features 11, 11a, 11b complete — AI PDF extraction, duplicate detection, New Marker Wizard) · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar (counts kept in sync manually or via Ctrl+F) -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">13</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">14</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">7</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">12</span>  Not Built</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">11</span>  Not Built</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">32</span>  Total Items</div>
 </div>
 
@@ -341,7 +341,7 @@
         <div class="phase-title">Data Verification &amp; Integrity</div>
         <div class="phase-desc">AI PDF extraction, provider NPI verification, and direct lab API integrations</div>
       </div>
-      <div class="phase-progress">1 / 5 done — 2 planned</div>
+      <div class="phase-progress">2 / 5 done — 1 planned</div>
     </div>
     <div class="items">
 
@@ -354,22 +354,22 @@
         <span class="item-status status-done">✅ Built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">11a</div>
         <div class="item-body">
           <div class="item-title">PDF duplicate detection — hash + accession number + collection date</div>
-          <div class="item-note">AI extracts accession number and collection date alongside lab values. Server computes SHA-256 hash of the file. New <code>lab_pdf_uploads</code> table stores hash, accession number, collection date, user ID, and upload timestamp. On upload: checks for matching hash (exact file re-upload) OR matching accession number (same lab, rescanned). If duplicate found, warns user with original upload date before showing the review table.</div>
+          <div class="item-note">SHA-256 hash checked before extraction (exact file re-upload). Accession number + collection date extracted by AI and checked after extraction (same lab report, different scan). Both checks scope to the current user. <code>lab_pdf_uploads</code> table stores hash, accession_num, collection_date, filename, uploaded_at with RLS. Amber warning banner shown above review table; user can still save results if intentional. Migration: 20260313_create_lab_pdf_uploads.sql.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">11b</div>
         <div class="item-body">
           <div class="item-title">New Marker Wizard in Admin — guided marker + logic rules creation</div>
-          <div class="item-note">Guided 3-step flow in the Admin panel: (1) create marker (name, unit), (2) define logic rules (optimal range, improvement range, out-of-range) with auto-suggested tag names, (3) confirm and save marker + rules + tags in one transaction. Eliminates current fragmented workflow where admins must manually navigate between Lab Markers, Criteria, and Tags tabs and know their relationships.</div>
+          <div class="item-note">3-step guided modal on the Lab Markers tab. Step 1: name + unit (duplicate-checked). Step 2: up to 3 scoring rule rows (Optimal / Improvement / Out of Range) with auto-suggested tag names. Step 3: review summary + single "Create All" button. Server: POST /api/admin/new-marker-wizard creates marker → tags → logic rules atomically. Developer note shown in Step 3 to manually add tags to OPTIMAL_TAGS / IMPROVEMENT_TAGS in evaluateRules.ts for BHAS scoring.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built</span>
       </div>
 
       <div class="item todo" data-status="todo">
