@@ -59,7 +59,7 @@
 - `AuthContext.tsx`: on signup, updates the trigger-created profile row with a system-generated `public_id`.
 - `ProfilePage.tsx`, `ConsentPage.tsx`, `PublicProfilePage.tsx`: all display the public token. Real name is never shown publicly. "Change ID" feature shows a "Coming soon — requires signed HIPAA authorization" placeholder.
 
-## 2026-03-13 — dev
+## 2026-03-13 / 2026-03-14 — dev
 
 ### Phase 3: AI PDF Lab Upload & Extraction (Feature 11 — Complete)
 

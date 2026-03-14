@@ -132,7 +132,6 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
 
     if (error) {
       console.error('Error saving lab result:', error)
-      alert('Save failed: ' + (error.message || error.code || JSON.stringify(error)))
       return
     }
 
