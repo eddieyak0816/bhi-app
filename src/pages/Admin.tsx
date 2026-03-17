@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { supabase, directFetch } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
@@ -36,6 +37,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit' | 'organizations'>('resources')
   // Use global theme context
   const { darkMode, theme: globalTheme } = useTheme()
+  const { isSuperAdmin } = useAuth()
   // View mode per tab (card or table)
   const [viewMode, setViewMode] = useState<Record<string, 'card' | 'table'>>({
     resources: 'card',
@@ -152,8 +154,16 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [orgAddSaving, setOrgAddSaving] = useState(false)
   const [assigningTeams, setAssigningTeams] = useState<Record<string, boolean>>({})
   const [assignTeamsMsg, setAssignTeamsMsg] = useState<Record<string, string | null>>({})
+  const [allPublicIds, setAllPublicIds] = useState<string[]>([])
+  const [publicIdsLoaded, setPublicIdsLoaded] = useState(false)
+  const [orgTeams, setOrgTeams] = useState<Record<string, Array<{id: string; name: string}>>>({})
+  const [orgTeamInput, setOrgTeamInput] = useState<Record<string, string>>({})
+  const [orgTeamEditId, setOrgTeamEditId] = useState<string | null>(null)
+  const [orgTeamEditVal, setOrgTeamEditVal] = useState('')
+  const [orgTeamError, setOrgTeamError] = useState<Record<string, string | null>>({})
 
   // User identity mapping state (Feature 15)
+  const [showIdentityPanel, setShowIdentityPanel] = useState<boolean>(() => localStorage.getItem('bhi_show_identity_panel') === 'true')
   const [allUsers, setAllUsers] = useState<Array<{id: string; name: string; email: string; username: string|null; public_id: string|null; role: string; created_at: string}>>([])
   const [usersLoaded, setUsersLoaded] = useState(false)
   const [usersLoading, setUsersLoading] = useState(false)
@@ -499,9 +509,81 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     try {
       const res = await fetch(apiUrl(`/api/admin/organizations/${orgId}/members`), { headers: authHeaders() })
       const body = await res.json()
-      setOrgMembers(prev => ({ ...prev, [orgId]: body || [] }))
+      setOrgMembers(prev => ({ ...prev, [orgId]: Array.isArray(body) ? body : [] }))
     } catch (err) {
       console.error('loadOrgMembers', err)
+    }
+  }
+
+  async function loadOrgTeams(orgId: string) {
+    try {
+      const res = await fetch(apiUrl(`/api/admin/organizations/${orgId}/teams`), { headers: authHeaders() })
+      const body = await res.json()
+      setOrgTeams(prev => ({ ...prev, [orgId]: Array.isArray(body) ? body : [] }))
+    } catch (err) {
+      console.error('loadOrgTeams', err)
+    }
+  }
+
+  async function addOrgTeam(orgId: string) {
+    const name = (orgTeamInput[orgId] || '').trim()
+    if (!name) return
+    try {
+      const res = await fetch(apiUrl(`/api/admin/organizations/${orgId}/teams`), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ name })
+      })
+      if (res.status === 409) { setOrgTeamError(prev => ({ ...prev, [orgId]: 'Team name already exists.' })); return }
+      if (!res.ok) { setOrgTeamError(prev => ({ ...prev, [orgId]: 'Error adding team.' })); return }
+      setOrgTeamInput(prev => ({ ...prev, [orgId]: '' }))
+      setOrgTeamError(prev => ({ ...prev, [orgId]: null }))
+      await loadOrgTeams(orgId)
+    } catch {
+      setOrgTeamError(prev => ({ ...prev, [orgId]: 'Network error.' }))
+    }
+  }
+
+  async function saveOrgTeamEdit(orgId: string, teamId: string) {
+    const name = orgTeamEditVal.trim()
+    if (!name) return
+    try {
+      const res = await fetch(apiUrl(`/api/admin/organizations/${orgId}/teams/${teamId}`), {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ name })
+      })
+      if (res.status === 409) { setOrgTeamError(prev => ({ ...prev, [orgId]: 'Team name already exists.' })); return }
+      if (!res.ok) { setOrgTeamError(prev => ({ ...prev, [orgId]: 'Error renaming team.' })); return }
+      setOrgTeamEditId(null)
+      setOrgTeamError(prev => ({ ...prev, [orgId]: null }))
+      await loadOrgTeams(orgId)
+    } catch {
+      setOrgTeamError(prev => ({ ...prev, [orgId]: 'Network error.' }))
+    }
+  }
+
+  async function deleteOrgTeam(orgId: string, teamId: string) {
+    if (!confirm('Delete this team? Members assigned to it will become unassigned.')) return
+    try {
+      await fetch(apiUrl(`/api/admin/organizations/${orgId}/teams/${teamId}`), {
+        method: 'DELETE', headers: authHeaders()
+      })
+      await loadOrgTeams(orgId)
+    } catch (err) {
+      console.error('deleteOrgTeam', err)
+    }
+  }
+
+  async function loadAllPublicIds() {
+    if (publicIdsLoaded) return
+    try {
+      const res = await fetch(apiUrl('/api/admin/public-ids'), { headers: authHeaders() })
+      const body = await res.json()
+      setAllPublicIds(Array.isArray(body) ? body : [])
+      setPublicIdsLoaded(true)
+    } catch (err) {
+      console.error('loadAllPublicIds', err)
     }
   }
 
@@ -537,14 +619,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   }
 
   async function addOrgMember(orgId: string) {
-    if (!orgAddUserId.trim()) { setOrgAddError('User ID is required.'); return }
+    if (!orgAddUserId.trim()) { setOrgAddError('Public ID is required.'); return }
     setOrgAddSaving(true); setOrgAddError(null)
     try {
       const res = await fetch(apiUrl(`/api/admin/organizations/${orgId}/members`), {
         method: 'POST',
         headers: { 'content-type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ user_id: orgAddUserId.trim(), role: orgAddRole, team: orgAddTeam || null })
+        body: JSON.stringify({ public_id: orgAddUserId.trim(), role: orgAddRole, team: orgAddTeam || null })
       })
+      if (res.status === 404) { setOrgAddError('No user found with that Public ID.'); return }
       if (res.status === 409) { setOrgAddError('User is already a member.'); return }
       if (!res.ok) { setOrgAddError('Server error adding member.'); return }
       setOrgAddUserId(''); setOrgAddRole('member'); setOrgAddTeam('')
@@ -3625,12 +3708,31 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             <strong>PHI rule:</strong> Employer-facing views must never expose real names, emails, or raw lab values — only de-identified usernames, public IDs, and aggregate scores.
           </div>
 
-          {/* User Identity Mapping (Feature 15) — admin-only, PHI-bearing */}
-          <div style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,marginBottom:20}}>
+          {/* User Identity Mapping (Feature 15) — admin-only, PHI-bearing, hidden by default */}
+          <div style={{marginBottom:20}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom: showIdentityPanel ? 10 : 0}}>
+              <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:12,color:theme.textMuted,userSelect:'none'}}>
+                <input
+                  type="checkbox"
+                  checked={showIdentityPanel}
+                  onChange={e => {
+                    const val = e.target.checked
+                    setShowIdentityPanel(val)
+                    localStorage.setItem('bhi_show_identity_panel', String(val))
+                    if (!val) { setUsersLoaded(false) }
+                  }}
+                  style={{cursor:'pointer'}}
+                />
+                Show User Identity Mapping (PHI — demo/admin use only)
+              </label>
+            </div>
+
+            {showIdentityPanel && (
+            <div style={{background:theme.bgSecondary,border:`1px solid #f59e0b`,borderRadius:8,padding:16}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
               <div>
                 <h4 style={{margin:0,fontSize:14,fontWeight:600,color:theme.text}}>User Identity Mapping</h4>
-                <p style={{margin:'4px 0 0 0',fontSize:12,color:theme.textMuted}}>Admin-only view: real name + email ↔ username + public ID. Use this to look up who to add to an org. Never share this view with employers.</p>
+                <p style={{margin:'4px 0 0 0',fontSize:12,color:theme.textMuted}}>Admin-only: real name + email ↔ username + public ID. Never share with employers.</p>
               </div>
               <button
                 onClick={() => { if (!usersLoaded) loadAllUsers(); else setUsersLoaded(false) }}
@@ -3685,10 +3787,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               )
             )}
             {usernameOverrideError && <p style={{color:'#dc2626',fontSize:12,margin:'8px 0 0 0'}}>{usernameOverrideError}</p>}
+            </div>
+            )}
           </div>
 
-          {/* Create org form */}
-          <div style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,marginBottom:20}}>
+          {/* Create org form — super admin only */}
+          {isSuperAdmin && <div style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,marginBottom:20}}>
             <h4 style={{margin:'0 0 12px 0',fontSize:14,fontWeight:600,color:theme.text}}>Create Organization</h4>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'end'}}>
               <div>
@@ -3716,7 +3820,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
               >{orgCreateSaving ? 'Creating…' : '+ Create'}</button>
             </div>
             {orgCreateError && <p style={{color:'#dc2626',fontSize:13,margin:'8px 0 0 0'}}>{orgCreateError}</p>}
-          </div>
+          </div>}
 
           {/* Org list */}
           {loading ? <div style={{color:theme.textMuted}}>Loading…</div> : orgs.length === 0 ? (
@@ -3740,6 +3844,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           } else {
                             setExpandedOrgId(org.id)
                             loadOrgMembers(org.id)
+                            loadOrgTeams(org.id)
+                            loadAllPublicIds()
                           }
                         }}
                         style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:theme.text}}
@@ -3754,10 +3860,10 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         title="Assign unassigned members to teams (balanced)"
                         style={{background:'transparent',border:`1px solid #7c3aed`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:'#7c3aed',opacity:assigningTeams[org.id]?0.6:1,whiteSpace:'nowrap'}}
                       >{assigningTeams[org.id] ? 'Assigning…' : 'Auto-assign Teams'}</button>
-                      <button
+                      {isSuperAdmin && <button
                         onClick={() => deleteOrg(org.id)}
                         style={{background:'transparent',border:'1px solid #dc2626',borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:'#dc2626'}}
-                      >Delete</button>
+                      >Delete</button>}
                     </div>
                   </div>
 
@@ -3776,13 +3882,17 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <h5 style={{margin:'0 0 10px 0',fontSize:13,fontWeight:600,color:theme.text}}>Add Member</h5>
                         <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr auto',gap:8,alignItems:'end'}}>
                           <div>
-                            <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>User ID (auth.users UUID)</label>
-                            <input
+                            <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Public ID</label>
+                            <select
                               value={orgAddUserId}
                               onChange={e => setOrgAddUserId(e.target.value)}
-                              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                              style={{width:'100%',padding:'6px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13,boxSizing:'border-box'}}
-                            />
+                              style={{width:'100%',padding:'6px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13,fontFamily:'monospace'}}
+                            >
+                              <option value="">— select —</option>
+                              {allPublicIds.map(pid => (
+                                <option key={pid} value={pid}>{pid}</option>
+                              ))}
+                            </select>
                           </div>
                           <div>
                             <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Role</label>
@@ -3803,10 +3913,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               style={{width:'100%',padding:'6px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
                             >
                               <option value="">— none —</option>
-                              <option value="fire">Fire</option>
-                              <option value="water">Water</option>
-                              <option value="wind">Wind</option>
-                              <option value="earth">Earth</option>
+                              {(orgTeams[org.id] || []).map(t => (
+                                <option key={t.id} value={t.name}>{t.name}</option>
+                              ))}
                             </select>
                           </div>
                           <button
@@ -3818,6 +3927,53 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         {orgAddError && <p style={{color:'#dc2626',fontSize:12,margin:'6px 0 0 0'}}>{orgAddError}</p>}
                       </div>
 
+                      {/* Teams management */}
+                      <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:12,marginBottom:14}}>
+                        <h5 style={{margin:'0 0 10px 0',fontSize:13,fontWeight:600,color:theme.text}}>Teams</h5>
+                        {/* Existing teams */}
+                        {(orgTeams[org.id] || []).length === 0 ? (
+                          <p style={{color:theme.textMuted,fontSize:12,margin:'0 0 8px 0'}}>No teams yet. Add one below.</p>
+                        ) : (
+                          <div style={{display:'flex',flexDirection:'column',gap:4,marginBottom:10}}>
+                            {(orgTeams[org.id] || []).map(t => (
+                              <div key={t.id} style={{display:'flex',alignItems:'center',gap:8}}>
+                                {orgTeamEditId === t.id ? (
+                                  <>
+                                    <input
+                                      value={orgTeamEditVal}
+                                      onChange={e => setOrgTeamEditVal(e.target.value)}
+                                      style={{flex:1,padding:'4px 8px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
+                                      onKeyDown={e => { if (e.key === 'Enter') saveOrgTeamEdit(org.id, t.id); if (e.key === 'Escape') setOrgTeamEditId(null) }}
+                                      autoFocus
+                                    />
+                                    <button onClick={() => saveOrgTeamEdit(org.id, t.id)} style={{background:'#2563eb',color:'#fff',border:'none',borderRadius:4,padding:'3px 10px',fontSize:12,cursor:'pointer'}}>Save</button>
+                                    <button onClick={() => setOrgTeamEditId(null)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'3px 10px',fontSize:12,cursor:'pointer',color:theme.text}}>Cancel</button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span style={{flex:1,fontSize:13,color:theme.text}}>{t.name}</span>
+                                    <button onClick={() => { setOrgTeamEditId(t.id); setOrgTeamEditVal(t.name) }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'2px 9px',fontSize:12,cursor:'pointer',color:theme.text}}>Rename</button>
+                                    <button onClick={() => deleteOrgTeam(org.id, t.id)} style={{background:'transparent',border:'1px solid #dc2626',borderRadius:4,padding:'2px 9px',fontSize:12,cursor:'pointer',color:'#dc2626'}}>Delete</button>
+                                  </>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Add team */}
+                        <div style={{display:'flex',gap:8}}>
+                          <input
+                            value={orgTeamInput[org.id] || ''}
+                            onChange={e => setOrgTeamInput(prev => ({ ...prev, [org.id]: e.target.value }))}
+                            placeholder="New team name"
+                            onKeyDown={e => { if (e.key === 'Enter') addOrgTeam(org.id) }}
+                            style={{flex:1,padding:'5px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
+                          />
+                          <button onClick={() => addOrgTeam(org.id)} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:5,padding:'5px 14px',fontSize:13,fontWeight:600,cursor:'pointer'}}>Add Team</button>
+                        </div>
+                        {orgTeamError[org.id] && <p style={{color:'#dc2626',fontSize:12,margin:'6px 0 0 0'}}>{orgTeamError[org.id]}</p>}
+                      </div>
+
                       {/* Member table */}
                       {!orgMembers[org.id] ? (
                         <p style={{color:theme.textMuted,fontSize:13}}>Loading members…</p>
@@ -3827,7 +3983,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
                           <thead>
                             <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                              {['Public ID','Username','Role','Team','Joined',''].map(h => (
+                              {['Public ID','Role','Team','Joined',''].map(h => (
                                 <th key={h} style={{textAlign:'left',padding:'6px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase'}}>{h}</th>
                               ))}
                             </tr>
@@ -3836,7 +3992,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             {orgMembers[org.id].map(m => (
                               <tr key={m.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
                                 <td style={{padding:'7px 8px',color:theme.text,fontFamily:'monospace',fontSize:12}}>{m.public_id || '—'}</td>
-                                <td style={{padding:'7px 8px',color:theme.text}}>{m.username || '—'}</td>
                                 <td style={{padding:'7px 8px'}}>
                                   <span style={{background:m.role==='admin'?'#dbeafe':'#f0fdf4',color:m.role==='admin'?'#1d4ed8':'#15803d',borderRadius:4,padding:'2px 7px',fontSize:11,fontWeight:600}}>{m.role}</span>
                                 </td>

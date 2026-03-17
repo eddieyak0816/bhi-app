@@ -1652,21 +1652,35 @@ app.get('/api/admin/organizations/:id/members', async (req, res) => {
   const { id } = req.params;
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const { data, error } = await sb
+    // Fetch memberships first (org_memberships → auth.users, not profiles, so no direct join)
+    const { data: memberships, error: mErr } = await sb
       .from('org_memberships')
-      .select('id, user_id, role, team, joined_at, profiles(username, public_id)')
+      .select('id, user_id, role, team, joined_at')
       .eq('org_id', id)
       .order('joined_at');
-    if (error) return res.status(500).json({ error: 'db_error', detail: error });
-    // PHI rule: strip anything that could identify the user beyond username/public_id
-    const safe = (data || []).map(m => ({
+    if (mErr) return res.status(500).json({ error: 'db_error', detail: mErr });
+    if (!memberships || memberships.length === 0) return res.status(200).json([]);
+
+    // Fetch profiles for those user_ids to get username + public_id
+    const userIds = memberships.map(m => m.user_id);
+    const { data: profiles, error: pErr } = await sb
+      .from('profiles')
+      .select('id, username, public_id')
+      .in('id', userIds);
+    if (pErr) return res.status(500).json({ error: 'db_error', detail: pErr });
+
+    const profileMap = {};
+    for (const p of profiles || []) profileMap[p.id] = p;
+
+    // PHI rule: only expose username and public_id — no real name, email, or raw lab values
+    const safe = memberships.map(m => ({
       id: m.id,
       user_id: m.user_id,
       role: m.role,
       team: m.team,
       joined_at: m.joined_at,
-      username: m.profiles?.username || null,
-      public_id: m.profiles?.public_id || null,
+      username: profileMap[m.user_id]?.username || null,
+      public_id: profileMap[m.user_id]?.public_id || null,
     }));
     return res.status(200).json(safe);
   } catch (err) {
@@ -1675,18 +1689,46 @@ app.get('/api/admin/organizations/:id/members', async (req, res) => {
   }
 });
 
+// GET /api/admin/public-ids — list all known public IDs (BHI-XXXX-XXXX) with no other identifying info
+// Used to populate the Add Member dropdown — admin sees only tokens, never names/emails/usernames
+app.get('/api/admin/public-ids', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('profiles')
+      .select('public_id')
+      .not('public_id', 'is', null)
+      .order('public_id');
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    return res.status(200).json((data || []).map(r => r.public_id));
+  } catch (err) {
+    console.error('GET /api/admin/public-ids error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // POST /api/admin/organizations/:id/members — add user to org
+// Accepts public_id (BHI-XXXX-XXXX) — resolves to user_id internally so admins never handle raw UUIDs
 app.post('/api/admin/organizations/:id/members', async (req, res) => {
   if (!requireAdmin(req, res)) return;
   const { id } = req.params;
-  const { user_id, role = 'member', team } = req.body || {};
-  if (!user_id) return res.status(400).json({ error: 'missing-params', required: ['user_id'] });
+  const { public_id, role = 'member', team } = req.body || {};
+  if (!public_id) return res.status(400).json({ error: 'missing-params', required: ['public_id'] });
   const validRoles = ['member', 'admin'];
   const validTeams = ['fire', 'water', 'wind', 'earth', null, undefined];
   if (!validRoles.includes(role)) return res.status(400).json({ error: 'invalid-role' });
   if (!validTeams.includes(team)) return res.status(400).json({ error: 'invalid-team' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    // Resolve public_id → user_id (UUID never exposed to admin UI)
+    const { data: profile, error: pErr } = await sb
+      .from('profiles')
+      .select('id')
+      .eq('public_id', public_id)
+      .single();
+    if (pErr || !profile) return res.status(404).json({ error: 'user_not_found' });
+    const user_id = profile.id;
     const { data, error } = await sb
       .from('org_memberships')
       .insert({ org_id: id, user_id, role, team: team || null })
@@ -1722,15 +1764,113 @@ app.delete('/api/admin/organizations/:id/members/:userId', async (req, res) => {
   }
 });
 
+// GET /api/admin/organizations/:id/teams — list teams for an org
+app.get('/api/admin/organizations/:id/teams', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('org_teams')
+      .select('id, name, created_at')
+      .eq('org_id', id)
+      .order('created_at');
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    return res.status(200).json(data || []);
+  } catch (err) {
+    console.error('GET /api/admin/organizations/:id/teams error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/organizations/:id/teams — create a team
+app.post('/api/admin/organizations/:id/teams', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  const { name } = req.body || {};
+  if (!name || !name.trim()) return res.status(400).json({ error: 'missing-params', required: ['name'] });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('org_teams')
+      .insert({ org_id: id, name: name.trim() })
+      .select()
+      .single();
+    if (error) {
+      if (error.code === '23505') return res.status(409).json({ error: 'team_name_conflict' });
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(201).json(data);
+  } catch (err) {
+    console.error('POST /api/admin/organizations/:id/teams error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// PATCH /api/admin/organizations/:id/teams/:teamId — rename a team
+app.patch('/api/admin/organizations/:id/teams/:teamId', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id, teamId } = req.params;
+  const { name } = req.body || {};
+  if (!name || !name.trim()) return res.status(400).json({ error: 'missing-params', required: ['name'] });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('org_teams')
+      .update({ name: name.trim() })
+      .eq('id', teamId)
+      .eq('org_id', id)
+      .select()
+      .single();
+    if (error) {
+      if (error.code === '23505') return res.status(409).json({ error: 'team_name_conflict' });
+      return res.status(500).json({ error: 'db_error', detail: error });
+    }
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error('PATCH /api/admin/organizations/:id/teams/:teamId error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/organizations/:id/teams/:teamId — delete a team
+app.delete('/api/admin/organizations/:id/teams/:teamId', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id, teamId } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb
+      .from('org_teams')
+      .delete()
+      .eq('id', teamId)
+      .eq('org_id', id);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/organizations/:id/teams/:teamId error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // POST /api/admin/organizations/:id/assign-teams — auto-assign unassigned members to teams (balanced by count)
-// Strategy: round-robin across fire/water/wind/earth sorted by current team size ascending.
-// Only affects members where team IS NULL. Existing assignments are never changed.
+// Uses dynamic org_teams for this org. Only affects members where team IS NULL.
 app.post('/api/admin/organizations/:id/assign-teams', async (req, res) => {
   if (!requireAdmin(req, res)) return;
   const { id } = req.params;
-  const TEAMS = ['fire', 'water', 'wind', 'earth'];
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Fetch this org's teams
+    const { data: orgTeams, error: tErr } = await sb
+      .from('org_teams')
+      .select('name')
+      .eq('org_id', id)
+      .order('created_at');
+    if (tErr) return res.status(500).json({ error: 'db_error', detail: tErr });
+    if (!orgTeams || orgTeams.length === 0) {
+      return res.status(400).json({ error: 'no_teams', message: 'No teams defined for this org. Add teams first.' });
+    }
+    const TEAMS = orgTeams.map(t => t.name);
 
     // Fetch all members for this org
     const { data: members, error: fetchErr } = await sb
@@ -1745,7 +1885,8 @@ app.post('/api/admin/organizations/:id/assign-teams', async (req, res) => {
     }
 
     // Count current members per team to seed the balance
-    const counts = { fire: 0, water: 0, wind: 0, earth: 0 };
+    const counts = {};
+    TEAMS.forEach(t => { counts[t] = 0; });
     members.filter(m => m.team).forEach(m => { if (counts[m.team] !== undefined) counts[m.team]++; });
 
     // Assign each unassigned member to the team with the lowest count (greedy balance)
@@ -1755,11 +1896,8 @@ app.post('/api/admin/organizations/:id/assign-teams', async (req, res) => {
       return { id: m.id, team: minTeam };
     });
 
-    // Batch update via individual upserts (Supabase JS v2 doesn't support bulk update with different values per row)
     const updateResults = await Promise.all(
-      updates.map(u =>
-        sb.from('org_memberships').update({ team: u.team }).eq('id', u.id)
-      )
+      updates.map(u => sb.from('org_memberships').update({ team: u.team }).eq('id', u.id))
     );
     const failed = updateResults.filter(r => r.error);
     if (failed.length > 0) {
