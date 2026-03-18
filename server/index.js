@@ -1080,6 +1080,22 @@ app.post('/api/admin/new-marker-wizard', async (req, res) => {
   }
 });
 
+// ── DEV: PDF text extraction preview (no AI) ─────────────────────────────────
+// POST /api/dev/extract-pdf-text — returns raw pdf-parse text only, no AI call
+app.post('/api/dev/extract-pdf-text', upload.single('pdf'), async (req, res) => {
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_ENDPOINT !== 'true') {
+    return res.status(404).json({ error: 'not_found' });
+  }
+  if (!req.file) return res.status(400).json({ error: 'no-file' });
+  try {
+    const pdfParse = require('pdf-parse');
+    const parsed = await pdfParse(req.file.buffer);
+    return res.status(200).json({ chars: parsed.text.length, text: parsed.text });
+  } catch (err) {
+    return res.status(422).json({ error: 'pdf-parse-failed', message: err.message });
+  }
+});
+
 // ── PDF Lab Extraction ───────────────────────────────────────────────────────
 // POST /api/extract-labs
 // Extracts text from the PDF with pdf-parse, then tries providers in order:
@@ -1142,6 +1158,7 @@ app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
     const parsed = await pdfParse(req.file.buffer);
     pdfText = parsed.text || '';
     console.info(`extract-labs: extracted ${pdfText.length} chars of text from PDF`);
+    console.info('extract-labs: PDF text sample:\n' + pdfText.slice(0, 4000));
   } catch (pdfErr) {
     console.error('extract-labs: pdf-parse failed', pdfErr.message);
     return res.status(422).json({ error: 'pdf-parse-failed', message: 'Could not extract text from this PDF.' });
@@ -1153,33 +1170,101 @@ app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
 
   const prompt = `You are a medical lab report parser. Extract all lab test results from the following lab report text.
 
+The report columns are: TEST NAME | CURRENT RESULT | [FLAG] | [PREVIOUS RESULT] | [DATE] | UNITS | REFERENCE RANGE
+- The CURRENT RESULT is the first number after the test name.
+- FLAG words like "High", "Low", "H", "L" may appear immediately after the current result — they are NOT part of the value.
+- A PREVIOUS RESULT (older number) and DATE (e.g. "08/18/2021") may follow the flag — ignore them, use only the current result.
+
+CRITICAL: This PDF was extracted by a text parser that concatenates columns with NO spaces. The current result and previous result run together as one string. You MUST split them correctly.
+- Pattern: CURRENT_RESULT + PREVIOUS_RESULT + DATE, with NO spaces between them.
+- To find where the current result ends: the current result is the SHORTER leading number. The previous result follows immediately after, then an 8-digit date like "08182021".
+- Examples from this EXACT report (showing the raw concatenated text and the correct parse):
+    Raw: "Vitamin D, 25-Hydroxy\n 01\n82.056.108/18/2021ng/mL30.0-100.0"  → value_str="82.0" (NOT "82.05"; "56.1" is previous result starting right after)
+    Raw: "RBC\n 01\n4.314.6808/18/2021x10E6/uL4.14-5.80"  → value_str="4.31" (NOT "4.3"; "4.68" is previous result starting right after)
+    Raw: "TSH\n 01\n0.9881.31008/18/2021uIU/mL0.450-4.500"  → value_str="0.988" ("1.310" is previous result)
+    Raw: "Oxidized LDL\n 01\n390Highng/mL10-170"  → value_str="390", flag="H"
+    Raw: "LDL Chol Calc (NIH)107High10408/18/2021mg/dL0-99"  → value_str="107", flag="H" (104 is previous result)
+    Raw: "Vitamin B12\n 01\n764pg/mL232-1245"  → value_str="764" (no previous result here)
+    Raw: "T4,Free(Direct)\n 01\n1.59ng/dL0.82-1.77"  → value_str="1.59"
+    Raw: "Neutrophils\n 01\n525408/18/2021%Not Estab."  → value_str="52", min_normal=null, max_normal=null (54 is previous result; "Not Estab." → still include)
+    Raw: "Lipoprotein (a)\n A, 01\n<8.4nmol/L<75.0"  → value_str="<8.4"
+    Raw: "Thyroglobulin Antibody\n 01\n<1.0IU/mL0.0-0.9"  → value_str="<1.0"
+    Raw: "eGFR82mL/min/1.73>59"  → value_str="82", max_normal=null (">59" reference means only a lower bound)
+    Raw: "Immature Granulocytes\n 01\n0008/18/2021%Not Estab."  → value_str="0", min_normal=null, max_normal=null (INCLUDE — zero is a valid result)
+    Raw: "Immature Grans (Abs)\n 01\n0.00.008/18/2021x10E3/uL0.0-0.1"  → value_str="0.0", min_normal=0, max_normal=0.1 (INCLUDE — zero is valid)
+
 Also extract these report metadata fields if present (return null if not found):
-- "accession_num": the lab accession or specimen number (string, e.g. "LW-2026031300482")
-- "collection_date": the specimen collection date in ISO format YYYY-MM-DD (string, e.g. "2026-03-13")
+- "accession_num": the specimen/accession ID (e.g. "262-174-6271-0")
+- "collection_date": the collection date in ISO format YYYY-MM-DD
 
-Return a single JSON object (not an array) with two keys:
+Return a single JSON object with two keys:
 1. "meta": an object with "accession_num" and "collection_date"
-2. "results": an array of lab test objects, each with:
-   - "name": the lab test name as it appears on the report (string)
-   - "value": the numeric result value (number)
-   - "unit": the unit of measurement (string, e.g. "mg/dL", "ng/mL", "pg/mL", "%")
-   - "min_normal": lower bound of the lab's reference range if shown (number or null)
-   - "max_normal": upper bound of the lab's reference range if shown (number or null)
-   - "flag": any abnormal flag shown (string: "H", "L", "HH", "LL", or null if normal/not shown)
+2. "results": an array of objects, each with:
+   - "name": test name (string)
+   - "value_str": the current result EXACTLY as it appears, including any < or > prefix (string, e.g. "390", "0.988", "4.31", "<8.4", ">59", "1.59")
+   - "unit": unit of measurement (string)
+   - "min_normal": lower bound of reference range (number or null)
+   - "max_normal": upper bound of reference range (number or null)
+   - "flag": "H", "L", "HH", "LL", or null
 
-Only include tests with a numeric result. Skip non-numeric results (e.g. "Positive", "Detected"). Skip patient demographics. If you cannot find any lab values, return an empty results array.
+Rules for "value_str":
+- Copy the result character-by-character exactly as printed — preserve ALL digits and the decimal point. "4.31" not "4.3", "1.59" not "1.5", "0.988" not "0.98", "390" not "39", "764" not "76".
+- If the result has a < or > qualifier, include it: "<8.4", "<1.0", ">59".
+- FLAG WORDS: "High", "Low", "H", "L" after the number are flags — do NOT include them in value_str.
+- PREVIOUS RESULTS: a second number followed by a date like "08/18/2021" is the previous result — ignore it, use only the first (current) result.
+- FOOTNOTES: markers like "01" after test names are footnote numbers — ignore them.
+- ZERO VALUES: "0" and "0.0" are valid results — INCLUDE them. Do not skip rows just because the value is zero.
+- SKIP: non-numeric results ("Positive", "Detected"), patient demographics, and disclaimer/note text.
+- "Not Estab." as a reference range means min_normal=null, max_normal=null — still INCLUDE the result row.
+- A reference like ">59" means min_normal=59, max_normal=null. A reference like "<90" means min_normal=null, max_normal=90.
+
+If no lab values are found, return an empty results array.
+
+IMPORTANT: Return ONLY raw JSON — no markdown fences, no explanation. Response must start with { and end with }.
 
 Lab report text:
 ${pdfText}`;
 
   // Helper: parse AI response — expects { meta, results } object
+  // Handles: plain JSON, markdown code fences, and prose preamble ("Here is the data: {...}")
   function parseAIResponse(raw) {
-    const cleaned = raw.trim().replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
-    const parsed = JSON.parse(cleaned);
-    // Support both new { meta, results } shape and legacy plain array
-    if (Array.isArray(parsed)) return { meta: {}, results: parsed };
-    if (parsed && Array.isArray(parsed.results)) return parsed;
-    throw new Error('Unexpected response shape');
+    // 1. Strip markdown code fences
+    let cleaned = raw.trim().replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+
+    function normalizeResults(parsed) {
+      // Support both new { meta, results } shape and legacy plain array
+      let obj;
+      if (Array.isArray(parsed)) obj = { meta: {}, results: parsed };
+      else if (parsed && Array.isArray(parsed.results)) obj = parsed;
+      else throw new Error('Unexpected response shape');
+
+      // Normalize value_str → value: strip < > qualifiers and parse to float
+      obj.results = obj.results.map(r => {
+        if (typeof r.value_str === 'string') {
+          const stripped = r.value_str.replace(/^[<>]=?\s*/, '').trim();
+          const num = parseFloat(stripped);
+          return { ...r, value: isNaN(num) ? null : num };
+        }
+        // Legacy: model returned numeric value directly
+        return r;
+      }).filter(r => r.value !== null && r.value !== undefined);
+
+      return obj;
+    }
+
+    // 2. Try direct parse first
+    try {
+      return normalizeResults(JSON.parse(cleaned));
+    } catch (_) {
+      // 3. Extract first { ... } or [ ... ] block from prose response
+      const objMatch = cleaned.match(/\{[\s\S]*\}/);
+      const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+      const match = objMatch && arrMatch
+        ? (cleaned.indexOf(objMatch[0]) < cleaned.indexOf(arrMatch[0]) ? objMatch[0] : arrMatch[0])
+        : (objMatch?.[0] || arrMatch?.[0]);
+      if (match) return normalizeResults(JSON.parse(match));
+      throw new Error('Could not extract JSON from AI response');
+    }
   }
 
   // Helper: record a successful upload in lab_pdf_uploads (best-effort, non-blocking)
@@ -1274,8 +1359,8 @@ ${pdfText}`;
       return res.status(200).json({ results, meta, ...earlyDuplicateWarning });
     } catch (err) {
       const is429 = err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('RESOURCE_EXHAUSTED'));
-      console.warn(`extract-labs: Gemini key ${i + 1} failed${is429 ? ' (quota)' : ''}:`, err.message);
-      if (!is429) break;
+      console.warn(`extract-labs: Gemini key ${i + 1} failed${is429 ? ' (quota)' : ' (error)'}:`, err.message);
+      // Always continue to next key regardless of error type
     }
   }
 
@@ -1283,9 +1368,10 @@ ${pdfText}`;
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
   if (OPENROUTER_API_KEY) {
     const orModels = [
-      'meta-llama/llama-4-scout:free',
-      'qwen/qwen2.5-vl-72b-instruct:free',
-      'mistralai/mistral-small-3.1-24b-instruct:free',
+      'meta-llama/llama-3.3-70b-instruct:free',  // confirmed working
+      'google/gemini-2.0-flash-exp:free',         // Gemini via OpenRouter (free experimental)
+      'mistralai/mistral-7b-instruct:free',
+      'qwen/qwen2.5-72b-instruct:free',
     ];
     for (const orModel of orModels) {
       try {
@@ -1474,6 +1560,14 @@ app.get('/api/employer/:orgSlug', async (req, res) => {
       }
     }
 
+    // Feature 18: fetch org teams for per-team breakdown
+    const { data: orgTeamsData } = await sb
+      .from('org_teams')
+      .select('name')
+      .eq('org_id', org.id)
+      .order('created_at');
+    const orgTeamNames = (orgTeamsData || []).map(t => t.name);
+
     // Build response — no PHI (raw values never included)
     const result = (members || []).map(m => {
       const userLatest = Object.values(latestByUser[m.user_id] || {});
@@ -1489,7 +1583,33 @@ app.get('/api/employer/:orgSlug', async (req, res) => {
       };
     });
 
-    return res.status(200).json({ org: { name: org.name, slug: org.slug }, members: result });
+    // Feature 18: per-team breakdown (team name, member count, avg BHAS, % at optimal)
+    // Include all org teams (even empty ones) plus any team names in memberships not in org_teams
+    const allTeamNames = new Set([
+      ...orgTeamNames,
+      ...result.filter(m => m.team).map(m => m.team),
+    ]);
+    const teamBreakdown = [...allTeamNames].map(teamName => {
+      const tm = result.filter(m => m.team === teamName);
+      const withScores = tm.filter(m => m.bhas_pct !== null);
+      const avgBhas = withScores.length > 0
+        ? Math.round(withScores.reduce((s, m) => s + m.bhas_pct, 0) / withScores.length)
+        : null;
+      const optimalCount = withScores.filter(m => m.bhas_pct === 100).length;
+      const optimalPct = tm.length > 0 ? Math.round((optimalCount / tm.length) * 100) : null;
+      return {
+        team: teamName,
+        member_count: tm.length,
+        avg_bhas_pct: avgBhas,
+        optimal_pct: optimalPct,  // % of members at 100% BHAS
+      };
+    }).sort((a, b) => (b.avg_bhas_pct ?? -1) - (a.avg_bhas_pct ?? -1));
+
+    return res.status(200).json({
+      org: { name: org.name, slug: org.slug },
+      members: result,
+      team_breakdown: teamBreakdown,  // Feature 18
+    });
   } catch (err) {
     console.error('GET /api/employer/:orgSlug error:', err.message);
     return res.status(500).json({ error: 'server_error' });

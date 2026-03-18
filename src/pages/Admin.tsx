@@ -37,7 +37,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit' | 'organizations'>('resources')
   // Use global theme context
   const { darkMode, theme: globalTheme } = useTheme()
-  const { isSuperAdmin } = useAuth()
+  const { isSuperAdmin, user } = useAuth()
   // View mode per tab (card or table)
   const [viewMode, setViewMode] = useState<Record<string, 'card' | 'table'>>({
     resources: 'card',
@@ -161,6 +161,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [orgTeamEditId, setOrgTeamEditId] = useState<string | null>(null)
   const [orgTeamEditVal, setOrgTeamEditVal] = useState('')
   const [orgTeamError, setOrgTeamError] = useState<Record<string, string | null>>({})
+  // Feature 18: per-team BHAS score summary for each org (keyed by org.slug)
+  const [orgTeamScores, setOrgTeamScores] = useState<Record<string, Array<{team: string; member_count: number; avg_bhas_pct: number | null; optimal_pct: number | null}>>>({})
 
   // User identity mapping state (Feature 15)
   const [showIdentityPanel, setShowIdentityPanel] = useState<boolean>(() => localStorage.getItem('bhi_show_identity_panel') === 'true')
@@ -651,6 +653,23 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     }
   }
 
+  // Feature 18: load per-team BHAS score breakdown for an org (via employer endpoint)
+  async function loadOrgTeamScores(orgSlug: string) {
+    if (!user?.id) return
+    try {
+      const res = await fetch(apiUrl(`/api/employer/${encodeURIComponent(orgSlug)}`), {
+        headers: { 'x-user-id': user.id }
+      })
+      if (!res.ok) return
+      const body = await res.json()
+      if (body.team_breakdown) {
+        setOrgTeamScores(prev => ({ ...prev, [orgSlug]: body.team_breakdown }))
+      }
+    } catch {
+      // non-fatal — team scores are read-only display
+    }
+  }
+
   // Feature 17: auto-assign unassigned members to teams (balanced)
   async function assignTeams(orgId: string) {
     setAssigningTeams(prev => ({ ...prev, [orgId]: true }))
@@ -670,6 +689,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         : `Assigned ${body.assigned} member${body.assigned !== 1 ? 's' : ''} to teams.`
       setAssignTeamsMsg(prev => ({ ...prev, [orgId]: msg }))
       await loadOrgMembers(orgId)
+      const orgSlug = orgs.find(o => o.id === orgId)?.slug
+      if (orgSlug) loadOrgTeamScores(orgSlug)
     } catch {
       setAssignTeamsMsg(prev => ({ ...prev, [orgId]: 'Network error.' }))
     } finally {
@@ -3846,6 +3867,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             loadOrgMembers(org.id)
                             loadOrgTeams(org.id)
                             loadAllPublicIds()
+                            loadOrgTeamScores(org.slug)
                           }
                         }}
                         style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:theme.text}}
@@ -3973,6 +3995,43 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         </div>
                         {orgTeamError[org.id] && <p style={{color:'#dc2626',fontSize:12,margin:'6px 0 0 0'}}>{orgTeamError[org.id]}</p>}
                       </div>
+
+                      {/* Feature 18: Team score summary */}
+                      {(orgTeamScores[org.slug] || []).filter(t => t.member_count > 0).length > 0 && (
+                        <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:12,marginBottom:14}}>
+                          <h5 style={{margin:'0 0 10px 0',fontSize:13,fontWeight:600,color:theme.text}}>Team Score Summary</h5>
+                          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                            <thead>
+                              <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                                {['Rank','Team','Members','Avg BHAS','% at Optimal'].map(h => (
+                                  <th key={h} style={{textAlign:'left',padding:'4px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase'}}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(orgTeamScores[org.slug] || [])
+                                .filter(t => t.member_count > 0)
+                                .map((t, idx) => (
+                                <tr key={t.team} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                                  <td style={{padding:'5px 8px',color:theme.textMuted,fontWeight:600}}>#{idx + 1}</td>
+                                  <td style={{padding:'5px 8px',color:theme.text,fontWeight:500}}>{t.team}</td>
+                                  <td style={{padding:'5px 8px',color:theme.textMuted}}>{t.member_count}</td>
+                                  <td style={{padding:'5px 8px'}}>
+                                    {t.avg_bhas_pct !== null ? (
+                                      <span style={{
+                                        background: t.avg_bhas_pct >= 80 ? '#dcfce7' : t.avg_bhas_pct >= 50 ? '#fef3c7' : '#fee2e2',
+                                        color: t.avg_bhas_pct >= 80 ? '#15803d' : t.avg_bhas_pct >= 50 ? '#b45309' : '#b91c1c',
+                                        borderRadius:4, padding:'1px 7px', fontWeight:700, fontSize:12
+                                      }}>{t.avg_bhas_pct}%</span>
+                                    ) : <span style={{color:theme.textMuted}}>—</span>}
+                                  </td>
+                                  <td style={{padding:'5px 8px',color:theme.textMuted}}>{t.optimal_pct !== null ? `${t.optimal_pct}%` : '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
 
                       {/* Member table */}
                       {!orgMembers[org.id] ? (

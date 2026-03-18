@@ -136,6 +136,12 @@
 - Server: four new CRUD endpoints for teams — `GET/POST /api/admin/organizations/:id/teams`, `PATCH/DELETE /api/admin/organizations/:id/teams/:teamId`. New `GET /api/admin/public-ids` returns all `BHI-XXXX-XXXX` tokens (no names/usernames) for the Add Member dropdown.
 - Admin UI (`src/pages/Admin.tsx`): Teams management panel inside each org's expanded view — add, rename (inline), and delete teams. Add Member field changed from UUID text input to Public ID dropdown (`BHI-XXXX-XXXX` only). Member table username column removed — shows Public ID only. "Create Organization" form and "Delete" button hidden from `admin` role — visible to `super_admin` only. User Identity Mapping panel hidden by default behind a checkbox (persisted in localStorage) for PHI safety during demos. "Auto-assign Teams" button updated to use dynamic teams.
 
+### Phase 4: Team Scoring Display (Feature 18 — Complete)
+
+- Server (`server/index.js`): `GET /api/employer/:orgSlug` now fetches the org's dynamic teams from `org_teams` and returns a `team_breakdown` array — each entry has `team`, `member_count`, `avg_bhas_pct`, and `optimal_pct` (% of members at 100% BHAS). Breakdown is sorted by avg BHAS descending. Handles teams from both `org_teams` table and any free-form values already in `org_memberships.team`.
+- `src/pages/EmployerPage.tsx`: removed hardcoded `TEAM_COLORS` (fire/water/wind/earth). Per-team summary cards now sourced from `team_breakdown` in the API response. Team colours cycle through an 8-colour palette keyed by position — no reliance on team names. Cards show avg BHAS % and "% at optimal" sub-line. Member table team badges also use the cycling palette. Removed `textTransform: capitalize` from team name display (names are now arbitrary strings).
+- `src/pages/Admin.tsx` (Organizations tab): "Team Score Summary" panel added inside each expanded org — read-only ranked table (Rank, Team, Members, Avg BHAS colour-coded green/amber/red, % at Optimal). Loaded from the employer endpoint on org expand and refreshed after Auto-assign Teams. No migration required.
+
 ## 2026-02-07 — dev
 
 ## 2026-02-06 — dev

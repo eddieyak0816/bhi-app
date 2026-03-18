@@ -12,9 +12,17 @@ interface Member {
   result_count: number
 }
 
+interface TeamBreakdown {
+  team: string
+  member_count: number
+  avg_bhas_pct: number | null
+  optimal_pct: number | null
+}
+
 interface OrgData {
   org: { name: string; slug: string }
   members: Member[]
+  team_breakdown: TeamBreakdown[]
 }
 
 interface EmployerPageProps {
@@ -23,11 +31,20 @@ interface EmployerPageProps {
   onNavigate?: (page: string) => void
 }
 
-const TEAM_COLORS: Record<string, { bg: string; color: string }> = {
-  fire:  { bg: '#fee2e2', color: '#b91c1c' },
-  water: { bg: '#dbeafe', color: '#1d4ed8' },
-  wind:  { bg: '#f0fdf4', color: '#15803d' },
-  earth: { bg: '#fef9c3', color: '#713f12' },
+// Cycling palette for dynamic team names (no hardcoded fire/water/wind/earth)
+const TEAM_COLOR_PALETTE: Array<{ bg: string; color: string }> = [
+  { bg: '#dbeafe', color: '#1d4ed8' },
+  { bg: '#dcfce7', color: '#15803d' },
+  { bg: '#fef9c3', color: '#713f12' },
+  { bg: '#fee2e2', color: '#b91c1c' },
+  { bg: '#f3e8ff', color: '#7c3aed' },
+  { bg: '#ffedd5', color: '#c2410c' },
+  { bg: '#e0f2fe', color: '#0369a1' },
+  { bg: '#fce7f3', color: '#be185d' },
+]
+
+function teamColor(teamName: string, index: number): { bg: string; color: string } {
+  return TEAM_COLOR_PALETTE[index % TEAM_COLOR_PALETTE.length]
 }
 
 function BhasBadge({ pct }: { pct: number | null }) {
@@ -103,23 +120,13 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
   if (!data) return null
 
   const members = data.members
-  const teams = ['fire', 'water', 'wind', 'earth'] as const
+  const teamBreakdown = data.team_breakdown || []
 
   // Aggregate stats
   const withScores = members.filter(m => m.bhas_pct !== null)
   const avgBhas = withScores.length > 0
     ? Math.round(withScores.reduce((s, m) => s + (m.bhas_pct ?? 0), 0) / withScores.length)
     : null
-
-  // Per-team aggregates
-  const teamStats = teams.map(team => {
-    const tm = members.filter(m => m.team === team)
-    const tmWithScores = tm.filter(m => m.bhas_pct !== null)
-    const avg = tmWithScores.length > 0
-      ? Math.round(tmWithScores.reduce((s, m) => s + (m.bhas_pct ?? 0), 0) / tmWithScores.length)
-      : null
-    return { team, count: tm.length, avg }
-  }).filter(t => t.count > 0)
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
@@ -136,17 +143,20 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
         {members.length} member{members.length !== 1 ? 's' : ''}{avgBhas !== null ? ` · Org avg BHAS: ${avgBhas}%` : ''}
       </p>
 
-      {/* Team summary cards */}
-      {teamStats.length > 0 && (
+      {/* Team summary cards — Feature 18: dynamic teams with color cycling */}
+      {teamBreakdown.filter(t => t.member_count > 0).length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
-          {teamStats.map(({ team, count, avg }) => {
-            const tc = TEAM_COLORS[team] || { bg: theme.bgSecondary, color: theme.text }
+          {teamBreakdown.filter(t => t.member_count > 0).map(({ team, member_count, avg_bhas_pct, optimal_pct }, idx) => {
+            const tc = teamColor(team, idx)
             return (
               <div key={team} style={{ background: tc.bg, borderRadius: 8, padding: '14px 16px' }}>
-                <div style={{ fontWeight: 700, fontSize: 15, textTransform: 'capitalize', color: tc.color, marginBottom: 4 }}>{team}</div>
-                <div style={{ fontSize: 12, color: tc.color, marginBottom: 8 }}>{count} member{count !== 1 ? 's' : ''}</div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: tc.color }}>{avg !== null ? `${avg}%` : '—'}</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: tc.color, marginBottom: 4 }}>{team}</div>
+                <div style={{ fontSize: 12, color: tc.color, marginBottom: 8 }}>{member_count} member{member_count !== 1 ? 's' : ''}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: tc.color }}>{avg_bhas_pct !== null ? `${avg_bhas_pct}%` : '—'}</div>
                 <div style={{ fontSize: 11, color: tc.color, opacity: 0.8 }}>avg BHAS</div>
+                {optimal_pct !== null && (
+                  <div style={{ fontSize: 11, color: tc.color, opacity: 0.7, marginTop: 4 }}>{optimal_pct}% at optimal</div>
+                )}
               </div>
             )
           })}
@@ -175,7 +185,8 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
                   .slice()
                   .sort((a, b) => (b.bhas_pct ?? -1) - (a.bhas_pct ?? -1))
                   .map((m, i) => {
-                    const tc = m.team ? TEAM_COLORS[m.team] : null
+                    const teamIdx = m.team ? teamBreakdown.findIndex(t => t.team === m.team) : -1
+                    const tc = teamIdx >= 0 ? teamColor(m.team!, teamIdx) : null
                     return (
                       <tr key={i} style={{ borderBottom: `1px solid ${theme.borderColor}` }}>
                         <td style={{ padding: '8px 10px', color: theme.text, fontWeight: 500 }}>
@@ -186,7 +197,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
                         </td>
                         <td style={{ padding: '8px 10px' }}>
                           {m.team && tc ? (
-                            <span style={{ background: tc.bg, color: tc.color, borderRadius: 4, padding: '2px 8px', fontWeight: 600, fontSize: 12, textTransform: 'capitalize' }}>{m.team}</span>
+                            <span style={{ background: tc.bg, color: tc.color, borderRadius: 4, padding: '2px 8px', fontWeight: 600, fontSize: 12 }}>{m.team}</span>
                           ) : <span style={{ color: theme.textMuted }}>—</span>}
                         </td>
                         <td style={{ padding: '8px 10px' }}>

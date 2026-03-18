@@ -401,9 +401,9 @@
       <span class="phase-badge">Phase 4</span>
       <div>
         <div class="phase-title">Corporate Portal</div>
-        <div class="phase-desc">Employer orgs, de-identification, team assignment (Fire / Water / Wind / Earth), and team scoring</div>
+        <div class="phase-desc">Employer orgs, de-identification, team assignment, and team scoring</div>
       </div>
-      <div class="phase-progress">3 / 5 done</div>
+      <div class="phase-progress">4 / 5 done</div>
     </div>
     <div class="items">
 
@@ -443,13 +443,13 @@
         <span class="item-status status-done">✅ Complete</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">18</div>
         <div class="item-body">
-          <div class="item-title">Team scoring display — average score, % optimal, ranking, trends</div>
-          <div class="item-note">Dashboard view showing each team's average BHAS score, % of members at optimal per metric, overall team ranking, and improvement over time. Depends on team assignment + BHAS rollup both being complete.</div>
+          <div class="item-title">Team scoring display — average score, % optimal, ranking</div>
+          <div class="item-note">Server: GET /api/employer/:orgSlug now returns team_breakdown (team, member_count, avg_bhas_pct, optimal_pct) sorted by avg BHAS desc. EmployerPage: replaced hardcoded fire/water/wind/earth colours with 8-colour cycling palette; team cards sourced from team_breakdown; added "% at optimal" sub-line. Admin Organizations tab: read-only Team Score Summary ranked table (Rank, Team, Members, Avg BHAS, % at Optimal) in expanded org panel; refreshes on expand and after Auto-assign Teams. 2026-03-17.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Complete</span>
       </div>
 
     </div>

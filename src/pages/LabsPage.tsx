@@ -13,6 +13,7 @@ const BACKEND_KEY = import.meta.env.VITE_BACKEND_API_KEY || ''
 interface ExtractedRow {
   name: string
   value: number | string
+  value_str?: string     // raw string from AI, may include < or > qualifier (e.g. "<8.4")
   unit: string
   min_normal: number | null
   max_normal: number | null
@@ -117,7 +118,7 @@ export default function Labs() {
   const handleSaveExtracted = () => {
     if (!extractedRows) return
     setSavingExtracted(true)
-    const toSave = extractedRows.filter(r => r.include && r.value !== '' && r.value !== null)
+    const toSave = extractedRows.filter(r => r.include && r.value !== '' && r.value !== null && r.value !== undefined)
     for (const row of toSave) {
       const matched = labMarkers.find(m => m.id === row.matchedMarkerId)
       const optimal = row.matchedMarkerId ? optimalRanges[row.matchedMarkerId] : null
@@ -390,23 +391,30 @@ export default function Labs() {
                             {matched ? matched.name : <span style={{ fontSize: 12 }}>No match — will save as-is</span>}
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>
-                            <input
-                              type="number"
-                              value={row.value}
-                              onChange={e => setExtractedRows(rows => rows!.map((r, j) =>
-                                j === i ? { ...r, value: e.target.value } : r
-                              ))}
-                              style={{
-                                width: 80,
-                                padding: '4px 6px',
-                                border: `1px solid ${theme.borderColor}`,
-                                borderRadius: 4,
-                                background: theme.bg,
-                                color: theme.text,
-                                fontSize: 13,
-                                textAlign: 'right',
-                              }}
-                            />
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
+                              {row.value_str && /^[<>]/.test(row.value_str) && (
+                                <span style={{ fontSize: 12, color: theme.textMuted, fontWeight: 400 }}>
+                                  {row.value_str.charAt(0)}
+                                </span>
+                              )}
+                              <input
+                                type="number"
+                                value={row.value}
+                                onChange={e => setExtractedRows(rows => rows!.map((r, j) =>
+                                  j === i ? { ...r, value: e.target.value } : r
+                                ))}
+                                style={{
+                                  width: 80,
+                                  padding: '4px 6px',
+                                  border: `1px solid ${theme.borderColor}`,
+                                  borderRadius: 4,
+                                  background: theme.bg,
+                                  color: theme.text,
+                                  fontSize: 13,
+                                  textAlign: 'right',
+                                }}
+                              />
+                            </div>
                           </td>
                           <td style={{ padding: '8px 12px', color: theme.textMuted }}>{row.unit}</td>
                           <td style={{ padding: '8px 12px', textAlign: 'center' }}>
