@@ -403,7 +403,7 @@
         <div class="phase-title">Corporate Portal</div>
         <div class="phase-desc">Employer orgs, de-identification, team assignment, and team scoring</div>
       </div>
-      <div class="phase-progress">4 / 5 done</div>
+      <div class="phase-progress">4 / 6 done</div>
     </div>
     <div class="items">
 
@@ -452,6 +452,40 @@
         <span class="item-status status-done">✅ Complete</span>
       </div>
 
+      <div class="item todo" data-status="todo">
+        <div class="item-num">18a</div>
+        <div class="item-body">
+          <div class="item-title">Admin Organizations tab — search and filter</div>
+          <div class="item-note">
+            Add filtering to three distinct areas of the Admin → Organizations tab:<br><br>
+
+            <strong>1. Org list (top level)</strong> — currently shows all orgs as an unfiltered card list.<br>
+            • Text search box: filter cards by org name or slug (case-insensitive substring match)<br>
+            • Member count range: "Min members" number input to hide orgs below a threshold<br>
+            • Sort toggle: by name (A→Z) or by member count (desc)<br><br>
+
+            <strong>2. Member table (inside expanded org panel)</strong> — currently shows all members with no filtering.<br>
+            • Public ID search: filter rows by BHI-XXXX-XXXX token substring<br>
+            • Team dropdown: filter by assigned team (options populated from org's teams)<br>
+            • Role dropdown: filter by member | admin<br>
+            • "Unassigned only" checkbox: show only members with no team assigned<br>
+            • Clear button: appears when any filter is active<br>
+            • "Showing X of Y" count when filters are active<br><br>
+
+            <strong>3. Team Score Summary table (inside expanded org panel)</strong> — currently shows all teams sorted by avg BHAS.<br>
+            • Min avg BHAS slider (0–100): hide teams scoring below threshold<br>
+            • "Has members only" toggle: hide teams with 0 members (already partially handled by the existing filter but should be a named control)<br><br>
+
+            Implementation notes:<br>
+            • All filtering is client-side (data already loaded into state on expand)<br>
+            • Filter state can be per-org (keyed by org.id) or reset on collapse — simpler to reset on collapse<br>
+            • No new server endpoints required<br>
+            • Filter bar styling should match the existing filter bars on EmployerPage.tsx and LeaderboardPage.tsx
+          </div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
     </div>
   </section>
 
@@ -465,7 +499,7 @@
         <div class="phase-title">Analytics &amp; Reporting</div>
         <div class="phase-desc">Population benchmarks, corporate dashboards, insurance reports, and exportable outputs</div>
       </div>
-      <div class="phase-progress">1 / 5 done</div>
+      <div class="phase-progress">2 / 5 done</div>
     </div>
     <div class="items">
 
@@ -478,28 +512,13 @@
         <span class="item-status status-todo">❌ Not Built</span>
       </div>
 
-      <div class="item partial" data-status="partial">
+      <div class="item done" data-status="done">
         <div class="item-num">20</div>
         <div class="item-body">
           <div class="item-title">Corporate analytics dashboard — population averages, risk distribution, team comparisons</div>
-          <div class="item-note">
-            <strong>In Progress (planned 2026-03-18)</strong><br><br>
-            New server endpoint <code>GET /api/analytics/:orgSlug</code> (server/index.js) — same auth guard as employer endpoint (org admin or app admin). Returns:<br>
-            • <code>kpis</code> — total_members, members_with_data, avg_bhas_pct, pct_at_optimal<br>
-            • <code>score_distribution</code> — member counts in 5 BHAS % buckets (0–24, 25–49, 50–74, 75–99, 100)<br>
-            • <code>label_distribution</code> — member counts by BHAS v2 label (Optimal / Healthy / Needs Improvement / High Risk) from bhas_v2_scores<br>
-            • <code>trend</code> — weekly org-average total_score for last 12 weeks from bhas_v2_scores, grouped by ISO week<br>
-            • <code>metric_breakdown</code> — per-metric % of members scoring optimal, extracted from metric_scores JSONB in bhas_v2_scores<br><br>
-            Analytics tab added to EmployerPage.tsx (alongside existing Members tab):<br>
-            • 4 KPI tiles: Total Members, Avg BHAS %, Members with Data, % at Optimal<br>
-            • BHAS Score Distribution — vertical BarChart (Recharts), 5 buckets, colour-coded green/amber/red<br>
-            • Org BHAS Trend — LineChart (Recharts), last 12 weeks, avg score per week<br>
-            • Per-Metric % Optimal — horizontal BarChart (Recharts), one bar per BHAS v2 metric<br><br>
-            No new DB migration required — reads from existing bhas_v2_scores + org_memberships tables.<br>
-            PHI rule maintained: no names, emails, or raw lab values in any chart or tooltip.
-          </div>
+          <div class="item-note">New endpoint GET /api/analytics/:orgSlug (server/index.js) — auth-gated (org admin or app admin). Returns: kpis (total_members, members_with_data, avg_bhas_pct, pct_at_optimal), score_distribution (5 BHAS % buckets), label_distribution (Optimal/Healthy/Needs Improvement/High Risk counts), trend (weekly org-average BHAS % for last 12 weeks from bhas_v2_scores ISO-week grouped), metric_breakdown (per-metric % at Optimal from metric_scores JSONB). Analytics tab added to EmployerPage.tsx alongside Members tab — lazy-loaded on first switch. AnalyticsPanel shows: 4 KPI tiles, BHAS score distribution bar chart, health label count cards, 12-week trend line chart (Recharts, 0–100% Y-axis, Optimal reference line), per-metric % optimal horizontal bar chart (colour-coded ≥75% green / ≥50% amber / &lt;50% red). No DB migration — reads bhas_v2_scores + org_memberships. PHI: aggregates only, no names/emails/raw values.</div>
         </div>
-        <span class="item-status status-partial">🔶 In Progress</span>
+        <span class="item-status status-done">✅ Built 2026-03-18</span>
       </div>
 
       <div class="item todo" data-status="todo">

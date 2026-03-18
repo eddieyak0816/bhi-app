@@ -1,30 +1,57 @@
 # CHANGELOG
 
-## 2026-03-18 — planned (F20 Corporate Analytics Dashboard)
+## 2026-03-18 — planned (F18a Admin Org Filters)
 
-### F20: Corporate Analytics Dashboard — Implementation Plan
+### F18a: Admin Organizations Tab — Search & Filter
 
-**Scope:** Employer-facing analytics tab added to `EmployerPage.tsx`, backed by a new dedicated server endpoint. All data is de-identified — no PHI, no raw lab values.
+Planned addition of client-side filtering to the Admin → Organizations tab. No new server endpoints required — all data is already loaded into state on panel expand.
 
-**New server endpoint: `GET /api/analytics/:orgSlug`**
-- Same auth guard as `/api/employer/:orgSlug` (org admin or app admin via `x-user-id` header).
+**Org list (card level)**
+- Text search input: filter org cards by name or slug (case-insensitive substring)
+- Min members number input: hide orgs below a member count threshold
+- Sort toggle: A→Z by name, or by member count descending
+
+**Member table (inside expanded org panel)**
+- Public ID search: filter member rows by BHI-XXXX-XXXX token substring
+- Team dropdown: filter by assigned team (options from the org's team list)
+- Role dropdown: filter by `member` | `admin`
+- "Unassigned only" checkbox: show only members with no team assigned
+- Clear button (appears when any filter active) + "Showing X of Y" count
+
+**Team Score Summary table (inside expanded org panel)**
+- Min avg BHAS slider (0–100): hide teams scoring below threshold
+- "Has members only" toggle: hide teams with 0 members
+
+Filter state resets when org panel is collapsed. Styling to match existing filter bars on `EmployerPage.tsx` and `LeaderboardPage.tsx`.
+
+---
+
+## 2026-03-18 — dev (F20 Corporate Analytics Dashboard)
+
+### F20: Corporate Analytics Dashboard — Complete
+
+**`server/index.js` — new endpoint `GET /api/analytics/:orgSlug`**
+- Auth: org admin or app admin only (same access check as employer endpoint, via `x-user-id` header).
 - Returns:
-  - `score_distribution` — member counts in 5 BHAS % buckets: 0–24, 25–49, 50–74, 75–99, 100.
-  - `label_distribution` — member counts by BHAS v2 label (Optimal / Healthy / Needs Improvement / High Risk). Sourced from latest `bhas_v2_scores` row per member.
-  - `trend` — weekly org-average `total_score` for the last 12 weeks. Computed from `bhas_v2_scores` rows grouped by ISO week. Each point: `{ week: 'YYYY-WXX', avg_score: number, member_count: number }`.
-  - `metric_breakdown` — per-metric % of org members scoring optimal. Extracted from `metric_scores` JSONB column in `bhas_v2_scores` (latest row per member). Each entry: `{ metric: string, optimal_pct: number, member_count: number }`.
-  - `kpis` — top-level summary: `{ total_members, members_with_data, avg_bhas_pct, pct_at_optimal }`.
+  - `kpis` — `{ total_members, members_with_data, avg_bhas_pct, pct_at_optimal }` — org-level summary.
+  - `score_distribution` — member counts in 5 BHAS % buckets (0–24, 25–49, 50–74, 75–99, 100), computed from latest `bhas_v2_scores` per member.
+  - `label_distribution` — member counts by BHAS v2 label (Optimal / Healthy / Needs Improvement / High Risk).
+  - `trend` — weekly org-average BHAS % for last 12 weeks, grouped by ISO week from `bhas_v2_scores`. One data point per week: `{ week, avg_score, member_count }`. Uses latest score per user per week to avoid double-counting.
+  - `metric_breakdown` — per-metric % of members scoring Optimal, extracted from `metric_scores` JSONB in each member's latest `bhas_v2_scores` row. Excludes metrics where `included=false` (e.g. HOMA-IR excluded for Type 1). Each entry: `{ metric, optimal_pct, member_count }`.
+- Returns empty payload with zero members if org has no memberships.
+- PHI guarantee: aggregates only — no names, emails, or raw lab values.
 
 **`src/pages/EmployerPage.tsx` — Analytics tab**
-- Two tabs added to the employer page header: **Members** (existing view, unchanged) and **Analytics** (new).
-- Analytics tab layout:
-  - **KPI tiles row** (4 tiles): Total Members, Avg BHAS %, Members with Data, % at Optimal.
-  - **BHAS Score Distribution** — vertical `BarChart` (Recharts). X-axis: 5 score buckets. Y-axis: member count. Bars colour-coded matching the existing green/amber/red BHAS palette.
-  - **Org BHAS Trend** — `LineChart` (Recharts). X-axis: week label. Y-axis: avg BHAS score (0–10). Plots last 12 weeks of org-average score. Shows member count in tooltip.
-  - **Per-Metric % Optimal** — horizontal `BarChart` (Recharts). One bar per BHAS v2 metric. X-axis: % (0–100). Bars colour-coded: ≥75% green, ≥50% amber, <50% red.
-- Uses Recharts (already installed). No new dependencies.
-- No new route — analytics renders inline under `#/employer/:orgSlug`.
-- PHI rule maintained: no names, emails, or raw lab values in any chart or tooltip.
+- Two-tab layout added below org header: **Members** (existing view, unchanged) and **Analytics** (new).
+- Analytics data fetched lazily on first tab switch (not on initial page load).
+- `AnalyticsPanel` component renders:
+  - **4 KPI tiles:** Total Members · Members with Data · Avg BHAS % · % at Optimal.
+  - **BHAS Score Distribution** — vertical `BarChart` (Recharts). X-axis: 5 score buckets. Bars colour-coded green/amber/red matching BHAS palette.
+  - **Health Label Distribution** — coloured count cards for each BHAS v2 label.
+  - **Org BHAS Trend** — `LineChart` (Recharts). X-axis: ISO week. Y-axis: 0–100%. Dashed reference line at 89% (Optimal threshold). Tooltip shows avg % + member count.
+  - **Per-Metric % Optimal** — horizontal `BarChart` (Recharts). One bar per BHAS v2 metric. X-axis: 0–100%. Bars colour-coded ≥75% green / ≥50% amber / <50% red. Tooltip shows % + member count.
+- No new route — renders inline under `#/employer/:orgSlug`.
+- No new dependencies — uses Recharts (already installed).
 
 **No DB migration required** — reads from existing `bhas_v2_scores` and `org_memberships` tables.
 

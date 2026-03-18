@@ -1761,6 +1761,203 @@ app.get('/api/leaderboard/:orgSlug', async (req, res) => {
   }
 });
 
+// ── F20: Corporate Analytics Dashboard ───────────────────────────────────────
+
+// GET /api/analytics/:orgSlug
+// Returns de-identified aggregate analytics for an org: KPIs, score distribution,
+// BHAS v2 label distribution, 12-week trend, and per-metric % optimal.
+// Auth: org admin or app admin only (same guard as employer endpoint).
+// PHI guarantee: no names, emails, or raw lab values — aggregates only.
+app.get('/api/analytics/:orgSlug', async (req, res) => {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(501).json({ error: 'backend-disabled' });
+  const requestingUserId = req.header('x-user-id') || '';
+  if (!requestingUserId) return res.status(401).json({ error: 'unauthenticated' });
+
+  const { orgSlug } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Resolve org
+    const { data: org, error: orgErr } = await sb
+      .from('organizations')
+      .select('id, name, slug')
+      .eq('slug', orgSlug)
+      .maybeSingle();
+    if (orgErr) return res.status(500).json({ error: 'db_error', step: 'org_lookup', detail: orgErr.message });
+    if (!org) return res.status(404).json({ error: 'org_not_found' });
+
+    // Auth check: requesting user must be an org admin or app admin
+    const { data: requesterProfile } = await sb
+      .from('profiles')
+      .select('role')
+      .eq('id', requestingUserId)
+      .maybeSingle();
+    const isAppAdmin = requesterProfile?.role === 'admin' || requesterProfile?.role === 'super_admin';
+
+    if (!isAppAdmin) {
+      const { data: membership } = await sb
+        .from('org_memberships')
+        .select('role')
+        .eq('org_id', org.id)
+        .eq('user_id', requestingUserId)
+        .maybeSingle();
+      if (!membership || membership.role !== 'admin') {
+        return res.status(403).json({ error: 'not_org_admin' });
+      }
+    }
+
+    // Fetch org member IDs
+    const { data: members, error: mErr } = await sb
+      .from('org_memberships')
+      .select('user_id')
+      .eq('org_id', org.id);
+    if (mErr) return res.status(500).json({ error: 'db_error', step: 'members_fetch', detail: mErr.message });
+
+    const memberIds = (members || []).map(m => m.user_id);
+    if (memberIds.length === 0) {
+      return res.status(200).json({
+        org: { name: org.name, slug: org.slug },
+        kpis: { total_members: 0, members_with_data: 0, avg_bhas_pct: null, pct_at_optimal: null },
+        score_distribution: [],
+        label_distribution: [],
+        trend: [],
+        metric_breakdown: [],
+      });
+    }
+
+    // Fetch all bhas_v2_scores rows for org members (last 12 weeks + latest per user)
+    const twelveWeeksAgo = new Date();
+    twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84); // 12 * 7
+    const twelveWeeksAgoStr = twelveWeeksAgo.toISOString().slice(0, 10);
+
+    const { data: allScores, error: sErr } = await sb
+      .from('bhas_v2_scores')
+      .select('user_id, score_date, total_score, label, metric_scores')
+      .in('user_id', memberIds)
+      .gte('score_date', twelveWeeksAgoStr)
+      .order('score_date', { ascending: true });
+    if (sErr) return res.status(500).json({ error: 'db_error', step: 'scores_fetch', detail: sErr.message });
+
+    // Also fetch the latest score per user regardless of date (for snapshot analytics)
+    const { data: latestScoresAll, error: lsErr } = await sb
+      .from('bhas_v2_scores')
+      .select('user_id, score_date, total_score, label, metric_scores')
+      .in('user_id', memberIds)
+      .order('score_date', { ascending: false });
+    if (lsErr) return res.status(500).json({ error: 'db_error', step: 'latest_scores_fetch', detail: lsErr.message });
+
+    // Keep only the most recent score per user (snapshot)
+    const latestByUser = {};
+    for (const row of latestScoresAll || []) {
+      if (!latestByUser[row.user_id]) latestByUser[row.user_id] = row;
+    }
+    const latestSnapshots = Object.values(latestByUser);
+
+    // ── KPIs ─────────────────────────────────────────────────────────────────
+    const membersWithData = latestSnapshots.length;
+    const totalMembers = memberIds.length;
+
+    // Convert total_score (0–9) to percentage (0–100) for display
+    const MAX_SCORE = 9.0;
+    const pctValues = latestSnapshots.map(s => Math.round((Number(s.total_score) / MAX_SCORE) * 100));
+    const avgBhasPct = pctValues.length > 0
+      ? Math.round(pctValues.reduce((a, b) => a + b, 0) / pctValues.length)
+      : null;
+    const optimalCount = latestSnapshots.filter(s => s.label === 'Optimal').length;
+    const pctAtOptimal = membersWithData > 0 ? Math.round((optimalCount / membersWithData) * 100) : null;
+
+    // ── Score distribution (buckets based on bhas_pct 0–100) ─────────────────
+    const buckets = [
+      { label: '0–24%',   min: 0,   max: 24,  count: 0 },
+      { label: '25–49%',  min: 25,  max: 49,  count: 0 },
+      { label: '50–74%',  min: 50,  max: 74,  count: 0 },
+      { label: '75–99%',  min: 75,  max: 99,  count: 0 },
+      { label: '100%',    min: 100, max: 100, count: 0 },
+    ];
+    for (const pct of pctValues) {
+      const bucket = buckets.find(b => pct >= b.min && pct <= b.max);
+      if (bucket) bucket.count++;
+    }
+    const score_distribution = buckets.map(({ label, count }) => ({ label, count }));
+
+    // ── Label distribution ────────────────────────────────────────────────────
+    const labelCounts = { 'Optimal': 0, 'Healthy': 0, 'Needs Improvement': 0, 'High Risk': 0 };
+    for (const s of latestSnapshots) {
+      if (s.label in labelCounts) labelCounts[s.label]++;
+    }
+    const label_distribution = Object.entries(labelCounts).map(([label, count]) => ({ label, count }));
+
+    // ── 12-week trend (weekly org-average total_score → converted to pct) ─────
+    // Group bhas_v2_scores rows by ISO week (YYYY-WXX)
+    function isoWeek(dateStr) {
+      const d = new Date(dateStr + 'T12:00:00Z');
+      const dayOfWeek = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayOfWeek);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+      return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+    }
+
+    // One row per user per week — keep only latest per (user, week)
+    const weekUserMap = {}; // week → { userId → score }
+    for (const row of allScores || []) {
+      const week = isoWeek(row.score_date);
+      if (!weekUserMap[week]) weekUserMap[week] = {};
+      // later rows (ascending order) overwrite earlier — keeps latest per user per week
+      weekUserMap[week][row.user_id] = Number(row.total_score);
+    }
+
+    const trend = Object.entries(weekUserMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([week, userScores]) => {
+        const scores = Object.values(userScores);
+        const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+        return {
+          week,
+          avg_score: Math.round((avgScore / MAX_SCORE) * 100 * 10) / 10, // % with 1 decimal
+          member_count: scores.length,
+        };
+      });
+
+    // ── Per-metric % optimal ──────────────────────────────────────────────────
+    // Aggregate metric_scores JSONB from each user's latest snapshot
+    const metricMap = {}; // metric name → { optimal: n, total: n }
+    for (const s of latestSnapshots) {
+      const metrics = Array.isArray(s.metric_scores) ? s.metric_scores : [];
+      for (const m of metrics) {
+        if (!m.included) continue; // skip excluded metrics (e.g. HOMA-IR for Type 1)
+        if (!metricMap[m.metric]) metricMap[m.metric] = { optimal: 0, total: 0 };
+        metricMap[m.metric].total++;
+        if (m.label === 'Optimal') metricMap[m.metric].optimal++;
+      }
+    }
+    const metric_breakdown = Object.entries(metricMap)
+      .map(([metric, { optimal, total }]) => ({
+        metric,
+        optimal_pct: Math.round((optimal / total) * 100),
+        member_count: total,
+      }))
+      .sort((a, b) => a.metric.localeCompare(b.metric));
+
+    return res.status(200).json({
+      org: { name: org.name, slug: org.slug },
+      kpis: {
+        total_members: totalMembers,
+        members_with_data: membersWithData,
+        avg_bhas_pct: avgBhasPct,
+        pct_at_optimal: pctAtOptimal,
+      },
+      score_distribution,
+      label_distribution,
+      trend,
+      metric_breakdown,
+    });
+  } catch (err) {
+    console.error('GET /api/analytics/:orgSlug error:', err.message, err.stack);
+    return res.status(500).json({ error: 'server_error', detail: err.message });
+  }
+});
+
 // ── Feature 15: Username System ──────────────────────────────────────────────
 
 // GET /api/username/check?username=foo — public availability check (used by ProfilePage)

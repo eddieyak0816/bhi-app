@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react'
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, ReferenceLine,
+} from 'recharts'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -23,6 +27,20 @@ interface OrgData {
   org: { name: string; slug: string }
   members: Member[]
   team_breakdown: TeamBreakdown[]
+}
+
+interface AnalyticsData {
+  org: { name: string; slug: string }
+  kpis: {
+    total_members: number
+    members_with_data: number
+    avg_bhas_pct: number | null
+    pct_at_optimal: number | null
+  }
+  score_distribution: Array<{ label: string; count: number }>
+  label_distribution: Array<{ label: string; count: number }>
+  trend: Array<{ week: string; avg_score: number; member_count: number }>
+  metric_breakdown: Array<{ metric: string; optimal_pct: number; member_count: number }>
 }
 
 interface EmployerPageProps {
@@ -76,6 +94,14 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'members' | 'analytics'>('members')
+
+  // Analytics state
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null)
+
   // Filters
   const [searchUsername, setSearchUsername] = useState('')
   const [filterTeam, setFilterTeam] = useState('')
@@ -102,6 +128,24 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
       .then(body => { setData(body); setLoading(false) })
       .catch(err => { setError(err.message); setLoading(false) })
   }, [user?.id, orgSlug])
+
+  useEffect(() => {
+    if (!user?.id || !orgSlug || activeTab !== 'analytics') return
+    if (analyticsData) return // already loaded
+    setAnalyticsLoading(true); setAnalyticsError(null)
+    fetch(apiUrl(`/api/analytics/${encodeURIComponent(orgSlug)}`), {
+      headers: { 'x-user-id': user.id },
+    })
+      .then(async res => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(`Analytics error ${res.status}: ${body.error ?? 'unknown'} ${body.detail ?? body.step ?? ''}`.trim())
+        }
+        return res.json()
+      })
+      .then(body => { setAnalyticsData(body); setAnalyticsLoading(false) })
+      .catch(err => { setAnalyticsError(err.message); setAnalyticsLoading(false) })
+  }, [user?.id, orgSlug, activeTab])
 
   const sectionStyle: React.CSSProperties = {
     background: theme.bgSecondary,
@@ -192,9 +236,43 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
           </button>
         )}
       </div>
-      <p style={{ margin: '0 0 24px 0', color: theme.textMuted, fontSize: 14 }}>
+      <p style={{ margin: '0 0 16px 0', color: theme.textMuted, fontSize: 14 }}>
         {members.length} member{members.length !== 1 ? 's' : ''}{avgBhas !== null ? ` · Org avg BHAS: ${avgBhas}%` : ''}
       </p>
+
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: `2px solid ${theme.borderColor}` }}>
+        {(['members', 'analytics'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '8px 18px', fontSize: 14, fontWeight: 600,
+              color: activeTab === tab ? (theme.blue ?? '#3B82F6') : theme.textMuted,
+              borderBottom: activeTab === tab ? `2px solid ${theme.blue ?? '#3B82F6'}` : '2px solid transparent',
+              marginBottom: -2,
+              textTransform: 'capitalize',
+            }}
+          >
+            {tab === 'members' ? 'Members' : 'Analytics'}
+          </button>
+        ))}
+      </div>
+
+      {/* ── ANALYTICS TAB ── */}
+      {activeTab === 'analytics' && (
+        <AnalyticsPanel
+          data={analyticsData}
+          loading={analyticsLoading}
+          error={analyticsError}
+          theme={theme}
+          darkMode={darkMode}
+        />
+      )}
+
+      {/* ── MEMBERS TAB ── */}
+      {activeTab === 'members' && (<>
 
       {/* Team summary cards — Feature 18: dynamic teams with color cycling */}
       {teamBreakdown.filter(t => t.member_count > 0).length > 0 && (
@@ -333,6 +411,204 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
           </div>
         )}
       </div>
+      </>)}
     </div>
   )
 }
+
+// ── Analytics Panel ───────────────────────────────────────────────────────────
+
+interface AnalyticsPanelProps {
+  data: AnalyticsData | null
+  loading: boolean
+  error: string | null
+  theme: any
+  darkMode: boolean
+}
+
+const LABEL_COLORS: Record<string, { bg: string; color: string }> = {
+  'Optimal':           { bg: '#dcfce7', color: '#15803d' },
+  'Healthy':           { bg: '#dbeafe', color: '#1d4ed8' },
+  'Needs Improvement': { bg: '#fef3c7', color: '#b45309' },
+  'High Risk':         { bg: '#fee2e2', color: '#b91c1c' },
+}
+
+function distBarColor(label: string): string {
+  if (label === '100%') return '#15803d'
+  if (label === '75–99%') return '#22c55e'
+  if (label === '50–74%') return '#b45309'
+  if (label === '25–49%') return '#f97316'
+  return '#b91c1c'
+}
+
+function metricBarColor(pct: number): string {
+  if (pct >= 75) return '#15803d'
+  if (pct >= 50) return '#b45309'
+  return '#b91c1c'
+}
+
+function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPanelProps) {
+  const sectionStyle: React.CSSProperties = {
+    background: theme.bgSecondary,
+    border: `1px solid ${theme.borderColor}`,
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 20,
+  }
+
+  if (loading) {
+    return <div style={{ color: theme.textMuted, padding: '40px 0', textAlign: 'center' }}>Loading analytics…</div>
+  }
+  if (error) {
+    return (
+      <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: 16, color: '#b91c1c', marginBottom: 20 }}>
+        {error}
+      </div>
+    )
+  }
+  if (!data) return null
+
+  const { kpis, score_distribution, label_distribution, trend, metric_breakdown } = data
+  const hasScoreData = kpis.members_with_data > 0
+
+  // KPI tiles
+  const kpiTiles = [
+    { label: 'Total Members',     value: String(kpis.total_members) },
+    { label: 'Members with Data', value: String(kpis.members_with_data) },
+    { label: 'Avg BHAS %',        value: kpis.avg_bhas_pct !== null ? `${kpis.avg_bhas_pct}%` : '—' },
+    { label: '% at Optimal',      value: kpis.pct_at_optimal !== null ? `${kpis.pct_at_optimal}%` : '—' },
+  ]
+
+  // Custom bar colours for score distribution chart
+  const DistBar = (props: any) => {
+    const { x, y, width, height, label: bucketLabel } = props
+    return <rect x={x} y={y} width={width} height={height} fill={distBarColor(bucketLabel)} rx={3} />
+  }
+
+  // Custom bar colours for metric breakdown chart
+  const MetricBar = (props: any) => {
+    const { x, y, width, height, optimal_pct } = props
+    return <rect x={x} y={y} width={width} height={height} fill={metricBarColor(optimal_pct)} rx={3} />
+  }
+
+  return (
+    <>
+      {/* KPI tiles */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
+        {kpiTiles.map(({ label, value }) => (
+          <div key={label} style={{ ...sectionStyle, marginBottom: 0, padding: '16px 18px' }}>
+            <div style={{ fontSize: 26, fontWeight: 800, color: theme.text }}>{value}</div>
+            <div style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {!hasScoreData && (
+        <div style={{ ...sectionStyle, color: theme.textMuted, fontSize: 14 }}>
+          No BHAS v2 score data yet for this organization. Members need to calculate their score on the Dashboard for analytics to populate.
+        </div>
+      )}
+
+      {hasScoreData && (<>
+
+        {/* BHAS Score Distribution */}
+        <div style={sectionStyle}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>BHAS Score Distribution</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={score_distribution} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
+              <XAxis dataKey="label" tick={{ fontSize: 12, fill: theme.textMuted }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: theme.textMuted }} />
+              <Tooltip
+                contentStyle={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, color: theme.text }}
+                labelStyle={{ color: theme.text }}
+                itemStyle={{ color: theme.blue ?? '#3B82F6' }}
+                formatter={(value: number) => [value, 'Members']}
+              />
+              <Bar dataKey="count" shape={(props: any) => {
+                const entry = score_distribution.find(d => d.label === props.label)
+                return <rect {...props} fill={distBarColor(entry?.label ?? '')} rx={3} />
+              }} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* BHAS v2 Label Distribution */}
+        <div style={sectionStyle}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>Health Label Distribution</h3>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {label_distribution.map(({ label, count }) => {
+              const c = LABEL_COLORS[label] ?? { bg: '#f3f4f6', color: '#374151' }
+              return (
+                <div key={label} style={{ background: c.bg, borderRadius: 8, padding: '12px 18px', minWidth: 120 }}>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: c.color }}>{count}</div>
+                  <div style={{ fontSize: 12, color: c.color, marginTop: 2 }}>{label}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* 12-Week Trend */}
+        {trend.length > 0 && (
+          <div style={sectionStyle}>
+            <h3 style={{ margin: '0 0 4px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>Org BHAS Trend — Last 12 Weeks</h3>
+            <p style={{ margin: '0 0 16px 0', fontSize: 12, color: theme.textMuted }}>Weekly average BHAS % across members with data</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={trend} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
+                <XAxis dataKey="week" tick={{ fontSize: 11, fill: theme.textMuted }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: theme.textMuted }} unit="%" />
+                <Tooltip
+                  contentStyle={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, color: theme.text }}
+                labelStyle={{ color: theme.text }}
+                itemStyle={{ color: theme.blue ?? '#3B82F6' }}
+                  formatter={(value: number, name: string) => [
+                    name === 'avg_score' ? `${value}%` : value,
+                    name === 'avg_score' ? 'Avg BHAS' : 'Members',
+                  ]}
+                />
+                <ReferenceLine y={89} stroke="#15803d" strokeDasharray="4 2" label={{ value: 'Optimal', position: 'insideTopRight', fontSize: 10, fill: '#15803d' }} />
+                <Line type="monotone" dataKey="avg_score" stroke={theme.blue ?? '#3B82F6'} strokeWidth={2} dot={{ r: 4, fill: theme.blue ?? '#3B82F6' }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Per-Metric % Optimal */}
+        {metric_breakdown.length > 0 && (
+          <div style={sectionStyle}>
+            <h3 style={{ margin: '0 0 4px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>Per-Metric % at Optimal</h3>
+            <p style={{ margin: '0 0 16px 0', fontSize: 12, color: theme.textMuted }}>Percentage of members with data scoring Optimal on each BHAS v2 metric</p>
+            <ResponsiveContainer width="100%" height={Math.max(180, metric_breakdown.length * 36)}>
+              <BarChart
+                layout="vertical"
+                data={metric_breakdown}
+                margin={{ top: 4, right: 40, left: 10, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} horizontal={false} />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: theme.textMuted }} unit="%" />
+                <YAxis type="category" dataKey="metric" width={140} tick={{ fontSize: 11, fill: theme.text }} />
+                <Tooltip
+                  contentStyle={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, color: theme.text }}
+                labelStyle={{ color: theme.text }}
+                itemStyle={{ color: theme.blue ?? '#3B82F6' }}
+                  formatter={(value: number, _name: string, props: any) => [
+                    `${value}% (${props.payload.member_count} members)`,
+                    '% at Optimal',
+                  ]}
+                />
+                <Bar dataKey="optimal_pct" shape={(props: any) => {
+                  const entry = metric_breakdown.find(m => m.metric === props.metric)
+                  return <rect {...props} fill={metricBarColor(entry?.optimal_pct ?? 0)} rx={3} />
+                }} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+      </>)}
+    </>
+  )
+}
+
