@@ -76,6 +76,12 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Filters
+  const [searchUsername, setSearchUsername] = useState('')
+  const [filterTeam, setFilterTeam] = useState('')
+  const [filterRole, setFilterRole] = useState('')
+  const [minBhas, setMinBhas] = useState(0)
+
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   function apiUrl(path: string) {
     return DEV_BACKEND_URL ? `${DEV_BACKEND_URL.replace(/\/$/, '')}${path}` : path
@@ -139,6 +145,32 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
     ? Math.round(withScores.reduce((s, m) => s + (m.bhas_pct ?? 0), 0) / withScores.length)
     : null
 
+  const allTeams = [...new Set(members.map(m => m.team).filter(Boolean) as string[])]
+  const allRoles = [...new Set(members.map(m => m.role).filter(Boolean))]
+  const hasFilters = searchUsername || filterTeam || filterRole || minBhas > 0
+
+  const filteredMembers = members
+    .slice()
+    .sort((a, b) => (b.bhas_pct ?? -1) - (a.bhas_pct ?? -1))
+    .filter(m => {
+      if (searchUsername && !(m.username ?? '').toLowerCase().includes(searchUsername.toLowerCase()) &&
+          !(m.public_id ?? '').toLowerCase().includes(searchUsername.toLowerCase())) return false
+      if (filterTeam && m.team !== filterTeam) return false
+      if (filterRole && m.role !== filterRole) return false
+      if (minBhas > 0 && (m.bhas_pct === null || m.bhas_pct < minBhas)) return false
+      return true
+    })
+
+  const inputStyle: React.CSSProperties = {
+    background: theme.card,
+    border: `1px solid ${theme.borderColor}`,
+    borderRadius: 6,
+    padding: '6px 10px',
+    color: theme.text,
+    fontSize: 13,
+    outline: 'none',
+  }
+
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
       {/* PHI notice */}
@@ -186,11 +218,76 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
 
       {/* Member table */}
       <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 14px 0', fontSize: 15, fontWeight: 600, color: theme.text }}>
+        <h3 style={{ margin: '0 0 12px 0', fontSize: 15, fontWeight: 600, color: theme.text }}>
           Members
         </h3>
+
+        {/* Filter bar */}
+        {members.length > 0 && (
+          <>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: `1fr 130px 120px auto${hasFilters ? ' auto' : ''}`,
+              gap: 8, alignItems: 'center',
+              background: theme.bg, border: `1px solid ${theme.borderColor}`,
+              borderRadius: 8, padding: '10px 12px', marginBottom: 12,
+            }}>
+              <input
+                type="text"
+                placeholder="Search username or public ID…"
+                value={searchUsername}
+                onChange={e => setSearchUsername(e.target.value)}
+                style={{ ...inputStyle, width: '100%' }}
+              />
+              <select
+                value={filterTeam}
+                onChange={e => setFilterTeam(e.target.value)}
+                style={{ ...inputStyle, cursor: 'pointer', width: '100%' }}
+              >
+                <option value="">All teams</option>
+                {allTeams.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <select
+                value={filterRole}
+                onChange={e => setFilterRole(e.target.value)}
+                style={{ ...inputStyle, cursor: 'pointer', width: '100%' }}
+              >
+                <option value="">All roles</option>
+                {allRoles.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 12, color: theme.textMuted }}>
+                  Min BHAS: <strong style={{ color: theme.text }}>{minBhas}%</strong>
+                </span>
+                <input
+                  type="range"
+                  min={0} max={100} step={5}
+                  value={minBhas}
+                  onChange={e => setMinBhas(Number(e.target.value))}
+                  style={{ width: 80, cursor: 'pointer', accentColor: theme.blue }}
+                />
+              </div>
+              {hasFilters && (
+                <button
+                  onClick={() => { setSearchUsername(''); setFilterTeam(''); setFilterRole(''); setMinBhas(0) }}
+                  style={{ ...inputStyle, cursor: 'pointer', color: theme.textMuted, fontSize: 12, whiteSpace: 'nowrap' }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {hasFilters && (
+              <p style={{ margin: '0 0 10px 0', fontSize: 12, color: theme.textMuted }}>
+                Showing {filteredMembers.length} of {members.length} members
+              </p>
+            )}
+          </>
+        )}
+
         {members.length === 0 ? (
           <p style={{ color: theme.textMuted, fontSize: 14 }}>No members in this organization yet.</p>
+        ) : filteredMembers.length === 0 ? (
+          <p style={{ color: theme.textMuted, fontSize: 14 }}>No members match the current filters.</p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -202,38 +299,35 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
                 </tr>
               </thead>
               <tbody>
-                {members
-                  .slice()
-                  .sort((a, b) => (b.bhas_pct ?? -1) - (a.bhas_pct ?? -1))
-                  .map((m, i) => {
-                    const teamIdx = m.team ? teamBreakdown.findIndex(t => t.team === m.team) : -1
-                    const tc = teamIdx >= 0 ? teamColor(teamIdx, darkMode) : null
-                    return (
-                      <tr key={i} style={{ borderBottom: `1px solid ${theme.borderColor}` }}>
-                        <td style={{ padding: '8px 10px', color: theme.text, fontWeight: 500 }}>
-                          {m.username || <em style={{ color: theme.textMuted }}>not set</em>}
-                        </td>
-                        <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: 12, color: theme.textMuted }}>
-                          {m.public_id || '—'}
-                        </td>
-                        <td style={{ padding: '8px 10px' }}>
-                          {m.team && tc ? (
-                            <span style={{ background: tc.bg, color: tc.color, borderRadius: 4, padding: '2px 8px', fontWeight: 600, fontSize: 12 }}>{m.team}</span>
-                          ) : <span style={{ color: theme.textMuted }}>—</span>}
-                        </td>
-                        <td style={{ padding: '8px 10px' }}>
-                          <BhasBadge pct={m.bhas_pct} />
-                        </td>
-                        <td style={{ padding: '8px 10px', color: theme.textMuted }}>{m.result_count}</td>
-                        <td style={{ padding: '8px 10px' }}>
-                          <span style={{ background: m.role === 'admin' ? '#dbeafe' : '#f3f4f6', color: m.role === 'admin' ? '#1d4ed8' : '#374151', borderRadius: 4, padding: '1px 7px', fontSize: 11, fontWeight: 600 }}>{m.role}</span>
-                        </td>
-                        <td style={{ padding: '8px 10px', color: theme.textMuted, whiteSpace: 'nowrap' }}>
-                          {m.joined_at ? new Date(m.joined_at).toLocaleDateString() : '—'}
-                        </td>
-                      </tr>
-                    )
-                  })}
+                {filteredMembers.map((m, i) => {
+                  const teamIdx = m.team ? teamBreakdown.findIndex(t => t.team === m.team) : -1
+                  const tc = teamIdx >= 0 ? teamColor(teamIdx, darkMode) : null
+                  return (
+                    <tr key={i} style={{ borderBottom: `1px solid ${theme.borderColor}` }}>
+                      <td style={{ padding: '8px 10px', color: theme.text, fontWeight: 500 }}>
+                        {m.username || <em style={{ color: theme.textMuted }}>not set</em>}
+                      </td>
+                      <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: 12, color: theme.textMuted }}>
+                        {m.public_id || '—'}
+                      </td>
+                      <td style={{ padding: '8px 10px' }}>
+                        {m.team && tc ? (
+                          <span style={{ background: tc.bg, color: tc.color, borderRadius: 4, padding: '2px 8px', fontWeight: 600, fontSize: 12 }}>{m.team}</span>
+                        ) : <span style={{ color: theme.textMuted }}>—</span>}
+                      </td>
+                      <td style={{ padding: '8px 10px' }}>
+                        <BhasBadge pct={m.bhas_pct} />
+                      </td>
+                      <td style={{ padding: '8px 10px', color: theme.textMuted }}>{m.result_count}</td>
+                      <td style={{ padding: '8px 10px' }}>
+                        <span style={{ background: m.role === 'admin' ? '#dbeafe' : '#f3f4f6', color: m.role === 'admin' ? '#1d4ed8' : '#374151', borderRadius: 4, padding: '1px 7px', fontSize: 11, fontWeight: 600 }}>{m.role}</span>
+                      </td>
+                      <td style={{ padding: '8px 10px', color: theme.textMuted, whiteSpace: 'nowrap' }}>
+                        {m.joined_at ? new Date(m.joined_at).toLocaleDateString() : '—'}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
