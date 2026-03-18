@@ -1499,7 +1499,7 @@ app.get('/api/employer/:orgSlug', async (req, res) => {
       .select('id, name, slug')
       .eq('slug', orgSlug)
       .maybeSingle();
-    if (orgErr) return res.status(500).json({ error: 'db_error' });
+    if (orgErr) return res.status(500).json({ error: 'db_error', step: 'org_lookup', detail: orgErr.message });
     if (!org) return res.status(404).json({ error: 'org_not_found' });
 
     // Auth check: requesting user must be an org admin or app admin
@@ -1522,41 +1522,51 @@ app.get('/api/employer/:orgSlug', async (req, res) => {
       }
     }
 
-    // Fetch members (de-identified)
+    // Fetch members
     const { data: members, error: mErr } = await sb
       .from('org_memberships')
-      .select('user_id, role, team, joined_at, profiles(username, public_id)')
+      .select('user_id, role, team, joined_at')
       .eq('org_id', org.id);
-    if (mErr) return res.status(500).json({ error: 'db_error' });
+    if (mErr) return res.status(500).json({ error: 'db_error', step: 'members_fetch', detail: mErr.message });
+
+    // Fetch profiles separately (avoid PostgREST join — schema cache issue)
+    const memberIds = (members || []).map(m => m.user_id);
+    let profileMap = {};
+    if (memberIds.length > 0) {
+      const { data: profileRows } = await sb
+        .from('profiles')
+        .select('id, username, public_id')
+        .in('id', memberIds);
+      for (const p of profileRows || []) profileMap[p.id] = p;
+    }
 
     // Fetch logic rules for BHAS computation
     const { data: logicRules } = await sb
       .from('logic_rules')
-      .select('marker_id, min_value, max_value, operator, tag_to_apply, lab_markers(name)')
-      .order('marker_id');
+      .select('min_value, max_value, operator, tag_to_apply, lab_markers(name)')
+      .order('id');
     const rulesWithNames = (logicRules || []).map(r => ({
       ...r, marker_name: r.lab_markers?.name || '',
     }));
 
     // For each member, fetch their latest result per marker and compute BHAS %
-    const memberIds = (members || []).map(m => m.user_id);
     let latestByUser = {};
     if (memberIds.length > 0) {
       // Get latest lab result per (user_id, marker_id) — subquery via RPC not available,
       // so fetch all and reduce in JS (service role has full access)
       const { data: allResults } = await sb
         .from('user_lab_results')
-        .select('user_id, marker_id, value, recorded_at, lab_markers(name)')
+        .select('user_id, marker_name, value, date')
         .in('user_id', memberIds)
-        .order('recorded_at', { ascending: false });
+        .order('date', { ascending: false });
 
-      // Build map: user_id → marker_id → latest { value, marker_name }
+      // Build map: user_id → marker_name → latest { value, marker_name }
       for (const row of allResults || []) {
         if (!latestByUser[row.user_id]) latestByUser[row.user_id] = {};
-        if (!latestByUser[row.user_id][row.marker_id]) {
-          latestByUser[row.user_id][row.marker_id] = {
+        if (!latestByUser[row.user_id][row.marker_name]) {
+          latestByUser[row.user_id][row.marker_name] = {
             value: row.value,
-            marker_name: row.lab_markers?.name || '',
+            marker_name: row.marker_name,
           };
         }
       }
@@ -1575,8 +1585,8 @@ app.get('/api/employer/:orgSlug', async (req, res) => {
       const userLatest = Object.values(latestByUser[m.user_id] || {});
       const bhasPct = computeBhasPct(userLatest, rulesWithNames);
       return {
-        username: m.profiles?.username || null,
-        public_id: m.profiles?.public_id || null,
+        username: profileMap[m.user_id]?.username || null,
+        public_id: profileMap[m.user_id]?.public_id || null,
         role: m.role,
         team: m.team,
         joined_at: m.joined_at,
@@ -1613,8 +1623,8 @@ app.get('/api/employer/:orgSlug', async (req, res) => {
       team_breakdown: teamBreakdown,  // Feature 18
     });
   } catch (err) {
-    console.error('GET /api/employer/:orgSlug error:', err.message);
-    return res.status(500).json({ error: 'server_error' });
+    console.error('GET /api/employer/:orgSlug error:', err.message, err.stack);
+    return res.status(500).json({ error: 'server_error', detail: err.message });
   }
 });
 
