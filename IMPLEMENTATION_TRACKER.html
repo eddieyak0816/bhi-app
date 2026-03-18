@@ -465,7 +465,7 @@
         <div class="phase-title">Analytics &amp; Reporting</div>
         <div class="phase-desc">Population benchmarks, corporate dashboards, insurance reports, and exportable outputs</div>
       </div>
-      <div class="phase-progress">0 / 4 done</div>
+      <div class="phase-progress">1 / 5 done</div>
     </div>
     <div class="items">
 
@@ -505,13 +505,13 @@
         <span class="item-status status-todo">❌ Not Built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">23</div>
         <div class="item-body">
-          <div class="item-title">Lab marker charts — admin-defined data visualization</div>
-          <div class="item-note">Admin creates named charts (e.g. "Cardiometabolic Panel") and selects which lab markers to include. Users see their own values plotted over time as line graphs. DB: charts table + chart_markers join table. Admin UI: new Charts tab (create/delete charts, add/remove markers). User UI: Recharts line graphs on Dashboard or Labs page — only renders markers with at least one user result.</div>
+          <div class="item-title">Lab marker charts — historical trend visualization per marker</div>
+          <div class="item-note">Inline Recharts ComposedChart on Labs page (src/pages/LabsPage.tsx). Each marker card shows "Show Trend" toggle when ≥2 results exist. Chart: blue line + dots (value over time), green shaded optimal range band (from logic_rules optimalRanges map), dashed reference lines at optimal min/max. One chart open at a time. No new DB migration — uses existing user_lab_results + logic_rules data. Installed: recharts.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-03-17</span>
       </div>
 
     </div>

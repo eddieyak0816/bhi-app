@@ -6,6 +6,17 @@ import { useEvaluation } from '../context/EvaluationContext'
 import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
 import type { ProviderVerification } from '../context/ResultsContext'
+import {
+  ComposedChart,
+  Line,
+  ReferenceArea,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4242'
 const BACKEND_KEY = import.meta.env.VITE_BACKEND_API_KEY || ''
@@ -168,6 +179,8 @@ export default function Labs() {
     fetchMarkers()
   }, [])
 
+  const [chartOpenMarker, setChartOpenMarker] = useState<string | null>(null)
+
   const uniqueMarkers = Array.from(new Set(results.map(r => r.markerName)))
   const filteredResults = selectedMarker ? getResultsForMarker(selectedMarker) : results.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
@@ -225,6 +238,14 @@ export default function Labs() {
       minNormal: optimal ? String(optimal.min) : String(marker.min_normal || 0),
       maxNormal: optimal ? String(optimal.max) : String(marker.max_normal || 100),
     }))
+  }
+
+  // Build chart data for a given marker (ascending date order for left→right trend)
+  const buildChartData = (markerName: string) => {
+    return getResultsForMarker(markerName)
+      .slice()
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map(r => ({ date: r.date, value: r.value, unit: r.unit }))
   }
 
   return (
@@ -723,34 +744,131 @@ export default function Labs() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
             {uniqueMarkers.map(marker => {
               const latest = getResultsForMarker(marker)[0]
+              const markerHistory = getResultsForMarker(marker)
               const statusColor = latest ? getStatusColor(latest.value, latest.minNormal, latest.maxNormal) : theme.textMuted
+              const isChartOpen = chartOpenMarker === marker
               return (
-                <button
-                  key={marker}
-                  onClick={() => setSelectedMarker(selectedMarker === marker ? null : marker)}
-                  style={{
-                    background: selectedMarker === marker ? theme.bgSecondary : 'transparent',
-                    border: `1.5px solid ${selectedMarker === marker ? theme.blue : theme.borderColor}`,
-                    borderRadius: 6,
-                    padding: 12,
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    color: theme.text,
-                  }}
-                >
-                  <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 6 }}>{marker}</div>
-                  {latest && (
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 600, color: statusColor }}>
-                        {latest.value} {latest.unit}
+                <div key={marker} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <button
+                    onClick={() => setSelectedMarker(selectedMarker === marker ? null : marker)}
+                    style={{
+                      background: selectedMarker === marker ? theme.bgSecondary : 'transparent',
+                      border: `1.5px solid ${selectedMarker === marker ? theme.blue : theme.borderColor}`,
+                      borderRadius: 6,
+                      padding: 12,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      color: theme.text,
+                    }}
+                  >
+                    <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 6 }}>{marker}</div>
+                    {latest && (
+                      <div>
+                        <div style={{ fontSize: 16, fontWeight: 600, color: statusColor }}>
+                          {latest.value} {latest.unit}
+                        </div>
+                        <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>{latest.date}</div>
                       </div>
-                      <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>{latest.date}</div>
-                    </div>
+                    )}
+                  </button>
+                  {markerHistory.length > 1 && (
+                    <button
+                      onClick={() => setChartOpenMarker(isChartOpen ? null : marker)}
+                      style={{
+                        background: 'transparent',
+                        border: `1px solid ${isChartOpen ? theme.blue : theme.borderColor}`,
+                        borderRadius: 4,
+                        padding: '4px 8px',
+                        fontSize: 11,
+                        cursor: 'pointer',
+                        color: isChartOpen ? theme.blue : theme.textMuted,
+                        fontWeight: 600,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {isChartOpen ? '▲ Hide Trend' : '▼ Show Trend'}
+                    </button>
                   )}
-                </button>
+                </div>
               )
             })}
           </div>
+
+          {/* Inline trend chart */}
+          {chartOpenMarker && (() => {
+            const chartData = buildChartData(chartOpenMarker)
+            const latest = getResultsForMarker(chartOpenMarker)[0]
+            const markerObj = labMarkers.find(m => m.name === chartOpenMarker)
+            const optimal = markerObj ? optimalRanges[markerObj.id] : null
+            const unit = latest?.unit || ''
+            const values = chartData.map(d => d.value)
+            const dataMin = Math.min(...values)
+            const dataMax = Math.max(...values)
+            // Y-axis domain: include optimal range if present, plus 10% padding
+            const yMin = optimal ? Math.min(dataMin, optimal.min) : dataMin
+            const yMax = optimal ? Math.max(dataMax, optimal.max) : dataMax
+            const pad = (yMax - yMin) * 0.15 || 1
+            return (
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${theme.borderColor}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{chartOpenMarker} — Trend</div>
+                  {optimal && (
+                    <div style={{ fontSize: 12, color: theme.textMuted }}>
+                      Optimal range: <span style={{ color: '#10B981', fontWeight: 600 }}>{optimal.min} – {optimal.max} {unit}</span>
+                    </div>
+                  )}
+                </div>
+                <ResponsiveContainer width="100%" height={220}>
+                  <ComposedChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 11, fill: theme.textMuted as string }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      domain={[yMin - pad, yMax + pad]}
+                      tick={{ fontSize: 11, fill: theme.textMuted as string }}
+                      tickLine={false}
+                      tickFormatter={(v: number) => String(Math.round(v * 10) / 10)}
+                      width={40}
+                    />
+                    <Tooltip
+                      contentStyle={{ background: theme.card as string, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 12 }}
+                      labelStyle={{ color: theme.textMuted as string }}
+                      formatter={(val: number) => [`${val} ${unit}`, chartOpenMarker]}
+                    />
+                    {optimal && (
+                      <ReferenceArea
+                        y1={optimal.min}
+                        y2={optimal.max}
+                        fill="#10B981"
+                        fillOpacity={0.08}
+                        stroke="#10B981"
+                        strokeOpacity={0.3}
+                        label=""
+                      />
+                    )}
+                    {optimal && (
+                      <ReferenceLine y={optimal.min} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />
+                    )}
+                    {optimal && (
+                      <ReferenceLine y={optimal.max} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />
+                    )}
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke={theme.blue as string}
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: theme.blue as string, strokeWidth: 0 }}
+                      activeDot={{ r: 6 }}
+                      isAnimationActive={false}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            )
+          })()}
         </div>
       )}
 

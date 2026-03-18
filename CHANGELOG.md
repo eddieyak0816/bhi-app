@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-03-17 — dev
+
+### Feature 23: Lab Marker Charts (Phase 5 / Section 8b)
+
+**Historical trend charts on Labs page**
+- Installed `recharts` (ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer).
+- Added `buildChartData(markerName)` helper in `LabsPage.tsx` — returns ascending-date sorted data points for a marker.
+- Each marker card in "Your Markers" now shows a "Show Trend" toggle button **when the marker has ≥ 2 historical data points** (markers with only one result get no toggle).
+- Clicking the toggle opens an inline `ComposedChart` panel below the marker grid showing:
+  - Blue line with dots for each historical value (X-axis: date, Y-axis: result value).
+  - Green shaded `ReferenceArea` band for the optimal range (sourced from `optimalRanges` map — same logic rules used for BHAS scoring).
+  - Dashed green `ReferenceLine` at optimal min and max boundaries.
+  - Tooltip showing value + unit on hover.
+  - Y-axis domain auto-padded to include both data values and optimal range.
+  - Optimal range label displayed in the panel header for quick reference.
+- Only one marker chart can be open at a time (controlled by `chartOpenMarker: string | null` state).
+- No new DB migration required — data already exists in `user_lab_results`.
+- No new page route — charts render inline on `#/labs`.
+
 ## 2026-01-25 — dev
 - Added Admin UI: tag-manager, criteria (logic_rules) CRUD, inline lab-marker creation, bulk-delete, CSV export. (`src/pages/Admin.tsx`)
 - Server: admin endpoints for `tags`, `logic_rules`, `lab_markers`, `resources` bulk-delete and `delete-by-attrs` fallback; audit logging added. (`server/index.js`)
