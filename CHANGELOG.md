@@ -1,5 +1,47 @@
 # CHANGELOG
 
+## 2026-03-17 — dev
+
+### BHAS v2.3 Parallel Scoring Engine (F34–F42, F44)
+
+**New file: `src/utils/bhasV2.ts`**
+- `calculateBhasV2Score(results, profile)` runs in parallel with v1 engine — v1 (`evaluateRules.ts`) is unchanged.
+- Scores 9 metrics using derived ratios: HOMA-IR, TG/HDL Ratio, Grip Ratio, Waist-to-Height Ratio, Vitamin D (binary), Vitamin B12 (binary), VO2 Max Percentile, Advanced Care Plan (binary), Insulin Units/kg (Type 1 only).
+- Type 1 Diabetes branch: excludes HOMA-IR, substitutes Insulin Units/kg scoring.
+- Score interpretation: ≥8.0 = Optimal, ≥6.0 = Healthy, ≥4.0 = Needs Improvement, <4.0 = High Risk.
+- `hasEnoughData` flag: panel only shows when ≥4 of 9 metrics are scoreable.
+- `missingInputs[]`: hints to user listing what's needed to complete the score.
+- `tieBreaker` object exposes VO2 Max, WtHR, hs-CRP, Acute Visits for future leaderboard use.
+
+**DB migration (run in Supabase SQL Editor):**
+```sql
+alter table profiles
+  add column if not exists height_cm numeric,
+  add column if not exists weight_kg numeric,
+  add column if not exists is_type1_diabetes boolean default false,
+  add column if not exists total_daily_insulin_units numeric,
+  add column if not exists has_advanced_care_plan boolean default false,
+  add column if not exists acute_visits integer;
+```
+
+**`src/pages/ProfilePage.tsx` — new Biometrics + Clinical Information fields:**
+- Height: two inputs (feet + inches), converts to cm on save (`ft × 30.48 + in × 2.54`), displays in American units on load.
+- Body Weight: lbs input, converts to kg on save (`lbs ÷ 2.205`), displays in lbs on load. DB stores `weight_kg`.
+- Type 1 Diabetes checkbox: conditionally shows Total Daily Insulin Units input; clears insulin on uncheck.
+- Advanced Care Plan checkbox.
+- Acute Care Visits number input (tie-breaker only, not directly scored).
+- `handleSave` wrapped in try/catch/finally to prevent button hang on network errors.
+
+**`src/pages/Dashboard.tsx` — BHAS v2.3 panel:**
+- Loads profile from Supabase, converts waist to cm if stored in inches, builds `BhasV2Profile`, calls `calculateBhasV2Score`.
+- Panel renders below existing BHAS v1 banner only when `hasEnoughData`.
+- Shows score/9.0, colored label badge, metric chips with derived value tooltips on hover.
+- Missing inputs hint with links to Profile and Labs pages.
+
+**Tested with real user data (Eddie Yakubovich):**
+- 9/9 metrics covered after adding test lab rows (Triglycerides, hs-CRP, VO2 Max Percentile) and fixing B12 marker name.
+- Confirmed score changes reactively when Advanced Care Plan toggled: 4.0 → 5.0.
+
 ## 2026-03-17 — scope review
 
 ### BHAS v2.3 Scope Added (from APP integration Point system and Metrics.pdf)
