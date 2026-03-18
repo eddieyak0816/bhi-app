@@ -131,8 +131,10 @@
 
 ### Phase 4: Auto Team Assignment (Feature 17 — Complete)
 
-- Server (`server/index.js`): `POST /api/admin/organizations/:id/assign-teams` — greedy-balanced assignment. Counts existing members per team (fire/water/wind/earth), then assigns each unassigned member (team = null) to whichever team has the fewest members at that moment. Returns `{ assigned, distribution }`. Requires `x-backend-api-key`. Existing assignments are never overwritten.
-- `src/pages/Admin.tsx` (Organizations tab): "Auto-assign Teams" button (purple border) added to each org header row. Calls the endpoint, shows inline feedback (green on success, red on error), and refreshes the member list automatically. Per-org loading state prevents double-clicks.
+- Migration `db/migrations/20260314_dynamic_org_teams.sql`: new `org_teams` table (`id, org_id, name, created_at`, unique on `org_id+name`). Drops the hardcoded `fire|water|wind|earth` check constraint from `org_memberships.team`, making it free-form text.
+- Server (`server/index.js`): `POST /api/admin/organizations/:id/assign-teams` — greedy-balanced assignment using the org's dynamic teams from `org_teams`. Returns `{ assigned, distribution }`. Returns `400 no_teams` if org has no teams defined. Existing assignments never overwritten.
+- Server: four new CRUD endpoints for teams — `GET/POST /api/admin/organizations/:id/teams`, `PATCH/DELETE /api/admin/organizations/:id/teams/:teamId`. New `GET /api/admin/public-ids` returns all `BHI-XXXX-XXXX` tokens (no names/usernames) for the Add Member dropdown.
+- Admin UI (`src/pages/Admin.tsx`): Teams management panel inside each org's expanded view — add, rename (inline), and delete teams. Add Member field changed from UUID text input to Public ID dropdown (`BHI-XXXX-XXXX` only). Member table username column removed — shows Public ID only. "Create Organization" form and "Delete" button hidden from `admin` role — visible to `super_admin` only. User Identity Mapping panel hidden by default behind a checkbox (persisted in localStorage) for PHI safety during demos. "Auto-assign Teams" button updated to use dynamic teams.
 
 ## 2026-02-07 — dev
 

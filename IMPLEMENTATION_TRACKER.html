@@ -185,15 +185,15 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-14 (Feature 17 complete — Auto Team Assignment) · 18 built · 2 partial · 12 todo · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-17 (Added Features 23–25: lab marker charts, affiliate product catalog, affiliate product display) · 18 built · 2 partial · 13 todo · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar (counts kept in sync manually or via Ctrl+F) -->
 <div class="stats">
   <div class="stat stat-done">    <span class="num" id="cnt-done">18</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">2</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">12</span>  Not Built</div>
-  <div class="stat stat-total">   <span class="num" id="cnt-total">32</span>  Total Items</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">13</span>  Not Built</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">33</span>  Total Items</div>
 </div>
 
 <!-- Filter controls -->
@@ -437,8 +437,8 @@
       <div class="item done" data-status="done">
         <div class="item-num">17</div>
         <div class="item-body">
-          <div class="item-title">Auto team assignment — Fire, Water, Wind, Earth</div>
-          <div class="item-note">Server: POST /api/admin/organizations/:id/assign-teams — greedy-balanced assignment (assigns unassigned members to whichever team has fewest). Existing assignments never overwritten. Returns { assigned, distribution }. Admin UI: "Auto-assign Teams" button (purple) per org in Organizations tab — calls endpoint, shows inline success/error feedback, refreshes member list. 2026-03-14.</div>
+          <div class="item-title">Auto team assignment — dynamic per-org teams</div>
+          <div class="item-note">Migration: org_teams table (per-org team names), drops hardcoded fire/water/wind/earth constraint. Server: CRUD endpoints for org teams (GET/POST/PATCH/DELETE), assign-teams uses dynamic teams, GET /api/admin/public-ids for dropdown. Admin UI: Teams panel (add/rename/delete) in expanded org view, Add Member uses Public ID dropdown, member table shows Public ID only (no username), Create Org + Delete hidden from non-super-admins, Identity Mapping panel hidden by default (localStorage toggle). Tested 2026-03-17.</div>
         </div>
         <span class="item-status status-done">✅ Complete</span>
       </div>
@@ -505,6 +505,15 @@
         <span class="item-status status-todo">❌ Not Built</span>
       </div>
 
+      <div class="item todo" data-status="todo">
+        <div class="item-num">23</div>
+        <div class="item-body">
+          <div class="item-title">Lab marker charts — admin-defined data visualization</div>
+          <div class="item-note">Admin creates named charts (e.g. "Cardiometabolic Panel") and selects which lab markers to include. Users see their own values plotted over time as line graphs. DB: charts table + chart_markers join table. Admin UI: new Charts tab (create/delete charts, add/remove markers). User UI: Recharts line graphs on Dashboard or Labs page — only renders markers with at least one user result.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
     </div>
   </section>
 
@@ -515,15 +524,33 @@
     <div class="phase-header">
       <span class="phase-badge">Phase 6</span>
       <div>
-        <div class="phase-title">Monetization &amp; HSA Reimbursement Automation</div>
-        <div class="phase-desc">Payment gate, medical necessity document generation, and HSA bank submission</div>
+        <div class="phase-title">Monetization, Affiliate Products &amp; HSA Reimbursement</div>
+        <div class="phase-desc">Affiliate product catalog, payment gate, medical necessity document generation, and HSA bank submission</div>
       </div>
-      <div class="phase-progress">0 / 3 done</div>
+      <div class="phase-progress">0 / 5 done</div>
     </div>
     <div class="items">
 
       <div class="item todo" data-status="todo">
-        <div class="item-num">23</div>
+        <div class="item-num">24</div>
+        <div class="item-body">
+          <div class="item-title">Affiliate product catalog — Admin manages products and affiliate links</div>
+          <div class="item-note">Admin UI: new "Products" tab — create/edit/delete products (name, description, image URL, affiliate URL). Products are associated with health tags so they can be matched to users. DB: affiliate_products table + product_tags join table.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">25</div>
+        <div class="item-body">
+          <div class="item-title">Affiliate product display — user-facing recommendations with commission links</div>
+          <div class="item-note">Products whose tags match the user's fired result tags shown as cards on Dashboard or a "Recommendations" page. Each card links to the affiliate URL (opens new tab). Commission tracked externally by affiliate network — no in-app tracking needed for v1. PHI rule: matching is tag-based only, never exposes raw lab values.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">26</div>
         <div class="item-body">
           <div class="item-title">Payment / subscription system — HSA feature paywall</div>
           <div class="item-note">HSA reimbursement automation is a paid feature for public users. Requires payment processor integration (e.g. Stripe). Must be in place before the HSA feature can be gated.</div>
@@ -532,7 +559,7 @@
       </div>
 
       <div class="item partial" data-status="partial">
-        <div class="item-num">24</div>
+        <div class="item-num">27</div>
         <div class="item-body">
           <div class="item-title">HSA reimbursement automation — detect → document → form → submit</div>
           <div class="item-note">
@@ -544,10 +571,10 @@
       </div>
 
       <div class="item todo" data-status="todo">
-        <div class="item-num">25</div>
+        <div class="item-num">28</div>
         <div class="item-body">
           <div class="item-title">HSA bank connection</div>
-          <div class="item-note">Integration with HSA bank APIs to submit reimbursement claims directly. Requires HSA automation workflow (item 24) to be complete first.</div>
+          <div class="item-note">Integration with HSA bank APIs to submit reimbursement claims directly. Requires HSA automation workflow (item 27) to be complete first.</div>
         </div>
         <span class="item-status status-todo">❌ Not Built</span>
       </div>
@@ -570,7 +597,7 @@
     <div class="items">
 
       <div class="item todo" data-status="todo">
-        <div class="item-num">26</div>
+        <div class="item-num">29</div>
         <div class="item-body">
           <div class="item-title">CGM device integrations (continuous glucose monitors)</div>
           <div class="item-note">Real-time glucose data from wearable devices. Requires device manufacturer partnerships and API agreements.</div>
@@ -579,7 +606,7 @@
       </div>
 
       <div class="item todo" data-status="todo">
-        <div class="item-num">27</div>
+        <div class="item-num">30</div>
         <div class="item-body">
           <div class="item-title">VO2 Max calculator</div>
           <div class="item-note">Cardiorespiratory fitness metric. Would be entered as a verified biometric (requires clinician or certified fitness professional attestation).</div>
@@ -588,7 +615,7 @@
       </div>
 
       <div class="item todo" data-status="todo">
-        <div class="item-num">28</div>
+        <div class="item-num">31</div>
         <div class="item-body">
           <div class="item-title">Advanced care planning status</div>
           <div class="item-note">Tracks whether a user has completed advance care planning (e.g. living will, healthcare proxy). Clinical workflow definition needed before building.</div>
@@ -597,7 +624,7 @@
       </div>
 
       <div class="item todo" data-status="todo">
-        <div class="item-num">29</div>
+        <div class="item-num">32</div>
         <div class="item-body">
           <div class="item-title">Insulin usage tracking (Type 1 diabetes)</div>
           <div class="item-note">Boolean or quantitative field to track insulin dependency. Affects BHAS scoring and HSA documentation for Type 1 diabetics.</div>
@@ -606,7 +633,7 @@
       </div>
 
       <div class="item todo" data-status="todo">
-        <div class="item-num">30</div>
+        <div class="item-num">33</div>
         <div class="item-body">
           <div class="item-title">Acute care visit tracking</div>
           <div class="item-note">Records ER or urgent care visits. Relevant to corporate risk reporting and insurance negotiation reports.</div>
@@ -620,7 +647,7 @@
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-14 &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-17 &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
 </footer>

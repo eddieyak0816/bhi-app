@@ -59,7 +59,12 @@ and automates HSA reimbursement documentation.
 - AI extracts values
 - Flags anomalies
 - Sends for approval
+- **Marker matching:** Only values whose marker name matches (or fuzzy-matches) a known lab marker in the database are imported. Unmatched markers are displayed in the review table with a warning flag. Admin can create missing markers via the New Marker Wizard before re-importing. Unknown markers are never silently discarded — user sees them and can choose to skip.
 - Approved metrics stored
+
+### Data Source Labelling
+- Every lab result row is tagged with its entry method: **Self** (manual input), **PDF** (AI extraction), or **Provider** (provider-verified).
+- The source badge is shown in the results table on the Labs page so users always know how each data point was entered.
 
 ---
 
@@ -259,6 +264,40 @@ If user metrics show non-optimal health:
 
 ---
 
+### Section 8b – Lab Marker Charts (Feature 23)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Admin can create named charts | ❌ Not built | Chart has a name and an ordered list of lab markers |
+| Admin can add/remove markers from a chart | ❌ Not built | Each marker plotted as a line or bar series |
+| Charts visible to users on their dashboard or Labs page | ❌ Not built | Shows user's own values over time for selected markers |
+| Multiple charts supported | ❌ Not built | e.g. "Cardiometabolic Panel", "Vitamin Status" |
+
+**Spec:**
+- DB: `charts` table (`id, name, created_at`) + `chart_markers` join table (`chart_id, marker_id, display_order`)
+- Admin UI: new "Charts" tab — create/delete charts, add/remove markers per chart
+- User UI: charts rendered as line graphs (time on x-axis, value on y-axis) using a charting library (e.g. Recharts)
+- Only markers for which the user has at least one result are rendered
+
+---
+
+### Section 8c – Affiliate Product Catalog (Features 24–25)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Admin product catalog (add/edit/delete) | ❌ Not built | Admin manages products with name, description, image URL, affiliate URL, associated tags |
+| Tag-based product matching | ❌ Not built | Products are associated with health tags; shown to users whose results fired those tags |
+| User-facing product recommendations | ❌ Not built | Shown on Dashboard or a dedicated "Recommendations" page; links open affiliate URL |
+| Commission tracking | ❌ Not built | Out-of-scope for v1 — affiliate URLs are external; commission tracked by affiliate network |
+
+**Spec:**
+- DB: `affiliate_products` table (`id, name, description, image_url, affiliate_url, created_at`) + `product_tags` join table (`product_id, tag`)
+- Admin UI: new "Products" tab — create/edit/delete products, assign health tags
+- User UI: products whose tags match the user's fired result tags shown as cards with name, description, and "Learn More" link (opens affiliate URL in new tab)
+- PHI rule: product recommendations are based on tags only, never on raw lab values
+
+---
+
 ### Section 9 – HSA Reimbursement Automation
 
 | Feature | Status | Notes |
@@ -341,13 +380,17 @@ Items are ordered by logical dependency — each phase builds on the one before 
 | 20 | Corporate analytics dashboard (population averages, risk distribution, team comparisons) | ❌ Not built | Depends on corporate portal being complete |
 | 21 | Insurance negotiation reports | ❌ Not built | Depends on corporate analytics |
 | 22 | Exportable reports (user + corporate) | ❌ Not built | Depends on analytics being complete |
-| **Phase 6 – Monetization & Advanced Automation** | | | |
-| 23 | Payment / subscription system (HSA feature paywall) | ❌ Not built | Required before HSA feature is gated |
-| 24 | HSA reimbursement automation (detect → document → form → submit) | ❌ Not built | Depends on verified labs + payment gate |
-| 25 | HSA bank connection | ❌ Not built | Depends on HSA automation being built |
+| **Phase 5 – Analytics & Reporting (continued)** | | | |
+| 23 | Lab marker charts — admin-defined, user-facing data visualization | ❌ Not built | Admin creates named charts, selects which markers to include; users see their values plotted over time |
+| **Phase 6 – Monetization & HSA Automation** | | | |
+| 24 | Affiliate product catalog — admin manages products + affiliate links | ❌ Not built | Admin adds product name, description, image, affiliate URL; products shown to users based on their health tags |
+| 25 | Affiliate product display — user-facing recommendations with commission links | ❌ Not built | Depends on product catalog being built |
+| 26 | Payment / subscription system (HSA feature paywall) | ❌ Not built | Required before HSA feature is gated |
+| 27 | HSA reimbursement automation (detect → document → form → submit) | ❌ Not built | Depends on verified labs + payment gate |
+| 28 | HSA bank connection | ❌ Not built | Depends on HSA automation being built |
 | **Phase 7 – Future / Nice to Have** | | | |
-| 26 | CGM device integrations | ❌ Not built | Requires device partnerships |
-| 27 | VO2 Max calculator | ❌ Not built | Biometric feature |
-| 28 | Advanced care planning status | ❌ Not built | Requires clinical workflow definition |
-| 29 | Insulin usage tracking (Type 1) | ❌ Not built | |
-| 30 | Acute care visit tracking | ❌ Not built | |
+| 29 | CGM device integrations | ❌ Not built | Requires device partnerships |
+| 30 | VO2 Max calculator | ❌ Not built | Biometric feature |
+| 31 | Advanced care planning status | ❌ Not built | Requires clinical workflow definition |
+| 32 | Insulin usage tracking (Type 1) | ❌ Not built | |
+| 33 | Acute care visit tracking | ❌ Not built | |
