@@ -1618,6 +1618,129 @@ app.get('/api/employer/:orgSlug', async (req, res) => {
   }
 });
 
+// ── F45: Leaderboard ─────────────────────────────────────────────────────────
+
+// GET /api/leaderboard/:orgSlug
+// Returns de-identified BHAS v2.3 leaderboard for an org, ranked by score with
+// tie-breaker logic. Accessible by org admins and app admins only.
+// PHI guarantee: returns username + public_id only — no name, email, or raw lab values.
+app.get('/api/leaderboard/:orgSlug', async (req, res) => {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(501).json({ error: 'backend-disabled' });
+  const requestingUserId = req.header('x-user-id') || '';
+  if (!requestingUserId) return res.status(401).json({ error: 'unauthenticated' });
+
+  const { orgSlug } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Resolve org
+    const { data: org, error: orgErr } = await sb
+      .from('organizations')
+      .select('id, name, slug')
+      .eq('slug', orgSlug)
+      .maybeSingle();
+    if (orgErr) return res.status(500).json({ error: 'db_error' });
+    if (!org) return res.status(404).json({ error: 'org_not_found' });
+
+    // Auth check: org admin or app admin only
+    const { data: requesterProfile } = await sb
+      .from('profiles')
+      .select('role')
+      .eq('id', requestingUserId)
+      .maybeSingle();
+    const isAppAdmin = requesterProfile?.role === 'admin' || requesterProfile?.role === 'super_admin';
+
+    if (!isAppAdmin) {
+      const { data: membership } = await sb
+        .from('org_memberships')
+        .select('role')
+        .eq('org_id', org.id)
+        .eq('user_id', requestingUserId)
+        .maybeSingle();
+      if (!membership || membership.role !== 'admin') {
+        return res.status(403).json({ error: 'not_org_admin' });
+      }
+    }
+
+    // Fetch org members
+    const { data: members, error: mErr } = await sb
+      .from('org_memberships')
+      .select('user_id, team, profiles(username, public_id)')
+      .eq('org_id', org.id);
+    if (mErr) return res.status(500).json({ error: 'db_error' });
+
+    const memberIds = (members || []).map(m => m.user_id);
+    if (memberIds.length === 0) {
+      return res.status(200).json({ org: { name: org.name, slug: org.slug }, entries: [] });
+    }
+
+    // Fetch latest bhas_v2_scores row per member (most recent score_date)
+    const { data: scores, error: sErr } = await sb
+      .from('bhas_v2_scores')
+      .select('user_id, score_date, total_score, label, vo2_max_percentile, wthr, hs_crp, acute_visits')
+      .in('user_id', memberIds)
+      .order('score_date', { ascending: false });
+    if (sErr) return res.status(500).json({ error: 'db_error' });
+
+    // Keep only the most recent score per user
+    const latestScore = {};
+    for (const row of scores || []) {
+      if (!latestScore[row.user_id]) latestScore[row.user_id] = row;
+    }
+
+    // Build member lookup for de-identified profile fields
+    const memberMap = {};
+    for (const m of members || []) {
+      memberMap[m.user_id] = { team: m.team, username: m.profiles?.username || null, public_id: m.profiles?.public_id || null };
+    }
+
+    // Assemble entries (only members who have a score)
+    const entries = Object.entries(latestScore).map(([userId, s]) => ({
+      username:          memberMap[userId]?.username || null,
+      public_id:         memberMap[userId]?.public_id || null,
+      team:              memberMap[userId]?.team || null,
+      total_score:       Number(s.total_score),
+      label:             s.label,
+      // Tie-breaker fields exposed for display only — no raw lab values
+      vo2_max_percentile: s.vo2_max_percentile != null ? Number(s.vo2_max_percentile) : null,
+      wthr:              s.wthr != null ? Number(s.wthr) : null,
+      hs_crp:            s.hs_crp != null ? Number(s.hs_crp) : null,
+      acute_visits:      s.acute_visits != null ? Number(s.acute_visits) : null,
+      score_date:        s.score_date,
+    }));
+
+    // Sort by tie-breaker rules (spec Section 6b):
+    // 1. Higher total_score
+    // 2. Higher vo2_max_percentile
+    // 3. Lower wthr
+    // 4. Lower hs_crp
+    // 5. Fewer acute_visits
+    entries.sort((a, b) => {
+      if (b.total_score !== a.total_score) return b.total_score - a.total_score;
+      const vo2A = a.vo2_max_percentile ?? -Infinity;
+      const vo2B = b.vo2_max_percentile ?? -Infinity;
+      if (vo2B !== vo2A) return vo2B - vo2A;
+      const wthrA = a.wthr ?? Infinity;
+      const wthrB = b.wthr ?? Infinity;
+      if (wthrA !== wthrB) return wthrA - wthrB;
+      const crpA = a.hs_crp ?? Infinity;
+      const crpB = b.hs_crp ?? Infinity;
+      if (crpA !== crpB) return crpA - crpB;
+      const avA = a.acute_visits ?? Infinity;
+      const avB = b.acute_visits ?? Infinity;
+      return avA - avB;
+    });
+
+    return res.status(200).json({
+      org: { name: org.name, slug: org.slug },
+      entries,
+    });
+  } catch (err) {
+    console.error('GET /api/leaderboard/:orgSlug error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // ── Feature 15: Username System ──────────────────────────────────────────────
 
 // GET /api/username/check?username=foo — public availability check (used by ProfilePage)

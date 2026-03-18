@@ -63,6 +63,32 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
           profile
         )
         setBhasV2Result(v2)
+
+        // F43: Persist derived values for analytics / leaderboard
+        if (v2.hasEnoughData) {
+          const today = new Date().toISOString().slice(0, 10)
+          supabase.from('bhas_v2_scores').upsert(
+            {
+              user_id:               user.id,
+              score_date:            today,
+              scored_at:             new Date().toISOString(),
+              total_score:           v2.totalScore,
+              label:                 v2.label,
+              homa_ir:               v2.derived.homaIr,
+              tg_hdl_ratio:          v2.derived.tgHdlRatio,
+              grip_ratio:            v2.derived.gripRatio,
+              wthr:                  v2.derived.wthr,
+              insulin_units_per_kg:  v2.derived.insulinUnitsPerKg,
+              vo2_max_percentile:    v2.tieBreaker.vo2MaxPercentile,
+              hs_crp:                v2.tieBreaker.hsCrp,
+              acute_visits:          v2.tieBreaker.acuteVisits,
+              metric_scores:         v2.metricScores,
+            },
+            { onConflict: 'user_id,score_date' }
+          ).then(({ error }) => {
+            if (error) console.error('F43: failed to persist BHAS v2 score', error)
+          })
+        }
       })
   }, [user?.id, results])
 

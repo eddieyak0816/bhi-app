@@ -1,5 +1,40 @@
 # CHANGELOG
 
+## 2026-03-18 — dev
+
+### F43: Persist BHAS v2.3 Derived Values
+
+**DB migration: `db/migrations/20260318_create_bhas_v2_scores.sql`**
+- New table `bhas_v2_scores`: one row per user per day (`UNIQUE(user_id, score_date)`).
+- Stores: `total_score`, `label`, `homa_ir`, `tg_hdl_ratio`, `grip_ratio`, `wthr`, `insulin_units_per_kg`, `vo2_max_percentile`, `hs_crp`, `acute_visits`, `metric_scores` (JSONB full breakdown).
+- RLS: users can read/insert/update their own rows only.
+
+**`src/pages/Dashboard.tsx`**
+- After `calculateBhasV2Score()` runs and `hasEnoughData` is true, fires a fire-and-forget Supabase upsert to `bhas_v2_scores` with conflict target `(user_id, score_date)`.
+
+---
+
+### F45: Leaderboard with Tie-Breaker Ranking
+
+**`server/index.js` — new endpoint `GET /api/leaderboard/:orgSlug`**
+- Auth: org admin or app admin only (same access check as employer endpoint).
+- Reads latest `bhas_v2_scores` row per org member.
+- Sorts by 5-level tie-breaker: 1) Higher total_score, 2) Higher VO2 Max %, 3) Lower WtHR, 4) Lower hs-CRP, 5) Fewer acute visits.
+- PHI guarantee: returns username + public_id only — no name, email, or raw lab values.
+
+**New file: `src/pages/LeaderboardPage.tsx`**
+- Ranked table with medal badges (🥇🥈🥉), label color chips, team badges, tie-breaker columns (VO2 %, WtHR, hs-CRP), and score date.
+- "← Employer View" back-link.
+- Route: `#/leaderboard/:orgSlug`.
+
+**`src/pages/EmployerPage.tsx`**
+- Added "View Leaderboard" button in org header, navigates to `leaderboard/:orgSlug`.
+
+**`src/App.tsx`**
+- Imported `LeaderboardPage` and added route: `currentPage.startsWith('leaderboard/')`.
+
+---
+
 ## 2026-03-17 — dev
 
 ### BHAS v2.3 Parallel Scoring Engine (F34–F42, F44)

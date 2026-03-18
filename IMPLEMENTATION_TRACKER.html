@@ -677,13 +677,13 @@
         <span class="item-status status-done">✅ Built 2026-03-17</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">43</div>
         <div class="item-body">
           <div class="item-title">Store derived values alongside raw inputs</div>
-          <div class="item-note">Per spec section 8: calculate and persist HOMA-IR, TG/HDL Ratio, Grip Ratio, WtHR, and Insulin Units/kg each time BHAS is scored. Options: (a) computed_metrics table keyed to user + date, or (b) JSONB column on a bhas_snapshots table. Needed for leaderboard tie-breakers and population analytics.</div>
+          <div class="item-note">bhas_v2_scores table (migration 20260318_create_bhas_v2_scores.sql). Upserts one row per user per day from Dashboard.tsx after calculateBhasV2Score() runs. Stores HOMA-IR, TG/HDL, Grip Ratio, WtHR, Insulin Units/kg, VO2 Max %, hs-CRP, acute visits, and full metric_scores JSONB. Conflict target: (user_id, score_date).</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-03-18</span>
       </div>
 
       <div class="item done" data-status="done">
@@ -695,13 +695,13 @@
         <span class="item-status status-done">✅ Built 2026-03-17</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">45</div>
         <div class="item-body">
           <div class="item-title">Leaderboard with tie-breaker ranking logic</div>
-          <div class="item-note">Rank users (within org or globally) by BHAS score. Tie-breaker order: 1) Higher VO2 Max Percentile, 2) Lower WtHR, 3) Lower hs-CRP, 4) Fewer Acute Care Visits. Depends on derived values being stored (item 43). Display on employer view or a dedicated leaderboard page.</div>
+          <div class="item-note">GET /api/leaderboard/:orgSlug in server/index.js queries bhas_v2_scores for org members, applies 5-level tie-breaker sort (score → VO2 % → WtHR asc → hs-CRP asc → acute visits asc). LeaderboardPage.tsx shows ranked table with medal badges, label chips, team badges, and tie-breaker columns. Linked from EmployerPage via "View Leaderboard" button. Route: #/leaderboard/:orgSlug.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-03-18</span>
       </div>
 
       <div class="item todo" data-status="todo">

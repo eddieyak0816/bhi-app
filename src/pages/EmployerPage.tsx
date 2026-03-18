@@ -136,9 +136,19 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
       </div>
 
       {/* Org header */}
-      <h2 style={{ margin: '0 0 4px 0', fontSize: 22, fontWeight: 700, color: theme.text }}>
-        {data.org.name}
-      </h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 4 }}>
+        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: theme.text }}>
+          {data.org.name}
+        </h2>
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate(`leaderboard/${orgSlug}`)}
+            style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            View Leaderboard
+          </button>
+        )}
+      </div>
       <p style={{ margin: '0 0 24px 0', color: theme.textMuted, fontSize: 14 }}>
         {members.length} member{members.length !== 1 ? 's' : ''}{avgBhas !== null ? ` · Org avg BHAS: ${avgBhas}%` : ''}
       </p>
