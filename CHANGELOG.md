@@ -136,6 +136,18 @@
 - Server: four new CRUD endpoints for teams — `GET/POST /api/admin/organizations/:id/teams`, `PATCH/DELETE /api/admin/organizations/:id/teams/:teamId`. New `GET /api/admin/public-ids` returns all `BHI-XXXX-XXXX` tokens (no names/usernames) for the Add Member dropdown.
 - Admin UI (`src/pages/Admin.tsx`): Teams management panel inside each org's expanded view — add, rename (inline), and delete teams. Add Member field changed from UUID text input to Public ID dropdown (`BHI-XXXX-XXXX` only). Member table username column removed — shows Public ID only. "Create Organization" form and "Delete" button hidden from `admin` role — visible to `super_admin` only. User Identity Mapping panel hidden by default behind a checkbox (persisted in localStorage) for PHI safety during demos. "Auto-assign Teams" button updated to use dynamic teams.
 
+### PDF Extraction Accuracy Improvements (Feature 11 — ongoing fixes)
+
+- **AI provider cascade stabilised**: Fixed Gemini key loop — non-quota errors no longer break out early; all keys are always tried. Updated OpenRouter model list (removed dead `llama-4-scout:free`, `qwen2.5-vl-72b`; added confirmed-working `llama-3.3-70b-instruct:free`, `google/gemini-2.0-flash-exp:free`).
+- **Groq JSON parse fix**: Groq prefixes responses with prose ("Here is the extracted data..."). `parseAIResponse()` now extracts the first `{...}` or `[...]` block from any surrounding text. Prompt updated with "Return ONLY raw JSON" instruction.
+- **Value truncation fix**: Changed AI schema field from `value` (number) to `value_str` (string) — prevents LLM rounding/digit-dropping (`4.31→4.3`, `1.59→1.5`, `390→39`, `764→76`). Server normalises `value_str` → numeric `value` via `parseFloat`.
+- **`<`/`>` qualifier handling**: `<8.4` and `<1.0` results no longer save as `0`. `parseAIResponse()` strips qualifier before parsing; `value_str` preserved in response. Frontend `ExtractedRow` interface now carries `value_str`; review table shows `<`/`>` prefix badge next to editable value.
+- **Concatenated-column prompt fix**: pdf-parse produces columns with no whitespace separators (e.g. `82.056.108/18/2021`). Prompt now explains this layout with concrete examples from the actual Labcorp report format, showing how to split current result from previous result and from unit string.
+- **Zero-value rows included**: Added explicit rule and examples (`Immature Granulocytes = 0`, `Immature Grans (Abs) = 0.0`) — AI was omitting rows with zero values.
+- **Unit-boundary truncation fix**: Added rule and example (`0.34mg/L → value_str="0.34"`) — AI was reading `0.34` as `0.3` when the unit started with a letter that followed a digit with no space.
+- **PHI**: Removed `docs/Damon DiLorenzo Labs.pdf` from git tracking; added to `.gitignore` — patient lab PDFs must never be committed.
+- **Debug endpoint**: `POST /api/dev/extract-pdf-text` (dev-only, `ENABLE_DEV_ENDPOINT=true`) returns raw pdf-parse text for verifying OCR accuracy before AI processing.
+
 ### Phase 4: Team Scoring Display (Feature 18 — Complete)
 
 - Server (`server/index.js`): `GET /api/employer/:orgSlug` now fetches the org's dynamic teams from `org_teams` and returns a `team_breakdown` array — each entry has `team`, `member_count`, `avg_bhas_pct`, and `optimal_pct` (% of members at 100% BHAS). Breakdown is sorted by avg BHAS descending. Handles teams from both `org_teams` table and any free-form values already in `org_memberships.team`.

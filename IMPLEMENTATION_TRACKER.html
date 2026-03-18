@@ -349,7 +349,7 @@
         <div class="item-num">11</div>
         <div class="item-body">
           <div class="item-title">AI lab PDF upload &amp; extraction (preferred verification method)</div>
-          <div class="item-note">User uploads a lab PDF → server extracts text via pdf-parse → AI parses lab values → user reviews in a table → confirmed results saved to app. AI provider cascade: Gemini (up to 5 keys, auto-rotates on 429) → OpenRouter (3 free models) → Groq. Fuzzy marker name matching links extracted values to known app markers for BHAS scoring. Reference range priority: PDF → app optimal logic rule → lab_markers fallback. "Upload Lab PDF" button on Labs page.</div>
+          <div class="item-note">User uploads a lab PDF → server extracts text via pdf-parse → AI parses lab values → user reviews in a table → confirmed results saved to app. AI provider cascade: Gemini (up to 5 keys, auto-rotates on 429) → OpenRouter (3 free models) → Groq. Fuzzy marker name matching links extracted values to known app markers for BHAS scoring. Reference range priority: PDF → app optimal logic rule → lab_markers fallback. "Upload Lab PDF" button on Labs page. Extraction accuracy hardened: value_str field prevents digit truncation; &lt;/&gt; qualifiers preserved; concatenated-column prompt with Labcorp-format examples; zero-value rows included; unit-boundary truncation fix. PHI rule: patient PDFs excluded from git via .gitignore.</div>
         </div>
         <span class="item-status status-done">✅ Built</span>
       </div>
