@@ -1192,6 +1192,7 @@ CRITICAL: This PDF was extracted by a text parser that concatenates columns with
     Raw: "eGFR82mL/min/1.73>59"  → value_str="82", max_normal=null (">59" reference means only a lower bound)
     Raw: "Immature Granulocytes\n 01\n0008/18/2021%Not Estab."  → value_str="0", min_normal=null, max_normal=null (INCLUDE — zero is a valid result)
     Raw: "Immature Grans (Abs)\n 01\n0.00.008/18/2021x10E3/uL0.0-0.1"  → value_str="0.0", min_normal=0, max_normal=0.1 (INCLUDE — zero is valid)
+    Raw: "C-Reactive Protein, Cardiac\n 01\n0.34mg/L0.00-3.00"  → value_str="0.34" (NOT "0.3"; unit "mg/L" starts right after — do not confuse the "4" in "0.34" with the unit)
 
 Also extract these report metadata fields if present (return null if not found):
 - "accession_num": the specimen/accession ID (e.g. "262-174-6271-0")
@@ -1208,7 +1209,8 @@ Return a single JSON object with two keys:
    - "flag": "H", "L", "HH", "LL", or null
 
 Rules for "value_str":
-- Copy the result character-by-character exactly as printed — preserve ALL digits and the decimal point. "4.31" not "4.3", "1.59" not "1.5", "0.988" not "0.98", "390" not "39", "764" not "76".
+- Copy the result character-by-character exactly as printed — preserve ALL digits and the decimal point. "4.31" not "4.3", "1.59" not "1.5", "0.988" not "0.98", "390" not "39", "764" not "76", "0.34" not "0.3".
+- UNITS run directly into values with no space (e.g. "0.34mg/L" → value is "0.34", unit is "mg/L"). Do not truncate the value when the unit starts with a letter that could be confused with a digit.
 - If the result has a < or > qualifier, include it: "<8.4", "<1.0", ">59".
 - FLAG WORDS: "High", "Low", "H", "L" after the number are flags — do NOT include them in value_str.
 - PREVIOUS RESULTS: a second number followed by a date like "08/18/2021" is the previous result — ignore it, use only the first (current) result.

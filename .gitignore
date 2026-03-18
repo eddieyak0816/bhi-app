@@ -8,3 +8,6 @@ dist/
 .env.server
 nul
 .claude/settings.local.json
+
+# Patient lab reports — never commit PHI
+docs/Damon DiLorenzo Labs.pdf
