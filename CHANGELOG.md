@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 2026-03-17 — scope review
+
+### BHAS v2.3 Scope Added (from APP integration Point system and Metrics.pdf)
+
+Reviewed official BHAS v2.3 specification. Identified 13 new scope items (F34–F46) added as Phase 8 in IMPLEMENTATION_TRACKER.html and DEVELOPER_REQUIREMENTS.md Section 6b.
+
+Key changes vs. current implementation:
+- **Scoring engine rewrite required:** current app scores raw markers directly; v2.3 requires derived ratios (HOMA-IR, TG/HDL, Grip Ratio, WtHR) computed before scoring
+- **New markers needed:** Fasting Insulin, hs-CRP, VO2 Max Percentile
+- **New profile fields needed:** Height, Type 1 Diabetes flag, Advanced Care Plan status, Acute Care Visits, Total Daily Insulin Units
+- **Breaking changes:** Vitamin D and B12 change from tiered to binary scoring; Waist and Grip scoring replaced by WtHR and Grip Ratio
+- **New outputs:** score interpretation labels (Optimal / Healthy / Needs Improvement / High Risk), leaderboard with tie-breaker, CSV de-identified export, stored derived values
+- No code changed — scope documentation only
+
 ## 2026-03-17 — dev
 
 ### Feature 23: Lab Marker Charts (Phase 5 / Section 8b)

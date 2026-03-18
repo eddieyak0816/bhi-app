@@ -583,6 +583,140 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════
+       PHASE 8 – BHAS v2.3 SCORING ENGINE UPGRADE
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="8">
+    <div class="phase-header">
+      <span class="phase-badge">Phase 8</span>
+      <div>
+        <div class="phase-title">BHAS v2.3 Scoring Engine Upgrade</div>
+        <div class="phase-desc">Derived-ratio scoring, new markers, binary Vit D/B12, Type 1 substitution logic, score labels, new profile fields, and leaderboard tie-breaker. Source: APP integration Point system and Metrics.pdf</div>
+      </div>
+      <div class="phase-progress">0 / 13 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">34</div>
+        <div class="item-body">
+          <div class="item-title">New lab markers: Fasting Insulin, hs-CRP, VO2 Max Percentile</div>
+          <div class="item-note">Add to lab_markers table + logic_rules. Fasting Insulin (µIU/mL) is needed for HOMA-IR. hs-CRP (mg/L): &lt;1.0=1, 1.0–3.0=0.5, &gt;3.0=0. VO2 Max Percentile (0–100): ≥60=1, 40–59=0.5, &lt;40=0. DB migration + seed required. No UI changes needed — existing lab entry form handles new markers automatically.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">35</div>
+        <div class="item-body">
+          <div class="item-title">Add Height field to profiles</div>
+          <div class="item-note">Height (cm) required to compute Waist-to-Height Ratio (WtHR = Waist / Height). DB migration: add height_cm column to profiles. Profile page: add Height input alongside existing waist/weight/grip fields.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">36</div>
+        <div class="item-body">
+          <div class="item-title">Add Type 1 Diabetes flag to profiles</div>
+          <div class="item-note">Boolean field on profiles table. Controls BHAS scoring branch: Type 1 → exclude HOMA-IR, include Insulin Units/kg scoring. Non-Type 1 → include HOMA-IR, exclude Insulin Units/kg. DB migration + Profile page toggle.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">37</div>
+        <div class="item-body">
+          <div class="item-title">Add Advanced Care Plan status to profiles</div>
+          <div class="item-note">Boolean (Yes/No). Documented ACP = 1 point, not documented = 0. Binary scored. DB migration + Profile page checkbox. No lab entry needed — this is a profile-level flag, not a lab marker.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">38</div>
+        <div class="item-body">
+          <div class="item-title">Add Acute Care Visits field to profiles</div>
+          <div class="item-note">Integer count of ER/urgent care visits in the past 12 months. Not directly scored in BHAS — used only as tie-breaker #4 when scores are equal. DB migration + Profile page input. Reset annually.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">39</div>
+        <div class="item-body">
+          <div class="item-title">Add Total Daily Insulin Units field (Type 1 users only)</div>
+          <div class="item-note">Shown and required only when Type 1 Diabetes = Yes. Used to compute Insulin Units/kg = Total Daily Insulin / Body Weight. Scoring: &lt;0.6=1, 0.6–0.8=0.5, &gt;0.8=0. Store on profiles or as a lab marker entry. DB migration required.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">40</div>
+        <div class="item-body">
+          <div class="item-title">Rewrite BHAS scoring engine — derived ratio scoring</div>
+          <div class="item-note">Core breaking change to src/utils/evaluateRules.ts and server/index.js. Replace direct marker scoring with computed ratios before scoring: HOMA-IR = (Fasting Insulin × Fasting Glucose) / 405 (scored: &lt;1.5=1, 1.5–2.5=0.5, ≥2.5=0); TG/HDL = Triglycerides / HDL (scored: &lt;2=1, 2–3=0.5, &gt;3=0); Grip Ratio = Grip / Body Weight (sex-specific thresholds); WtHR = Waist / Height (≤0.50=1, 0.51–0.56=0.5, &gt;0.56=0); Insulin Units/kg (Type 1 only). Max score = 9.0.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">41</div>
+        <div class="item-body">
+          <div class="item-title">Update Vitamin D scoring to binary</div>
+          <div class="item-note">Current: tiered (Deficient/Insufficient/Adequate/Excess). Spec v2.3: binary — &gt;50 ng/mL = 1, ≤50 = 0. Update logic_rules and OPTIMAL_TAGS/IMPROVEMENT_TAGS in evaluateRules.ts. Old tiered tags can be deprecated or kept for resource matching.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">42</div>
+        <div class="item-body">
+          <div class="item-title">Update Vitamin B12 scoring to binary</div>
+          <div class="item-note">Current: tiered (Adequate_B12, Normal_B12). Spec v2.3: binary — &gt;750 pg/mL = 1, ≤750 = 0. Update logic_rules and scoring sets in evaluateRules.ts.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">43</div>
+        <div class="item-body">
+          <div class="item-title">Store derived values alongside raw inputs</div>
+          <div class="item-note">Per spec section 8: calculate and persist HOMA-IR, TG/HDL Ratio, Grip Ratio, WtHR, and Insulin Units/kg each time BHAS is scored. Options: (a) computed_metrics table keyed to user + date, or (b) JSONB column on a bhas_snapshots table. Needed for leaderboard tie-breakers and population analytics.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">44</div>
+        <div class="item-body">
+          <div class="item-title">Score interpretation label on Dashboard</div>
+          <div class="item-note">Map total BHAS score to a category label: 8.0–9.0 = Optimal, 6.0–7.5 = Healthy, 4.0–5.5 = Needs Improvement, 0–3.5 = High Risk. Display alongside numeric score on Dashboard BHAS banner. Frontend-only change once scoring engine is updated.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">45</div>
+        <div class="item-body">
+          <div class="item-title">Leaderboard with tie-breaker ranking logic</div>
+          <div class="item-note">Rank users (within org or globally) by BHAS score. Tie-breaker order: 1) Higher VO2 Max Percentile, 2) Lower WtHR, 3) Lower hs-CRP, 4) Fewer Acute Care Visits. Depends on derived values being stored (item 43). Display on employer view or a dedicated leaderboard page.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">46</div>
+        <div class="item-body">
+          <div class="item-title">CSV export for employer reporting (de-identified)</div>
+          <div class="item-note">Export org member data as CSV: username, public_id, team, BHAS score, per-metric points, derived values. No PHI (no name, email, raw sensitive values). Accessible from employer view or Admin panel. Backend endpoint + frontend download button.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
        PHASE 7 – FUTURE / NICE TO HAVE
   ═══════════════════════════════════════════════════════════ -->
   <section class="phase" data-phase="7">
@@ -647,7 +781,7 @@
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-17 &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-17 (BHAS v2.3 scope added) &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
 </footer>

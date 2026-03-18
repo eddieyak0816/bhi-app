@@ -93,6 +93,89 @@ Total BHAS score calculated per user.
 
 ---
 
+## 6b. BHAS v2.3 Scoring Specification
+
+Source: `docs/APP integration Point system and Metrics.pdf`
+
+### Participant Type Logic
+- **Type 1 Diabetes = Yes:** exclude HOMA-IR scoring, include Insulin Units/kg scoring
+- **Type 1 Diabetes = No:** include HOMA-IR scoring, exclude Insulin Units/kg scoring
+
+### Required Inputs
+| Input | Unit |
+|---|---|
+| Fasting Glucose | mg/dL |
+| Fasting Insulin | µIU/mL |
+| hs-CRP | mg/L |
+| Triglycerides | mg/dL |
+| HDL | mg/dL |
+| Vitamin D 25-OH | ng/mL |
+| Vitamin B12 | pg/mL |
+| VO2 Max Percentile | 0–100 (age/sex adjusted) |
+| Grip Strength | kg |
+| Body Weight | kg |
+| Height | cm |
+| Waist Circumference | cm |
+| Total Daily Insulin Units | units/day (Type 1 only) |
+| Acute Care Visits | count, past 12 months (tie-breaker only) |
+| Advanced Care Plan Status | Yes/No |
+| Sex | Male/Female (for grip scoring) |
+| Type 1 Diabetes | Yes/No |
+
+### Derived Calculations
+| Value | Formula |
+|---|---|
+| HOMA-IR | (Fasting Insulin × Fasting Glucose) / 405 |
+| TG/HDL Ratio | Triglycerides / HDL |
+| Grip Ratio | Grip Strength (kg) / Body Weight (kg) |
+| Waist-to-Height Ratio (WtHR) | Waist (cm) / Height (cm) |
+| Insulin Units/kg | Total Daily Insulin Units / Body Weight (kg) |
+
+### Metric Scoring Rules (1 / 0.5 / 0)
+| Metric | 1 | 0.5 | 0 |
+|---|---|---|---|
+| HOMA-IR (non-Type 1) | < 1.5 | 1.5–2.5 | ≥ 2.5 |
+| hs-CRP | < 1.0 | 1.0–3.0 | > 3.0 |
+| TG/HDL Ratio | < 2.0 | 2.0–3.0 | > 3.0 |
+| Insulin Units/kg (Type 1) | < 0.6 | 0.6–0.8 | > 0.8 |
+| Vitamin D (binary) | > 50 ng/mL | — | ≤ 50 |
+| Vitamin B12 (binary) | > 750 pg/mL | — | ≤ 750 |
+| VO2 Max Percentile | ≥ 60 | 40–59 | < 40 |
+| Grip Ratio — Men | ≥ 0.60 | 0.50–0.59 | < 0.50 |
+| Grip Ratio — Women | ≥ 0.45 | 0.35–0.44 | < 0.35 |
+| WtHR | ≤ 0.50 | 0.51–0.56 | > 0.56 |
+| Advanced Care Planning (binary) | Documented | — | Not documented |
+
+### Total Score
+- 9 scored categories per participant (max = 9.0)
+- Non-Type 1: HOMA-IR + hs-CRP + TG/HDL + Vit D + B12 + VO2 + Grip Ratio + WtHR + ACP
+- Type 1: Insulin Units/kg replaces HOMA-IR, all others same
+
+### Score Interpretation
+| Range | Label |
+|---|---|
+| 8.0–9.0 | Optimal |
+| 6.0–7.5 | Healthy |
+| 4.0–5.5 | Needs Improvement |
+| 0–3.5 | High Risk |
+
+### Tie-Breaker Ranking (when scores are equal)
+1. Higher VO2 Max Percentile
+2. Lower Waist-to-Height Ratio
+3. Lower hs-CRP
+4. Fewer Acute Care Visits (past 12 months)
+
+### App Output Requirements (Section 8 of spec)
+- Store raw input values with units and timestamps
+- Calculate and store derived values (HOMA-IR, TG/HDL, Grip Ratio, WtHR, Insulin Units/kg)
+- Assign and store per-metric points (0 / 0.5 / 1; Vit D / B12 / ACP are binary)
+- User dashboard: raw values + points + BHAS total + category label
+- Population analytics: averages, distributions, % meeting optimal per metric
+- Leaderboards with tie-breaker logic
+- CSV export for employer reporting (de-identified)
+
+---
+
 ## 7. Corporate Gamification
 
 Users auto-assigned to one of four permanent teams: **Fire, Water, Wind, Earth**
@@ -394,3 +477,17 @@ Items are ordered by logical dependency — each phase builds on the one before 
 | 31 | Advanced care planning status | ❌ Not built | Requires clinical workflow definition |
 | 32 | Insulin usage tracking (Type 1) | ❌ Not built | |
 | 33 | Acute care visit tracking | ❌ Not built | |
+| **Phase 8 – BHAS v2.3 Scoring Engine Upgrade** | | | |
+| 34 | New lab markers: Fasting Insulin, hs-CRP, VO2 Max Percentile | ❌ Not built | DB migration + seed; existing lab entry form handles automatically |
+| 35 | Add Height field to profiles | ❌ Not built | Required for WtHR calculation |
+| 36 | Add Type 1 Diabetes flag to profiles | ❌ Not built | Controls HOMA-IR vs. Insulin Units/kg scoring branch |
+| 37 | Add Advanced Care Plan status to profiles | ❌ Not built | Binary scored metric (1/0) |
+| 38 | Add Acute Care Visits count to profiles | ❌ Not built | Tie-breaker only, not scored |
+| 39 | Add Total Daily Insulin Units field (Type 1 only) | ❌ Not built | Needed to compute Insulin Units/kg |
+| 40 | Rewrite BHAS scoring engine for derived ratio scoring | ❌ Not built | Breaking change to evaluateRules.ts + server/index.js |
+| 41 | Update Vitamin D scoring to binary (>50=1, ≤50=0) | ❌ Not built | Replaces current 4-tier tag system |
+| 42 | Update Vitamin B12 scoring to binary (>750=1, ≤750=0) | ❌ Not built | Replaces current tiered tag system |
+| 43 | Store derived values (HOMA-IR, TG/HDL, etc.) alongside raw inputs | ❌ Not built | Required for leaderboard + analytics |
+| 44 | Score interpretation label on Dashboard | ❌ Not built | Optimal / Healthy / Needs Improvement / High Risk |
+| 45 | Leaderboard with tie-breaker ranking logic | ❌ Not built | Depends on derived values being stored |
+| 46 | CSV export for employer reporting (de-identified) | ❌ Not built | Username, public_id, team, BHAS, per-metric points |
