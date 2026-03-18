@@ -429,7 +429,7 @@
         <div class="item-num">16</div>
         <div class="item-body">
           <div class="item-title">De-identified employer view — no PHI visible to employer</div>
-          <div class="item-note">Server: GET /api/employer/:orgSlug (auth-gated to org admins; returns username, public_id, team, BHAS %, result count — no name/email/raw labs). BHAS computed server-side mirroring evaluateRules.ts. EmployerPage.tsx: PHI notice, org header, per-team summary cards (fire/water/wind/earth), member table sorted by BHAS. Admin orgs tab: "Employer View" link per org. 2026-03-14.</div>
+          <div class="item-note">Server: GET /api/employer/:orgSlug (auth-gated to org admins; returns username, public_id, team, BHAS %, result count — no name/email/raw labs). BHAS computed server-side mirroring evaluateRules.ts. EmployerPage.tsx: PHI notice, org header, per-team summary cards with dark-mode aware color palette, member table sorted by BHAS, inline filter bar (username/public ID search, team dropdown, role dropdown, min BHAS % slider). Admin orgs tab: "Employer View" link per org. 2026-03-14, updated 2026-03-18.</div>
         </div>
         <span class="item-status status-done">✅ Complete</span>
       </div>
@@ -478,13 +478,28 @@
         <span class="item-status status-todo">❌ Not Built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item partial" data-status="partial">
         <div class="item-num">20</div>
         <div class="item-body">
           <div class="item-title">Corporate analytics dashboard — population averages, risk distribution, team comparisons</div>
-          <div class="item-note">Employer-facing dashboard showing aggregate health trends, % optimal per metric across the org, risk distribution, and team head-to-head comparisons. Depends on corporate portal being fully built.</div>
+          <div class="item-note">
+            <strong>In Progress (planned 2026-03-18)</strong><br><br>
+            New server endpoint <code>GET /api/analytics/:orgSlug</code> (server/index.js) — same auth guard as employer endpoint (org admin or app admin). Returns:<br>
+            • <code>kpis</code> — total_members, members_with_data, avg_bhas_pct, pct_at_optimal<br>
+            • <code>score_distribution</code> — member counts in 5 BHAS % buckets (0–24, 25–49, 50–74, 75–99, 100)<br>
+            • <code>label_distribution</code> — member counts by BHAS v2 label (Optimal / Healthy / Needs Improvement / High Risk) from bhas_v2_scores<br>
+            • <code>trend</code> — weekly org-average total_score for last 12 weeks from bhas_v2_scores, grouped by ISO week<br>
+            • <code>metric_breakdown</code> — per-metric % of members scoring optimal, extracted from metric_scores JSONB in bhas_v2_scores<br><br>
+            Analytics tab added to EmployerPage.tsx (alongside existing Members tab):<br>
+            • 4 KPI tiles: Total Members, Avg BHAS %, Members with Data, % at Optimal<br>
+            • BHAS Score Distribution — vertical BarChart (Recharts), 5 buckets, colour-coded green/amber/red<br>
+            • Org BHAS Trend — LineChart (Recharts), last 12 weeks, avg score per week<br>
+            • Per-Metric % Optimal — horizontal BarChart (Recharts), one bar per BHAS v2 metric<br><br>
+            No new DB migration required — reads from existing bhas_v2_scores + org_memberships tables.<br>
+            PHI rule maintained: no names, emails, or raw lab values in any chart or tooltip.
+          </div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-partial">🔶 In Progress</span>
       </div>
 
       <div class="item todo" data-status="todo">
@@ -699,7 +714,7 @@
         <div class="item-num">45</div>
         <div class="item-body">
           <div class="item-title">Leaderboard with tie-breaker ranking logic</div>
-          <div class="item-note">GET /api/leaderboard/:orgSlug in server/index.js queries bhas_v2_scores for org members, applies 5-level tie-breaker sort (score → VO2 % → WtHR asc → hs-CRP asc → acute visits asc). LeaderboardPage.tsx shows ranked table with medal badges, label chips, team badges, and tie-breaker columns. Linked from EmployerPage via "View Leaderboard" button. Route: #/leaderboard/:orgSlug.</div>
+          <div class="item-note">GET /api/leaderboard/:orgSlug in server/index.js queries bhas_v2_scores for org members, applies 5-level tie-breaker sort (score → VO2 % → WtHR asc → hs-CRP asc → acute visits asc). LeaderboardPage.tsx shows ranked table with medal badges, label chips, team badges, and tie-breaker columns. Linked from EmployerPage via "View Leaderboard" button. Route: #/leaderboard/:orgSlug. Inline filter bar: username/public ID search, team dropdown, health label dropdown, min score slider. EmployerPage also has inline filter bar: username/public ID search, team dropdown, role dropdown, min BHAS % slider. Both use dark-mode aware team color palettes. 2026-03-18.</div>
         </div>
         <span class="item-status status-done">✅ Built 2026-03-18</span>
       </div>

@@ -1,5 +1,53 @@
 # CHANGELOG
 
+## 2026-03-18 — planned (F20 Corporate Analytics Dashboard)
+
+### F20: Corporate Analytics Dashboard — Implementation Plan
+
+**Scope:** Employer-facing analytics tab added to `EmployerPage.tsx`, backed by a new dedicated server endpoint. All data is de-identified — no PHI, no raw lab values.
+
+**New server endpoint: `GET /api/analytics/:orgSlug`**
+- Same auth guard as `/api/employer/:orgSlug` (org admin or app admin via `x-user-id` header).
+- Returns:
+  - `score_distribution` — member counts in 5 BHAS % buckets: 0–24, 25–49, 50–74, 75–99, 100.
+  - `label_distribution` — member counts by BHAS v2 label (Optimal / Healthy / Needs Improvement / High Risk). Sourced from latest `bhas_v2_scores` row per member.
+  - `trend` — weekly org-average `total_score` for the last 12 weeks. Computed from `bhas_v2_scores` rows grouped by ISO week. Each point: `{ week: 'YYYY-WXX', avg_score: number, member_count: number }`.
+  - `metric_breakdown` — per-metric % of org members scoring optimal. Extracted from `metric_scores` JSONB column in `bhas_v2_scores` (latest row per member). Each entry: `{ metric: string, optimal_pct: number, member_count: number }`.
+  - `kpis` — top-level summary: `{ total_members, members_with_data, avg_bhas_pct, pct_at_optimal }`.
+
+**`src/pages/EmployerPage.tsx` — Analytics tab**
+- Two tabs added to the employer page header: **Members** (existing view, unchanged) and **Analytics** (new).
+- Analytics tab layout:
+  - **KPI tiles row** (4 tiles): Total Members, Avg BHAS %, Members with Data, % at Optimal.
+  - **BHAS Score Distribution** — vertical `BarChart` (Recharts). X-axis: 5 score buckets. Y-axis: member count. Bars colour-coded matching the existing green/amber/red BHAS palette.
+  - **Org BHAS Trend** — `LineChart` (Recharts). X-axis: week label. Y-axis: avg BHAS score (0–10). Plots last 12 weeks of org-average score. Shows member count in tooltip.
+  - **Per-Metric % Optimal** — horizontal `BarChart` (Recharts). One bar per BHAS v2 metric. X-axis: % (0–100). Bars colour-coded: ≥75% green, ≥50% amber, <50% red.
+- Uses Recharts (already installed). No new dependencies.
+- No new route — analytics renders inline under `#/employer/:orgSlug`.
+- PHI rule maintained: no names, emails, or raw lab values in any chart or tooltip.
+
+**No DB migration required** — reads from existing `bhas_v2_scores` and `org_memberships` tables.
+
+---
+
+## 2026-03-18 — dev (update 2)
+
+### Leaderboard & Employer View — Filters + Dark Mode Polish
+
+**`src/pages/LeaderboardPage.tsx`**
+- Added inline grid filter bar: username/public ID search, team dropdown, health label dropdown, min BHAS score slider (0–9), Clear button.
+- Rank numbers always reflect full unfiltered standings even when filters are active.
+- "Showing X of Y" count displayed when any filter is active.
+- Fixed `GET /api/leaderboard/:orgSlug` 500 error: replaced PostgREST embedded join `profiles(username, public_id)` with separate profiles fetch joined in JS (same fix as employer endpoint).
+- Dark-mode aware team color palette (`TEAM_PALETTE_DARK` using rgba backgrounds with light text).
+
+**`src/pages/EmployerPage.tsx`**
+- Added inline grid filter bar above member table: username/public ID search, team dropdown, role dropdown, min BHAS % slider (0–100), Clear button.
+- "Showing X of Y" count when filters active; "No members match" empty state.
+- Dark-mode aware team color palette for both team summary cards and member table badges.
+
+---
+
 ## 2026-03-18 — dev
 
 ### F43: Persist BHAS v2.3 Derived Values
