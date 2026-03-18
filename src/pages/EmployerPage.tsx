@@ -31,8 +31,7 @@ interface EmployerPageProps {
   onNavigate?: (page: string) => void
 }
 
-// Cycling palette for dynamic team names (no hardcoded fire/water/wind/earth)
-const TEAM_COLOR_PALETTE: Array<{ bg: string; color: string }> = [
+const TEAM_COLOR_PALETTE_LIGHT: Array<{ bg: string; color: string }> = [
   { bg: '#dbeafe', color: '#1d4ed8' },
   { bg: '#dcfce7', color: '#15803d' },
   { bg: '#fef9c3', color: '#713f12' },
@@ -43,8 +42,20 @@ const TEAM_COLOR_PALETTE: Array<{ bg: string; color: string }> = [
   { bg: '#fce7f3', color: '#be185d' },
 ]
 
-function teamColor(teamName: string, index: number): { bg: string; color: string } {
-  return TEAM_COLOR_PALETTE[index % TEAM_COLOR_PALETTE.length]
+const TEAM_COLOR_PALETTE_DARK: Array<{ bg: string; color: string }> = [
+  { bg: 'rgba(59,130,246,0.18)',  color: '#93c5fd' },
+  { bg: 'rgba(34,197,94,0.15)',   color: '#86efac' },
+  { bg: 'rgba(234,179,8,0.15)',   color: '#fde047' },
+  { bg: 'rgba(239,68,68,0.15)',   color: '#fca5a5' },
+  { bg: 'rgba(168,85,247,0.15)',  color: '#d8b4fe' },
+  { bg: 'rgba(249,115,22,0.15)',  color: '#fdba74' },
+  { bg: 'rgba(14,165,233,0.15)',  color: '#7dd3fc' },
+  { bg: 'rgba(236,72,153,0.15)',  color: '#f9a8d4' },
+]
+
+function teamColor(index: number, darkMode: boolean): { bg: string; color: string } {
+  const palette = darkMode ? TEAM_COLOR_PALETTE_DARK : TEAM_COLOR_PALETTE_LIGHT
+  return palette[index % palette.length]
 }
 
 function BhasBadge({ pct }: { pct: number | null }) {
@@ -59,7 +70,7 @@ function BhasBadge({ pct }: { pct: number | null }) {
 }
 
 export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps) {
-  const { theme } = useTheme()
+  const { theme, darkMode } = useTheme()
   const { user } = useAuth()
   const [data, setData] = useState<OrgData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -157,7 +168,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
       {teamBreakdown.filter(t => t.member_count > 0).length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
           {teamBreakdown.filter(t => t.member_count > 0).map(({ team, member_count, avg_bhas_pct, optimal_pct }, idx) => {
-            const tc = teamColor(team, idx)
+            const tc = teamColor(idx, darkMode)
             return (
               <div key={team} style={{ background: tc.bg, borderRadius: 8, padding: '14px 16px' }}>
                 <div style={{ fontWeight: 700, fontSize: 15, color: tc.color, marginBottom: 4 }}>{team}</div>
@@ -196,7 +207,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
                   .sort((a, b) => (b.bhas_pct ?? -1) - (a.bhas_pct ?? -1))
                   .map((m, i) => {
                     const teamIdx = m.team ? teamBreakdown.findIndex(t => t.team === m.team) : -1
-                    const tc = teamIdx >= 0 ? teamColor(m.team!, teamIdx) : null
+                    const tc = teamIdx >= 0 ? teamColor(teamIdx, darkMode) : null
                     return (
                       <tr key={i} style={{ borderBottom: `1px solid ${theme.borderColor}` }}>
                         <td style={{ padding: '8px 10px', color: theme.text, fontWeight: 500 }}>

@@ -32,7 +32,7 @@ const LABEL_COLOR: Record<string, { bg: string; color: string }> = {
   'High Risk':         { bg: '#fee2e2', color: '#b91c1c' },
 }
 
-const TEAM_PALETTE: Array<{ bg: string; color: string }> = [
+const TEAM_PALETTE_LIGHT: Array<{ bg: string; color: string }> = [
   { bg: '#dbeafe', color: '#1d4ed8' },
   { bg: '#dcfce7', color: '#15803d' },
   { bg: '#fef9c3', color: '#713f12' },
@@ -41,9 +41,19 @@ const TEAM_PALETTE: Array<{ bg: string; color: string }> = [
   { bg: '#ffedd5', color: '#c2410c' },
 ]
 
-function teamColor(teamName: string, teams: string[]) {
+const TEAM_PALETTE_DARK: Array<{ bg: string; color: string }> = [
+  { bg: 'rgba(59,130,246,0.18)',  color: '#93c5fd' },
+  { bg: 'rgba(34,197,94,0.15)',   color: '#86efac' },
+  { bg: 'rgba(234,179,8,0.15)',   color: '#fde047' },
+  { bg: 'rgba(239,68,68,0.15)',   color: '#fca5a5' },
+  { bg: 'rgba(168,85,247,0.15)',  color: '#d8b4fe' },
+  { bg: 'rgba(249,115,22,0.15)',  color: '#fdba74' },
+]
+
+function teamColor(teamName: string, teams: string[], darkMode: boolean) {
   const idx = teams.indexOf(teamName)
-  return TEAM_PALETTE[(idx >= 0 ? idx : 0) % TEAM_PALETTE.length]
+  const palette = darkMode ? TEAM_PALETTE_DARK : TEAM_PALETTE_LIGHT
+  return palette[(idx >= 0 ? idx : 0) % palette.length]
 }
 
 function RankBadge({ rank }: { rank: number }) {
@@ -54,7 +64,7 @@ function RankBadge({ rank }: { rank: number }) {
 }
 
 export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPageProps) {
-  const { theme } = useTheme()
+  const { theme, darkMode } = useTheme()
   const { user } = useAuth()
   const [data, setData] = useState<LeaderboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -157,7 +167,7 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
               <tbody>
                 {entries.map((e, i) => {
                   const lc = LABEL_COLOR[e.label] ?? LABEL_COLOR['High Risk']
-                  const tc = e.team ? teamColor(e.team, allTeams) : null
+                  const tc = e.team ? teamColor(e.team, allTeams, darkMode) : null
                   return (
                     <tr
                       key={i}
