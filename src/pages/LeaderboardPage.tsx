@@ -63,12 +63,20 @@ function RankBadge({ rank }: { rank: number }) {
   return <span style={{ fontSize: 13, fontWeight: 700, color: '#6b7280' }}>#{rank}</span>
 }
 
+const LABELS = ['Optimal', 'Healthy', 'Needs Improvement', 'High Risk'] as const
+
 export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPageProps) {
   const { theme, darkMode } = useTheme()
   const { user } = useAuth()
   const [data, setData] = useState<LeaderboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Filters
+  const [searchUsername, setSearchUsername] = useState('')
+  const [filterTeam, setFilterTeam] = useState('')
+  const [filterLabel, setFilterLabel] = useState('')
+  const [minScore, setMinScore] = useState(0)
 
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   function apiUrl(path: string) {
@@ -122,6 +130,30 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
   const entries = data.entries
   const allTeams = [...new Set(entries.map(e => e.team).filter(Boolean) as string[])]
 
+  // Apply filters — rank index is always based on the unfiltered sorted list
+  const filtered = entries
+    .map((e, i) => ({ entry: e, rank: i + 1 }))
+    .filter(({ entry: e }) => {
+      if (searchUsername && !(e.username ?? '').toLowerCase().includes(searchUsername.toLowerCase()) &&
+          !(e.public_id ?? '').toLowerCase().includes(searchUsername.toLowerCase())) return false
+      if (filterTeam && e.team !== filterTeam) return false
+      if (filterLabel && e.label !== filterLabel) return false
+      if (e.total_score < minScore) return false
+      return true
+    })
+
+  const hasFilters = searchUsername || filterTeam || filterLabel || minScore > 0
+
+  const inputStyle: React.CSSProperties = {
+    background: theme.card,
+    border: `1px solid ${theme.borderColor}`,
+    borderRadius: 6,
+    padding: '6px 10px',
+    color: theme.text,
+    fontSize: 13,
+    outline: 'none',
+  }
+
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
       {/* Back link */}
@@ -143,13 +175,94 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
       <h2 style={{ margin: '0 0 4px 0', fontSize: 22, fontWeight: 700, color: theme.text }}>
         {data.org.name} — BHAS Leaderboard
       </h2>
-      <p style={{ margin: '0 0 24px 0', color: theme.textMuted, fontSize: 14 }}>
+      <p style={{ margin: '0 0 20px 0', color: theme.textMuted, fontSize: 14 }}>
         {entries.length} participant{entries.length !== 1 ? 's' : ''} with a scored v2.3 result · Ranked by BHAS v2.3 score with tie-breaker logic
       </p>
+
+      {entries.length > 0 && (
+        <>
+          {/* Filter bar */}
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center',
+            background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`,
+            borderRadius: 8, padding: '12px 14px', marginBottom: 16,
+          }}>
+            {/* Username / Public ID search */}
+            <input
+              type="text"
+              placeholder="Search username or public ID…"
+              value={searchUsername}
+              onChange={e => setSearchUsername(e.target.value)}
+              style={{ ...inputStyle, minWidth: 200, flexGrow: 1 }}
+            />
+
+            {/* Team filter */}
+            {allTeams.length > 0 && (
+              <select
+                value={filterTeam}
+                onChange={e => setFilterTeam(e.target.value)}
+                style={{ ...inputStyle, cursor: 'pointer' }}
+              >
+                <option value="">All teams</option>
+                {allTeams.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            )}
+
+            {/* Health label filter */}
+            <select
+              value={filterLabel}
+              onChange={e => setFilterLabel(e.target.value)}
+              style={{ ...inputStyle, cursor: 'pointer' }}
+            >
+              <option value="">All labels</option>
+              {LABELS.map(l => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+
+            {/* Minimum score */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: theme.textMuted, whiteSpace: 'nowrap' }}>
+                Min score: <strong style={{ color: theme.text }}>{minScore.toFixed(1)}</strong>
+              </span>
+              <input
+                type="range"
+                min={0} max={9} step={0.5}
+                value={minScore}
+                onChange={e => setMinScore(Number(e.target.value))}
+                style={{ width: 90, cursor: 'pointer', accentColor: theme.blue }}
+              />
+            </div>
+
+            {/* Clear filters */}
+            {hasFilters && (
+              <button
+                onClick={() => { setSearchUsername(''); setFilterTeam(''); setFilterLabel(''); setMinScore(0) }}
+                style={{ ...inputStyle, cursor: 'pointer', color: theme.textMuted, fontSize: 12 }}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+
+          {/* Result count when filtered */}
+          {hasFilters && (
+            <p style={{ margin: '0 0 10px 0', fontSize: 12, color: theme.textMuted }}>
+              Showing {filtered.length} of {entries.length} participants
+            </p>
+          )}
+        </>
+      )}
 
       {entries.length === 0 ? (
         <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 40, textAlign: 'center', color: theme.textMuted }}>
           No scored participants yet. Members need to log enough lab data for a BHAS v2.3 score to appear here.
+        </div>
+      ) : filtered.length === 0 ? (
+        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 40, textAlign: 'center', color: theme.textMuted }}>
+          No participants match the current filters.
         </div>
       ) : (
         <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, overflow: 'hidden' }}>
@@ -165,20 +278,20 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
                 </tr>
               </thead>
               <tbody>
-                {entries.map((e, i) => {
+                {filtered.map(({ entry: e, rank }) => {
                   const lc = LABEL_COLOR[e.label] ?? LABEL_COLOR['High Risk']
                   const tc = e.team ? teamColor(e.team, allTeams, darkMode) : null
                   return (
                     <tr
-                      key={i}
+                      key={rank}
                       style={{
                         borderBottom: `1px solid ${theme.borderColor}`,
-                        background: i === 0 ? 'rgba(16,185,129,0.04)' : 'transparent',
+                        background: rank === 1 ? 'rgba(16,185,129,0.04)' : 'transparent',
                       }}
                     >
-                      {/* Rank */}
+                      {/* Rank — always reflects position in full unfiltered list */}
                       <td style={{ padding: '10px 12px', textAlign: 'center', minWidth: 48 }}>
-                        <RankBadge rank={i + 1} />
+                        <RankBadge rank={rank} />
                       </td>
                       {/* Username */}
                       <td style={{ padding: '10px 12px', fontWeight: 600, color: theme.text }}>

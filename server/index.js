@@ -1675,14 +1675,23 @@ app.get('/api/leaderboard/:orgSlug', async (req, res) => {
     // Fetch org members
     const { data: members, error: mErr } = await sb
       .from('org_memberships')
-      .select('user_id, team, profiles(username, public_id)')
+      .select('user_id, team')
       .eq('org_id', org.id);
-    if (mErr) return res.status(500).json({ error: 'db_error' });
+    if (mErr) return res.status(500).json({ error: 'db_error', step: 'members_fetch', detail: mErr.message });
 
     const memberIds = (members || []).map(m => m.user_id);
     if (memberIds.length === 0) {
       return res.status(200).json({ org: { name: org.name, slug: org.slug }, entries: [] });
     }
+
+    // Fetch profiles separately (avoid PostgREST schema cache join issue)
+    const { data: profiles, error: pErr } = await sb
+      .from('profiles')
+      .select('id, username, public_id')
+      .in('id', memberIds);
+    if (pErr) return res.status(500).json({ error: 'db_error', step: 'profiles_fetch', detail: pErr.message });
+    const profileMap = {};
+    for (const p of profiles || []) profileMap[p.id] = p;
 
     // Fetch latest bhas_v2_scores row per member (most recent score_date)
     const { data: scores, error: sErr } = await sb
@@ -1701,7 +1710,8 @@ app.get('/api/leaderboard/:orgSlug', async (req, res) => {
     // Build member lookup for de-identified profile fields
     const memberMap = {};
     for (const m of members || []) {
-      memberMap[m.user_id] = { team: m.team, username: m.profiles?.username || null, public_id: m.profiles?.public_id || null };
+      const p = profileMap[m.user_id] || {};
+      memberMap[m.user_id] = { team: m.team, username: p.username || null, public_id: p.public_id || null };
     }
 
     // Assemble entries (only members who have a score)
