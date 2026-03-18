@@ -181,40 +181,37 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
 
       {entries.length > 0 && (
         <>
-          {/* Filter bar */}
+          {/* Filter bar — inline strip */}
           <div style={{
-            display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center',
+            display: 'grid',
+            gridTemplateColumns: `1fr 130px 180px auto${hasFilters ? ' auto' : ''}`,
+            gap: 8, alignItems: 'center',
             background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`,
-            borderRadius: 8, padding: '12px 14px', marginBottom: 16,
+            borderRadius: 8, padding: '10px 14px', marginBottom: 16,
           }}>
-            {/* Username / Public ID search */}
             <input
               type="text"
               placeholder="Search username or public ID…"
               value={searchUsername}
               onChange={e => setSearchUsername(e.target.value)}
-              style={{ ...inputStyle, minWidth: 200, flexGrow: 1 }}
+              style={{ ...inputStyle, width: '100%' }}
             />
 
-            {/* Team filter */}
-            {allTeams.length > 0 && (
-              <select
-                value={filterTeam}
-                onChange={e => setFilterTeam(e.target.value)}
-                style={{ ...inputStyle, cursor: 'pointer' }}
-              >
-                <option value="">All teams</option>
-                {allTeams.map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            )}
+            <select
+              value={filterTeam}
+              onChange={e => setFilterTeam(e.target.value)}
+              style={{ ...inputStyle, cursor: 'pointer', width: '100%' }}
+            >
+              <option value="">All teams</option>
+              {allTeams.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
 
-            {/* Health label filter */}
             <select
               value={filterLabel}
               onChange={e => setFilterLabel(e.target.value)}
-              style={{ ...inputStyle, cursor: 'pointer' }}
+              style={{ ...inputStyle, cursor: 'pointer', width: '100%' }}
             >
               <option value="">All labels</option>
               {LABELS.map(l => (
@@ -222,27 +219,25 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
               ))}
             </select>
 
-            {/* Minimum score */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 12, color: theme.textMuted, whiteSpace: 'nowrap' }}>
-                Min score: <strong style={{ color: theme.text }}>{minScore.toFixed(1)}</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 12, color: theme.textMuted }}>
+                Min: <strong style={{ color: theme.text }}>{minScore.toFixed(1)}</strong>
               </span>
               <input
                 type="range"
                 min={0} max={9} step={0.5}
                 value={minScore}
                 onChange={e => setMinScore(Number(e.target.value))}
-                style={{ width: 90, cursor: 'pointer', accentColor: theme.blue }}
+                style={{ width: 80, cursor: 'pointer', accentColor: theme.blue }}
               />
             </div>
 
-            {/* Clear filters */}
             {hasFilters && (
               <button
                 onClick={() => { setSearchUsername(''); setFilterTeam(''); setFilterLabel(''); setMinScore(0) }}
-                style={{ ...inputStyle, cursor: 'pointer', color: theme.textMuted, fontSize: 12 }}
+                style={{ ...inputStyle, cursor: 'pointer', color: theme.textMuted, fontSize: 12, whiteSpace: 'nowrap' }}
               >
-                Clear filters
+                Clear
               </button>
             )}
           </div>
