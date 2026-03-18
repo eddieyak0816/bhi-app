@@ -32,6 +32,14 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     waistCircumference: '',
     waistUnit: 'in' as 'in' | 'cm',
     gripStrength: '',
+    // BHAS v2.3 fields — stored in American units in state, converted to metric on save
+    heightFt: '',
+    heightIn: '',
+    weightLbs: '',
+    isType1Diabetes: false,
+    totalDailyInsulinUnits: '',
+    hasAdvancedCarePlan: false,
+    acuteVisits: '',
     healthGoals: [] as string[],
     preferredResourceTypes: [] as string[],
     notificationsEnabled: true,
@@ -68,7 +76,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     if (!user?.id) return
     supabase
       .from('profiles')
-      .select('name, age, sex, waist_circumference, waist_unit, grip_strength, is_public, public_id, username')
+      .select('name, age, sex, waist_circumference, waist_unit, grip_strength, is_public, public_id, username, height_cm, weight_kg, is_type1_diabetes, total_daily_insulin_units, has_advanced_care_plan, acute_visits')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
@@ -81,6 +89,15 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
           waistCircumference: data.waist_circumference != null ? String(data.waist_circumference) : '',
           waistUnit: data.waist_unit || 'in',
           gripStrength: data.grip_strength != null ? String(data.grip_strength) : '',
+          // Convert stored cm → ft/in for display
+          heightFt: data.height_cm != null ? String(Math.floor(data.height_cm / 30.48)) : '',
+          heightIn: data.height_cm != null ? String(Math.round((data.height_cm % 30.48) / 2.54)) : '',
+          // Convert stored kg → lbs for display
+          weightLbs: data.weight_kg != null ? String(Math.round(data.weight_kg * 2.205)) : '',
+          isType1Diabetes: data.is_type1_diabetes ?? false,
+          totalDailyInsulinUnits: data.total_daily_insulin_units != null ? String(data.total_daily_insulin_units) : '',
+          hasAdvancedCarePlan: data.has_advanced_care_plan ?? false,
+          acuteVisits: data.acute_visits != null ? String(data.acute_visits) : '',
         }))
         setIsPublic(data.is_public ?? false)
         setPublicId(data.public_id ?? null)
@@ -93,21 +110,35 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     if (!user?.id) return
     setSaving(true)
     setSaveMessage(null)
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        name: formData.fullName,
-        age: formData.age ? parseInt(formData.age) : null,
-        sex: formData.sex || null,
-        waist_circumference: formData.waistCircumference ? parseFloat(formData.waistCircumference) : null,
-        waist_unit: formData.waistUnit,
-        grip_strength: formData.gripStrength ? parseFloat(formData.gripStrength) : null,
-        is_public: isPublic,
-      })
-      .eq('id', user.id)
-    setSaving(false)
-    setSaveMessage(error ? { type: 'error', text: error.message } : { type: 'success', text: 'Profile saved.' })
-    setTimeout(() => setSaveMessage(null), 3000)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: formData.fullName,
+          age: formData.age ? parseInt(formData.age) : null,
+          sex: formData.sex || null,
+          waist_circumference: formData.waistCircumference ? parseFloat(formData.waistCircumference) : null,
+          waist_unit: formData.waistUnit,
+          grip_strength: formData.gripStrength ? parseFloat(formData.gripStrength) : null,
+          is_public: isPublic,
+          // BHAS v2.3 fields — convert American units to metric before saving
+          height_cm: (formData.heightFt || formData.heightIn)
+            ? (parseFloat(formData.heightFt || '0') * 30.48) + (parseFloat(formData.heightIn || '0') * 2.54)
+            : null,
+          weight_kg: formData.weightLbs ? parseFloat(formData.weightLbs) / 2.205 : null,
+          is_type1_diabetes: formData.isType1Diabetes,
+          total_daily_insulin_units: formData.isType1Diabetes && formData.totalDailyInsulinUnits ? parseFloat(formData.totalDailyInsulinUnits) : null,
+          has_advanced_care_plan: formData.hasAdvancedCarePlan,
+          acute_visits: formData.acuteVisits ? parseInt(formData.acuteVisits) : null,
+        })
+        .eq('id', user.id)
+      setSaveMessage(error ? { type: 'error', text: error.message } : { type: 'success', text: 'Profile saved.' })
+    } catch (err) {
+      setSaveMessage({ type: 'error', text: err instanceof Error ? err.message : 'Save failed — check your connection.' })
+    } finally {
+      setSaving(false)
+      setTimeout(() => setSaveMessage(null), 3000)
+    }
   }
 
   // Username: debounced availability check
@@ -400,6 +431,115 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
               placeholder="e.g. 38"
               style={{ ...inputStyle, marginBottom: 0 }}
             />
+          </div>
+          <div>
+            <label style={labelStyle}>Height</label>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.heightFt}
+                  onChange={e => setFormData({ ...formData, heightFt: e.target.value })}
+                  placeholder="ft"
+                  style={{ ...inputStyle, marginBottom: 0 }}
+                />
+                <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 2, textAlign: 'center' }}>feet</div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="number"
+                  min="0"
+                  max="11"
+                  step="1"
+                  value={formData.heightIn}
+                  onChange={e => setFormData({ ...formData, heightIn: e.target.value })}
+                  placeholder="in"
+                  style={{ ...inputStyle, marginBottom: 0 }}
+                />
+                <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 2, textAlign: 'center' }}>inches</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Body Weight (lbs)</label>
+            <input
+              type="number"
+              step="1"
+              value={formData.weightLbs}
+              onChange={e => setFormData({ ...formData, weightLbs: e.target.value })}
+              placeholder="e.g. 175"
+              style={{ ...inputStyle, marginBottom: 0 }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* BHAS v2.3 Clinical Inputs */}
+      <div style={sectionStyle}>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>Clinical Information</h3>
+        <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
+          Used for BHAS v2.3 scoring. These affect which metrics are calculated.
+        </p>
+
+        {/* Type 1 Diabetes toggle */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', marginBottom: 16 }}>
+          <input
+            type="checkbox"
+            checked={formData.isType1Diabetes}
+            onChange={e => setFormData({ ...formData, isType1Diabetes: e.target.checked, totalDailyInsulinUnits: '' })}
+            style={{ width: 18, height: 18, cursor: 'pointer' }}
+          />
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>Type 1 Diabetes</div>
+            <div style={{ fontSize: 12, color: theme.textMuted }}>Switches BHAS scoring from HOMA-IR to Insulin Units/kg</div>
+          </div>
+        </label>
+
+        {/* Total Daily Insulin — only shown for Type 1 */}
+        {formData.isType1Diabetes && (
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Total Daily Insulin Units (units/day)</label>
+            <input
+              type="number"
+              step="0.5"
+              value={formData.totalDailyInsulinUnits}
+              onChange={e => setFormData({ ...formData, totalDailyInsulinUnits: e.target.value })}
+              placeholder="e.g. 42"
+              style={inputStyle}
+            />
+          </div>
+        )}
+
+        {/* Advanced Care Plan */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', marginBottom: 16 }}>
+          <input
+            type="checkbox"
+            checked={formData.hasAdvancedCarePlan}
+            onChange={e => setFormData({ ...formData, hasAdvancedCarePlan: e.target.checked })}
+            style={{ width: 18, height: 18, cursor: 'pointer' }}
+          />
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>Advanced Care Plan documented</div>
+            <div style={{ fontSize: 12, color: theme.textMuted }}>Living will, healthcare proxy, or similar document on file. Worth 1 point in BHAS v2.3.</div>
+          </div>
+        </label>
+
+        {/* Acute Care Visits */}
+        <div>
+          <label style={labelStyle}>Acute Care Visits (past 12 months)</label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={formData.acuteVisits}
+            onChange={e => setFormData({ ...formData, acuteVisits: e.target.value })}
+            placeholder="e.g. 0"
+            style={inputStyle}
+          />
+          <div style={{ fontSize: 12, color: theme.textMuted, marginTop: -12, marginBottom: 8 }}>
+            ER or urgent care visits. Used as a tie-breaker in leaderboard ranking — not directly scored.
           </div>
         </div>
       </div>

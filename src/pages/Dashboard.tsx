@@ -1,8 +1,11 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useEvaluation } from '../context/EvaluationContext'
 import { useResults } from '../context/ResultsContext'
+import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
+import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
+import { supabase } from '../lib/supabase'
 
 interface DashboardProps {
   userEmail?: string
@@ -16,9 +19,52 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
   const { theme } = useTheme()
   const { applicableTags, recommendedResources, bhasResult, loading, error } = useEvaluation()
   const { results, latestLabDate } = useResults()
+  const { user } = useAuth()
 
   // Get first name from full name
   const firstName = userName?.split(' ')[0] || ''
+
+  // BHAS v2.3 — load profile fields and compute score
+  const [bhasV2Result, setBhasV2Result] = useState<BhasV2Result | null>(null)
+
+  useEffect(() => {
+    if (!user?.id || results.length === 0) return
+
+    supabase
+      .from('profiles')
+      .select('sex, height_cm, weight_kg, waist_circumference, waist_unit, grip_strength, is_type1_diabetes, total_daily_insulin_units, has_advanced_care_plan, acute_visits')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (!data) return
+
+        // Convert waist to cm if stored in inches
+        let waistCm: number | null = null
+        if (data.waist_circumference != null) {
+          waistCm = data.waist_unit === 'in'
+            ? data.waist_circumference * 2.54
+            : data.waist_circumference
+        }
+
+        const profile: BhasV2Profile = {
+          sex: data.sex || '',
+          heightCm: data.height_cm ?? null,
+          waistCm,
+          weightKg: data.weight_kg ?? null,
+          gripStrengthKg: data.grip_strength ?? null,
+          isType1Diabetes: data.is_type1_diabetes ?? false,
+          totalDailyInsulinUnits: data.total_daily_insulin_units ?? null,
+          hasAdvancedCarePlan: data.has_advanced_care_plan ?? false,
+          acuteVisits: data.acute_visits ?? null,
+        }
+
+        const v2 = calculateBhasV2Score(
+          results.map(r => ({ markerName: r.markerName, value: r.value, date: r.date })),
+          profile
+        )
+        setBhasV2Result(v2)
+      })
+  }, [user?.id, results])
 
   const statCard = (label: string, value: string | number, icon: string) => (
     <div
@@ -126,6 +172,113 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* BHAS v2.3 Panel — shown only when enough data exists */}
+      {bhasV2Result && bhasV2Result.hasEnoughData && (
+        <div
+          style={{
+            background: theme.card,
+            border: `1.5px solid ${theme.borderColor}`,
+            borderRadius: 10,
+            padding: '20px 24px',
+            marginBottom: 32,
+          }}
+        >
+          {/* Header row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', marginBottom: 16 }}>
+            <div style={{ textAlign: 'center', minWidth: 80 }}>
+              <div style={{
+                fontSize: 36,
+                fontWeight: 800,
+                lineHeight: 1,
+                color: bhasV2Result.label === 'Optimal' ? '#10B981'
+                     : bhasV2Result.label === 'Healthy' ? '#3B82F6'
+                     : bhasV2Result.label === 'Needs Improvement' ? '#D97706'
+                     : '#EF4444',
+              }}>
+                {bhasV2Result.totalScore.toFixed(1)}
+              </div>
+              <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                / 9.0
+              </div>
+            </div>
+
+            <div style={{ width: 1, height: 48, background: theme.borderColor, flexShrink: 0 }} />
+
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>BHAS v2.3</div>
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: '2px 10px',
+                  borderRadius: 20,
+                  background: bhasV2Result.label === 'Optimal' ? 'rgba(16,185,129,0.12)'
+                             : bhasV2Result.label === 'Healthy' ? 'rgba(59,130,246,0.12)'
+                             : bhasV2Result.label === 'Needs Improvement' ? 'rgba(245,158,11,0.12)'
+                             : 'rgba(239,68,68,0.12)',
+                  color: bhasV2Result.label === 'Optimal' ? '#10B981'
+                       : bhasV2Result.label === 'Healthy' ? '#3B82F6'
+                       : bhasV2Result.label === 'Needs Improvement' ? '#D97706'
+                       : '#EF4444',
+                }}>
+                  {bhasV2Result.label}
+                </span>
+              </div>
+              <div style={{ fontSize: 12, color: theme.textMuted }}>
+                {bhasV2Result.metricScores.length} of 9 metrics scored · uses derived ratios (HOMA-IR, TG/HDL, WtHR, Grip Ratio)
+              </div>
+            </div>
+          </div>
+
+          {/* Per-metric breakdown */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: bhasV2Result.missingInputs.length > 0 ? 12 : 0 }}>
+            {bhasV2Result.metricScores.map(m => (
+              <span
+                key={m.metric}
+                title={m.derived}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  padding: '3px 8px',
+                  borderRadius: 20,
+                  background: m.score === 1   ? 'rgba(16,185,129,0.12)'
+                             : m.score === 0.5 ? 'rgba(245,158,11,0.12)'
+                             :                   'rgba(239,68,68,0.12)',
+                  color: m.score === 1   ? '#10B981'
+                       : m.score === 0.5 ? '#D97706'
+                       :                  '#EF4444',
+                  cursor: 'default',
+                }}
+              >
+                {m.metric} · {m.score === 1 ? '✓' : m.score === 0.5 ? '~' : '✗'}
+              </span>
+            ))}
+          </div>
+
+          {/* Missing inputs hint */}
+          {bhasV2Result.missingInputs.length > 0 && (
+            <div style={{ fontSize: 12, color: theme.textMuted, borderTop: `1px solid ${theme.borderColor}`, paddingTop: 10 }}>
+              <strong>To complete your v2.3 score, add:</strong>{' '}
+              {bhasV2Result.missingInputs.join(' · ')}
+              {' '}—{' '}
+              <button
+                onClick={() => onNavigate?.('profile')}
+                style={{ background: 'none', border: 'none', color: theme.blue, cursor: 'pointer', fontSize: 12, padding: 0, textDecoration: 'underline' }}
+              >
+                update Profile
+              </button>
+              {' '}or{' '}
+              <button
+                onClick={() => onNavigate?.('labs')}
+                style={{ background: 'none', border: 'none', color: theme.blue, cursor: 'pointer', fontSize: 12, padding: 0, textDecoration: 'underline' }}
+              >
+                log Labs
+              </button>
+            </div>
+          )}
         </div>
       )}
 
