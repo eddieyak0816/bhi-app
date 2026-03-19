@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 2026-03-18 — planned (F18a Admin Org Filters)
+## 2026-03-18 — built (F18a Admin Org Filters)
 
 ### F18a: Admin Organizations Tab — Search & Filter
 

@@ -164,6 +164,21 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   // Feature 18: per-team BHAS score summary for each org (keyed by org.slug)
   const [orgTeamScores, setOrgTeamScores] = useState<Record<string, Array<{team: string; member_count: number; avg_bhas_pct: number | null; optimal_pct: number | null}>>>({})
 
+  // Feature 18a: Org list filters
+  const [orgSearch, setOrgSearch] = useState('')
+  const [orgMinMembers, setOrgMinMembers] = useState('')
+  const [orgSortBy, setOrgSortBy] = useState<'name' | 'members'>('name')
+
+  // Feature 18a: Member table filters (per org, keyed by org.id)
+  const [memberPubIdSearch, setMemberPubIdSearch] = useState<Record<string, string>>({})
+  const [memberTeamFilter, setMemberTeamFilter] = useState<Record<string, string>>({})
+  const [memberRoleFilter, setMemberRoleFilter] = useState<Record<string, string>>({})
+  const [memberUnassignedOnly, setMemberUnassignedOnly] = useState<Record<string, boolean>>({})
+
+  // Feature 18a: Team score summary filters (per org, keyed by org.slug)
+  const [teamScoreMinAvg, setTeamScoreMinAvg] = useState<Record<string, string>>({})
+  const [teamScoreHasMembersOnly, setTeamScoreHasMembersOnly] = useState<Record<string, boolean>>({})
+
   // User identity mapping state (Feature 15)
   const [showIdentityPanel, setShowIdentityPanel] = useState<boolean>(() => localStorage.getItem('bhi_show_identity_panel') === 'true')
   const [allUsers, setAllUsers] = useState<Array<{id: string; name: string; email: string; username: string|null; public_id: string|null; role: string; created_at: string}>>([])
@@ -3843,12 +3858,66 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             {orgCreateError && <p style={{color:'#dc2626',fontSize:13,margin:'8px 0 0 0'}}>{orgCreateError}</p>}
           </div>}
 
+          {/* Org list filters — F18a */}
+          {!loading && orgs.length > 0 && (
+            <div style={{display:'flex',gap:10,alignItems:'flex-end',flexWrap:'wrap',marginBottom:14,background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:'10px 14px'}}>
+              <div>
+                <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Search</label>
+                <input
+                  value={orgSearch}
+                  onChange={e => setOrgSearch(e.target.value)}
+                  placeholder="Name or slug…"
+                  style={{padding:'5px 9px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13,width:160}}
+                />
+              </div>
+              <div>
+                <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Min Members</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={orgMinMembers}
+                  onChange={e => setOrgMinMembers(e.target.value)}
+                  placeholder="0"
+                  style={{padding:'5px 9px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13,width:80}}
+                />
+              </div>
+              <div>
+                <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Sort By</label>
+                <select
+                  value={orgSortBy}
+                  onChange={e => setOrgSortBy(e.target.value as 'name' | 'members')}
+                  style={{padding:'5px 9px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
+                >
+                  <option value="name">Name A→Z</option>
+                  <option value="members">Most Members</option>
+                </select>
+              </div>
+              {(orgSearch || orgMinMembers || orgSortBy !== 'name') && (
+                <button
+                  onClick={() => { setOrgSearch(''); setOrgMinMembers(''); setOrgSortBy('name') }}
+                  style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:5,padding:'5px 10px',fontSize:12,cursor:'pointer',color:theme.textMuted,alignSelf:'flex-end'}}
+                >Clear</button>
+              )}
+            </div>
+          )}
+
           {/* Org list */}
           {loading ? <div style={{color:theme.textMuted}}>Loading…</div> : orgs.length === 0 ? (
             <p style={{color:theme.textMuted,fontSize:14}}>No organizations yet.</p>
-          ) : (
+          ) : (() => {
+            const minM = orgMinMembers !== '' ? parseInt(orgMinMembers, 10) : 0
+            const filtered = orgs
+              .filter(o => {
+                const q = orgSearch.toLowerCase()
+                if (q && !o.name.toLowerCase().includes(q) && !o.slug.toLowerCase().includes(q)) return false
+                if (orgMinMembers !== '' && !isNaN(minM) && o.member_count < minM) return false
+                return true
+              })
+              .sort((a, b) => orgSortBy === 'members' ? b.member_count - a.member_count : a.name.localeCompare(b.name))
+            if (filtered.length === 0) return <p style={{color:theme.textMuted,fontSize:14}}>No organizations match the current filters.</p>
+            return (
             <div style={{display:'flex',flexDirection:'column',gap:12}}>
-              {orgs.map(org => (
+              {filtered.map(org => (
                 <div key={org.id} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,overflow:'hidden'}}>
                   {/* Org header row */}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 16px'}}>
@@ -3996,10 +4065,45 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         {orgTeamError[org.id] && <p style={{color:'#dc2626',fontSize:12,margin:'6px 0 0 0'}}>{orgTeamError[org.id]}</p>}
                       </div>
 
-                      {/* Feature 18: Team score summary */}
-                      {(orgTeamScores[org.slug] || []).filter(t => t.member_count > 0).length > 0 && (
+                      {/* Feature 18: Team score summary — F18a: with filters */}
+                      {(orgTeamScores[org.slug] || []).length > 0 && (() => {
+                        const minAvgVal = teamScoreMinAvg[org.slug] !== undefined ? parseFloat(teamScoreMinAvg[org.slug]) : NaN
+                        const hasMembersToggle = teamScoreHasMembersOnly[org.slug] ?? true
+                        const filteredTeams = (orgTeamScores[org.slug] || []).filter(t => {
+                          if (hasMembersToggle && t.member_count === 0) return false
+                          if (!isNaN(minAvgVal) && (t.avg_bhas_pct === null || t.avg_bhas_pct < minAvgVal)) return false
+                          return true
+                        })
+                        return (
                         <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:12,marginBottom:14}}>
-                          <h5 style={{margin:'0 0 10px 0',fontSize:13,fontWeight:600,color:theme.text}}>Team Score Summary</h5>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,flexWrap:'wrap',gap:8}}>
+                            <h5 style={{margin:0,fontSize:13,fontWeight:600,color:theme.text}}>Team Score Summary</h5>
+                            <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+                              <div style={{display:'flex',alignItems:'center',gap:5}}>
+                                <label style={{fontSize:11,color:theme.textMuted}}>Min Avg BHAS %</label>
+                                <input
+                                  type="number"
+                                  min={0} max={100}
+                                  value={teamScoreMinAvg[org.slug] ?? ''}
+                                  onChange={e => setTeamScoreMinAvg(prev => ({...prev,[org.slug]:e.target.value}))}
+                                  placeholder="0"
+                                  style={{width:60,padding:'3px 6px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:12}}
+                                />
+                              </div>
+                              <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:theme.textMuted,cursor:'pointer',userSelect:'none'}}>
+                                <input
+                                  type="checkbox"
+                                  checked={teamScoreHasMembersOnly[org.slug] ?? true}
+                                  onChange={e => setTeamScoreHasMembersOnly(prev => ({...prev,[org.slug]:e.target.checked}))}
+                                  style={{cursor:'pointer'}}
+                                />
+                                Has members only
+                              </label>
+                            </div>
+                          </div>
+                          {filteredTeams.length === 0 ? (
+                            <p style={{color:theme.textMuted,fontSize:12,margin:0}}>No teams match the current filters.</p>
+                          ) : (
                           <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                             <thead>
                               <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
@@ -4009,9 +4113,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               </tr>
                             </thead>
                             <tbody>
-                              {(orgTeamScores[org.slug] || [])
-                                .filter(t => t.member_count > 0)
-                                .map((t, idx) => (
+                              {filteredTeams.map((t, idx) => (
                                 <tr key={t.team} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
                                   <td style={{padding:'5px 8px',color:theme.textMuted,fontWeight:600}}>#{idx + 1}</td>
                                   <td style={{padding:'5px 8px',color:theme.text,fontWeight:500}}>{t.team}</td>
@@ -4030,49 +4132,131 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                               ))}
                             </tbody>
                           </table>
+                          )}
                         </div>
-                      )}
+                        )
+                      })()}
 
-                      {/* Member table */}
+                      {/* Member table — F18a: with filters */}
                       {!orgMembers[org.id] ? (
                         <p style={{color:theme.textMuted,fontSize:13}}>Loading members…</p>
                       ) : orgMembers[org.id].length === 0 ? (
                         <p style={{color:theme.textMuted,fontSize:13}}>No members yet.</p>
-                      ) : (
-                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
-                          <thead>
-                            <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                              {['Public ID','Role','Team','Joined',''].map(h => (
-                                <th key={h} style={{textAlign:'left',padding:'6px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase'}}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {orgMembers[org.id].map(m => (
-                              <tr key={m.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                                <td style={{padding:'7px 8px',color:theme.text,fontFamily:'monospace',fontSize:12}}>{m.public_id || '—'}</td>
-                                <td style={{padding:'7px 8px'}}>
-                                  <span style={{background:m.role==='admin'?'#dbeafe':'#f0fdf4',color:m.role==='admin'?'#1d4ed8':'#15803d',borderRadius:4,padding:'2px 7px',fontSize:11,fontWeight:600}}>{m.role}</span>
-                                </td>
-                                <td style={{padding:'7px 8px',color:theme.text,textTransform:'capitalize'}}>{m.team || '—'}</td>
-                                <td style={{padding:'7px 8px',color:theme.textMuted}}>{m.joined_at ? new Date(m.joined_at).toLocaleDateString() : '—'}</td>
-                                <td style={{padding:'7px 8px'}}>
-                                  <button
-                                    onClick={() => removeOrgMember(org.id, m.user_id)}
-                                    style={{background:'transparent',border:'1px solid #dc2626',borderRadius:4,padding:'3px 9px',fontSize:12,cursor:'pointer',color:'#dc2626'}}
-                                  >Remove</button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
+                      ) : (() => {
+                        const pubQ = (memberPubIdSearch[org.id] || '').toLowerCase()
+                        const teamF = memberTeamFilter[org.id] || ''
+                        const roleF = memberRoleFilter[org.id] || ''
+                        const unassigned = memberUnassignedOnly[org.id] || false
+                        const filtered = orgMembers[org.id].filter(m => {
+                          if (pubQ && !(m.public_id || '').toLowerCase().includes(pubQ)) return false
+                          if (teamF && m.team !== teamF) return false
+                          if (roleF && m.role !== roleF) return false
+                          if (unassigned && m.team) return false
+                          return true
+                        })
+                        const hasActiveFilter = pubQ || teamF || roleF || unassigned
+                        const availableTeams = Array.from(new Set(orgMembers[org.id].map(m => m.team).filter(Boolean))) as string[]
+                        return (
+                          <>
+                            {/* Member filter bar */}
+                            <div style={{display:'flex',gap:8,alignItems:'flex-end',flexWrap:'wrap',marginBottom:10,background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'8px 12px'}}>
+                              <div>
+                                <label style={{display:'block',fontSize:10,color:theme.textMuted,marginBottom:2}}>Public ID</label>
+                                <input
+                                  value={memberPubIdSearch[org.id] || ''}
+                                  onChange={e => setMemberPubIdSearch(prev => ({...prev,[org.id]:e.target.value}))}
+                                  placeholder="BHI-…"
+                                  style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:12,width:130,fontFamily:'monospace'}}
+                                />
+                              </div>
+                              <div>
+                                <label style={{display:'block',fontSize:10,color:theme.textMuted,marginBottom:2}}>Team</label>
+                                <select
+                                  value={memberTeamFilter[org.id] || ''}
+                                  onChange={e => setMemberTeamFilter(prev => ({...prev,[org.id]:e.target.value}))}
+                                  style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:12}}
+                                >
+                                  <option value="">All teams</option>
+                                  {availableTeams.map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label style={{display:'block',fontSize:10,color:theme.textMuted,marginBottom:2}}>Role</label>
+                                <select
+                                  value={memberRoleFilter[org.id] || ''}
+                                  onChange={e => setMemberRoleFilter(prev => ({...prev,[org.id]:e.target.value}))}
+                                  style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:12}}
+                                >
+                                  <option value="">All roles</option>
+                                  <option value="member">Member</option>
+                                  <option value="admin">Admin</option>
+                                </select>
+                              </div>
+                              <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:theme.textMuted,cursor:'pointer',userSelect:'none',alignSelf:'flex-end',paddingBottom:2}}>
+                                <input
+                                  type="checkbox"
+                                  checked={memberUnassignedOnly[org.id] || false}
+                                  onChange={e => setMemberUnassignedOnly(prev => ({...prev,[org.id]:e.target.checked}))}
+                                  style={{cursor:'pointer'}}
+                                />
+                                Unassigned only
+                              </label>
+                              {hasActiveFilter && (
+                                <button
+                                  onClick={() => {
+                                    setMemberPubIdSearch(prev => ({...prev,[org.id]:''}))
+                                    setMemberTeamFilter(prev => ({...prev,[org.id]:''}))
+                                    setMemberRoleFilter(prev => ({...prev,[org.id]:''}))
+                                    setMemberUnassignedOnly(prev => ({...prev,[org.id]:false}))
+                                  }}
+                                  style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 9px',fontSize:11,cursor:'pointer',color:theme.textMuted,alignSelf:'flex-end',marginBottom:2}}
+                                >Clear</button>
+                              )}
+                              <span style={{fontSize:11,color:theme.textMuted,alignSelf:'flex-end',paddingBottom:3,marginLeft:'auto'}}>
+                                {filtered.length} / {orgMembers[org.id].length}
+                              </span>
+                            </div>
+                            {filtered.length === 0 ? (
+                              <p style={{color:theme.textMuted,fontSize:13}}>No members match the current filters.</p>
+                            ) : (
+                            <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+                              <thead>
+                                <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                                  {['Public ID','Role','Team','Joined',''].map(h => (
+                                    <th key={h} style={{textAlign:'left',padding:'6px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase'}}>{h}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filtered.map(m => (
+                                  <tr key={m.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                                    <td style={{padding:'7px 8px',color:theme.text,fontFamily:'monospace',fontSize:12}}>{m.public_id || '—'}</td>
+                                    <td style={{padding:'7px 8px'}}>
+                                      <span style={{background:m.role==='admin'?'#dbeafe':'#f0fdf4',color:m.role==='admin'?'#1d4ed8':'#15803d',borderRadius:4,padding:'2px 7px',fontSize:11,fontWeight:600}}>{m.role}</span>
+                                    </td>
+                                    <td style={{padding:'7px 8px',color:theme.text,textTransform:'capitalize'}}>{m.team || '—'}</td>
+                                    <td style={{padding:'7px 8px',color:theme.textMuted}}>{m.joined_at ? new Date(m.joined_at).toLocaleDateString() : '—'}</td>
+                                    <td style={{padding:'7px 8px'}}>
+                                      <button
+                                        onClick={() => removeOrgMember(org.id, m.user_id)}
+                                        style={{background:'transparent',border:'1px solid #dc2626',borderRadius:4,padding:'3px 9px',fontSize:12,cursor:'pointer',color:'#dc2626'}}
+                                      >Remove</button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                            )}
+                          </>
+                        )
+                      })()}
                     </div>
                   )}
                 </div>
               ))}
             </div>
-          )}
+          )
+          })()}
         </div>
       )}
     </div>
