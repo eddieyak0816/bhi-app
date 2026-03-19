@@ -108,6 +108,15 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
   const [filterRole, setFilterRole] = useState('')
   const [minBhas, setMinBhas] = useState(0)
 
+  // Column sort
+  const [sortCol, setSortCol] = useState<'username' | 'public_id' | 'team' | 'bhas_pct' | 'result_count' | 'role' | 'joined_at'>('bhas_pct')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  function toggleSort(col: typeof sortCol) {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCol(col); setSortDir('asc') }
+  }
+  function sortArrow(col: typeof sortCol) { return sortCol === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '' }
+
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   function apiUrl(path: string) {
     return DEV_BACKEND_URL ? `${DEV_BACKEND_URL.replace(/\/$/, '')}${path}` : path
@@ -194,8 +203,6 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
   const hasFilters = searchUsername || filterTeam || filterRole || minBhas > 0
 
   const filteredMembers = members
-    .slice()
-    .sort((a, b) => (b.bhas_pct ?? -1) - (a.bhas_pct ?? -1))
     .filter(m => {
       if (searchUsername && !(m.username ?? '').toLowerCase().includes(searchUsername.toLowerCase()) &&
           !(m.public_id ?? '').toLowerCase().includes(searchUsername.toLowerCase())) return false
@@ -203,6 +210,17 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
       if (filterRole && m.role !== filterRole) return false
       if (minBhas > 0 && (m.bhas_pct === null || m.bhas_pct < minBhas)) return false
       return true
+    })
+    .sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1
+      if (sortCol === 'bhas_pct') return dir * ((a.bhas_pct ?? -1) - (b.bhas_pct ?? -1))
+      if (sortCol === 'result_count') return dir * (a.result_count - b.result_count)
+      if (sortCol === 'joined_at') return dir * (a.joined_at || '').localeCompare(b.joined_at || '')
+      if (sortCol === 'username') return dir * (a.username ?? '').localeCompare(b.username ?? '')
+      if (sortCol === 'public_id') return dir * (a.public_id ?? '').localeCompare(b.public_id ?? '')
+      if (sortCol === 'team') return dir * (a.team ?? '').localeCompare(b.team ?? '')
+      if (sortCol === 'role') return dir * (a.role ?? '').localeCompare(b.role ?? '')
+      return 0
     })
 
   const inputStyle: React.CSSProperties = {
@@ -371,8 +389,22 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${theme.borderColor}` }}>
-                  {['Username', 'Public ID', 'Team', 'BHAS Score', 'Results', 'Role', 'Joined'].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '6px 10px', color: theme.textMuted, fontWeight: 600, fontSize: 11, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                  {([
+                    ['username',     'Username'],
+                    ['public_id',    'Public ID'],
+                    ['team',         'Team'],
+                    ['bhas_pct',     'BHAS Score'],
+                    ['result_count', 'Results'],
+                    ['role',         'Role'],
+                    ['joined_at',    'Joined'],
+                  ] as [typeof sortCol, string][]).map(([col, label]) => (
+                    <th
+                      key={col}
+                      onClick={() => toggleSort(col)}
+                      style={{ textAlign: 'left', padding: '6px 10px', color: theme.textMuted, fontWeight: 600, fontSize: 11, textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}
+                    >
+                      {label}{sortArrow(col)}
+                    </th>
                   ))}
                 </tr>
               </thead>
