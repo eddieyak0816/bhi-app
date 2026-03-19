@@ -179,6 +179,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [teamScoreMinAvg, setTeamScoreMinAvg] = useState<Record<string, string>>({})
   const [teamScoreHasMembersOnly, setTeamScoreHasMembersOnly] = useState<Record<string, boolean>>({})
 
+  // Column sort state for sortable tables
+  type SortDir = 'asc' | 'desc'
+  const [teamScoreSort, setTeamScoreSort] = useState<Record<string, {col: string; dir: SortDir}>>({})
+  const [memberSort, setMemberSort] = useState<Record<string, {col: string; dir: SortDir}>>({})
+  const [identitySort, setIdentitySort] = useState<{col: string; dir: SortDir}>({col: 'name', dir: 'asc'})
+
   // User identity mapping state (Feature 15)
   const [showIdentityPanel, setShowIdentityPanel] = useState<boolean>(() => localStorage.getItem('bhi_show_identity_panel') === 'true')
   const [allUsers, setAllUsers] = useState<Array<{id: string; name: string; email: string; username: string|null; public_id: string|null; role: string; created_at: string}>>([])
@@ -3777,17 +3783,35 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             </div>
             {usersLoaded && (
               usersLoading ? <div style={{color:theme.textMuted,fontSize:13}}>Loading…</div> :
-              allUsers.length === 0 ? <p style={{color:theme.textMuted,fontSize:13}}>No users found.</p> : (
+              allUsers.length === 0 ? <p style={{color:theme.textMuted,fontSize:13}}>No users found.</p> : (() => {
+                const iCol = identitySort.col
+                const iDir = identitySort.dir
+                const sortedUsers = [...allUsers].sort((a, b) => {
+                  let av = '', bv = ''
+                  if (iCol === 'name') { av = a.name || ''; bv = b.name || '' }
+                  else if (iCol === 'email') { av = a.email || ''; bv = b.email || '' }
+                  else if (iCol === 'username') { av = a.username || ''; bv = b.username || '' }
+                  else if (iCol === 'public_id') { av = a.public_id || ''; bv = b.public_id || '' }
+                  else if (iCol === 'role') { av = a.role || ''; bv = b.role || '' }
+                  const cmp = av.localeCompare(bv)
+                  return iDir === 'asc' ? cmp : -cmp
+                })
+                const iToggle = (col: string) => setIdentitySort(prev => prev.col === col ? {...prev, dir: prev.dir === 'asc' ? 'desc' : 'asc'} : {col, dir: 'asc'})
+                const iArrow = (col: string) => iCol === col ? (iDir === 'asc' ? ' ↑' : ' ↓') : ''
+                return (
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                   <thead>
                     <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                      {['Name','Email','Username','Public ID','Role',''].map(h => (
-                        <th key={h} style={{textAlign:'left',padding:'5px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase'}}>{h}</th>
+                      {(['name','email','username','public_id','role'] as const).map(col => (
+                        <th key={col} onClick={() => iToggle(col)} style={{textAlign:'left',padding:'5px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase',cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>
+                          {col.replace('_',' ')}{iArrow(col)}
+                        </th>
                       ))}
+                      <th style={{padding:'5px 8px'}} />
                     </tr>
                   </thead>
                   <tbody>
-                    {allUsers.map(u => (
+                    {sortedUsers.map(u => (
                       <tr key={u.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
                         <td style={{padding:'6px 8px',color:theme.text}}>{u.name}</td>
                         <td style={{padding:'6px 8px',color:theme.textMuted}}>{u.email}</td>
@@ -3820,7 +3844,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     ))}
                   </tbody>
                 </table>
-              )
+                )
+              })()
             )}
             {usernameOverrideError && <p style={{color:'#dc2626',fontSize:12,margin:'8px 0 0 0'}}>{usernameOverrideError}</p>}
             </div>
@@ -4065,15 +4090,29 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         {orgTeamError[org.id] && <p style={{color:'#dc2626',fontSize:12,margin:'6px 0 0 0'}}>{orgTeamError[org.id]}</p>}
                       </div>
 
-                      {/* Feature 18: Team score summary — F18a: with filters */}
+                      {/* Feature 18: Team score summary — F18a: with filters + sortable headers */}
                       {(orgTeamScores[org.slug] || []).length > 0 && (() => {
                         const minAvgVal = teamScoreMinAvg[org.slug] !== undefined ? parseFloat(teamScoreMinAvg[org.slug]) : NaN
                         const hasMembersToggle = teamScoreHasMembersOnly[org.slug] ?? true
-                        const filteredTeams = (orgTeamScores[org.slug] || []).filter(t => {
-                          if (hasMembersToggle && t.member_count === 0) return false
-                          if (!isNaN(minAvgVal) && (t.avg_bhas_pct === null || t.avg_bhas_pct < minAvgVal)) return false
-                          return true
+                        const tsSort = teamScoreSort[org.slug] || {col: 'avg_bhas', dir: 'desc' as SortDir}
+                        const filteredTeams = (orgTeamScores[org.slug] || [])
+                          .filter(t => {
+                            if (hasMembersToggle && t.member_count === 0) return false
+                            if (!isNaN(minAvgVal) && (t.avg_bhas_pct === null || t.avg_bhas_pct < minAvgVal)) return false
+                            return true
+                          })
+                          .sort((a, b) => {
+                            const dir = tsSort.dir === 'asc' ? 1 : -1
+                            if (tsSort.col === 'team') return dir * a.team.localeCompare(b.team)
+                            if (tsSort.col === 'members') return dir * (a.member_count - b.member_count)
+                            if (tsSort.col === 'optimal') return dir * ((a.optimal_pct ?? -1) - (b.optimal_pct ?? -1))
+                            return dir * ((a.avg_bhas_pct ?? -1) - (b.avg_bhas_pct ?? -1))
+                          })
+                        const tToggle = (col: string) => setTeamScoreSort(prev => {
+                          const cur = prev[org.slug] || {col: 'avg_bhas', dir: 'desc' as SortDir}
+                          return {...prev, [org.slug]: cur.col === col ? {...cur, dir: cur.dir === 'asc' ? 'desc' : 'asc'} : {col, dir: 'asc'}}
                         })
+                        const tArrow = (col: string) => tsSort.col === col ? (tsSort.dir === 'asc' ? ' ↑' : ' ↓') : ''
                         return (
                         <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:12,marginBottom:14}}>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,flexWrap:'wrap',gap:8}}>
@@ -4107,15 +4146,16 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                           <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                             <thead>
                               <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                                {['Rank','Team','Members','Avg BHAS','% at Optimal'].map(h => (
-                                  <th key={h} style={{textAlign:'left',padding:'4px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase'}}>{h}</th>
+                                {([['team','Team'],['members','Members'],['avg_bhas','Avg BHAS'],['optimal','% at Optimal']] as [string,string][]).map(([col,label]) => (
+                                  <th key={col} onClick={() => tToggle(col)} style={{textAlign:'left',padding:'4px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase',cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>
+                                    {label}{tArrow(col)}
+                                  </th>
                                 ))}
                               </tr>
                             </thead>
                             <tbody>
-                              {filteredTeams.map((t, idx) => (
+                              {filteredTeams.map((t) => (
                                 <tr key={t.team} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                                  <td style={{padding:'5px 8px',color:theme.textMuted,fontWeight:600}}>#{idx + 1}</td>
                                   <td style={{padding:'5px 8px',color:theme.text,fontWeight:500}}>{t.team}</td>
                                   <td style={{padding:'5px 8px',color:theme.textMuted}}>{t.member_count}</td>
                                   <td style={{padding:'5px 8px'}}>
@@ -4137,7 +4177,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         )
                       })()}
 
-                      {/* Member table — F18a: with filters */}
+                      {/* Member table — F18a: with filters + sortable headers */}
                       {!orgMembers[org.id] ? (
                         <p style={{color:theme.textMuted,fontSize:13}}>Loading members…</p>
                       ) : orgMembers[org.id].length === 0 ? (
@@ -4147,15 +4187,29 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         const teamF = memberTeamFilter[org.id] || ''
                         const roleF = memberRoleFilter[org.id] || ''
                         const unassigned = memberUnassignedOnly[org.id] || false
-                        const filtered = orgMembers[org.id].filter(m => {
-                          if (pubQ && !(m.public_id || '').toLowerCase().includes(pubQ)) return false
-                          if (teamF && m.team !== teamF) return false
-                          if (roleF && m.role !== roleF) return false
-                          if (unassigned && m.team) return false
-                          return true
-                        })
+                        const mSort = memberSort[org.id] || {col: 'public_id', dir: 'asc' as SortDir}
+                        const filtered = orgMembers[org.id]
+                          .filter(m => {
+                            if (pubQ && !(m.public_id || '').toLowerCase().includes(pubQ)) return false
+                            if (teamF && m.team !== teamF) return false
+                            if (roleF && m.role !== roleF) return false
+                            if (unassigned && m.team) return false
+                            return true
+                          })
+                          .sort((a, b) => {
+                            const dir = mSort.dir === 'asc' ? 1 : -1
+                            if (mSort.col === 'role') return dir * (a.role || '').localeCompare(b.role || '')
+                            if (mSort.col === 'team') return dir * (a.team || '').localeCompare(b.team || '')
+                            if (mSort.col === 'joined') return dir * ((a.joined_at || '').localeCompare(b.joined_at || ''))
+                            return dir * (a.public_id || '').localeCompare(b.public_id || '')
+                          })
                         const hasActiveFilter = pubQ || teamF || roleF || unassigned
                         const availableTeams = Array.from(new Set(orgMembers[org.id].map(m => m.team).filter(Boolean))) as string[]
+                        const mToggle = (col: string) => setMemberSort(prev => {
+                          const cur = prev[org.id] || {col: 'public_id', dir: 'asc' as SortDir}
+                          return {...prev, [org.id]: cur.col === col ? {...cur, dir: cur.dir === 'asc' ? 'desc' : 'asc'} : {col, dir: 'asc'}}
+                        })
+                        const mArrow = (col: string) => mSort.col === col ? (mSort.dir === 'asc' ? ' ↑' : ' ↓') : ''
                         return (
                           <>
                             {/* Member filter bar */}
@@ -4222,9 +4276,12 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
                               <thead>
                                 <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                                  {['Public ID','Role','Team','Joined',''].map(h => (
-                                    <th key={h} style={{textAlign:'left',padding:'6px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase'}}>{h}</th>
+                                  {([['public_id','Public ID'],['role','Role'],['team','Team'],['joined','Joined']] as [string,string][]).map(([col,label]) => (
+                                    <th key={col} onClick={() => mToggle(col)} style={{textAlign:'left',padding:'6px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase',cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>
+                                      {label}{mArrow(col)}
+                                    </th>
                                   ))}
+                                  <th style={{padding:'6px 8px'}} />
                                 </tr>
                               </thead>
                               <tbody>
