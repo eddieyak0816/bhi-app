@@ -111,28 +111,49 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     setSaving(true)
     setSaveMessage(null)
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: formData.fullName,
-          age: formData.age ? parseInt(formData.age) : null,
-          sex: formData.sex || null,
-          waist_circumference: formData.waistCircumference ? parseFloat(formData.waistCircumference) : null,
-          waist_unit: formData.waistUnit,
-          grip_strength: formData.gripStrength ? parseFloat(formData.gripStrength) : null,
-          is_public: isPublic,
-          // BHAS v2.3 fields — convert American units to metric before saving
-          height_cm: (formData.heightFt || formData.heightIn)
-            ? (parseFloat(formData.heightFt || '0') * 30.48) + (parseFloat(formData.heightIn || '0') * 2.54)
-            : null,
-          weight_kg: formData.weightLbs ? parseFloat(formData.weightLbs) / 2.205 : null,
-          is_type1_diabetes: formData.isType1Diabetes,
-          total_daily_insulin_units: formData.isType1Diabetes && formData.totalDailyInsulinUnits ? parseFloat(formData.totalDailyInsulinUnits) : null,
-          has_advanced_care_plan: formData.hasAdvancedCarePlan,
-          acute_visits: formData.acuteVisits ? parseInt(formData.acuteVisits) : null,
-        })
-        .eq('id', user.id)
-      setSaveMessage(error ? { type: 'error', text: error.message } : { type: 'success', text: 'Profile saved.' })
+      const payload = {
+        name: formData.fullName,
+        age: formData.age ? parseInt(formData.age) : null,
+        sex: formData.sex || null,
+        waist_circumference: formData.waistCircumference ? parseFloat(formData.waistCircumference) : null,
+        waist_unit: formData.waistUnit,
+        grip_strength: formData.gripStrength ? parseFloat(formData.gripStrength) : null,
+        is_public: isPublic,
+        // BHAS v2.3 fields — convert American units to metric before saving
+        height_cm: (formData.heightFt || formData.heightIn)
+          ? (parseFloat(formData.heightFt || '0') * 30.48) + (parseFloat(formData.heightIn || '0') * 2.54)
+          : null,
+        weight_kg: formData.weightLbs ? parseFloat(formData.weightLbs) / 2.205 : null,
+        is_type1_diabetes: formData.isType1Diabetes,
+        total_daily_insulin_units: formData.isType1Diabetes && formData.totalDailyInsulinUnits ? parseFloat(formData.totalDailyInsulinUnits) : null,
+        has_advanced_care_plan: formData.hasAdvancedCarePlan,
+        acute_visits: formData.acuteVisits ? parseInt(formData.acuteVisits) : null,
+      }
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+      const res = await fetch(
+        `${((import.meta as any).env.VITE_SUPABASE_URL as string)}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'apikey': (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string,
+            'Authorization': `Bearer ${(import.meta as any).env.VITE_SUPABASE_ANON_KEY as string}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        }
+      )
+      clearTimeout(timeoutId)
+
+      if (!res.ok) {
+        const body = await res.text()
+        throw new Error(`Save failed (${res.status}): ${body}`)
+      }
+      setSaveMessage({ type: 'success', text: 'Profile saved.' })
     } catch (err) {
       setSaveMessage({ type: 'error', text: err instanceof Error ? err.message : 'Save failed — check your connection.' })
     } finally {
