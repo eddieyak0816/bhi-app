@@ -379,7 +379,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
         <div>
           <label style={labelStyle}>Sex</label>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            {(['male', 'female', 'other'] as const).map(s => (
+            {(['male', 'female'] as const).map(s => (
               <button
                 key={s}
                 type="button"
