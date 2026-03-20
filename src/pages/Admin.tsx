@@ -27,12 +27,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null)
   const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
-  // inline marker-creation state
-  const [markerCreationVisible, setMarkerCreationVisible] = useState(false)
-  const [markerName, setMarkerName] = useState('')
-  const [markerUnit, setMarkerUnit] = useState('')
-  const [markerMinNormal, setMarkerMinNormal] = useState<number | null>(null)
-  const [markerMaxNormal, setMarkerMaxNormal] = useState<number | null>(null)
 
   const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit' | 'organizations'>('resources')
   // Use global theme context
@@ -2639,31 +2633,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 <span style={{color:theme.textMuted,fontSize:13}}>Guided setup: creates a marker, scoring rules, and tags in one step.</span>
               </div>
 
-              {/* Marker creation form (quick add, no rules) */}
-              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Quick Add Marker (no rules)</h3>
-                <div style={{display:'flex',gap:12,alignItems:'center'}}>
-                  <input placeholder="Marker name" value={markerName} onChange={e => setMarkerName(e.target.value)} style={{flex:1,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}} />
-                  <input placeholder="Unit (optional)" value={markerUnit} onChange={e => setMarkerUnit(e.target.value)} style={{width:120,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
-                  <input placeholder="Min value (optional)" type="number" value={markerMinNormal ?? ''} onChange={e => setMarkerMinNormal(e.target.value ? Number(e.target.value) : null)} style={{width:100,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
-                  <input placeholder="Max value (optional)" type="number" value={markerMaxNormal ?? ''} onChange={e => setMarkerMaxNormal(e.target.value ? Number(e.target.value) : null)} style={{width:100,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
-                  <button className="btn-primary" onClick={async () => {
-                    if (!markerName.trim()) return alert('Name required')
-                    try {
-                      const res = await fetch(apiUrl('/api/admin/lab-markers'), { method: 'POST', headers: { 'content-type': 'application/json', ...(DEV_BACKEND_KEY ? { 'x-backend-api-key': DEV_BACKEND_KEY } : {}) }, body: JSON.stringify({ name: markerName.trim(), unit: markerUnit.trim(), min_normal: markerMinNormal, max_normal: markerMaxNormal }) })
-                      if (!res.ok) throw new Error('create marker failed')
-                      await load()
-                      setMarkerName('')
-                      setMarkerUnit('')
-                      setMarkerMinNormal(null)
-                      setMarkerMaxNormal(null)
-                    } catch (err) {
-                      console.error('createMarker', err)
-                      alert('Create marker failed (check server logs)')
-                    }
-                  }}>Add Marker</button>
-                </div>
-              </div>
 
               {/* Lab Markers Filters */}
               <div style={styles.filterBox}>

@@ -1,5 +1,49 @@
 # CHANGELOG
 
+## 2026-03-20 — built (hs-CRP and VO2 Max Percentile markers added to database)
+
+The `20260320_complete_logic_rules.sql` migration skipped hs-CRP and VO2 Max Percentile because those markers did not exist in the `lab_markers` table. A follow-up SQL script was run directly in Supabase SQL Editor to:
+- Create the `hs-CRP` marker (unit: mg/L) and its 3 logic rules (Low/Average/High CRP)
+- Create the `VO2 Max Percentile` marker (unit: %) and its 3 logic rules (Low/Average/Excellent VO2)
+
+Database now has all 15 markers with 53 logic rules total. Verified by query.
+
+---
+
+## 2026-03-20 — built (Logic Rules Update + Admin UX)
+
+### Medically Current Lab Marker Scoring Ranges
+
+Updated BHAS scoring logic to use current medical guidelines for all 15 markers.
+
+**`src/utils/evaluateRules.ts`** — Added new tags to OPTIMAL_TAGS and IMPROVEMENT_TAGS:
+- `Low_CRP` (optimal), `Average_CRP` (improvement) — hs-CRP per ACC/AHA
+- `Excellent_VO2` (optimal), `Average_VO2` (improvement) — VO2 Max Percentile per ACSM
+- `Optimal_Insulin` (optimal), `Acceptable_Insulin` (improvement) — Fasting Insulin per Kraft/conventional
+
+**`db/migrations/20260320_complete_logic_rules.sql`** — Complete idempotent migration to update all 15 marker logic rules to current medical guidelines:
+- Vitamin D (Endocrine Society): <20 Deficient, 20–29.9 Insufficient, 30–100 Adequate, >100 Excess
+- Fasting Glucose (ADA 2024): <70 Low, 70–99.9 Normal, 100–125.9 Prediabetic, ≥126 Diabetic
+- Fasting Insulin: <5 Optimal, 5–9.9 Acceptable, 10–19.9 Elevated, ≥20 High
+- Total Cholesterol (AHA/ACC): <200 Desirable, 200–239.9 Borderline, ≥240 High
+- HDL: <40 Low, 40–59.9 Fair, ≥60 Good
+- LDL: <100 Optimal, 100–129.9 Near Optimal, 130–159.9 Borderline High, 160–189.9 High, ≥190 Very High
+- Triglycerides: <150 Normal, 150–199.9 Borderline High, 200–499.9 High, ≥500 Very High
+- BP Systolic/Diastolic (AHA/ACC 2017): Normal / Elevated / Stage 1 / Stage 2
+- hs-CRP (ACC/AHA): <1.0 Low, 1.0–3.0 Average, >3.0 High
+- VO2 Max Percentile (ACSM): ≥60 Excellent, 40–59 Average, <40 Low
+- Vitamin B12: <200 Deficient, 200–299.9 Low Normal, 300–900 Adequate, >900 Excess
+- Waist Circumference Male/Female — updated thresholds (inches)
+- Grip Strength: ≥35kg Optimal, 25–34.9 Low Normal, <25 Low
+
+> **Action required:** Run `db/migrations/20260320_complete_logic_rules.sql` in Supabase Dashboard → SQL Editor.
+
+### Admin — Removed Quick Add Marker form
+
+Removed the "Quick Add Marker (no rules)" form from the Markers tab. It created markers with no scoring rules, which caused them to always score 0 in BHAS. The **New Marker Wizard** (already present) handles all marker creation with guided rule and tag setup. Cleaned up associated unused state.
+
+---
+
 ## 2026-03-18 — built (F18a+ Sortable Column Headers)
 
 ### Sortable Column Headers — Admin & Employer pages

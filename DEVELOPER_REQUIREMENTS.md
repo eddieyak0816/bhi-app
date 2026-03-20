@@ -242,19 +242,19 @@ If user metrics show non-optimal health:
 
 ## 13. Implementation Status Review
 
-> Assessed against current codebase as of 2026-03-02.
+> Last updated: 2026-03-20.
 > Legend: ✅ Built | 🔶 Partial | ❌ Not built
 
 ### Section 1 – Core Platform Goals
 
 | Goal | Status | Notes |
 |------|--------|-------|
-| Secure collection of lab/biometric data | 🔶 Partial | Lab input form exists; biometric collection not yet built |
-| HIPAA/PHI compliant storage | 🔶 Partial | Supabase RLS policies in place; formal HIPAA BAA and audit trails not confirmed |
-| Verified health metric scoring (BHAS) | 🔶 Partial | Logic rules engine scores tags (0/0.5/1 scoring defined) but no total BHAS score rolled up to user yet |
-| Corporate wellness gamification | ❌ Not built | No team system, no corporate portal |
-| Automated HSA reimbursement documentation | ❌ Not built | No document generation or HSA bank integration |
-| De-identified population health analytics | ❌ Not built | No aggregate/population analytics module |
+| Secure collection of lab/biometric data | ✅ Built | Manual lab entry, AI PDF upload, provider verification, biometric fields on Profile |
+| HIPAA/PHI compliant storage | 🔶 Partial | Supabase RLS policies in place; formal HIPAA BAA not confirmed |
+| Verified health metric scoring (BHAS) | ✅ Built | BHAS v1 (per-marker %) and BHAS v2.3 (derived ratios, out of 9.0) both running on Dashboard |
+| Corporate wellness gamification | ✅ Built | Org structure, teams, employer view, leaderboard, team scoring display |
+| Automated HSA reimbursement documentation | ❌ Not built | Document generation and HSA bank integration not yet built |
+| De-identified population health analytics | ✅ Built | Corporate analytics dashboard on Employer page (aggregates only, no PHI) |
 
 ---
 
@@ -263,14 +263,14 @@ If user metrics show non-optimal health:
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Public individual user accounts | ✅ Built | Email/password auth, profile, lab input, dashboard |
-| Lab upload / connect | 🔶 Partial | Manual input built; direct lab API integrations not built |
-| Track personal health metrics | ✅ Built | Lab values stored, evaluated against rules |
-| Anonymous national comparisons | ❌ Not built | No aggregate benchmark data or comparison feature |
-| Optional public profile (opt-in consent) | 🔶 Partial | Consent noted in codebase; public profile page not built |
-| Corporate portal / employer assignment | ❌ Not built | No corporate org structure, no employer portal |
-| De-identified employer view | ❌ Not built | |
-| Auto team assignment (Fire/Water/Wind/Earth) | ❌ Not built | |
-| Team scoring and analytics | ❌ Not built | |
+| Lab upload / connect | ✅ Built | Manual entry + AI PDF upload built; direct lab API integrations skipped (blocked on agreements) |
+| Track personal health metrics | ✅ Built | Lab values stored, evaluated against rules, historical trend charts |
+| Anonymous national comparisons | ❌ Not built | No aggregate benchmark data; requires user volume |
+| Optional public profile (opt-in consent) | ✅ Built | Privacy toggle on Profile, Consent page, Public Profile preview |
+| Corporate portal / employer assignment | ✅ Built | Organizations + org_memberships, Employer page |
+| De-identified employer view | ✅ Built | Username, public_id, team, BHAS % only — no PHI |
+| Auto team assignment | ✅ Built | Dynamic per-org teams (not hardcoded); admin assigns via Public ID |
+| Team scoring and analytics | ✅ Built | Team score summary, per-team avg BHAS, % optimal, leaderboard |
 
 ---
 
@@ -278,12 +278,12 @@ If user metrics show non-optimal health:
 
 | Source | Status | Notes |
 |--------|--------|-------|
-| Labcorp / Quest / Mako / Rhythm API integrations | ❌ Not built | No lab API connections exist |
-| Provider-verified entries (NPI/license) | ❌ Not built | No verifier workflow in system |
-| AI-verified lab PDF upload | 🔶 In Progress | Google Gemini API selected; server endpoint + upload UI in progress |
-| Biometric verification by clinician | ❌ Not built | No biometric entry or verification workflow |
-| CGM device integrations | ❌ Not built | Noted as future |
-| VO2 Max calculator | ❌ Not built | Noted as future |
+| Labcorp / Quest / Mako / Rhythm API integrations | ⏸ Skipped | Blocked on lab partner agreements |
+| Provider-verified entries (NPI/license) | ✅ Built | Verifier name, credential, NPI, typed attestation stored; badge shown in results table |
+| AI-verified lab PDF upload | ✅ Built | Gemini → OpenRouter → Groq cascade; fuzzy marker matching; duplicate detection |
+| Biometric verification by clinician | 🔶 Partial | Biometric fields exist on Profile; no formal clinician attestation workflow for biometrics specifically |
+| CGM device integrations | ❌ Not built | Future — requires device partnerships |
+| VO2 Max calculator | ❌ Not built | Future |
 
 ---
 
@@ -291,9 +291,9 @@ If user metrics show non-optimal health:
 
 | Method | Status | Notes |
 |--------|--------|-------|
-| Secure API pull from certified labs | ❌ Not built | |
-| Provider verification (NPI, signature, date) | ❌ Not built | No verifier fields in schema |
-| AI PDF upload → extract → flag → approve → store | 🔶 In Progress | Google Gemini API; server endpoint + upload UI in progress |
+| Secure API pull from certified labs | ⏸ Skipped | Blocked on lab agreements |
+| Provider verification (NPI, signature, date) | ✅ Built | Full verifier fields + attestation on lab entry; badge shown in results table |
+| AI PDF upload → extract → flag → approve → store | ✅ Built | Full pipeline complete including duplicate detection |
 
 ---
 
@@ -301,16 +301,18 @@ If user metrics show non-optimal health:
 
 | Metric | Status | Notes |
 |--------|--------|-------|
-| Cardiometabolic labs (glucose, cholesterol, HDL, LDL, triglycerides, BP) | ✅ Built | Lab markers and logic rules seeded |
-| Vitamin D | ✅ Built | Lab marker and rules seeded |
-| Vitamin B12 | ❌ Not built | Not in current lab markers |
-| Waist circumference | ❌ Not built | No biometric input for this |
-| VO2 Max | ❌ Not built | Future item |
-| Grip strength | ❌ Not built | No biometric input for this |
-| Advanced care planning status | ❌ Not built | |
-| Insulin usage (Type 1) | ❌ Not built | |
-| Acute care visits | ❌ Not built | |
-| CGM metrics | ❌ Not built | Future item |
+| Cardiometabolic labs (glucose, cholesterol, HDL, LDL, triglycerides, BP) | ✅ Built | Markers, logic rules (updated to current medical guidelines 2026-03-20), BHAS scoring |
+| Vitamin D | ✅ Built | Updated to Endocrine Society thresholds |
+| Vitamin B12 | ✅ Built | Markers and logic rules seeded; binary scoring in v2.3 |
+| Fasting Insulin | ✅ Built | Logic rules seeded 2026-03-20 |
+| hs-CRP | ✅ Built | Lab marker created and logic rules seeded 2026-03-20 (was missing from lab_markers; added via follow-up SQL) |
+| VO2 Max Percentile | ✅ Built | Lab marker created and logic rules seeded 2026-03-20 (was missing from lab_markers; added via follow-up SQL) |
+| Waist circumference (male + female) | ✅ Built | Sex-specific markers; biometric entry on Profile |
+| Grip strength | ✅ Built | Marker seeded; biometric entry on Profile |
+| Advanced care planning status | ✅ Built | Profile checkbox; 1 point in BHAS v2.3 |
+| Insulin usage (Type 1) | ✅ Built | Type 1 flag + total daily insulin units on Profile; replaces HOMA-IR in v2.3 |
+| Acute care visits | ✅ Built | Profile field; tie-breaker in leaderboard |
+| CGM metrics | ❌ Not built | Future |
 
 ---
 
@@ -318,8 +320,11 @@ If user metrics show non-optimal health:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Per-metric scoring (Optimal=1, Improvement=0.5, Out of range=0) | 🔶 Partial | Tags indicate optimal/non-optimal but numeric scores not yet surfaced to users |
-| Total BHAS score calculated and displayed per user | ❌ Not built | Score rollup and display not implemented |
+| Per-marker scoring (Optimal=1, Improvement=0.5, Out of range=0) | ✅ Built | BHAS v1 engine in evaluateRules.ts; colour-coded chips on Dashboard and Labs page |
+| Total BHAS v1 score (% of entered markers) | ✅ Built | Displayed as percentage banner on Dashboard |
+| BHAS v2.3 score (derived ratios, out of 9.0) | ✅ Built | bhasV2.ts; shows when ≥4 of 9 metrics available; score label (Optimal/Healthy/Needs Improvement/High Risk) |
+| Score interpretation labels | ✅ Built | Optimal ≥8.0, Healthy ≥6.0, Needs Improvement ≥4.0, High Risk <4.0 |
+| All marker scoring ranges updated to current medical guidelines | ✅ Built | Migration 20260320_complete_logic_rules.sql covers all 15 markers |
 
 ---
 
@@ -327,11 +332,12 @@ If user metrics show non-optimal health:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Auto team assignment (Fire/Water/Wind/Earth) | ❌ Not built | |
-| Team average score display | ❌ Not built | |
-| % optimal per metric per team | ❌ Not built | |
-| Team ranking | ❌ Not built | |
-| Improvement trends | ❌ Not built | |
+| Auto team assignment | ✅ Built | Dynamic teams per org; admin assigns via Public ID dropdown |
+| Team average score display | ✅ Built | Per-team avg BHAS % on Employer page and Admin org panel |
+| % optimal per metric per team | ✅ Built | Team score summary includes % at optimal |
+| Team ranking | ✅ Built | Teams ranked by avg BHAS in Employer view and Admin panel |
+| Individual leaderboard with tie-breaker | ✅ Built | LeaderboardPage with medal badges, 5-level tie-breaker sort |
+| Improvement trends | ❌ Not built | 12-week trend on analytics tab shows org-level only; per-user trend not surfaced |
 
 ---
 
@@ -339,11 +345,11 @@ If user metrics show non-optimal health:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Corporate user de-identification | ❌ Not built | No corporate user model yet |
-| Unique usernames | 🔶 Partial | Users have email-based identity; username system not distinct |
-| Admin-only identity mapping | 🔶 Partial | Admin role exists; explicit identity mapping UI not built |
-| Employer cannot view PHI | ❌ Not built | No employer portal to restrict |
-| HIPAA compliant storage | 🔶 Partial | Supabase RLS in place; formal HIPAA posture not confirmed |
+| Corporate user de-identification | ✅ Built | Employer view shows username + public_id only; no name, email, or raw lab values |
+| Unique usernames | ✅ Built | Username column on profiles; user self-set or admin override; availability check |
+| Admin-only identity mapping | ✅ Built | Identity Mapping panel in Admin → Organizations (hidden by default; localStorage toggle) |
+| Employer cannot view PHI | ✅ Built | Server endpoint enforces this; only de-identified fields returned |
+| HIPAA compliant storage | 🔶 Partial | Supabase RLS enforced; formal HIPAA BAA with Supabase not confirmed |
 
 ---
 
@@ -351,16 +357,8 @@ If user metrics show non-optimal health:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Admin can create named charts | ❌ Not built | Chart has a name and an ordered list of lab markers |
-| Admin can add/remove markers from a chart | ❌ Not built | Each marker plotted as a line or bar series |
-| Charts visible to users on their dashboard or Labs page | ❌ Not built | Shows user's own values over time for selected markers |
-| Multiple charts supported | ❌ Not built | e.g. "Cardiometabolic Panel", "Vitamin Status" |
-
-**Spec:**
-- DB: `charts` table (`id, name, created_at`) + `chart_markers` join table (`chart_id, marker_id, display_order`)
-- Admin UI: new "Charts" tab — create/delete charts, add/remove markers per chart
-- User UI: charts rendered as line graphs (time on x-axis, value on y-axis) using a charting library (e.g. Recharts)
-- Only markers for which the user has at least one result are rendered
+| Historical trend chart per marker | ✅ Built | Inline Recharts chart on Labs page; shows when ≥2 results exist; optimal range band displayed |
+| Admin-defined multi-marker charts | ❌ Not built | The built version is auto-generated per marker; admin-configured named charts (e.g. "Cardiometabolic Panel") not yet built |
 
 ---
 
@@ -368,10 +366,9 @@ If user metrics show non-optimal health:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Admin product catalog (add/edit/delete) | ❌ Not built | Admin manages products with name, description, image URL, affiliate URL, associated tags |
-| Tag-based product matching | ❌ Not built | Products are associated with health tags; shown to users whose results fired those tags |
-| User-facing product recommendations | ❌ Not built | Shown on Dashboard or a dedicated "Recommendations" page; links open affiliate URL |
-| Commission tracking | ❌ Not built | Out-of-scope for v1 — affiliate URLs are external; commission tracked by affiliate network |
+| Admin product catalog (add/edit/delete) | ❌ Not built | |
+| Tag-based product matching | ❌ Not built | |
+| User-facing product recommendations | ❌ Not built | |
 
 **Spec:**
 - DB: `affiliate_products` table (`id, name, description, image_url, affiliate_url, created_at`) + `product_tags` join table (`product_id, tag`)
@@ -385,13 +382,13 @@ If user metrics show non-optimal health:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Detect deficiency from metrics | 🔶 Partial | Evaluation rules engine detects non-optimal tags |
+| Detect deficiency from metrics | ✅ Built | Rules engine fires non-optimal tags; BHAS score surfaces this to user |
 | Generate medical necessity document | ❌ Not built | |
 | Attach verified labs to document | ❌ Not built | |
 | Populate HSA form | ❌ Not built | |
 | Connect to HSA bank | ❌ Not built | |
 | Submit reimbursement | ❌ Not built | |
-| Fee/paywall for public access to this feature | ❌ Not built | No payment/subscription system |
+| Payment/paywall for HSA feature | ❌ Not built | No payment/subscription system yet |
 
 ---
 
@@ -399,9 +396,9 @@ If user metrics show non-optimal health:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Biannual lab update tracking | ❌ Not built | No date-based update enforcement or reminders |
-| User-uploaded lab update | 🔶 Partial | Manual entry exists; no structured upload workflow |
-| Ongoing biometric updates | ❌ Not built | No biometric input module |
+| Biannual lab update tracking | ✅ Built | Stale-data banner (>180 days) on Dashboard and Labs page |
+| Lab upload workflow | ✅ Built | Manual entry + AI PDF upload |
+| Biometric updates | ✅ Built | Biometric fields on Profile page (waist, grip, height) |
 
 ---
 
@@ -409,11 +406,12 @@ If user metrics show non-optimal health:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Population averages | ❌ Not built | |
-| % optimal metrics | ❌ Not built | |
-| Team comparisons | ❌ Not built | |
-| Risk distribution | ❌ Not built | |
-| Insurance negotiation reports | ❌ Not built | |
+| Population averages | ✅ Built | Analytics tab on Employer page: avg BHAS %, members with data |
+| % optimal per metric | ✅ Built | Per-metric % optimal horizontal bar chart on Analytics tab |
+| Team comparisons | ✅ Built | Team score summary on Employer page and Admin panel |
+| Score distribution / risk distribution | ✅ Built | BHAS distribution bar chart + health label count cards |
+| 12-week trend | ✅ Built | Org-average BHAS % line chart (last 12 weeks) |
+| Insurance negotiation reports | ❌ Not built | Formatted PDF/export for insurance negotiations |
 
 ---
 
@@ -421,73 +419,78 @@ If user metrics show non-optimal health:
 
 | Output | Status | Notes |
 |--------|--------|-------|
-| User dashboard | ✅ Built | Dashboard page with stats, recommendations |
-| Metric scores (per marker) | 🔶 Partial | Tags indicate range; numeric scores not displayed |
-| Total BHAS score | ❌ Not built | |
-| Team ranking | ❌ Not built | |
-| Corporate analytics dashboard | ❌ Not built | |
-| Exportable reports | ❌ Not built | |
+| User dashboard | ✅ Built | BHAS v1 + v2.3 panels, stale-data banner, personalized recommendations |
+| Metric scores (per marker) | ✅ Built | Colour-coded chips on Dashboard; BHAS Score column on Labs page |
+| Total BHAS score | ✅ Built | Both v1 (%) and v2.3 (out of 9.0) displayed |
+| Team ranking | ✅ Built | Leaderboard page + team summary on Employer page |
+| Corporate analytics dashboard | ✅ Built | Analytics tab on Employer page |
+| Exportable reports | ❌ Not built | CSV export and formatted reports not yet built |
 
 ---
 
 ### Summary & Recommended Build Order
 
-Items are ordered by logical dependency — each phase builds on the one before it.
+Items are ordered by logical dependency. Last updated: 2026-03-20.
 
-| Priority | Category | Status | Rationale |
-|----------|----------|--------|-----------|
-| **Phase 1 – Already Done** | | | |
-| 1 | Core infrastructure (auth, DB, routing) | ✅ Built | Foundation for everything |
-| 2 | Admin CMS (resources, tags, categories, rules) | ✅ Built | Needed to manage content |
-| 3 | Resource library & recommendations | ✅ Built | Core user value |
-| 4 | Individual user lab input & evaluation | 🔶 Partial | Core user value |
-| **Phase 2 – Complete the Individual User Experience** | | | |
-| 5 | BHAS scoring rollup (total score per user) | 🔶 Partial | Required before showing users meaningful results |
-| 6 | Metric scores surfaced in UI (0 / 0.5 / 1 per marker) | 🔶 Partial | Depends on BHAS logic being complete |
-| 7 | Vitamin B12 lab marker + rules | ❌ Not built | Simple addition to existing pattern |
-| 8 | Biometric data collection (waist, grip strength) | ❌ Not built | Needed for full BHAS score |
-| 9 | Data update frequency tracking (biannual reminders) | ❌ Not built | Ensures data stays current |
-| 10 | Optional public profile / opt-in consent page | 🔶 Partial | Required for any public-facing features |
-| **Phase 3 – Data Verification & Integrity** | | | |
-| 11 | AI PDF lab upload & extraction *(preferred method)* | ❌ Not built | Highest-impact data input improvement |
-| 12 | Provider verification workflow (NPI, credential, signature, date) | ❌ Not built | Required for HSA and corporate trust |
-| 13 | Lab API integrations (Labcorp, Quest, Mako, Rhythm) | ❌ Not built | Automates data entry; depends on lab partner agreements |
-| **Phase 4 – Corporate Portal** | | | |
-| 14 | Corporate org structure (employers, assigned users) | ❌ Not built | Foundation for all corporate features |
-| 15 | Unique username system + admin identity mapping | 🔶 Partial | Required for de-identification |
-| 16 | De-identified employer view (no PHI visible) | ❌ Not built | Depends on org structure + username system |
-| 17 | Auto team assignment (Fire / Water / Wind / Earth) | ❌ Not built | Depends on corporate user model |
-| 18 | Team scoring display (avg score, % optimal, ranking, trends) | ❌ Not built | Depends on team assignment + BHAS rollup |
-| **Phase 5 – Analytics & Reporting** | | | |
-| 19 | Anonymous national comparison benchmarks | ❌ Not built | Requires sufficient user data volume |
-| 20 | Corporate analytics dashboard (population averages, risk distribution, team comparisons) | ❌ Not built | Depends on corporate portal being complete |
-| 21 | Insurance negotiation reports | ❌ Not built | Depends on corporate analytics |
-| 22 | Exportable reports (user + corporate) | ❌ Not built | Depends on analytics being complete |
-| **Phase 5 – Analytics & Reporting (continued)** | | | |
-| 23 | Lab marker charts — admin-defined, user-facing data visualization | ❌ Not built | Admin creates named charts, selects which markers to include; users see their values plotted over time |
-| **Phase 6 – Monetization & HSA Automation** | | | |
-| 24 | Affiliate product catalog — admin manages products + affiliate links | ❌ Not built | Admin adds product name, description, image, affiliate URL; products shown to users based on their health tags |
-| 25 | Affiliate product display — user-facing recommendations with commission links | ❌ Not built | Depends on product catalog being built |
-| 26 | Payment / subscription system (HSA feature paywall) | ❌ Not built | Required before HSA feature is gated |
-| 27 | HSA reimbursement automation (detect → document → form → submit) | ❌ Not built | Depends on verified labs + payment gate |
-| 28 | HSA bank connection | ❌ Not built | Depends on HSA automation being built |
-| **Phase 7 – Future / Nice to Have** | | | |
+| # | Feature | Status | Notes |
+|---|---------|--------|-------|
+| **Phase 1 – Foundation** | | ✅ 4/4 complete | |
+| 1 | Core infrastructure (auth, DB, routing) | ✅ Built | |
+| 2 | Admin CMS (resources, tags, categories, rules) | ✅ Built | |
+| 3 | Resource library & recommendations | ✅ Built | |
+| 4 | Individual user lab input & evaluation | ✅ Built | |
+| **Phase 2 – Individual User Experience** | | ✅ 6/6 complete | |
+| 5 | BHAS v1 scoring rollup | ✅ Built | |
+| 6 | Metric scores in UI | ✅ Built | |
+| 7 | Vitamin B12 marker + rules | ✅ Built | |
+| 8 | Biometric data collection (waist, grip) | ✅ Built | |
+| 9 | Data update frequency tracking (stale-data banner) | ✅ Built | |
+| 10 | Optional public profile / consent page | ✅ Built | |
+| **Phase 3 – Data Verification** | | ✅ 4/5 complete · 1 skipped | |
+| 11 | AI PDF lab upload & extraction | ✅ Built | |
+| 11a | PDF duplicate detection | ✅ Built | |
+| 11b | New Marker Wizard (Admin) | ✅ Built | |
+| 12 | Provider verification workflow | ✅ Built | |
+| 13 | Direct lab API integrations | ⏸ Skipped | Blocked on lab agreements |
+| **Phase 4 – Corporate Portal** | | ✅ 6/6 complete | |
+| 14 | Corporate org structure | ✅ Built | |
+| 15 | Unique username system + admin identity mapping | ✅ Built | |
+| 16 | De-identified employer view | ✅ Built | |
+| 17 | Auto team assignment (dynamic per-org teams) | ✅ Built | |
+| 18 | Team scoring display | ✅ Built | |
+| 18a | Admin org filters + sortable columns | ✅ Built | |
+| **Phase 5 – Analytics & Reporting** | | 🔶 3/5 complete | |
+| 19 | Anonymous national comparison benchmarks | ❌ Not built | Requires user data volume |
+| 20 | Corporate analytics dashboard | ✅ Built | Analytics tab on Employer page |
+| 21 | Insurance negotiation reports | ❌ Not built | Depends on analytics |
+| 22 | Exportable reports (user + corporate) | ❌ Not built | |
+| 23 | Lab marker trend charts | ✅ Built | Per-marker on Labs page; admin-configured named charts not yet built |
+| **Phase 6 – Monetization & HSA** | | 🔶 1/5 partial | |
+| 24 | Affiliate product catalog (Admin) | ❌ Not built | |
+| 25 | Affiliate product display (User) | ❌ Not built | |
+| 26 | Payment / subscription system | ❌ Not built | |
+| 27 | HSA reimbursement automation | 🔶 Partial | Detection done; document generation not built |
+| 28 | HSA bank connection | ❌ Not built | |
+| **Phase 7 – Future / Nice to Have** | | 🔶 3/5 complete | |
 | 29 | CGM device integrations | ❌ Not built | Requires device partnerships |
-| 30 | VO2 Max calculator | ❌ Not built | Biometric feature |
-| 31 | Advanced care planning status | ❌ Not built | Requires clinical workflow definition |
-| 32 | Insulin usage tracking (Type 1) | ❌ Not built | |
-| 33 | Acute care visit tracking | ❌ Not built | |
-| **Phase 8 – BHAS v2.3 Scoring Engine Upgrade** | | | |
-| 34 | New lab markers: Fasting Insulin, hs-CRP, VO2 Max Percentile | ❌ Not built | DB migration + seed; existing lab entry form handles automatically |
-| 35 | Add Height field to profiles | ❌ Not built | Required for WtHR calculation |
-| 36 | Add Type 1 Diabetes flag to profiles | ❌ Not built | Controls HOMA-IR vs. Insulin Units/kg scoring branch |
-| 37 | Add Advanced Care Plan status to profiles | ❌ Not built | Binary scored metric (1/0) |
-| 38 | Add Acute Care Visits count to profiles | ❌ Not built | Tie-breaker only, not scored |
-| 39 | Add Total Daily Insulin Units field (Type 1 only) | ❌ Not built | Needed to compute Insulin Units/kg |
-| 40 | Rewrite BHAS scoring engine for derived ratio scoring | ❌ Not built | Breaking change to evaluateRules.ts + server/index.js |
-| 41 | Update Vitamin D scoring to binary (>50=1, ≤50=0) | ❌ Not built | Replaces current 4-tier tag system |
-| 42 | Update Vitamin B12 scoring to binary (>750=1, ≤750=0) | ❌ Not built | Replaces current tiered tag system |
-| 43 | Store derived values (HOMA-IR, TG/HDL, etc.) alongside raw inputs | ❌ Not built | Required for leaderboard + analytics |
-| 44 | Score interpretation label on Dashboard | ❌ Not built | Optimal / Healthy / Needs Improvement / High Risk |
-| 45 | Leaderboard with tie-breaker ranking logic | ❌ Not built | Depends on derived values being stored |
-| 46 | CSV export for employer reporting (de-identified) | ❌ Not built | Username, public_id, team, BHAS, per-metric points |
+| 30 | VO2 Max calculator | ❌ Not built | |
+| 31 | Advanced care planning status | ✅ Built | Done as part of Phase 8 |
+| 32 | Insulin usage tracking (Type 1) | ✅ Built | Done as part of Phase 8 |
+| 33 | Acute care visit tracking | ✅ Built | Done as part of Phase 8 |
+| **Phase 8 – BHAS v2.3 Scoring Engine** | | ✅ 12/13 complete | |
+| 34 | New markers: Fasting Insulin, hs-CRP, VO2 Max % | ✅ Built | |
+| 35 | Height field on profiles | ✅ Built | |
+| 36 | Type 1 Diabetes flag on profiles | ✅ Built | |
+| 37 | Advanced Care Plan status on profiles | ✅ Built | |
+| 38 | Acute Care Visits field on profiles | ✅ Built | |
+| 39 | Total Daily Insulin Units field | ✅ Built | |
+| 40 | BHAS v2.3 derived-ratio scoring engine | ✅ Built | bhasV2.ts — runs parallel with v1 |
+| 41 | Vitamin D binary scoring (v2.3) | ✅ Built | >50 ng/mL = 1 |
+| 42 | Vitamin B12 binary scoring (v2.3) | ✅ Built | >750 pg/mL = 1 |
+| 43 | Store derived values (bhas_v2_scores table) | ✅ Built | |
+| 44 | Score interpretation label on Dashboard | ✅ Built | |
+| 45 | Leaderboard with tie-breaker ranking | ✅ Built | |
+| 46 | CSV export for employer reporting | ❌ Not built | |
+| **Phase 9 – Scoring Engine Improvements** | | ❌ 0/2 complete | |
+| 47 | Remove hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS | ❌ Not built | Move scoring tier to database so the New Marker Wizard is fully self-contained; no code change needed after creating a new marker |
+| 48 | Multiple scoring ranges per tier in Wizard | ❌ Not built | Allow Optimal = 1–5 OR 10–15; Wizard UI only — DB already supports it |

@@ -185,15 +185,15 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-17 (Added Features 23–25: lab marker charts, affiliate product catalog, affiliate product display) · 18 built · 2 partial · 13 todo · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-20 — Phases 1–4 complete, Phase 8 complete, Phase 5 mostly done. Added Phase 9 (scoring engine improvements F47–F48). Updated all marker logic rules to current medical guidelines. Removed Quick Add Marker; Wizard is now the only way to create markers. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
-<!-- Stats bar (counts kept in sync manually or via Ctrl+F) -->
+<!-- Stats bar — counts as of 2026-03-20 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">18</span>  Built / Done</div>
-  <div class="stat stat-partial"> <span class="num" id="cnt-partial">2</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">13</span>  Not Built</div>
-  <div class="stat stat-total">   <span class="num" id="cnt-total">33</span>  Total Items</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">37</span>  Built / Done</div>
+  <div class="stat stat-partial"> <span class="num" id="cnt-partial">3</span>  Partial</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">12</span>  Not Built / Skipped</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">52</span>  Total Items</div>
 </div>
 
 <!-- Filter controls -->
@@ -505,7 +505,7 @@
         <div class="phase-title">Analytics &amp; Reporting</div>
         <div class="phase-desc">Population benchmarks, corporate dashboards, insurance reports, and exportable outputs</div>
       </div>
-      <div class="phase-progress">2 / 5 done</div>
+      <div class="phase-progress">3 / 5 done · 2 not built</div>
     </div>
     <div class="items">
 
@@ -818,10 +818,54 @@
     </div>
   </section>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE 9 – SCORING ENGINE IMPROVEMENTS
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="9">
+    <div class="phase-header">
+      <span class="phase-badge">Phase 9</span>
+      <div>
+        <div class="phase-title">Scoring Engine Improvements</div>
+        <div class="phase-desc">Make the New Marker Wizard fully self-contained — no code changes needed after creating a marker</div>
+      </div>
+      <div class="phase-progress">0 / 2 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">47</div>
+        <div class="item-body">
+          <div class="item-title">Remove hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS — move scoring tier to database</div>
+          <div class="item-note">
+            Currently the BHAS v1 scoring engine has two hardcoded lists in <code>src/utils/evaluateRules.ts</code>: OPTIMAL_TAGS and IMPROVEMENT_TAGS. Any marker created through the New Marker Wizard will always score 0 in BHAS v1 until a developer manually adds its tag names to these lists and redeploys the app.<br><br>
+            <strong>Fix:</strong> Add a <code>scoring_tier</code> column to the <code>tags</code> table with values: <code>optimal</code>, <code>improvement</code>, or <code>out_of_range</code>. The New Marker Wizard already asks you to label each rule as Optimal/Improvement/Out of Range — that label just needs to be saved to the tag. The scoring engine then reads the tier from the database at runtime instead of checking the hardcoded lists.<br><br>
+            <strong>Result:</strong> After this change, creating a new marker via the Wizard is fully self-contained. No code changes or redeployment needed.
+          </div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">48</div>
+        <div class="item-body">
+          <div class="item-title">Multiple scoring ranges per tier — New Marker Wizard UI</div>
+          <div class="item-note">
+            Some lab markers are optimal (or out of range) in two separate value ranges. For example, a marker might be Optimal when the value is between 1–5 OR between 10–15, but Out of Range for everything in between. The Wizard currently only allows one range per tier (one Optimal row, one Improvement row, one Out of Range row).<br><br>
+            <strong>Fix:</strong> Allow the admin to add additional range rows for any tier by clicking an "+ Add range" button. Each row has its own min and max value. All rows for the same tier use OR logic — the value only needs to match one of them to score at that tier.<br><br>
+            The underlying <code>logic_rules</code> database table already supports this (each range is its own row). Only the Wizard UI needs to be updated.
+          </div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+    </div>
+  </section>
+
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-17 (BHAS v2.3 built — F34–F42, F44 complete) &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-20 &nbsp;·&nbsp;
+  37 built · 3 partial · 12 not built/skipped out of 52 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
 </footer>

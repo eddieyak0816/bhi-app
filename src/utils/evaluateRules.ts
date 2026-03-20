@@ -59,6 +59,12 @@ const OPTIMAL_TAGS = new Set([
   'Optimal_Waist_Male',
   'Optimal_Waist_Female',
   'Optimal_Grip',
+  // hs-CRP (added in 20260320 migration)
+  'Low_CRP',
+  // VO2 Max Percentile (added in 20260320 migration)
+  'Excellent_VO2',
+  // Fasting Insulin (added in 20260320 migration)
+  'Optimal_Insulin',
 ])
 
 /**
@@ -82,6 +88,12 @@ const IMPROVEMENT_TAGS = new Set([
   'Borderline_Waist_Male',
   'Borderline_Waist_Female',
   'Low_Normal_Grip',
+  // hs-CRP (added in 20260320 migration)
+  'Average_CRP',
+  // VO2 Max Percentile (added in 20260320 migration)
+  'Average_VO2',
+  // Fasting Insulin (added in 20260320 migration)
+  'Acceptable_Insulin',
 ])
 
 function tagToScore(tag: string): BhasScore {
