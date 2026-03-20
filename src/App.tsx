@@ -44,15 +44,15 @@ function AppContent() {
   })
   const { isAuthenticated, loading, user } = useAuth()
 
-  console.log('[App] Auth state - isAuthenticated:', isAuthenticated, 'loading:', loading, 'currentRoute:', currentRoute, 'data exists:', !!data)
+  console.debug('[App] Auth state - isAuthenticated:', isAuthenticated, 'loading:', loading, 'currentRoute:', currentRoute, 'data exists:', !!data)
 
   useEffect(() => {
     let mounted = true
-    console.log('[App] Starting data load...')
+    console.debug('[App] Starting data load...')
     async function init() {
       // Load data from Supabase with timeout
       try {
-        console.log('[App] Making Supabase queries...')
+        console.debug('[App] Making Supabase queries...')
         
         const queryPromise = Promise.all([
           supabase.from('lab_markers').select('id,name,unit'),
@@ -69,7 +69,7 @@ function AppContent() {
           timeoutPromise as any
         ]) as any
 
-        console.log('[App] Supabase queries completed', {
+        console.debug('[App] Supabase queries completed', {
           lab_markers_count: (lm || []).length,
           logic_rules_count: (lr || []).length,
           resources_count: (r || []).length,
@@ -91,7 +91,7 @@ function AppContent() {
           const normalizedResources = (r || []).map((res: any) => ({ ...res, tags: normalizeTags(res.tags) }))
           setData({ lab_markers: lm || [], logic_rules: lr || [], resources: normalizedResources })
           setDataSource('supabase')
-          console.log('[App] Using Supabase data')
+          console.debug('[App] Using Supabase data')
           return
         }
 
@@ -102,7 +102,7 @@ function AppContent() {
 
       // Always fall back to sample data if we get here
       if (mounted) {
-        console.log('[App] Using sample data')
+        console.debug('[App] Using sample data')
         setData(loadSampleData())
         setDataSource('sample')
       }
@@ -180,7 +180,7 @@ function AppContent() {
     return <LoginPage />
   }
 
-  console.log('[App] About to check data, data exists:', !!data, 'dataSource:', dataSource)
+  console.debug('[App] About to check data, data exists:', !!data, 'dataSource:', dataSource)
   if (!data) return <div className="center">Loading…</div>
 
   if (showOnboard) {

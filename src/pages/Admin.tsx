@@ -471,6 +471,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const loadResourceTypesControllerRef = React.useRef<AbortController | null>(null)
   const loadHealthGoalsControllerRef = React.useRef<AbortController | null>(null)
   const loadCategoriesControllerRef = React.useRef<AbortController | null>(null)
+  // Tracks whether the initial mount has completed — used to skip the tab useEffect on first render
+  const initialMountRef = React.useRef(true)
 
   async function load() {
     // cancel previous load
@@ -1073,9 +1075,18 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
     }
   }
 
-  useEffect(() => { load(); loadTags(); loadResourceTypes(); loadHealthGoals(); loadCategories() }, [])
-
+  // On mount: only fetch what the default tab (resources) needs
   useEffect(() => {
+    load()
+    loadTags()
+    loadResourceTypes()
+    initialMountRef.current = false
+  }, [])
+
+  // On tab change: lazy-load the data for whichever tab was just opened.
+  // Skip on initial render — the mount effect above already handles that.
+  useEffect(() => {
+    if (initialMountRef.current) return
     if (activeTab === 'resources') load()
     else if (activeTab === 'types') loadResourceTypes()
     else if (activeTab === 'tags') loadTags()

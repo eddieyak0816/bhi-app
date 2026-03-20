@@ -25,10 +25,19 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
   const firstName = userName?.split(' ')[0] || ''
 
   // BHAS v2.3 — load profile fields and compute score
-  const [bhasV2Result, setBhasV2Result] = useState<BhasV2Result | null>(null)
+  const [bhasV2Result, setBhasV2Result] = useState<BhasV2Result | null>(() => {
+    // Seed from sessionStorage so the panel is visible immediately on remount
+    // while the async profile fetch runs in the background.
+    try {
+      const cached = sessionStorage.getItem('bhi-bhas-v2-result')
+      return cached ? JSON.parse(cached) : null
+    } catch { return null }
+  })
 
   useEffect(() => {
     if (!user?.id) return
+
+    let cancelled = false
 
     supabase
       .from('profiles')
@@ -36,7 +45,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
-        if (!data) return
+        if (!data || cancelled) return
 
         // Convert waist to cm if stored in inches
         let waistCm: number | null = null
@@ -63,6 +72,8 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
           profile
         )
         setBhasV2Result(v2)
+        // Cache so the panel reappears instantly on next remount
+        try { sessionStorage.setItem('bhi-bhas-v2-result', JSON.stringify(v2)) } catch {}
 
         // F43: Persist derived values for analytics / leaderboard
         if (v2.hasEnoughData) {
@@ -90,6 +101,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
           })
         }
       })
+    return () => { cancelled = true }
   }, [user?.id, results])
 
   const statCard = (label: string, value: string | number, icon: string) => (
@@ -174,9 +186,9 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
               Balanced Health Assessment — {bhasResult.totalScore.toFixed(1)} / {bhasResult.maxPossible} points
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {bhasResult.markerScores.map(m => (
+              {bhasResult.markerScores.map((m, i) => (
                 <span
-                  key={m.markerName}
+                  key={`${m.markerName}-${i}`}
                   title={m.tag || 'No matching rule'}
                   style={{
                     fontSize: 11,

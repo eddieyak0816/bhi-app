@@ -207,9 +207,22 @@ export function calculateBhasScore(
   userResults: UserLabResult[],
   rules: LogicRule[]
 ): BhasResult {
+  // Deduplicate to the latest result per marker before scoring.
+  // Without this, multiple historical entries for the same marker produce
+  // duplicate chips (and inflate maxPossible).
+  const latestByMarker = new Map<string, UserLabResult>()
+  for (const r of userResults) {
+    const key = r.markerName.toLowerCase()
+    const existing = latestByMarker.get(key)
+    if (!existing || new Date(r.date) > new Date(existing.date)) {
+      latestByMarker.set(key, r)
+    }
+  }
+  const dedupedResults = Array.from(latestByMarker.values())
+
   const markerScores: MarkerScore[] = []
 
-  for (const result of userResults) {
+  for (const result of dedupedResults) {
     // Find all rules for this marker
     const markerRules = rules.filter(
       r => r.marker_name.toLowerCase() === result.markerName.toLowerCase()
