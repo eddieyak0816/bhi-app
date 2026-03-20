@@ -28,7 +28,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
   const [bhasV2Result, setBhasV2Result] = useState<BhasV2Result | null>(null)
 
   useEffect(() => {
-    if (!user?.id || results.length === 0) return
+    if (!user?.id) return
 
     supabase
       .from('profiles')

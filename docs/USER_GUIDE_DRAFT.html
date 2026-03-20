@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BHI App — User Guide</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      line-height: 1.7;
+    }
+
+    /* ── Doc Header ── */
+    .doc-header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+      color: white;
+      padding: 40px 48px 32px;
+    }
+    .doc-header h1 { font-size: 2em; font-weight: 800; margin-bottom: 6px; }
+    .doc-header p  { opacity: 0.85; font-size: 0.95em; margin-top: 4px; }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: white;
+      border-right: 1px solid #e2e8f0;
+      padding: 24px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar h2 { font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 10px; margin-top: 20px; }
+    .sidebar h2:first-child { margin-top: 0; }
+    .sidebar a { display: block; font-size: 0.84em; color: #475569; text-decoration: none; padding: 4px 10px; border-radius: 5px; margin-bottom: 1px; }
+    .sidebar a:hover { background: #f1f5f9; color: #1e40af; }
+    .sidebar a.sub { padding-left: 20px; font-size: 0.79em; color: #64748b; }
+
+    /* ── Content ── */
+    .content { flex: 1; padding: 48px 56px; max-width: 900px; }
+
+    h2.page-title {
+      font-size: 1.55em;
+      font-weight: 800;
+      color: #1e3a8a;
+      margin-top: 60px;
+      margin-bottom: 6px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    h2.page-title:first-of-type { margin-top: 0; }
+    .page-intro { color: #475569; font-size: 0.93em; margin-bottom: 28px; margin-top: 8px; }
+
+    h3.section-head {
+      font-size: 1.05em;
+      font-weight: 700;
+      color: #334155;
+      margin-top: 36px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h3.section-head::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 16px;
+      background: #3b82f6;
+      border-radius: 2px;
+    }
+
+    p { margin-bottom: 12px; font-size: 0.93em; }
+    ul, ol { padding-left: 22px; margin-bottom: 12px; }
+    ul li, ol li { margin: 5px 0; font-size: 0.93em; }
+
+    /* ── Callouts ── */
+    .callout { border-radius: 6px; padding: 12px 16px; margin: 16px 0; font-size: 0.88em; }
+    .callout strong { display: block; margin-bottom: 3px; }
+    .callout.tip  { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+    .callout.note { background: #fef9c3; border-left: 4px solid #ca8a04; color: #78350f; }
+    .callout.warn { background: #fff1f2; border-left: 4px solid #e11d48; color: #9f1239; }
+
+    /* ── Tables ── */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 0.88em; }
+    th { background: #f1f5f9; text-align: left; padding: 9px 13px; font-weight: 600; color: #334155; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 9px 13px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+
+    /* ── Inline badges ── */
+    .b { display: inline-block; padding: 1px 9px; border-radius: 20px; font-size: 0.78em; font-weight: 700; }
+    .b-green  { background: #d1fae5; color: #065f46; }
+    .b-amber  { background: #fef3c7; color: #92400e; }
+    .b-red    { background: #fee2e2; color: #991b1b; }
+    .b-blue   { background: #dbeafe; color: #1e40af; }
+
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.84em; color: #0f172a; }
+
+    /* ════════════════════════════════════════
+       APP MOCKUP STYLES (dark mode theme)
+    ════════════════════════════════════════ */
+    .app-mockup {
+      background: #1e1e1e;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0 28px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      border: 1px solid #444;
+    }
+    /* Label above mockup */
+    .mockup-label {
+      font-size: 0.75em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 6px;
+      margin-top: 28px;
+    }
+
+    /* Dark theme tokens */
+    :root {
+      --dm-bg:       #252525;
+      --dm-card:     #252525;
+      --dm-border:   #888888;
+      --dm-text:     #e0e0e0;
+      --dm-muted:    #aaa;
+      --dm-blue:     #3B82F6;
+      --dm-header:   #252525;
+    }
+
+    /* Nav header */
+    .dm-nav {
+      background: var(--dm-header);
+      border-bottom: 1.5px solid var(--dm-border);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dm-nav-left { display: flex; align-items: center; gap: 28px; }
+    .dm-nav-logo { font-size: 18px; font-weight: 700; color: var(--dm-text); }
+    .dm-nav-links { display: flex; gap: 20px; }
+    .dm-nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--dm-muted);
+      cursor: default;
+    }
+    .dm-nav-link.active {
+      color: var(--dm-blue);
+      font-weight: 600;
+      border-bottom: 2px solid var(--dm-blue);
+      padding-bottom: 2px;
+    }
+    .dm-nav-right { display: flex; align-items: center; gap: 10px; }
+    .dm-nav-username { font-size: 12px; color: var(--dm-muted); }
+    .dm-nav-btn {
+      background: var(--dm-header);
+      border: 1.5px solid var(--dm-border);
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 13px;
+      color: var(--dm-text);
+      cursor: default;
+    }
+
+    /* Page body */
+    .dm-body { background: var(--dm-bg); padding: 20px 24px; }
+
+    /* Welcome */
+    .dm-welcome-name { font-size: 22px; font-weight: 700; color: var(--dm-text); margin-bottom: 4px; }
+    .dm-welcome-email { font-size: 13px; color: var(--dm-muted); margin-bottom: 18px; }
+
+    /* Stale banner */
+    .dm-stale {
+      background: rgba(217,119,6,0.08);
+      border: 1.5px solid #D97706;
+      border-radius: 8px;
+      padding: 13px 16px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .dm-stale-title { font-weight: 600; color: #D97706; font-size: 13px; margin-bottom: 2px; }
+    .dm-stale-sub   { font-size: 12px; color: var(--dm-muted); }
+    .dm-stale-btn   { background: #D97706; color: #fff; border: none; border-radius: 6px; padding: 7px 13px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: default; }
+
+    /* Stat cards */
+    .dm-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .dm-stat-card {
+      background: var(--dm-card);
+      border: 1.5px solid var(--dm-border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .dm-stat-icon  { font-size: 22px; margin-bottom: 6px; }
+    .dm-stat-label { font-size: 11px; color: var(--dm-muted); margin-bottom: 3px; }
+    .dm-stat-value { font-size: 22px; font-weight: 700; color: var(--dm-text); }
+
+    /* BHAS banner */
+    .dm-bhas {
+      background: var(--dm-card);
+      border: 1.5px solid var(--dm-border);
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .dm-bhas-pct { text-align: center; min-width: 70px; }
+    .dm-bhas-pct-num { font-size: 32px; font-weight: 800; line-height: 1; }
+    .dm-bhas-pct-label { font-size: 10px; color: var(--dm-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .dm-bhas-divider { width: 1px; height: 44px; background: var(--dm-border); flex-shrink: 0; }
+    .dm-bhas-right { flex: 1; }
+    .dm-bhas-title { font-size: 12px; font-weight: 600; color: var(--dm-text); margin-bottom: 8px; }
+    .dm-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .dm-chip {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      cursor: default;
+    }
+    .dm-chip-green { background: rgba(16,185,129,0.15); color: #10B981; }
+    .dm-chip-amber { background: rgba(245,158,11,0.15); color: #D97706; }
+    .dm-chip-red   { background: rgba(239,68,68,0.15);  color: #EF4444; }
+
+    /* BHAS v2 panel */
+    .dm-v2 {
+      background: var(--dm-card);
+      border: 1.5px solid var(--dm-border);
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin-bottom: 18px;
+    }
+    .dm-v2-header { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 12px; }
+    .dm-v2-score-num { font-size: 32px; font-weight: 800; line-height: 1; }
+    .dm-v2-score-denom { font-size: 10px; color: var(--dm-muted); margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .dm-v2-meta-title { font-size: 13px; font-weight: 700; color: var(--dm-text); display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+    .dm-v2-meta-sub { font-size: 11px; color: var(--dm-muted); }
+    .dm-v2-label-chip {
+      font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 20px;
+    }
+    .dm-v2-label-green { background: rgba(16,185,129,0.15); color: #10B981; }
+    .dm-v2-label-blue  { background: rgba(59,130,246,0.15);  color: #3B82F6; }
+    .dm-v2-label-amber { background: rgba(245,158,11,0.15);  color: #D97706; }
+    .dm-v2-label-red   { background: rgba(239,68,68,0.15);   color: #EF4444; }
+    .dm-v2-missing {
+      font-size: 11px; color: var(--dm-muted);
+      border-top: 1px solid var(--dm-border);
+      padding-top: 10px; margin-top: 10px;
+    }
+    .dm-v2-missing a { color: var(--dm-blue); text-decoration: underline; cursor: default; }
+
+    /* Recommendations */
+    .dm-section-title { font-size: 17px; font-weight: 600; color: var(--dm-text); margin-bottom: 4px; }
+    .dm-section-sub   { font-size: 12px; color: var(--dm-muted); margin-bottom: 14px; }
+    .dm-rec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+    .dm-rec-card {
+      background: var(--dm-card);
+      border: 1.5px solid var(--dm-border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .dm-rec-pin   { font-size: 10px; color: var(--dm-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
+    .dm-rec-type  { font-size: 11px; color: var(--dm-muted); margin-bottom: 6px; }
+    .dm-rec-title { font-weight: 600; font-size: 13px; color: var(--dm-text); margin-bottom: 8px; }
+    .dm-rec-tags  { font-size: 11px; color: var(--dm-muted); margin-bottom: 10px; }
+    .dm-rec-btn   { background: var(--dm-blue); color: #fff; border: none; border-radius: 5px; padding: 7px 10px; font-size: 12px; cursor: default; width: 100%; font-weight: 500; }
+
+    /* Quick actions */
+    .dm-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .dm-action-primary {
+      background: var(--dm-blue); color: #fff; border: none;
+      border-radius: 6px; padding: 11px 14px; font-size: 13px; font-weight: 600; cursor: default;
+    }
+    .dm-action-secondary {
+      background: var(--dm-card); color: var(--dm-text);
+      border: 1.5px solid var(--dm-border);
+      border-radius: 6px; padding: 11px 14px; font-size: 13px; font-weight: 600; cursor: default;
+    }
+
+    /* Annotation overlay helper */
+    .annotated { position: relative; }
+    .ann-box {
+      position: absolute;
+      border: 2px solid #f59e0b;
+      border-radius: 5px;
+      pointer-events: none;
+    }
+    .ann-label {
+      position: absolute;
+      background: #f59e0b;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    footer { text-align: center; padding: 32px; color: #94a3b8; font-size: 0.82em; border-top: 1px solid #e2e8f0; background: white; margin-top: 60px; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .content { padding: 24px; }
+      .dm-stat-grid { grid-template-columns: repeat(2,1fr); }
+      .dm-rec-grid  { grid-template-columns: 1fr; }
+      .dm-actions   { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="doc-header">
+  <h1>BHI App — User Guide</h1>
+  <p>Balanced Health Institute &nbsp;·&nbsp; Version 2.3 &nbsp;·&nbsp; Last updated March 2026</p>
+  <p>A complete reference for every page and feature in the app. UI mockups are rendered in dark mode to match the default experience.</p>
+</div>
+
+<div class="layout">
+
+  <!-- ══ SIDEBAR ══ -->
+  <nav class="sidebar">
+    <h2>Dashboard</h2>
+    <a href="#dashboard">Overview</a>
+    <a href="#nav-bar"          class="sub">Navigation Bar</a>
+    <a href="#welcome"          class="sub">Welcome Header</a>
+    <a href="#stale-banner"     class="sub">Stale Lab Banner</a>
+    <a href="#stat-cards"       class="sub">Stat Cards</a>
+    <a href="#bhas-banner"      class="sub">BHAS Score Banner</a>
+    <a href="#bhas-v2"          class="sub">BHAS v2.3 Panel</a>
+    <a href="#recommendations"  class="sub">Recommendations</a>
+    <a href="#recently-viewed"  class="sub">Recently Viewed</a>
+    <a href="#quick-actions"    class="sub">Quick Actions</a>
+  </nav>
+
+  <!-- ══ CONTENT ══ -->
+  <main class="content">
+
+    <!-- ════════════════════════════════════
+         DASHBOARD
+    ════════════════════════════════════ -->
+    <h2 class="page-title" id="dashboard">Dashboard (Home Page)</h2>
+    <p class="page-intro">
+      The Dashboard is the first page you see after logging in. It gives you a complete snapshot of your health
+      status, your BHAS scores, and personalized recommendations. Every section updates automatically when you
+      log new lab results or update your profile.
+    </p>
+
+    <!-- ── FULL PAGE MOCKUP ── -->
+    <p class="mockup-label">Full page — dark mode</p>
+    <div class="app-mockup">
+
+      <!-- Nav -->
+      <div class="dm-nav">
+        <div class="dm-nav-left">
+          <span class="dm-nav-logo">BHI</span>
+          <div class="dm-nav-links">
+            <span class="dm-nav-link active">Home</span>
+            <span class="dm-nav-link">Library</span>
+            <span class="dm-nav-link">Categories</span>
+            <span class="dm-nav-link">Lab Results</span>
+            <span class="dm-nav-link">Profile</span>
+          </div>
+        </div>
+        <div class="dm-nav-right">
+          <span class="dm-nav-username">Jane Smith</span>
+          <span class="dm-nav-btn">☀️</span>
+          <span class="dm-nav-btn">Logout</span>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="dm-body">
+
+        <!-- Welcome -->
+        <div class="dm-welcome-name">Welcome back, Jane</div>
+        <div class="dm-welcome-email">jane.smith@example.com</div>
+
+        <!-- Stale banner -->
+        <div class="dm-stale">
+          <div>
+            <div class="dm-stale-title">Lab results are 195 days old</div>
+            <div class="dm-stale-sub">For accurate health scoring, update your labs every 6 months.</div>
+          </div>
+          <button class="dm-stale-btn">Log New Results</button>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="dm-stat-grid">
+          <div class="dm-stat-card">
+            <div class="dm-stat-icon">🔖</div>
+            <div class="dm-stat-label">Bookmarked Resources</div>
+            <div class="dm-stat-value">4</div>
+          </div>
+          <div class="dm-stat-card">
+            <div class="dm-stat-icon">⚗️</div>
+            <div class="dm-stat-label">Lab Results</div>
+            <div class="dm-stat-value">11</div>
+          </div>
+          <div class="dm-stat-card">
+            <div class="dm-stat-icon">💡</div>
+            <div class="dm-stat-label">Health Insights</div>
+            <div class="dm-stat-value">7</div>
+          </div>
+          <div class="dm-stat-card">
+            <div class="dm-stat-icon">📚</div>
+            <div class="dm-stat-label">Recommendations</div>
+            <div class="dm-stat-value">9</div>
+          </div>
+        </div>
+
+        <!-- BHAS v1 -->
+        <div class="dm-bhas">
+          <div class="dm-bhas-pct">
+            <div class="dm-bhas-pct-num" style="color:#10B981;">78%</div>
+            <div class="dm-bhas-pct-label">BHAS Score</div>
+          </div>
+          <div class="dm-bhas-divider"></div>
+          <div class="dm-bhas-right">
+            <div class="dm-bhas-title">Balanced Health Assessment — 7.0 / 9 points</div>
+            <div class="dm-chips">
+              <span class="dm-chip dm-chip-green">Fasting Glucose · ✓</span>
+              <span class="dm-chip dm-chip-green">Total Cholesterol · ✓</span>
+              <span class="dm-chip dm-chip-green">HDL Cholesterol · ✓</span>
+              <span class="dm-chip dm-chip-amber">LDL Cholesterol · ~</span>
+              <span class="dm-chip dm-chip-green">Triglycerides · ✓</span>
+              <span class="dm-chip dm-chip-amber">Vitamin D · ~</span>
+              <span class="dm-chip dm-chip-red">hs-CRP · ✗</span>
+              <span class="dm-chip dm-chip-green">Vitamin B12 · ✓</span>
+              <span class="dm-chip dm-chip-green">Fasting Insulin · ✓</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BHAS v2.3 -->
+        <div class="dm-v2">
+          <div class="dm-v2-header">
+            <div style="text-align:center;min-width:70px;">
+              <div class="dm-v2-score-num" style="color:#3B82F6;">6.5</div>
+              <div class="dm-v2-score-denom">/ 9.0</div>
+            </div>
+            <div class="dm-bhas-divider"></div>
+            <div>
+              <div class="dm-v2-meta-title">
+                BHAS v2.3
+                <span class="dm-v2-label-chip dm-v2-label-blue">Healthy</span>
+              </div>
+              <div class="dm-v2-meta-sub">7 of 9 metrics scored · uses derived ratios (HOMA-IR, TG/HDL, WtHR, Grip Ratio)</div>
+            </div>
+          </div>
+          <div class="dm-chips">
+            <span class="dm-chip dm-chip-green">HOMA-IR · ✓</span>
+            <span class="dm-chip dm-chip-amber">TG/HDL · ~</span>
+            <span class="dm-chip dm-chip-green">Grip Ratio · ✓</span>
+            <span class="dm-chip dm-chip-green">WtHR · ✓</span>
+            <span class="dm-chip dm-chip-amber">Vitamin D · ~</span>
+            <span class="dm-chip dm-chip-green">Vitamin B12 · ✓</span>
+            <span class="dm-chip dm-chip-red">hs-CRP · ✗</span>
+          </div>
+          <div class="dm-v2-missing">
+            <strong>To complete your v2.3 score, add:</strong> VO2 Max Percentile · Advanced Care Plan —
+            <a href="#">update Profile</a> or <a href="#">log Labs</a>
+          </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="dm-section-title">Personalized for You</div>
+        <div class="dm-section-sub">Based on 7 health insights: Normal_Glucose, High_LDL, Low_VitD, Adequate_B12, Optimal_HOMAYR, High_CRP, Normal_TG</div>
+        <div class="dm-rec-grid">
+          <div class="dm-rec-card">
+            <div class="dm-rec-pin">📌 Recommended</div>
+            <div class="dm-rec-type">Article</div>
+            <div class="dm-rec-title">Lowering LDL Naturally: Diet and Lifestyle Changes</div>
+            <div class="dm-rec-tags">High_LDL, Cardiovascular</div>
+            <button class="dm-rec-btn">View Resource</button>
+          </div>
+          <div class="dm-rec-card">
+            <div class="dm-rec-pin">📌 Recommended</div>
+            <div class="dm-rec-type">Video</div>
+            <div class="dm-rec-title">Vitamin D Deficiency: Symptoms and Solutions</div>
+            <div class="dm-rec-tags">Low_VitD, Nutrition</div>
+            <button class="dm-rec-btn">View Resource</button>
+          </div>
+          <div class="dm-rec-card">
+            <div class="dm-rec-pin">📌 Recommended</div>
+            <div class="dm-rec-type">PDF Guide</div>
+            <div class="dm-rec-title">Understanding Inflammation: What hs-CRP Tells You</div>
+            <div class="dm-rec-tags">High_CRP, Inflammation</div>
+            <button class="dm-rec-btn">View Resource</button>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="dm-section-title" style="margin-top:8px;">Quick Actions</div>
+        <div style="height:10px;"></div>
+        <div class="dm-actions">
+          <button class="dm-action-primary">📊 Log Lab Results</button>
+          <button class="dm-action-secondary">🔍 Browse Library</button>
+          <button class="dm-action-secondary">⚙️ Edit Profile</button>
+        </div>
+
+      </div><!-- /dm-body -->
+    </div><!-- /app-mockup -->
+
+
+    <!-- ── NAV BAR ── -->
+    <h3 class="section-head" id="nav-bar">Navigation Bar</h3>
+    <p>The navigation bar sits at the top of every page in the app. It remains fixed as you scroll so you can always switch pages quickly.</p>
+
+    <p class="mockup-label">Navigation bar — dark mode</p>
+    <div class="app-mockup">
+      <div class="dm-nav">
+        <div class="dm-nav-left">
+          <span class="dm-nav-logo">BHI</span>
+          <div class="dm-nav-links">
+            <span class="dm-nav-link active">Home</span>
+            <span class="dm-nav-link">Library</span>
+            <span class="dm-nav-link">Categories</span>
+            <span class="dm-nav-link">Lab Results</span>
+            <span class="dm-nav-link">Profile</span>
+          </div>
+        </div>
+        <div class="dm-nav-right">
+          <span class="dm-nav-username">Jane Smith</span>
+          <span class="dm-nav-btn">☀️</span>
+          <span class="dm-nav-btn">Logout</span>
+        </div>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>Element</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><strong>BHI</strong> logo</td><td>Always visible on the left. Does not navigate anywhere — it is a brand identifier only.</td></tr>
+        <tr><td><strong>Home</strong></td><td>Returns you to the Dashboard from any page. The active page is highlighted in blue with an underline.</td></tr>
+        <tr><td><strong>Library</strong></td><td>Opens the Resource Library where you can browse and search all health resources.</td></tr>
+        <tr><td><strong>Categories</strong></td><td>Browse resources grouped by health category (e.g., Cardiovascular, Nutrition, Fitness).</td></tr>
+        <tr><td><strong>Lab Results</strong></td><td>Opens the Labs page for entering, uploading, or reviewing your lab values.</td></tr>
+        <tr><td><strong>Profile</strong></td><td>Opens your Profile page where you manage personal details, biometrics, and privacy settings.</td></tr>
+        <tr><td><strong>Admin</strong></td><td>Only visible to users with admin or super-admin roles. Opens the Admin CMS panel.</td></tr>
+        <tr><td><strong>Username</strong></td><td>Your display name shown in the top-right corner, confirming which account is active.</td></tr>
+        <tr><td>☀️ / 🌙 button</td><td>Toggles between dark mode and light mode. Your preference is saved automatically and persists between sessions.</td></tr>
+        <tr><td><strong>Logout</strong></td><td>Signs you out of the app immediately and returns you to the login screen.</td></tr>
+      </tbody>
+    </table>
+
+
+    <!-- ── WELCOME HEADER ── -->
+    <h3 class="section-head" id="welcome">Welcome Header</h3>
+    <p>The welcome header is the first thing you see on the Dashboard after the navigation bar.</p>
+
+    <p class="mockup-label">Welcome header</p>
+    <div class="app-mockup">
+      <div class="dm-body" style="padding-bottom:10px;">
+        <div class="dm-welcome-name">Welcome back, Jane</div>
+        <div class="dm-welcome-email">jane.smith@example.com</div>
+      </div>
+    </div>
+
+    <ul>
+      <li><strong>Welcome back, [First Name]</strong> — your first name is pulled from your profile automatically.</li>
+      <li>Your <strong>email address</strong> is shown below, confirming which account is active.</li>
+    </ul>
+
+    <div class="callout tip">
+      <strong>Tip</strong>
+      If your first name is not showing, go to <strong>Profile</strong> and save your full name in the Name field.
+    </div>
+
+
+    <!-- ── STALE LAB BANNER ── -->
+    <h3 class="section-head" id="stale-banner">Stale Lab Data Warning</h3>
+    <p>If your most recent lab results are more than <strong>180 days old</strong>, an amber warning banner appears directly below the welcome header.</p>
+
+    <p class="mockup-label">Stale lab banner — shown when results are over 6 months old</p>
+    <div class="app-mockup">
+      <div class="dm-body" style="padding-bottom:10px;">
+        <div class="dm-stale">
+          <div>
+            <div class="dm-stale-title">Lab results are 195 days old</div>
+            <div class="dm-stale-sub">For accurate health scoring, update your labs every 6 months.</div>
+          </div>
+          <button class="dm-stale-btn">Log New Results</button>
+        </div>
+      </div>
+    </div>
+
+    <ul>
+      <li>The banner shows exactly how many days have passed since your last lab entry.</li>
+      <li>Clicking <strong>Log New Results</strong> takes you directly to the Labs page.</li>
+      <li>The banner disappears automatically once you save new lab results.</li>
+    </ul>
+
+    <div class="callout note">
+      <strong>Why 180 days?</strong>
+      BHI recommends updating lab values at least every 6 months so your BHAS score and personalized recommendations remain accurate and clinically meaningful.
+    </div>
+
+
+    <!-- ── STAT CARDS ── -->
+    <h3 class="section-head" id="stat-cards">Stat Cards</h3>
+    <p>Four summary cards give you a quick count of your activity across the app.</p>
+
+    <p class="mockup-label">Stat cards — example with data entered</p>
+    <div class="app-mockup">
+      <div class="dm-body" style="padding-bottom:10px;">
+        <div class="dm-stat-grid">
+          <div class="dm-stat-card">
+            <div class="dm-stat-icon">🔖</div>
+            <div class="dm-stat-label">Bookmarked Resources</div>
+            <div class="dm-stat-value">4</div>
+          </div>
+          <div class="dm-stat-card">
+            <div class="dm-stat-icon">⚗️</div>
+            <div class="dm-stat-label">Lab Results</div>
+            <div class="dm-stat-value">11</div>
+          </div>
+          <div class="dm-stat-card">
+            <div class="dm-stat-icon">💡</div>
+            <div class="dm-stat-label">Health Insights</div>
+            <div class="dm-stat-value">7</div>
+          </div>
+          <div class="dm-stat-card">
+            <div class="dm-stat-icon">📚</div>
+            <div class="dm-stat-label">Recommendations</div>
+            <div class="dm-stat-value">9</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>Card</th><th>What it counts</th></tr></thead>
+      <tbody>
+        <tr><td>🔖 Bookmarked Resources</td><td>Resources you have saved with the bookmark button in the Library. Click any bookmark to revisit it quickly.</td></tr>
+        <tr><td>⚗️ Lab Results</td><td>Total individual lab values logged (e.g., entering 8 markers counts as 8).</td></tr>
+        <tr><td>💡 Health Insights</td><td>The number of health tags the scoring engine has assigned based on your lab values — e.g., <code>Normal_Glucose</code>, <code>Low_VitD</code>.</td></tr>
+        <tr><td>📚 Recommendations</td><td>Resources currently matched and recommended to you based on your active health tags.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <strong>Tip</strong>
+      All four numbers start at 0 for new accounts. Go to <strong>Lab Results</strong> and enter your first set of values to see them populate.
+    </div>
+
+
+    <!-- ── BHAS SCORE BANNER ── -->
+    <h3 class="section-head" id="bhas-banner">BHAS Score Banner</h3>
+    <p>Once you have logged at least one lab result, the BHAS (Balanced Health Assessment Score) banner appears. This is your primary health score, calculated using standard clinical thresholds for each marker you have entered.</p>
+
+    <p class="mockup-label">BHAS Score banner — showing a 78% score with per-marker chips</p>
+    <div class="app-mockup">
+      <div class="dm-body" style="padding-bottom:10px;">
+        <div class="dm-bhas">
+          <div class="dm-bhas-pct">
+            <div class="dm-bhas-pct-num" style="color:#10B981;">78%</div>
+            <div class="dm-bhas-pct-label">BHAS Score</div>
+          </div>
+          <div class="dm-bhas-divider"></div>
+          <div class="dm-bhas-right">
+            <div class="dm-bhas-title">Balanced Health Assessment — 7.0 / 9 points</div>
+            <div class="dm-chips">
+              <span class="dm-chip dm-chip-green">Fasting Glucose · ✓</span>
+              <span class="dm-chip dm-chip-green">Total Cholesterol · ✓</span>
+              <span class="dm-chip dm-chip-green">HDL Cholesterol · ✓</span>
+              <span class="dm-chip dm-chip-amber">LDL Cholesterol · ~</span>
+              <span class="dm-chip dm-chip-green">Triglycerides · ✓</span>
+              <span class="dm-chip dm-chip-amber">Vitamin D · ~</span>
+              <span class="dm-chip dm-chip-red">hs-CRP · ✗</span>
+              <span class="dm-chip dm-chip-green">Vitamin B12 · ✓</span>
+              <span class="dm-chip dm-chip-green">Fasting Insulin · ✓</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p><strong>Left side — Overall percentage:</strong></p>
+    <table>
+      <thead><tr><th>Color</th><th>Score range</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><span class="b b-green">Green</span></td><td>80% and above</td><td>Most entered markers are in the optimal clinical range.</td></tr>
+        <tr><td><span class="b b-amber">Amber</span></td><td>50% – 79%</td><td>Good progress, but several markers have room for improvement.</td></tr>
+        <tr><td><span class="b b-red">Red</span></td><td>Below 50%</td><td>Multiple markers are outside the optimal range and may need attention.</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>Right side — Per-marker chips:</strong></p>
+    <table>
+      <thead><tr><th>Chip color</th><th>Symbol</th><th>Meaning</th><th>Points</th></tr></thead>
+      <tbody>
+        <tr><td><span class="b b-green">Green</span></td><td>✓</td><td>Optimal — value is within the ideal clinical range.</td><td>1.0</td></tr>
+        <tr><td><span class="b b-amber">Amber</span></td><td>~</td><td>Improvement — outside optimal but not critically so.</td><td>0.5</td></tr>
+        <tr><td><span class="b b-red">Red</span></td><td>✗</td><td>Out of range — falls outside the acceptable threshold.</td><td>0</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <strong>Tip</strong>
+      Hover over any chip to see the specific health tag that fired for that marker (e.g., <code>Normal_Glucose</code>). This tells you exactly why a marker received its score.
+    </div>
+
+    <div class="callout note">
+      <strong>Note</strong>
+      Missing markers are not penalized — the score is a percentage of what you have entered. Entering more markers gives a more complete and useful picture.
+    </div>
+
+
+    <!-- ── BHAS v2.3 ── -->
+    <h3 class="section-head" id="bhas-v2">BHAS v2.3 Advanced Score Panel</h3>
+    <p>When you have entered enough data for at least 4 of the 9 scoreable metrics, a second panel appears below the standard BHAS banner. This is the <strong>BHAS v2.3</strong> score — a clinically advanced model that calculates derived ratios from your raw values and biometric data.</p>
+
+    <p class="mockup-label">BHAS v2.3 panel — showing a Healthy score of 6.5 / 9.0</p>
+    <div class="app-mockup">
+      <div class="dm-body" style="padding-bottom:10px;">
+        <div class="dm-v2">
+          <div class="dm-v2-header">
+            <div style="text-align:center;min-width:70px;">
+              <div class="dm-v2-score-num" style="color:#3B82F6;">6.5</div>
+              <div class="dm-v2-score-denom">/ 9.0</div>
+            </div>
+            <div class="dm-bhas-divider"></div>
+            <div>
+              <div class="dm-v2-meta-title">
+                BHAS v2.3
+                <span class="dm-v2-label-chip dm-v2-label-blue">Healthy</span>
+              </div>
+              <div class="dm-v2-meta-sub">7 of 9 metrics scored · uses derived ratios (HOMA-IR, TG/HDL, WtHR, Grip Ratio)</div>
+            </div>
+          </div>
+          <div class="dm-chips">
+            <span class="dm-chip dm-chip-green">HOMA-IR · ✓</span>
+            <span class="dm-chip dm-chip-amber">TG/HDL · ~</span>
+            <span class="dm-chip dm-chip-green">Grip Ratio · ✓</span>
+            <span class="dm-chip dm-chip-green">WtHR · ✓</span>
+            <span class="dm-chip dm-chip-amber">Vitamin D · ~</span>
+            <span class="dm-chip dm-chip-green">Vitamin B12 · ✓</span>
+            <span class="dm-chip dm-chip-red">hs-CRP · ✗</span>
+          </div>
+          <div class="dm-v2-missing">
+            <strong>To complete your v2.3 score, add:</strong> VO2 Max Percentile · Advanced Care Plan —
+            <a href="#">update Profile</a> or <a href="#">log Labs</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p><strong>Score labels:</strong></p>
+    <table>
+      <thead><tr><th>Label</th><th>Score range</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><span class="b b-green">Optimal</span></td><td>8.0 – 9.0</td><td>Excellent — most metrics are in their ideal range.</td></tr>
+        <tr><td><span class="b b-blue">Healthy</span></td><td>6.0 – 7.9</td><td>Good overall health with minor areas to watch.</td></tr>
+        <tr><td><span class="b b-amber">Needs Improvement</span></td><td>4.0 – 5.9</td><td>Several metrics are below optimal.</td></tr>
+        <tr><td><span class="b b-red">High Risk</span></td><td>Below 4.0</td><td>Multiple metrics need immediate attention.</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>The 9 v2.3 metrics:</strong></p>
+    <table>
+      <thead><tr><th>Metric</th><th>Derived from</th><th>Optimal threshold</th></tr></thead>
+      <tbody>
+        <tr><td>HOMA-IR</td><td>Fasting Glucose × Fasting Insulin ÷ 405</td><td>&lt; 1.5 = 1 pt; 1.5–2.5 = 0.5 pt</td></tr>
+        <tr><td>TG/HDL Ratio</td><td>Triglycerides ÷ HDL Cholesterol</td><td>&lt; 1.5 = 1 pt; 1.5–3.0 = 0.5 pt</td></tr>
+        <tr><td>Grip Ratio</td><td>Grip strength (kg) ÷ Body weight (kg)</td><td>≥ 0.45 male / ≥ 0.35 female = 1 pt</td></tr>
+        <tr><td>Waist-to-Height (WtHR)</td><td>Waist circumference ÷ Height (cm)</td><td>&lt; 0.50 = 1 pt; 0.50–0.60 = 0.5 pt</td></tr>
+        <tr><td>Vitamin D</td><td>Direct lab value</td><td>&gt; 50 ng/mL = 1 pt</td></tr>
+        <tr><td>Vitamin B12</td><td>Direct lab value</td><td>&gt; 750 pg/mL = 1 pt</td></tr>
+        <tr><td>VO2 Max Percentile</td><td>Entered directly (0–100)</td><td>≥ 60th percentile = 1 pt</td></tr>
+        <tr><td>hs-CRP</td><td>Direct lab value</td><td>&lt; 1.0 mg/L = 1 pt; 1.0–3.0 = 0.5 pt</td></tr>
+        <tr><td>Advanced Care Plan</td><td>Checkbox on Profile</td><td>Documented = 1 pt</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout note">
+      <strong>Type 1 Diabetes substitution</strong>
+      If you have checked <em>Type 1 Diabetes</em> on your Profile, HOMA-IR is replaced by <strong>Insulin Units per kg</strong> (Total Daily Insulin ÷ Body Weight). The total is still out of 9.0.
+    </div>
+
+    <div class="callout tip">
+      <strong>Tip</strong>
+      Hover over any metric chip to see the derived value used (e.g., <code>HOMA-IR: 1.4</code>). You never need to calculate these manually — just enter your raw lab values and the app does it automatically.
+    </div>
+
+    <p>If some metrics are missing, a line at the bottom of the panel lists exactly what data is needed, with direct links to <strong>Profile</strong> or <strong>Labs</strong> to fill it in.</p>
+
+
+    <!-- ── RECOMMENDATIONS ── -->
+    <h3 class="section-head" id="recommendations">Personalized Recommendations</h3>
+    <p>Once lab results are on file, up to 3 resource cards appear that are matched to your current health tags.</p>
+
+    <p class="mockup-label">Recommendation cards — matched to your active health tags</p>
+    <div class="app-mockup">
+      <div class="dm-body" style="padding-bottom:10px;">
+        <div class="dm-section-title">Personalized for You</div>
+        <div class="dm-section-sub" style="margin-bottom:12px;">Based on 7 health insights: Normal_Glucose, High_LDL, Low_VitD, Adequate_B12, Optimal_HOMAYR, High_CRP, Normal_TG</div>
+        <div class="dm-rec-grid">
+          <div class="dm-rec-card">
+            <div class="dm-rec-pin">📌 Recommended</div>
+            <div class="dm-rec-type">Article</div>
+            <div class="dm-rec-title">Lowering LDL Naturally: Diet and Lifestyle Changes</div>
+            <div class="dm-rec-tags">High_LDL, Cardiovascular</div>
+            <button class="dm-rec-btn">View Resource</button>
+          </div>
+          <div class="dm-rec-card">
+            <div class="dm-rec-pin">📌 Recommended</div>
+            <div class="dm-rec-type">Video</div>
+            <div class="dm-rec-title">Vitamin D Deficiency: Symptoms and Solutions</div>
+            <div class="dm-rec-tags">Low_VitD, Nutrition</div>
+            <button class="dm-rec-btn">View Resource</button>
+          </div>
+          <div class="dm-rec-card">
+            <div class="dm-rec-pin">📌 Recommended</div>
+            <div class="dm-rec-type">PDF Guide</div>
+            <div class="dm-rec-title">Understanding Inflammation: What hs-CRP Tells You</div>
+            <div class="dm-rec-tags">High_CRP, Inflammation</div>
+            <button class="dm-rec-btn">View Resource</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p>Each card shows:</p>
+    <ul>
+      <li><strong>📌 Recommended</strong> — confirms this was matched specifically to your profile.</li>
+      <li><strong>Resource type</strong> — Article, Video, PDF Guide, etc.</li>
+      <li><strong>Title</strong> — the name of the resource.</li>
+      <li><strong>Health tags</strong> — the tags that linked this resource to you.</li>
+      <li><strong>View Resource</strong> — opens the full resource.</li>
+    </ul>
+
+    <div class="callout note">
+      <strong>How matching works</strong>
+      The scoring engine evaluates your lab values against clinical thresholds and assigns health tags (e.g., <code>Low_VitD</code>). Resources that have been tagged with those same labels are then surfaced here. More markers entered = more specific recommendations.
+    </div>
+
+
+    <!-- ── RECENTLY VIEWED ── -->
+    <h3 class="section-head" id="recently-viewed">Recently Viewed (new users)</h3>
+    <p>Before you have logged any lab results, the Recommendations section is replaced by a <strong>Recently Viewed</strong> section showing resources you have browsed in the Library.</p>
+
+    <p class="mockup-label">Recently Viewed — shown before any labs are logged</p>
+    <div class="app-mockup">
+      <div class="dm-body" style="padding-bottom:10px;">
+        <div class="dm-section-title">Recently Viewed</div>
+        <div style="height:10px;"></div>
+        <div class="dm-rec-grid">
+          <div class="dm-rec-card">
+            <div class="dm-rec-type">Article</div>
+            <div class="dm-rec-title">Understanding Your Cholesterol Panel</div>
+            <button class="dm-rec-btn" style="background:var(--dm-blue);">Continue Reading</button>
+          </div>
+          <div class="dm-rec-card">
+            <div class="dm-rec-type">Video</div>
+            <div class="dm-rec-title">What is Insulin Resistance?</div>
+            <button class="dm-rec-btn" style="background:var(--dm-blue);">Continue Reading</button>
+          </div>
+          <div class="dm-rec-card">
+            <div class="dm-rec-type">PDF Guide</div>
+            <div class="dm-rec-title">Metabolic Health 101</div>
+            <button class="dm-rec-btn" style="background:var(--dm-blue);">Continue Reading</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ul>
+      <li>Each card shows the resource type and title.</li>
+      <li><strong>Continue Reading</strong> jumps you back to that resource.</li>
+      <li>If nothing has been viewed yet, a placeholder reads: <em>"No resources viewed yet. Start exploring!"</em></li>
+    </ul>
+
+    <div class="callout tip">
+      <strong>Tip</strong>
+      Once you log your first lab results, this section permanently switches to Personalized Recommendations.
+    </div>
+
+
+    <!-- ── QUICK ACTIONS ── -->
+    <h3 class="section-head" id="quick-actions">Quick Actions</h3>
+    <p>Three buttons at the bottom of the Dashboard give you one-click access to the most common tasks.</p>
+
+    <p class="mockup-label">Quick Action buttons</p>
+    <div class="app-mockup">
+      <div class="dm-body" style="padding-bottom:10px;">
+        <div class="dm-actions">
+          <button class="dm-action-primary">📊 Log Lab Results</button>
+          <button class="dm-action-secondary">🔍 Browse Library</button>
+          <button class="dm-action-secondary">⚙️ Edit Profile</button>
+        </div>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>Button</th><th>Where it goes</th><th>When to use it</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>📊 Log Lab Results</td>
+          <td>Labs page</td>
+          <td>You have new blood work to enter, or the stale lab banner is showing.</td>
+        </tr>
+        <tr>
+          <td>🔍 Browse Library</td>
+          <td>Resource Library</td>
+          <td>You want to explore health content without a specific tag in mind.</td>
+        </tr>
+        <tr>
+          <td>⚙️ Edit Profile</td>
+          <td>Profile page</td>
+          <td>You need to update height, weight, sex, waist circumference, grip strength, or other biometric data used in the v2.3 score.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout note">
+      <strong>Note</strong>
+      <strong>Log Lab Results</strong> is highlighted in blue because entering lab values is the single most impactful action for activating the personalization features in the app.
+    </div>
+
+  </main>
+</div>
+
+<footer>
+  BHI App — User Guide &nbsp;·&nbsp; Balanced Health Institute &nbsp;·&nbsp; Draft · Dashboard section complete
+</footer>
+
+</body>
+</html>

@@ -115,7 +115,7 @@ export default function Resources() {
     try {
       const cat = localStorage.getItem('bhi-filter-category')
       if (cat) {
-        setFilterTag(cat)
+        setFilterCategory(cat)
         localStorage.removeItem('bhi-filter-category')
       }
     } catch {}

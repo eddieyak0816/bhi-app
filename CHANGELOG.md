@@ -1,10 +1,36 @@
 # CHANGELOG
 
+## 2026-03-18 — built (F18a+ Sortable Column Headers)
+
+### Sortable Column Headers — Admin & Employer pages
+
+Added click-to-sort on column headers across three tables. Clicking a header sorts ascending; clicking again reverses to descending. Active sort column shows ↑/↓ arrow indicator.
+
+**Admin → Organizations → expanded panel → Team Score Summary**
+- Sortable: Team (A→Z), Members (numeric), Avg BHAS (numeric), % at Optimal (numeric)
+- Default: Avg BHAS descending
+
+**Admin → Organizations → expanded panel → Member table**
+- Sortable: Public ID, Role, Team, Joined (all string/date)
+- Default: Public ID ascending
+
+**Admin → Organizations → User Identity Mapping table**
+- Sortable: Name, Email, Username, Public ID, Role (all string)
+- Default: Name ascending
+
+**Employer page → Members tab → Members table**
+- Sortable: Username, Public ID, Team, BHAS Score (numeric), Results (numeric), Role, Joined
+- Default: BHAS Score descending (preserves prior behavior)
+
+All sorting is client-side. Sort state is per-table (org-keyed for expanded panels). No server changes.
+
+---
+
 ## 2026-03-18 — built (F18a Admin Org Filters)
 
 ### F18a: Admin Organizations Tab — Search & Filter
 
-Planned addition of client-side filtering to the Admin → Organizations tab. No new server endpoints required — all data is already loaded into state on panel expand.
+Client-side filtering added to the Admin → Organizations tab. No new server endpoints required — all data is already loaded into state on panel expand.
 
 **Org list (card level)**
 - Text search input: filter org cards by name or slug (case-insensitive substring)

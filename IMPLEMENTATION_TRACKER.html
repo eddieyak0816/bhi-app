@@ -429,7 +429,7 @@
         <div class="item-num">16</div>
         <div class="item-body">
           <div class="item-title">De-identified employer view — no PHI visible to employer</div>
-          <div class="item-note">Server: GET /api/employer/:orgSlug (auth-gated to org admins; returns username, public_id, team, BHAS %, result count — no name/email/raw labs). BHAS computed server-side mirroring evaluateRules.ts. EmployerPage.tsx: PHI notice, org header, per-team summary cards with dark-mode aware color palette, member table sorted by BHAS, inline filter bar (username/public ID search, team dropdown, role dropdown, min BHAS % slider). Admin orgs tab: "Employer View" link per org. 2026-03-14, updated 2026-03-18.</div>
+          <div class="item-note">Server: GET /api/employer/:orgSlug (auth-gated to org admins; returns username, public_id, team, BHAS %, result count — no name/email/raw labs). BHAS computed server-side mirroring evaluateRules.ts. EmployerPage.tsx: PHI notice, org header, per-team summary cards with dark-mode aware color palette, member table with inline filter bar (username/public ID search, team dropdown, role dropdown, min BHAS % slider) and sortable column headers (Username, Public ID, Team, BHAS Score, Results, Role, Joined — click to sort asc/desc, ↑↓ indicator). Admin orgs tab: "Employer View" link per org. 2026-03-14, updated 2026-03-18.</div>
         </div>
         <span class="item-status status-done">✅ Complete</span>
       </div>
@@ -480,7 +480,13 @@
             • All filtering is client-side (data already loaded into state on expand)<br>
             • Filter state can be per-org (keyed by org.id) or reset on collapse — simpler to reset on collapse<br>
             • No new server endpoints required<br>
-            • Filter bar styling should match the existing filter bars on EmployerPage.tsx and LeaderboardPage.tsx
+            • Filter bar styling should match the existing filter bars on EmployerPage.tsx and LeaderboardPage.tsx<br><br>
+
+            <strong>Sortable column headers (added 2026-03-18)</strong><br>
+            All three tables gained click-to-sort column headers. Clicking a header sorts ascending; clicking again reverses to descending. Active column shows ↑/↓ arrow.<br>
+            • Team Score Summary: Team, Members, Avg BHAS, % at Optimal (default: Avg BHAS desc)<br>
+            • Member table: Public ID, Role, Team, Joined (default: Public ID asc)<br>
+            • User Identity Mapping: Name, Email, Username, Public ID, Role (default: Name asc)
           </div>
         </div>
         <span class="item-status status-done">✅ Built 2026-03-18</span>
