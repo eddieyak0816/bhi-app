@@ -1042,11 +1042,20 @@ app.post('/api/admin/new-marker-wizard', async (req, res) => {
     createdMarker = Array.isArray(mData) ? mData[0] : mData;
     markerId = createdMarker.id;
 
-    // 2. Create tags (skip duplicates silently)
+    // 2. Create tags with scoring_tier (skip duplicates silently)
+    // label values from the Wizard: 'Optimal' | 'Improvement' | 'Out of Range'
+    const labelToTier = { 'Optimal': 'optimal', 'Improvement': 'improvement', 'Out of Range': 'out_of_range' };
     const tagNames = [...new Set(validRules.map(r => r.tag_name.trim()))];
     for (const tagName of tagNames) {
-      const { error: tErr } = await sb.from('tags').insert([{ name: tagName }]);
-      if (tErr && tErr.code !== '23505') console.warn('wizard-tag-insert-warn', tagName, tErr);
+      const rule = validRules.find(r => r.tag_name.trim() === tagName);
+      const scoring_tier = labelToTier[rule?.label] || 'out_of_range';
+      const { error: tErr } = await sb.from('tags').insert([{ name: tagName, scoring_tier }]);
+      if (tErr && tErr.code === '23505') {
+        // Tag exists — update its tier in case it was previously unset
+        await sb.from('tags').update({ scoring_tier }).eq('name', tagName).is('scoring_tier', null);
+      } else if (tErr) {
+        console.warn('wizard-tag-insert-warn', tagName, tErr);
+      }
     }
 
     // 3. Create logic rules
@@ -1435,19 +1444,9 @@ ${pdfText}`;
 
 // ── Feature 16: De-identified Employer View ──────────────────────────────────
 
-// Server-side BHAS scoring (mirrors src/utils/evaluateRules.ts)
-const OPTIMAL_TAGS = new Set([
-  'Adequate_VitD','Normal_Glucose','Desirable_Cholesterol','Good_HDL','Optimal_LDL',
-  'Normal_Triglycerides','Normal_BP_Systolic','Normal_BP_Diastolic','Normal D',
-  'Adequate_B12','Normal_B12','Optimal_Waist_Male','Optimal_Waist_Female','Optimal_Grip',
-]);
-const IMPROVEMENT_TAGS = new Set([
-  'Insufficient_VitD','Prediabetic_Glucose','Borderline_High_Cholesterol','Fair_HDL',
-  'Near_Optimal_LDL','Borderline_High_LDL','Borderline_High_Triglycerides',
-  'Elevated_BP_Systolic','Elevated_BP_Diastolic','Stage1_Hypertension_Systolic',
-  'Stage1_Hypertension_Diastolic','Low_Normal_B12','Borderline_Waist_Male',
-  'Borderline_Waist_Female','Low_Normal_Grip',
-]);
+// Server-side BHAS scoring — reads scoring_tier from tags table (F47)
+// tagTierMap: Map<tagName, 'optimal' | 'improvement' | 'out_of_range'>
+// Falls back to 0 for any tag not in the map (unknown/legacy).
 
 function evalRule(value, rule) {
   const op = rule.operator || 'between';
@@ -1462,21 +1461,23 @@ function evalRule(value, rule) {
   }
 }
 
-function tagToScore(tag) {
-  if (OPTIMAL_TAGS.has(tag)) return 1;
-  if (IMPROVEMENT_TAGS.has(tag)) return 0.5;
+function tagToScore(tag, tagTierMap) {
+  const tier = tagTierMap.get(tag);
+  if (tier === 'optimal') return 1;
+  if (tier === 'improvement') return 0.5;
   return 0;
 }
 
-function computeBhasPct(latestResults, logicRules) {
+function computeBhasPct(latestResults, logicRules, tagTierMap) {
   // latestResults: [{ marker_name, value }]
   // logicRules: [{ marker_name, min_value, max_value, operator, tag_to_apply }]
+  // tagTierMap: Map<tagName, tier>
   if (!latestResults.length) return null;
   let total = 0;
   for (const r of latestResults) {
     const rules = logicRules.filter(lr => lr.marker_name.toLowerCase() === r.marker_name.toLowerCase());
     const fired = rules.find(lr => evalRule(r.value, lr));
-    total += fired ? tagToScore(fired.tag_to_apply) : 0;
+    total += fired ? tagToScore(fired.tag_to_apply, tagTierMap) : 0;
   }
   return Math.round((total / latestResults.length) * 100);
 }
@@ -1549,6 +1550,10 @@ app.get('/api/employer/:orgSlug', async (req, res) => {
       ...r, marker_name: r.lab_markers?.name || '',
     }));
 
+    // Fetch tag scoring tiers (F47 — replaces hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS)
+    const { data: tagRows } = await sb.from('tags').select('name, scoring_tier');
+    const tagTierMap = new Map((tagRows || []).map(t => [t.name, t.scoring_tier]));
+
     // For each member, fetch their latest result per marker and compute BHAS %
     let latestByUser = {};
     if (memberIds.length > 0) {
@@ -1583,7 +1588,7 @@ app.get('/api/employer/:orgSlug', async (req, res) => {
     // Build response — no PHI (raw values never included)
     const result = (members || []).map(m => {
       const userLatest = Object.values(latestByUser[m.user_id] || {});
-      const bhasPct = computeBhasPct(userLatest, rulesWithNames);
+      const bhasPct = computeBhasPct(userLatest, rulesWithNames, tagTierMap);
       return {
         username: profileMap[m.user_id]?.username || null,
         public_id: profileMap[m.user_id]?.public_id || null,

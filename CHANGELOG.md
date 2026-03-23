@@ -1,5 +1,40 @@
 # CHANGELOG
 
+## 2026-03-23 — built (F47: DB-driven scoring tier — removes hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS)
+
+### F47: scoring_tier column on tags table
+
+**Problem:** The BHAS v1 scoring engine had two hardcoded sets (`OPTIMAL_TAGS`, `IMPROVEMENT_TAGS`) in `src/utils/evaluateRules.ts` and a mirror copy in `server/index.js`. Any new marker created via the New Marker Wizard would always score 0 until a developer manually added its tags to these sets and redeployed.
+
+**Fix — 3 parts:**
+
+**`db/migrations/20260323_add_scoring_tier_to_tags.sql`**
+- Adds `scoring_tier TEXT CHECK (IN ('optimal','improvement','out_of_range'))` column to the `tags` table
+- Backfills all existing 15 markers' tags with their correct tiers
+- Run in Supabase Dashboard → SQL Editor
+
+**`src/utils/evaluateRules.ts`**
+- Added `TagTierMap` type (`Map<string, 'optimal'|'improvement'|'out_of_range'>`)
+- `tagToScore()` now accepts optional `tagTierMap` — uses DB tier first, falls back to hardcoded sets for any tag with null tier (backward compatible)
+- `calculateBhasScore()` accepts optional `tagTierMap` and passes it through
+
+**`src/context/EvaluationContext.tsx`**
+- Fetches `tags(name, scoring_tier)` in parallel with existing rules + resources fetch
+- Builds `TagTierMap` and passes it to `calculateBhasScore()`
+
+**`server/index.js`**
+- Removed hardcoded `OPTIMAL_TAGS` / `IMPROVEMENT_TAGS` sets
+- `tagToScore()` now accepts `tagTierMap` parameter
+- `computeBhasPct()` now accepts and uses `tagTierMap`
+- Employer view endpoint fetches `tags(name, scoring_tier)` and builds the map before computing BHAS scores
+- New Marker Wizard endpoint saves `scoring_tier` to the `tags` table when creating tags; updates tier on existing tags that have null tier
+
+**Result:** Creating a new marker via the Wizard is now fully self-contained. No code changes or redeployment needed after wizard use.
+
+**Action required:** Run `db/migrations/20260323_add_scoring_tier_to_tags.sql` in Supabase Dashboard → SQL Editor.
+
+---
+
 ## 2026-03-23 — feat: CSV export for EmployerPage and LeaderboardPage
 
 ### New: `src/utils/csvExport.ts`

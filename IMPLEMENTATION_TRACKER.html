@@ -190,9 +190,9 @@
 
 <!-- Stats bar — counts as of 2026-03-23 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">39</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">40</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">4</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">16</span>  Not Built / Skipped</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">15</span>  Not Built / Skipped</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">59</span>  Total Items</div>
 </div>
 
@@ -828,21 +828,22 @@
         <div class="phase-title">Scoring Engine Improvements</div>
         <div class="phase-desc">Make the New Marker Wizard fully self-contained — no code changes needed after creating a marker</div>
       </div>
-      <div class="phase-progress">0 / 2 done</div>
+      <div class="phase-progress">1 / 2 done</div>
     </div>
     <div class="items">
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">47</div>
         <div class="item-body">
           <div class="item-title">Remove hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS — move scoring tier to database</div>
           <div class="item-note">
-            Currently the BHAS v1 scoring engine has two hardcoded lists in <code>src/utils/evaluateRules.ts</code>: OPTIMAL_TAGS and IMPROVEMENT_TAGS. Any marker created through the New Marker Wizard will always score 0 in BHAS v1 until a developer manually adds its tag names to these lists and redeploys the app.<br><br>
-            <strong>Fix:</strong> Add a <code>scoring_tier</code> column to the <code>tags</code> table with values: <code>optimal</code>, <code>improvement</code>, or <code>out_of_range</code>. The New Marker Wizard already asks you to label each rule as Optimal/Improvement/Out of Range — that label just needs to be saved to the tag. The scoring engine then reads the tier from the database at runtime instead of checking the hardcoded lists.<br><br>
-            <strong>Result:</strong> After this change, creating a new marker via the Wizard is fully self-contained. No code changes or redeployment needed.
+            Added <code>scoring_tier</code> column to <code>tags</code> table ('optimal'|'improvement'|'out_of_range'). All existing tags backfilled. New Marker Wizard now saves the tier when creating tags.<br><br>
+            <strong>Frontend:</strong> <code>src/utils/evaluateRules.ts</code> — <code>tagToScore()</code> and <code>calculateBhasScore()</code> accept a <code>TagTierMap</code>; falls back to hardcoded sets for null-tier tags (backward compatible). <code>src/context/EvaluationContext.tsx</code> fetches tag tiers in parallel and builds the map.<br><br>
+            <strong>Server:</strong> <code>server/index.js</code> — removed hardcoded sets; <code>computeBhasPct()</code> accepts <code>tagTierMap</code>; employer endpoint fetches tiers from DB.<br><br>
+            <strong>Migration:</strong> <code>db/migrations/20260323_add_scoring_tier_to_tags.sql</code> — run in Supabase Dashboard → SQL Editor. Built 2026-03-23.
           </div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-03-23</span>
       </div>
 
       <div class="item todo" data-status="todo">
@@ -945,7 +946,7 @@
 
 <footer>
   BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-23 &nbsp;·&nbsp;
-  39 built · 4 partial · 16 not built/skipped out of 59 total items &nbsp;·&nbsp;
+  40 built · 4 partial · 15 not built/skipped out of 59 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
 </footer>

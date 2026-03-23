@@ -492,7 +492,7 @@ Items are ordered by logical dependency. Last updated: 2026-03-23.
 | 45 | Leaderboard with tie-breaker ranking | ✅ Built | |
 | 46 | CSV export for employer reporting | ❌ Not built | |
 | **Phase 9 – Scoring Engine Improvements** | | ❌ 0/2 complete | |
-| 47 | Remove hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS | ❌ Not built | Move scoring tier to database so the New Marker Wizard is fully self-contained; no code change needed after creating a new marker |
+| 47 | Remove hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS | ✅ Built | scoring_tier column on tags table; EvaluationContext + evaluateRules.ts + server/index.js all read from DB. Migration: 20260323_add_scoring_tier_to_tags.sql. New Marker Wizard now fully self-contained. |
 | 48 | Multiple scoring ranges per tier in Wizard | ❌ Not built | Allow Optimal = 1–5 OR 10–15; Wizard UI only — DB already supports it |
 | **Phase 10 – Pending / Backlog** | | ❌ 0/7 complete | |
 | 49 | Resource Library — thumbnail/image per resource | ❌ Not built | Add image/thumbnail to each resource card. Storage, upload UI, and fallback display to be designed before building |

@@ -14,6 +14,12 @@ export interface LogicRule {
 }
 
 /**
+ * Map of tag name → scoring tier, loaded from the tags table (F47).
+ * Replaces the hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS sets at runtime.
+ */
+export type TagTierMap = Map<string, 'optimal' | 'improvement' | 'out_of_range'>
+
+/**
  * BHAS (Balanced Health Assessment Score) per-marker score
  * 1 = Optimal, 0.5 = Improvement range, 0 = Out of range
  */
@@ -96,7 +102,15 @@ const IMPROVEMENT_TAGS = new Set([
   'Acceptable_Insulin',
 ])
 
-function tagToScore(tag: string): BhasScore {
+function tagToScore(tag: string, tagTierMap?: TagTierMap): BhasScore {
+  // F47: prefer DB-driven tier; fall back to hardcoded sets for legacy tags
+  if (tagTierMap) {
+    const tier = tagTierMap.get(tag)
+    if (tier === 'optimal') return 1
+    if (tier === 'improvement') return 0.5
+    if (tier === 'out_of_range') return 0
+    // tier is null/undefined — fall through to hardcoded fallback below
+  }
   if (OPTIMAL_TAGS.has(tag)) return 1
   if (IMPROVEMENT_TAGS.has(tag)) return 0.5
   return 0
@@ -217,7 +231,8 @@ export function getHealthSummary(tags: string[]): {
  */
 export function calculateBhasScore(
   userResults: UserLabResult[],
-  rules: LogicRule[]
+  rules: LogicRule[],
+  tagTierMap?: TagTierMap
 ): BhasResult {
   // Deduplicate to the latest result per marker before scoring.
   // Without this, multiple historical entries for the same marker produce
@@ -244,7 +259,7 @@ export function calculateBhasScore(
     const firedRule = markerRules.find(r => evaluateRule(result.value, r))
 
     const tag = firedRule?.tag_to_apply ?? ''
-    const score = tagToScore(tag)
+    const score = tagToScore(tag, tagTierMap)
 
     markerScores.push({
       markerName: result.markerName,
