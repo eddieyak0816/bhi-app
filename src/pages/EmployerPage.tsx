@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+import { buildCsvString, downloadCsv, todayIso } from '../utils/csvExport'
 
 interface Member {
   username: string | null
@@ -223,6 +224,20 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
       return 0
     })
 
+  function handleExportMembers() {
+    const headers = ['Username', 'Public ID', 'Team', 'Role', 'Joined Date', 'BHAS Score (%)', 'Lab Results']
+    const rows = filteredMembers.map(m => [
+      m.username ?? '',
+      m.public_id ?? '',
+      m.team ?? '',
+      m.role,
+      m.joined_at ? m.joined_at.slice(0, 10) : '',
+      m.bhas_pct ?? '',
+      m.result_count,
+    ])
+    downloadCsv(buildCsvString(headers, rows), `bhi-members-${orgSlug}-${todayIso()}.csv`)
+  }
+
   const inputStyle: React.CSSProperties = {
     background: theme.card,
     border: `1px solid ${theme.borderColor}`,
@@ -314,9 +329,17 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
 
       {/* Member table */}
       <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 12px 0', fontSize: 15, fontWeight: 600, color: theme.text }}>
-          Members
-        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: theme.text }}>Members</h3>
+          {filteredMembers.length > 0 && (
+            <button
+              onClick={handleExportMembers}
+              style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Export CSV
+            </button>
+          )}
+        </div>
 
         {/* Filter bar */}
         {members.length > 0 && (

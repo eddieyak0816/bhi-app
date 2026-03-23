@@ -185,15 +185,15 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-20 — Phases 1–4 complete, Phase 8 complete, Phase 5 mostly done. Added Phase 9 (scoring engine improvements F47–F48). Updated all marker logic rules to current medical guidelines. Removed Quick Add Marker; Wizard is now the only way to create markers. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-23 — Phases 1–4 complete, Phase 8 now complete (13/13). CSV export added to EmployerPage and LeaderboardPage (src/utils/csvExport.ts); Phase 5 item 22 marked partial (CSV done, PDF pending). Previously: profile save bug fixed, sex selector updated, all 15 markers updated to 2026 medical guidelines, Phase 10 backlog documented. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
-<!-- Stats bar — counts as of 2026-03-20 -->
+<!-- Stats bar — counts as of 2026-03-23 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">37</span>  Built / Done</div>
-  <div class="stat stat-partial"> <span class="num" id="cnt-partial">3</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">12</span>  Not Built / Skipped</div>
-  <div class="stat stat-total">   <span class="num" id="cnt-total">52</span>  Total Items</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">39</span>  Built / Done</div>
+  <div class="stat stat-partial"> <span class="num" id="cnt-partial">4</span>  Partial</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">16</span>  Not Built / Skipped</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">59</span>  Total Items</div>
 </div>
 
 <!-- Filter controls -->
@@ -403,7 +403,7 @@
         <div class="phase-title">Corporate Portal</div>
         <div class="phase-desc">Employer orgs, de-identification, team assignment, and team scoring</div>
       </div>
-      <div class="phase-progress">5 / 6 done</div>
+      <div class="phase-progress">6 / 6 done ✅</div>
     </div>
     <div class="items">
 
@@ -505,7 +505,7 @@
         <div class="phase-title">Analytics &amp; Reporting</div>
         <div class="phase-desc">Population benchmarks, corporate dashboards, insurance reports, and exportable outputs</div>
       </div>
-      <div class="phase-progress">3 / 5 done · 2 not built</div>
+      <div class="phase-progress">3 / 5 done · 1 partial · 1 not built</div>
     </div>
     <div class="items">
 
@@ -536,13 +536,13 @@
         <span class="item-status status-todo">❌ Not Built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item partial" data-status="partial">
         <div class="item-num">22</div>
         <div class="item-body">
           <div class="item-title">Exportable reports — user and corporate</div>
-          <div class="item-note">PDF or CSV export of individual user health summaries and corporate aggregate reports. Depends on analytics being complete.</div>
+          <div class="item-note">CSV export built 2026-03-23 for employer members and leaderboard (de-identified). PDF export of individual user health summaries and formatted corporate reports not yet built.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-partial">⚠️ Partial — CSV export built 2026-03-23; PDF reports pending</span>
       </div>
 
       <div class="item done" data-status="done">
@@ -632,7 +632,7 @@
         <div class="phase-title">BHAS v2.3 Scoring Engine Upgrade</div>
         <div class="phase-desc">Derived-ratio scoring, new markers, binary Vit D/B12, Type 1 substitution logic, score labels, new profile fields, and leaderboard tie-breaker. Source: APP integration Point system and Metrics.pdf</div>
       </div>
-      <div class="phase-progress">11 / 13 done</div>
+      <div class="phase-progress">13 / 13 done</div>
     </div>
     <div class="items">
 
@@ -744,13 +744,13 @@
         <span class="item-status status-done">✅ Built 2026-03-18</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">46</div>
         <div class="item-body">
           <div class="item-title">CSV export for employer reporting (de-identified)</div>
-          <div class="item-note">Export org member data as CSV: username, public_id, team, BHAS score, per-metric points, derived values. No PHI (no name, email, raw sensitive values). Accessible from employer view or Admin panel. Backend endpoint + frontend download button.</div>
+          <div class="item-note">Client-side CSV export on EmployerPage (members: username, public_id, team, role, joined date, BHAS %, lab results count) and LeaderboardPage (rank, username, public_id, team, BHAS v2.3 score, label, VO2 %, WtHR, hs-CRP, acute visits, score date). RFC 4180 compliant. No PHI. Exports currently-filtered rows. Filenames: bhi-members-{slug}-{date}.csv / bhi-leaderboard-{slug}-{date}.csv. Utility: src/utils/csvExport.ts. Built 2026-03-23.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-03-23</span>
       </div>
 
     </div>
@@ -861,11 +861,91 @@
     </div>
   </section>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE 10 – BACKLOG / PENDING
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="10">
+    <div class="phase-header">
+      <span class="phase-badge">Phase 10</span>
+      <div>
+        <div class="phase-title">Backlog &amp; Pending Items</div>
+        <div class="phase-desc">Items flagged for review, testing, research, or future builds — added 2026-03-23</div>
+      </div>
+      <div class="phase-progress">1 / 7 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item done" data-status="done">
+        <div class="item-num">55</div>
+        <div class="item-body">
+          <div class="item-title">Profile sex selector — remove "Other" option</div>
+          <div class="item-note">Only Male and Female are shown on the Profile page sex selector. The "Other" option was removed 2026-03-23. No DB change required.</div>
+        </div>
+        <span class="item-status status-done">✅ Built 2026-03-23</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">49</div>
+        <div class="item-body">
+          <div class="item-title">Resource Library — thumbnail / image per resource</div>
+          <div class="item-note">Add an image/thumbnail to each resource card in the Resource Library. Storage approach (Supabase Storage bucket vs. external URL), Admin CMS upload UI, display size, and fallback (placeholder/icon) all need to be decided before building. Discuss with client first.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">50</div>
+        <div class="item-body">
+          <div class="item-title">Rebrand: BHI → NHL (National Health League)</div>
+          <div class="item-note">Rename all references to "Balanced Health Institute" / "BHI" throughout the app: UI text, branding, Public ID prefix (BHI-XXXX-XXXX), BHAS score name, code comments, DB seed data, and all project docs. This is a large cross-cutting change — confirm full scope with client before starting. Public ID format change may require a migration.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">51</div>
+        <div class="item-body">
+          <div class="item-title">Lab data retention policy — 1-year limit on stored lab results</div>
+          <div class="item-note">Only retain lab marker results (user_lab_results) for 12 months. Implement either: (a) automated purge via Supabase scheduled function / pg_cron, or (b) admin-triggered purge tool. Also update staleCheck.ts and trend chart queries that currently assume unlimited history. Decision on approach required before building.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">52</div>
+        <div class="item-body">
+          <div class="item-title">Research: direct lab API integrations (Labcorp, Quest, Mako, Rhythm)</div>
+          <div class="item-note">Investigate whether patient-facing APIs are available from major lab vendors. Key questions: API availability, patient authorization flow (SMART on FHIR / proprietary OAuth), cost, and overall integration complexity. Report findings before committing to building F13 (currently skipped/blocked). See also DEVELOPER_REQUIREMENTS.md Section 3.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">53</div>
+        <div class="item-body">
+          <div class="item-title">Review: "Add Provider Verification (optional)" section on Labs page</div>
+          <div class="item-note">The collapsible "▸ Add Provider Verification (optional)" section on the Lab Results entry page needs a UX and functionality review. Confirm: it works correctly end-to-end, it is sufficiently discoverable, and it meets the provider verification requirements from the spec (verifier name, credential, NPI, typed attestation, badge in results table). See src/pages/LabsPage.tsx.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Reviewed</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">54</div>
+        <div class="item-body">
+          <div class="item-title">Test: "Add Category" pill in Admin → Resources tab</div>
+          <div class="item-note">Verify the Add Category pill/button in Admin → Resources tab works correctly: new category can be created, it appears in the category list, and resources can be assigned to it. Check for any edge cases (duplicate names, empty name, etc.). See src/pages/Admin.tsx.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Tested</span>
+      </div>
+
+    </div>
+  </section>
+
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-20 &nbsp;·&nbsp;
-  37 built · 3 partial · 12 not built/skipped out of 52 total items &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-23 &nbsp;·&nbsp;
+  38 built · 3 partial · 18 not built/skipped out of 59 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
 </footer>

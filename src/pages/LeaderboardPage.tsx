@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+import { buildCsvString, downloadCsv, todayIso } from '../utils/csvExport'
 
 interface LeaderboardEntry {
   username: string | null
@@ -144,6 +145,24 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
 
   const hasFilters = searchUsername || filterTeam || filterLabel || minScore > 0
 
+  function handleExportLeaderboard() {
+    const headers = ['Rank', 'Username', 'Public ID', 'Team', 'BHAS Score (v2.3)', 'Health Label', 'VO2 Max Percentile', 'Waist-to-Height Ratio', 'hs-CRP', 'Acute Visits', 'Score Date']
+    const rows = filtered.map(({ entry: e, rank }) => [
+      rank,
+      e.username ?? '',
+      e.public_id ?? '',
+      e.team ?? '',
+      e.total_score.toFixed(1),
+      e.label,
+      e.vo2_max_percentile ?? '',
+      e.wthr != null ? e.wthr.toFixed(3) : '',
+      e.hs_crp ?? '',
+      e.acute_visits ?? '',
+      e.score_date ? e.score_date.slice(0, 10) : '',
+    ])
+    downloadCsv(buildCsvString(headers, rows), `bhi-leaderboard-${orgSlug}-${todayIso()}.csv`)
+  }
+
   const inputStyle: React.CSSProperties = {
     background: theme.card,
     border: `1px solid ${theme.borderColor}`,
@@ -175,9 +194,20 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
       <h2 style={{ margin: '0 0 4px 0', fontSize: 22, fontWeight: 700, color: theme.text }}>
         {data.org.name} — BHAS Leaderboard
       </h2>
-      <p style={{ margin: '0 0 20px 0', color: theme.textMuted, fontSize: 14 }}>
+      <p style={{ margin: '0 0 12px 0', color: theme.textMuted, fontSize: 14 }}>
         {entries.length} participant{entries.length !== 1 ? 's' : ''} with a scored v2.3 result · Ranked by BHAS v2.3 score with tie-breaker logic
       </p>
+
+      {filtered.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+          <button
+            onClick={handleExportLeaderboard}
+            style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+          >
+            Export CSV
+          </button>
+        </div>
+      )}
 
       {entries.length > 0 && (
         <>

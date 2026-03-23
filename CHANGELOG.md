@@ -1,5 +1,59 @@
 # CHANGELOG
 
+## 2026-03-23 — feat: CSV export for EmployerPage and LeaderboardPage
+
+### New: `src/utils/csvExport.ts`
+
+Reusable CSV utility with three exports:
+- `buildCsvString(headers, rows)` — builds an RFC 4180-compliant CSV string
+- `downloadCsv(csv, filename)` — triggers a browser file download via `Blob` + `URL.createObjectURL`
+- `todayIso()` — returns today's date as `YYYY-MM-DD`
+
+### EmployerPage — Export CSV button (members tab)
+
+An **Export CSV** button now appears in the Members section header (right-aligned). It exports the currently-filtered member list to `bhi-members-{orgSlug}-{date}.csv`.
+
+Columns: Username, Public ID, Team, Role, Joined Date, BHAS Score (%), Lab Results
+
+Only visible when the filtered list is non-empty. No PHI — matches the existing de-identified view.
+
+### LeaderboardPage — Export CSV button
+
+An **Export CSV** button now appears above the filter bar (right-aligned). It exports the currently-filtered leaderboard entries to `bhi-leaderboard-{orgSlug}-{date}.csv`.
+
+Columns: Rank, Username, Public ID, Team, BHAS Score (v2.3), Health Label, VO2 Max Percentile, Waist-to-Height Ratio, hs-CRP, Acute Visits, Score Date
+
+Ranks in the CSV reflect the unfiltered position (tie-breaker order), matching the on-screen display. Only visible when the filtered list is non-empty.
+
+### Tracker updates
+- Phase 8 item 46 (CSV export) → ✅ Built — Phase 8 is now 13/13 complete
+- Phase 5 item 22 (Exportable reports) → ⚠️ Partial — CSV done, PDF reports pending
+- Overall stats: Done 39 / Partial 4 / Not Built 16 / Total 59
+
+---
+
+## 2026-03-20 — updates (profile fix + backlog items added)
+
+### Profile Save — fixed (stale Supabase client)
+
+`src/pages/ProfilePage.tsx` — `handleSave()` was using the Supabase JS client `.update()` which hangs without resolving when the connection is stale (known issue on tab re-focus). Replaced with a direct `fetch` PATCH to the Supabase REST API (same pattern as `directFetch` used for reads). Save now completes reliably and shows success/error feedback.
+
+### Profile — Sex selector
+
+Removed "Other" option from the sex selector on the Profile page. Only Male and Female are shown. (DEVELOPER_REQUIREMENTS F55)
+
+### Backlog items added (Phase 10)
+
+The following items were added to `DEVELOPER_REQUIREMENTS.md` as Phase 10 backlog:
+- **F49** — Resource Library thumbnails/images (design TBD before building)
+- **F50** — Rebrand BHI → NHL (National Health League) — scope to be confirmed
+- **F51** — Lab data retention: 1-year limit on stored lab marker results
+- **F52** — Research: direct lab API integrations (Labcorp, Quest, Mako, Rhythm)
+- **F53** — Review: "Add Provider Verification" section on Labs page
+- **F54** — Test: "Add Category" pill in Admin → Resources tab
+
+---
+
 ## 2026-03-20 — built (hs-CRP and VO2 Max Percentile markers added to database)
 
 The `20260320_complete_logic_rules.sql` migration skipped hs-CRP and VO2 Max Percentile because those markers did not exist in the `lab_markers` table. A follow-up SQL script was run directly in Supabase SQL Editor to:

@@ -242,7 +242,7 @@ If user metrics show non-optimal health:
 
 ## 13. Implementation Status Review
 
-> Last updated: 2026-03-20.
+> Last updated: 2026-03-23.
 > Legend: ✅ Built | 🔶 Partial | ❌ Not built
 
 ### Section 1 – Core Platform Goals
@@ -430,7 +430,7 @@ If user metrics show non-optimal health:
 
 ### Summary & Recommended Build Order
 
-Items are ordered by logical dependency. Last updated: 2026-03-20.
+Items are ordered by logical dependency. Last updated: 2026-03-23.
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
@@ -494,3 +494,11 @@ Items are ordered by logical dependency. Last updated: 2026-03-20.
 | **Phase 9 – Scoring Engine Improvements** | | ❌ 0/2 complete | |
 | 47 | Remove hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS | ❌ Not built | Move scoring tier to database so the New Marker Wizard is fully self-contained; no code change needed after creating a new marker |
 | 48 | Multiple scoring ranges per tier in Wizard | ❌ Not built | Allow Optimal = 1–5 OR 10–15; Wizard UI only — DB already supports it |
+| **Phase 10 – Pending / Backlog** | | ❌ 0/7 complete | |
+| 49 | Resource Library — thumbnail/image per resource | ❌ Not built | Add image/thumbnail to each resource card. Storage, upload UI, and fallback display to be designed before building |
+| 50 | Rebrand: BHI → NHL (National Health League) | ❌ Not built | Rename all UI text, branding, Public ID prefix, BHAS references, DB seeds, and docs from "BHI"/"Balanced Health Institute" to "NHL"/"National Health League". Scope to be confirmed before starting |
+| 51 | Lab data retention policy (1-year limit) | ❌ Not built | Only retain lab marker results for 12 months. Implement automated purge (pg_cron or Supabase scheduled function) or admin purge tool. Update stale-data logic and trend charts accordingly |
+| 52 | Research: direct lab API integrations (Labcorp, Quest, Mako, Rhythm) | ❌ Not built | Investigate patient-facing API availability, SMART on FHIR / OAuth flows, cost, and feasibility before committing to F13 |
+| 53 | Review: "Add Provider Verification" section on Labs page | ❌ Not reviewed | Verify UX and functionality of the collapsible provider verification section on the Lab Results entry page |
+| 54 | Test: "Add Category" pill in Admin → Resources tab | ❌ Not tested | Verify category creation, list display, and resource assignment all work correctly |
+| 55 | Profile sex selector: remove "Other" | ✅ Built | Only Male and Female shown (2026-03-20) |
