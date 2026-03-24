@@ -107,7 +107,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [resourceModalOpen, setResourceModalOpen] = useState(false)
   const [resourceModalData, setResourceModalData] = useState<any>(null)
   const [isEditingResource, setIsEditingResource] = useState(false)
-  const [resourceEditForm, setResourceEditForm] = useState<{title?: string; type?: string; tags?: string[]; categories?: string[]; link_url?: string; link_protocol?: string}>({})
+  const [resourceEditForm, setResourceEditForm] = useState<{title?: string; type?: string; tags?: string[]; categories?: string[]; link_url?: string; link_protocol?: string; thumbnail_url?: string}>({})
+  const [thumbnailUploading, setThumbnailUploading] = useState(false)
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null)
   // resource type modal state
   const [resourceTypeModalOpen, setResourceTypeModalOpen] = useState(false)
   const [resourceTypeModalData, setResourceTypeModalData] = useState<any>(null)
@@ -1808,6 +1810,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             {!isEditingResource ? (
               <>
                 <div style={{flex:1,overflowY:'auto',marginBottom:16}}>
+                  {resourceModalData.thumbnail_url && (
+                    <div style={{marginBottom:12}}>
+                      <img src={resourceModalData.thumbnail_url} alt="Thumbnail" style={{width:'100%',maxHeight:160,objectFit:'cover',borderRadius:6,border:`1px solid ${theme.borderColor}`}} />
+                    </div>
+                  )}
                   <div style={{marginBottom:12}}>
                     <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Type:</p>
                     <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.type}</p>
@@ -1835,8 +1842,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   <button onClick={() => { 
                     console.log('Edit button clicked, resourceModalData:', resourceModalData)
                     const capitalizedType = resourceModalData.type ? resourceTypes.find(t => t.toLowerCase() === resourceModalData.type.toLowerCase()) || resourceModalData.type : ''
-                    const formData = {title: resourceModalData.title, type: capitalizedType, tags: resourceModalData.tags || [], categories: resourceModalData.categories || [], link_url: stripProtocol(resourceModalData.link_url || ''), link_protocol: getProtocol(resourceModalData.link_url || '')}
+                    const formData = {title: resourceModalData.title, type: capitalizedType, tags: resourceModalData.tags || [], categories: resourceModalData.categories || [], link_url: stripProtocol(resourceModalData.link_url || ''), link_protocol: getProtocol(resourceModalData.link_url || ''), thumbnail_url: resourceModalData.thumbnail_url || ''}
                     console.log('Setting form data:', formData)
+                    setThumbnailError(null)
                     setResourceEditForm(formData)
                     setIsEditingResource(true)
                   }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>✎ Edit</button>
@@ -1875,6 +1883,59 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                         <input type="text" value={resourceEditForm.link_url || ''} onChange={e => setResourceEditForm({...resourceEditForm, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box',minWidth:0}} />
                       </div>
                     </div>
+                    <div style={{marginBottom:12}}>
+                      <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Thumbnail</label>
+                      {resourceEditForm.thumbnail_url ? (
+                        <div style={{marginBottom:8,position:'relative',display:'inline-block'}}>
+                          <img src={resourceEditForm.thumbnail_url} alt="Thumbnail preview" style={{width:'100%',maxHeight:120,objectFit:'cover',borderRadius:6,border:`1px solid ${theme.borderColor}`,display:'block'}} />
+                          <button
+                            type="button"
+                            onClick={() => setResourceEditForm({...resourceEditForm, thumbnail_url: ''})}
+                            style={{position:'absolute',top:4,right:4,background:'rgba(0,0,0,0.6)',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:12,padding:'2px 6px',fontWeight:600}}
+                          >Remove</button>
+                        </div>
+                      ) : (
+                        <div style={{border:`2px dashed ${theme.borderColor}`,borderRadius:6,padding:'16px 12px',textAlign:'center',color:theme.textMuted,fontSize:13}}>
+                          No thumbnail
+                        </div>
+                      )}
+                      <label style={{display:'inline-block',marginTop:8,cursor:thumbnailUploading?'wait':'pointer'}}>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          style={{display:'none'}}
+                          disabled={thumbnailUploading}
+                          onChange={async e => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            if (file.size > 5 * 1024 * 1024) { setThumbnailError('Image must be under 5 MB'); return }
+                            setThumbnailUploading(true)
+                            setThumbnailError(null)
+                            try {
+                              const ext = file.name.split('.').pop() || 'jpg'
+                              const path = `${resourceModalData.id}.${ext}`
+                              const { error: upErr } = await supabase.storage
+                                .from('resource-thumbnails')
+                                .upload(path, file, { upsert: true, contentType: file.type })
+                              if (upErr) throw upErr
+                              const { data: urlData } = supabase.storage
+                                .from('resource-thumbnails')
+                                .getPublicUrl(path)
+                              setResourceEditForm(prev => ({...prev, thumbnail_url: urlData.publicUrl}))
+                            } catch (err: any) {
+                              setThumbnailError(err.message || 'Upload failed')
+                            } finally {
+                              setThumbnailUploading(false)
+                              e.target.value = ''
+                            }
+                          }}
+                        />
+                        <span style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 10px',fontSize:12,fontWeight:600,color:theme.text,pointerEvents:'none'}}>
+                          {thumbnailUploading ? 'Uploading…' : 'Upload Image'}
+                        </span>
+                      </label>
+                      {thumbnailError && <div style={{color:'#dc2626',fontSize:12,marginTop:4}}>{thumbnailError}</div>}
+                    </div>
                   </div>
 
                   {/* Right column - Tags & Categories */}
@@ -1911,7 +1972,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     try {
                       if (!resourceEditForm.title || !resourceEditForm.title.toString().trim()) return alert('Title required')
                       const fullUrl = resourceEditForm.link_url ? buildFullUrl(resourceEditForm.link_protocol || 'https://', resourceEditForm.link_url) : null
-                      const res = await fetch(apiUrl(`/api/admin/resources/${resourceModalData.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: resourceEditForm.title, type: (resourceEditForm.type || '').toLowerCase(), tags: resourceEditForm.tags || [], categories: resourceEditForm.categories || [], link_url: fullUrl }) })
+                      const res = await fetch(apiUrl(`/api/admin/resources/${resourceModalData.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: resourceEditForm.title, type: (resourceEditForm.type || '').toLowerCase(), tags: resourceEditForm.tags || [], categories: resourceEditForm.categories || [], link_url: fullUrl, thumbnail_url: resourceEditForm.thumbnail_url || null }) })
                       if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                       await load()
                       setIsEditingResource(false)

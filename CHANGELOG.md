@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 2026-03-24 — feat: F49 — resource thumbnails (Supabase Storage)
+
+**What changed:** Resource cards in the Library now display a thumbnail image. Admins can upload a thumbnail per resource from the Admin edit modal.
+
+**Implementation:**
+- **DB migration** `20260323_add_thumbnail_to_resources.sql` — adds `thumbnail_url TEXT` column to `resources` table (run in Supabase SQL Editor)
+- **Supabase Storage** — `resource-thumbnails` public bucket with SELECT (public) + INSERT (authenticated) RLS policies
+- **`server/index.js`** — `PATCH /api/admin/resources/:id` now accepts and persists `thumbnail_url`
+- **`src/pages/Admin.tsx`** — resource edit modal shows upload widget (file picker → uploads to `resource-thumbnails` bucket via Supabase JS client → stores public URL); view panel shows thumbnail; supports remove
+- **`src/pages/ResourcesPage.tsx`** — grid cards show full-width thumbnail above content; list cards show thumbnail as left-side image; detail modal shows thumbnail at top; graceful fallback when no thumbnail
+
+**Constraints:** JPG/PNG/WebP/GIF, 5 MB max per image.
+
+---
+
 ## 2026-03-23 — feat: F48 — multiple scoring ranges per tier in New Marker Wizard
 
 **What changed:** Step 2 of the New Marker Wizard now renders each tier (Optimal / Improvement / Out of Range) as its own section. Each section has an **+ Add Range** button to add additional min/max/tag rows for that tier. A × button removes extra rows (disabled when only one row remains for that tier).

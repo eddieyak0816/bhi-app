@@ -494,8 +494,8 @@ Items are ordered by logical dependency. Last updated: 2026-03-23.
 | **Phase 9 – Scoring Engine Improvements** | | ✅ 2/2 complete | |
 | 47 | Remove hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS | ✅ Built | scoring_tier column on tags table; EvaluationContext + evaluateRules.ts + server/index.js all read from DB. Migration: 20260323_add_scoring_tier_to_tags.sql. New Marker Wizard now fully self-contained. |
 | 48 | Multiple scoring ranges per tier in Wizard | ✅ Built | Step 2 renders per-tier sections with + Add Range / × Remove buttons. Validation requires ≥1 valid Optimal row. No backend changes needed. |
-| **Phase 10 – Pending / Backlog** | | ❌ 0/7 complete | |
-| 49 | Resource Library — thumbnail/image per resource | ❌ Not built | Add image/thumbnail to each resource card. Storage, upload UI, and fallback display to be designed before building |
+| **Phase 10 – Pending / Backlog** | | 🔶 2/7 complete | |
+| 49 | Resource Library — thumbnail/image per resource | ✅ Built | Supabase Storage bucket `resource-thumbnails` (public). `thumbnail_url` on `resources` table. Admin upload widget in edit modal. Grid/list/detail views all show thumbnail. Migration: `20260323_add_thumbnail_to_resources.sql`. |
 | 50 | Rebrand: BHI → NHL (National Health League) | ❌ Not built | Rename all UI text, branding, Public ID prefix, BHAS references, DB seeds, and docs from "BHI"/"Balanced Health Institute" to "NHL"/"National Health League". Scope to be confirmed before starting |
 | 51 | Lab data retention policy (1-year limit) | ❌ Not built | Only retain lab marker results for 12 months. Implement automated purge (pg_cron or Supabase scheduled function) or admin purge tool. Update stale-data logic and trend charts accordingly |
 | 52 | Research: direct lab API integrations (Labcorp, Quest, Mako, Rhythm) | ❌ Not built | Investigate patient-facing API availability, SMART on FHIR / OAuth flows, cost, and feasibility before committing to F13 |

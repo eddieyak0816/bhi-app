@@ -242,7 +242,7 @@ app.patch('/api/admin/resources/:id', async (req, res) => {
   const id = req.params.id;
   if (!id) return res.status(400).json({ error: 'missing-id' });
   
-  const { title, description, type, tags, categories, link_url } = req.body || {};
+  const { title, description, type, tags, categories, link_url, thumbnail_url } = req.body || {};
   const updateData = {};
   if (title !== undefined) updateData.title = title;
   if (description !== undefined) updateData.description = description;
@@ -250,6 +250,7 @@ app.patch('/api/admin/resources/:id', async (req, res) => {
   if (tags !== undefined) updateData.tags = tags;
   if (categories !== undefined) updateData.categories = categories;
   if (link_url !== undefined) updateData.link_url = link_url;
+  if (thumbnail_url !== undefined) updateData.thumbnail_url = thumbnail_url;
   
   if (Object.keys(updateData).length === 0) return res.status(400).json({ error: 'no-fields-to-update' });
   

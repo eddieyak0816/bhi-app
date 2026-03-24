@@ -190,9 +190,9 @@
 
 <!-- Stats bar — counts as of 2026-03-23 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">41</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">42</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">4</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">14</span>  Not Built / Skipped</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">13</span>  Not Built / Skipped</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">59</span>  Total Items</div>
 </div>
 
@@ -870,7 +870,7 @@
         <div class="phase-title">Backlog &amp; Pending Items</div>
         <div class="phase-desc">Items flagged for review, testing, research, or future builds — added 2026-03-23</div>
       </div>
-      <div class="phase-progress">1 / 7 done</div>
+      <div class="phase-progress">2 / 7 done</div>
     </div>
     <div class="items">
 
@@ -883,13 +883,13 @@
         <span class="item-status status-done">✅ Built 2026-03-23</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">49</div>
         <div class="item-body">
           <div class="item-title">Resource Library — thumbnail / image per resource</div>
-          <div class="item-note">Add an image/thumbnail to each resource card in the Resource Library. Storage approach (Supabase Storage bucket vs. external URL), Admin CMS upload UI, display size, and fallback (placeholder/icon) all need to be decided before building. Discuss with client first.</div>
+          <div class="item-note">Supabase Storage bucket <code>resource-thumbnails</code> (public) with RLS policies (public SELECT, authenticated INSERT). <code>thumbnail_url</code> column added to <code>resources</code> table. Admin edit modal has file upload widget — uploads to bucket, stores public URL. Resource cards show thumbnail in grid (full-width above content) and list (left-side image) views. Detail modal shows thumbnail at top. Graceful fallback when no thumbnail. JPG/PNG/WebP/GIF, 5 MB max. Migration: <code>20260323_add_thumbnail_to_resources.sql</code>.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-03-24</span>
       </div>
 
       <div class="item todo" data-status="todo">
@@ -944,7 +944,7 @@
 
 <footer>
   BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-23 &nbsp;·&nbsp;
-  41 built · 4 partial · 14 not built/skipped out of 59 total items &nbsp;·&nbsp;
+  42 built · 4 partial · 13 not built/skipped out of 59 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
 </footer>

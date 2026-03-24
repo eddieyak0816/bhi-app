@@ -11,6 +11,7 @@ interface Resource {
   description?: string
   tags: string[]
   link_url?: string
+  thumbnail_url?: string
 }
 
 export default function Resources() {
@@ -418,14 +419,15 @@ export default function Resources() {
                       background: theme.card,
                       border: `1.5px solid ${theme.borderColor}`,
                       borderRadius: 8,
-                      padding: 16,
+                      padding: 0,
                       cursor: 'pointer',
                       transition: 'all 0.2s',
                       display: 'flex',
                       flexDirection: viewMode === 'list' ? 'row' : 'column',
-                      gap: viewMode === 'list' ? 16 : 0,
+                      gap: 0,
                       justifyContent: viewMode === 'list' ? 'space-between' : 'flex-start',
-                      alignItems: viewMode === 'list' ? 'flex-end' : 'stretch',
+                      alignItems: viewMode === 'list' ? 'stretch' : 'stretch',
+                      overflow: 'hidden',
                     }}
                     onMouseEnter={e => {
                       ;(e.currentTarget as HTMLElement).style.borderColor = theme.blue
@@ -434,7 +436,22 @@ export default function Resources() {
                       ;(e.currentTarget as HTMLElement).style.borderColor = theme.borderColor
                     }}
                   >
-                    <div style={{ flex: 1 }}>
+                    {/* Thumbnail */}
+                    {resource.thumbnail_url && viewMode === 'grid' && (
+                      <img
+                        src={resource.thumbnail_url}
+                        alt=""
+                        style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block', flexShrink: 0 }}
+                      />
+                    )}
+                    {resource.thumbnail_url && viewMode === 'list' && (
+                      <img
+                        src={resource.thumbnail_url}
+                        alt=""
+                        style={{ width: 100, flexShrink: 0, objectFit: 'cover', display: 'block' }}
+                      />
+                    )}
+                    <div style={{ flex: 1, padding: 16 }}>
                       <div style={{ fontSize: 11, color: theme.textMuted, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         {resource.type}
                       </div>
@@ -463,30 +480,47 @@ export default function Resources() {
                           })}
                         </div>
                       )}
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, flexDirection: viewMode === 'list' ? 'row' : 'column', marginTop: viewMode === 'list' ? 0 : 12 }}>
-                      <button
-                        onClick={() => toggleBookmark(resource.id)}
-                        style={{
-                          background: isBookmarked ? theme.blue : 'transparent',
-                          color: isBookmarked ? '#fff' : theme.text,
-                          border: `1.5px solid ${theme.borderColor}`,
-                          borderRadius: 6,
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          fontSize: 14,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {isBookmarked ? '⭐ Bookmarked' : '☆ Bookmark'}
-                      </button>
-                      {resource.link_url && (
-                        <a
-                          href={resource.link_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                      <div style={{ display: 'flex', gap: 8, flexDirection: viewMode === 'list' ? 'row' : 'column', marginTop: 12 }}>
+                        <button
+                          onClick={() => toggleBookmark(resource.id)}
                           style={{
-                            background: '#10b981',
+                            background: isBookmarked ? theme.blue : 'transparent',
+                            color: isBookmarked ? '#fff' : theme.text,
+                            border: `1.5px solid ${theme.borderColor}`,
+                            borderRadius: 6,
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                            fontSize: 14,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {isBookmarked ? '⭐ Bookmarked' : '☆ Bookmark'}
+                        </button>
+                        {resource.link_url && (
+                          <a
+                            href={resource.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              background: '#10b981',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: 6,
+                              padding: '8px 12px',
+                              cursor: 'pointer',
+                              fontSize: 14,
+                              fontWeight: 600,
+                              textDecoration: 'none',
+                              textAlign: 'center',
+                            }}
+                          >
+                            Open →
+                          </a>
+                        )}
+                        <button
+                          onClick={() => setSelectedResource(resource)}
+                          style={{
+                            background: theme.blue,
                             color: '#fff',
                             border: 'none',
                             borderRadius: 6,
@@ -494,29 +528,12 @@ export default function Resources() {
                             cursor: 'pointer',
                             fontSize: 14,
                             fontWeight: 600,
-                            textDecoration: 'none',
-                            textAlign: 'center',
                           }}
                         >
-                          Open →
-                        </a>
-                      )}
-                      <button
-                        onClick={() => setSelectedResource(resource)}
-                        style={{
-                          background: theme.blue,
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 6,
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          fontSize: 14,
-                          fontWeight: 600,
-                        }}
-                      >
-                        View Details
-                      </button>
-                    </div>
+                          View Details
+                        </button>
+                      </div>
+                    </div>{/* end padded wrapper */}
                   </div>
                 )
               })}
@@ -566,6 +583,13 @@ export default function Resources() {
                 }}
                 onClick={e => e.stopPropagation()}
               >
+                {selectedResource.thumbnail_url && (
+                  <img
+                    src={selectedResource.thumbnail_url}
+                    alt=""
+                    style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 6, marginBottom: 20, display: 'block' }}
+                  />
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 16 }}>
                   <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>{selectedResource.title}</h2>
                   <button
