@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## 2026-03-23 — fix: sex selector not persisting on ProfilePage remount
+
+**Problem:** Navigating away from Profile and back caused the Male/Female button to appear unselected, even though the value was saved in the DB. The `useEffect` that loads profile data had `[user?.id]` as its dependency, so it didn't re-run on remount (user ID doesn't change on navigation).
+
+**Fix:** Changed dependency array to `[]` so the profile fetch runs on every mount.
+
+**File:** `src/pages/ProfilePage.tsx` — profile load `useEffect` dependency array
+
+---
+
+## 2026-03-23 — fix: Supabase API key rotation + Render env vars
+
+- Rotated from legacy JWT-based anon/service role keys to new Supabase `sb_publishable_` / `sb_secret_` format
+- Updated `VITE_SUPABASE_ANON_KEY` in `.env` and Netlify to new publishable key
+- Updated `SUPABASE_SERVICE_ROLE` in `.env.server` and Render to new secret key
+- Added all AI provider keys to Render env vars: `GEMINI_API_KEY`, `GEMINI_API_KEY_2`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`
+- Cleaned up leaked secrets from `.env.example` and `.env` (were accidentally committed in ffddd94)
+
+---
+
 ## 2026-03-23 — built (F47: DB-driven scoring tier — removes hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS)
 
 ### F47: scoring_tier column on tags table

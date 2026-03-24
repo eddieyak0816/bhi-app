@@ -104,7 +104,8 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
         setUsername(data.username ?? '')
         setUsernameInput(data.username ?? '')
       })
-  }, [user?.id])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSave = async () => {
     if (!user?.id) return
