@@ -125,7 +125,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [wizardStep, setWizardStep] = useState(1)
   const [wizardMarkerName, setWizardMarkerName] = useState('')
   const [wizardMarkerUnit, setWizardMarkerUnit] = useState('')
-  const [wizardRules, setWizardRules] = useState([
+  const [wizardRules, setWizardRules] = useState<Array<{ label: string; min_value: string; max_value: string; tag_name: string }>>([
     { label: 'Optimal', min_value: '', max_value: '', tag_name: '' },
     { label: 'Improvement', min_value: '', max_value: '', tag_name: '' },
     { label: 'Out of Range', min_value: '', max_value: '', tag_name: '' }
@@ -205,15 +205,34 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   function autoSuggestTags(markerName: string) {
     const base = markerName.trim().replace(/\s+/g, '_')
     if (!base) return
-    setWizardRules(prev => prev.map((r, i) => {
+    setWizardRules(prev => prev.map(r => {
       if (r.tag_name) return r // don't overwrite user edits
-      const prefix = i === 0 ? 'Normal' : i === 1 ? 'Borderline' : 'High'
+      const prefix = r.label === 'Optimal' ? 'Normal' : r.label === 'Improvement' ? 'Borderline' : 'High'
       return { ...r, tag_name: `${prefix}_${base}` }
     }))
   }
 
   function updateWizardRule(index: number, field: string, value: string) {
     setWizardRules(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r))
+  }
+
+  function addWizardRow(label: string) {
+    setWizardRules(prev => {
+      // Insert after last row with same label
+      const lastIdx = prev.map((r, i) => r.label === label ? i : -1).filter(i => i >= 0).pop() ?? prev.length - 1
+      const next = [...prev]
+      next.splice(lastIdx + 1, 0, { label, min_value: '', max_value: '', tag_name: '' })
+      return next
+    })
+  }
+
+  function removeWizardRow(index: number) {
+    setWizardRules(prev => {
+      const label = prev[index].label
+      const sameCount = prev.filter(r => r.label === label).length
+      if (sameCount <= 1) return prev // keep at least one row per tier
+      return prev.filter((_, i) => i !== index)
+    })
   }
 
   async function wizardSave() {
@@ -3614,54 +3633,78 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
             )}
 
             {/* Step 2 */}
-            {wizardStep === 2 && (
+            {wizardStep === 2 && (() => {
+              const TIERS: Array<{ label: string; color: string }> = [
+                { label: 'Optimal', color: '#16a34a' },
+                { label: 'Improvement', color: '#ca8a04' },
+                { label: 'Out of Range', color: '#dc2626' },
+              ]
+              return (
               <div>
-                <p style={{marginTop:0,marginBottom:4,fontSize:14,color:theme.textMuted}}>Define scoring rules for <strong style={{color:theme.text}}>{wizardMarkerName}</strong>. At least the Optimal row is required.</p>
-                <p style={{marginTop:0,marginBottom:16,fontSize:12,color:theme.textMuted}}>Rows with empty Min, Max, or Tag will be skipped.</p>
+                <p style={{marginTop:0,marginBottom:4,fontSize:14,color:theme.textMuted}}>Define scoring rules for <strong style={{color:theme.text}}>{wizardMarkerName}</strong>. At least one Optimal row is required.</p>
+                <p style={{marginTop:0,marginBottom:16,fontSize:12,color:theme.textMuted}}>Each tier can have multiple ranges (e.g. Optimal = 1–5 OR 10–15). Rows with empty Min, Max, or Tag are skipped.</p>
                 <div style={{marginBottom:16}}>
-                  <div style={{display:'grid',gridTemplateColumns:'100px 1fr 1fr 1fr',gap:8,marginBottom:6}}>
-                    <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Label</div>
-                    <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Min Value</div>
-                    <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Max Value</div>
-                    <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Tag Name</div>
-                  </div>
-                  {wizardRules.map((rule, i) => (
-                    <div key={i} style={{display:'grid',gridTemplateColumns:'100px 1fr 1fr 1fr',gap:8,marginBottom:8,alignItems:'center'}}>
-                      <div style={{fontSize:13,fontWeight:600,color:i === 0 ? '#16a34a' : i === 1 ? '#ca8a04' : '#dc2626'}}>{rule.label}</div>
-                      <input
-                        type="number"
-                        placeholder="Min"
-                        value={rule.min_value}
-                        onChange={e => updateWizardRule(i, 'min_value', e.target.value)}
-                        style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
-                      />
-                      <input
-                        type="number"
-                        placeholder="Max"
-                        value={rule.max_value}
-                        onChange={e => updateWizardRule(i, 'max_value', e.target.value)}
-                        style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
-                      />
-                      <input
-                        placeholder="Tag name"
-                        value={rule.tag_name}
-                        onChange={e => updateWizardRule(i, 'tag_name', e.target.value)}
-                        style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
-                      />
-                    </div>
-                  ))}
+                  {TIERS.map(({ label, color }) => {
+                    const tierRows = wizardRules.map((r, i) => ({ r, i })).filter(({ r }) => r.label === label)
+                    return (
+                      <div key={label} style={{marginBottom:16}}>
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+                          <div style={{fontSize:12,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</div>
+                          <button
+                            type="button"
+                            onClick={() => addWizardRow(label)}
+                            style={{background:'transparent',border:`1px solid ${color}`,borderRadius:4,padding:'2px 10px',fontSize:12,color,cursor:'pointer',fontWeight:600}}
+                          >+ Add Range</button>
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 28px',gap:6,marginBottom:4}}>
+                          <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Min Value</div>
+                          <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Max Value</div>
+                          <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Tag Name</div>
+                          <div />
+                        </div>
+                        {tierRows.map(({ r, i }) => (
+                          <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 28px',gap:6,marginBottom:6,alignItems:'center'}}>
+                            <input
+                              type="number"
+                              placeholder="Min"
+                              value={r.min_value}
+                              onChange={e => updateWizardRule(i, 'min_value', e.target.value)}
+                              style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
+                            />
+                            <input
+                              type="number"
+                              placeholder="Max"
+                              value={r.max_value}
+                              onChange={e => updateWizardRule(i, 'max_value', e.target.value)}
+                              style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
+                            />
+                            <input
+                              placeholder="Tag name"
+                              value={r.tag_name}
+                              onChange={e => updateWizardRule(i, 'tag_name', e.target.value)}
+                              style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeWizardRow(i)}
+                              disabled={tierRows.length <= 1}
+                              title="Remove this range"
+                              style={{background:'transparent',border:'none',color:tierRows.length <= 1 ? theme.borderColor : '#dc2626',cursor:tierRows.length <= 1 ? 'default' : 'pointer',fontSize:16,padding:0,lineHeight:1}}
+                            >×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })}
                 </div>
                 {wizardError && <p style={{color:'#dc2626',fontSize:13,marginBottom:12}}>{wizardError}</p>}
                 <div style={{display:'flex',justifyContent:'space-between'}}>
                   <button onClick={() => setWizardStep(1)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'8px 16px',fontSize:14,cursor:'pointer',color:theme.text}}>← Back</button>
                   <button
                     onClick={() => {
-                      const valid = wizardRules.filter(r => r.tag_name.trim() && r.min_value !== '' && r.max_value !== '')
-                      if (valid.length === 0) { setWizardError('Fill in at least the Optimal row (Min, Max, and Tag).'); return }
-                      if (!wizardRules[0].tag_name.trim() || wizardRules[0].min_value === '' || wizardRules[0].max_value === '') {
-                        setWizardError('The Optimal row is required.')
-                        return
-                      }
+                      const optimalRows = wizardRules.filter(r => r.label === 'Optimal')
+                      const hasValidOptimal = optimalRows.some(r => r.tag_name.trim() && r.min_value !== '' && r.max_value !== '')
+                      if (!hasValidOptimal) { setWizardError('At least one Optimal row must have Min, Max, and Tag filled in.'); return }
                       setWizardError(null)
                       setWizardStep(3)
                     }}
@@ -3669,7 +3712,8 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   >Next →</button>
                 </div>
               </div>
-            )}
+              )
+            })()}
 
             {/* Step 3 */}
             {wizardStep === 3 && (
@@ -3684,12 +3728,15 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                   </div>
                   <div style={{marginBottom:10}}>
                     <span style={{fontSize:12,fontWeight:700,color:theme.textMuted,textTransform:'uppercase'}}>Scoring Rules</span>
-                    {wizardRules.filter(r => r.tag_name.trim() && r.min_value !== '' && r.max_value !== '').map((r, i) => (
-                      <div key={i} style={{marginTop:4,fontSize:13,color:theme.text}}>
-                        <span style={{fontWeight:600,color:i === 0 ? '#16a34a' : i === 1 ? '#ca8a04' : '#dc2626'}}>{r.label}:</span>{' '}
-                        {r.min_value} – {r.max_value} → <code style={{background:theme.bgTertiary,padding:'1px 4px',borderRadius:3,fontSize:12}}>{r.tag_name}</code>
-                      </div>
-                    ))}
+                    {wizardRules.filter(r => r.tag_name.trim() && r.min_value !== '' && r.max_value !== '').map((r, i) => {
+                      const labelColor = r.label === 'Optimal' ? '#16a34a' : r.label === 'Improvement' ? '#ca8a04' : '#dc2626'
+                      return (
+                        <div key={i} style={{marginTop:4,fontSize:13,color:theme.text}}>
+                          <span style={{fontWeight:600,color:labelColor}}>{r.label}:</span>{' '}
+                          {r.min_value} – {r.max_value} → <code style={{background:theme.bgTertiary,padding:'1px 4px',borderRadius:3,fontSize:12}}>{r.tag_name}</code>
+                        </div>
+                      )
+                    })}
                   </div>
                   <div>
                     <span style={{fontSize:12,fontWeight:700,color:theme.textMuted,textTransform:'uppercase'}}>Tags to Create</span>
@@ -3699,9 +3746,6 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       ))}
                     </div>
                   </div>
-                </div>
-                <div style={{background:'#fef9c3',border:'1px solid #fde047',borderRadius:6,padding:10,marginBottom:16,fontSize:12,color:'#713f12'}}>
-                  <strong>Developer note:</strong> For BHAS scoring, add the Optimal tag to <code>OPTIMAL_TAGS</code> and the Improvement tag to <code>IMPROVEMENT_TAGS</code> in <code>src/utils/evaluateRules.ts</code> — this requires a code change and redeploy.
                 </div>
                 {wizardError && <p style={{color:'#dc2626',fontSize:13,marginBottom:12}}>{wizardError}</p>}
                 <div style={{display:'flex',justifyContent:'space-between'}}>

@@ -190,9 +190,9 @@
 
 <!-- Stats bar — counts as of 2026-03-23 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">40</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">41</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">4</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">15</span>  Not Built / Skipped</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">14</span>  Not Built / Skipped</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">59</span>  Total Items</div>
 </div>
 
@@ -828,7 +828,7 @@
         <div class="phase-title">Scoring Engine Improvements</div>
         <div class="phase-desc">Make the New Marker Wizard fully self-contained — no code changes needed after creating a marker</div>
       </div>
-      <div class="phase-progress">1 / 2 done</div>
+      <div class="phase-progress">2 / 2 done</div>
     </div>
     <div class="items">
 
@@ -846,17 +846,15 @@
         <span class="item-status status-done">✅ Built 2026-03-23</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">48</div>
         <div class="item-body">
           <div class="item-title">Multiple scoring ranges per tier — New Marker Wizard UI</div>
           <div class="item-note">
-            Some lab markers are optimal (or out of range) in two separate value ranges. For example, a marker might be Optimal when the value is between 1–5 OR between 10–15, but Out of Range for everything in between. The Wizard currently only allows one range per tier (one Optimal row, one Improvement row, one Out of Range row).<br><br>
-            <strong>Fix:</strong> Allow the admin to add additional range rows for any tier by clicking an "+ Add range" button. Each row has its own min and max value. All rows for the same tier use OR logic — the value only needs to match one of them to score at that tier.<br><br>
-            The underlying <code>logic_rules</code> database table already supports this (each range is its own row). Only the Wizard UI needs to be updated.
+            Step 2 of the New Marker Wizard now renders each tier (Optimal / Improvement / Out of Range) as its own section with an "+ Add Range" button. Each additional range row gets its own Min/Max/Tag inputs and a × remove button (disabled when it's the only row for that tier). The validation now requires at least one valid Optimal row. The stale developer note about OPTIMAL_TAGS (made obsolete by F47) was also removed from Step 3. No backend changes needed — the server already accepts any number of rules per tier.
           </div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built</span>
       </div>
 
     </div>
@@ -946,7 +944,7 @@
 
 <footer>
   BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-23 &nbsp;·&nbsp;
-  40 built · 4 partial · 15 not built/skipped out of 59 total items &nbsp;·&nbsp;
+  41 built · 4 partial · 14 not built/skipped out of 59 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
 </footer>

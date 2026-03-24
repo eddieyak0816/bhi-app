@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 2026-03-23 — feat: F48 — multiple scoring ranges per tier in New Marker Wizard
+
+**What changed:** Step 2 of the New Marker Wizard now renders each tier (Optimal / Improvement / Out of Range) as its own section. Each section has an **+ Add Range** button to add additional min/max/tag rows for that tier. A × button removes extra rows (disabled when only one row remains for that tier).
+
+**Why:** Some lab markers are optimal in two separate ranges (e.g. 1–5 OR 10–15). The `logic_rules` table already supported multiple rows per tier — the Wizard UI was the only limitation.
+
+**Files changed:**
+- `src/pages/Admin.tsx` — added `addWizardRow()` / `removeWizardRow()` helpers; rewrote Step 2 to render per-tier sections; fixed Step 3 label color to use `r.label` instead of positional index; removed stale OPTIMAL_TAGS developer note from Step 3 (obsoleted by F47)
+
+**No backend changes needed** — the server endpoint already accepts any number of rules.
+
+---
+
 ## 2026-03-23 — fix: sex selector not persisting on ProfilePage remount
 
 **Problem:** Navigating away from Profile and back caused the Male/Female button to appear unselected, even though the value was saved in the DB. The `useEffect` that loads profile data had `[user?.id]` as its dependency, so it didn't re-run on remount (user ID doesn't change on navigation).

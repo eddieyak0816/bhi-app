@@ -491,9 +491,9 @@ Items are ordered by logical dependency. Last updated: 2026-03-23.
 | 44 | Score interpretation label on Dashboard | ✅ Built | |
 | 45 | Leaderboard with tie-breaker ranking | ✅ Built | |
 | 46 | CSV export for employer reporting | ❌ Not built | |
-| **Phase 9 – Scoring Engine Improvements** | | ❌ 0/2 complete | |
+| **Phase 9 – Scoring Engine Improvements** | | ✅ 2/2 complete | |
 | 47 | Remove hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS | ✅ Built | scoring_tier column on tags table; EvaluationContext + evaluateRules.ts + server/index.js all read from DB. Migration: 20260323_add_scoring_tier_to_tags.sql. New Marker Wizard now fully self-contained. |
-| 48 | Multiple scoring ranges per tier in Wizard | ❌ Not built | Allow Optimal = 1–5 OR 10–15; Wizard UI only — DB already supports it |
+| 48 | Multiple scoring ranges per tier in Wizard | ✅ Built | Step 2 renders per-tier sections with + Add Range / × Remove buttons. Validation requires ≥1 valid Optimal row. No backend changes needed. |
 | **Phase 10 – Pending / Backlog** | | ❌ 0/7 complete | |
 | 49 | Resource Library — thumbnail/image per resource | ❌ Not built | Add image/thumbnail to each resource card. Storage, upload UI, and fallback display to be designed before building |
 | 50 | Rebrand: BHI → NHL (National Health League) | ❌ Not built | Rename all UI text, branding, Public ID prefix, BHAS references, DB seeds, and docs from "BHI"/"Balanced Health Institute" to "NHL"/"National Health League". Scope to be confirmed before starting |
