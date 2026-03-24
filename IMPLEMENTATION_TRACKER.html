@@ -192,8 +192,8 @@
 <div class="stats">
   <div class="stat stat-done">    <span class="num" id="cnt-done">42</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">4</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">13</span>  Not Built / Skipped</div>
-  <div class="stat stat-total">   <span class="num" id="cnt-total">59</span>  Total Items</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">14</span>  Not Built / Skipped</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">60</span>  Total Items</div>
 </div>
 
 <!-- Filter controls -->
@@ -870,7 +870,7 @@
         <div class="phase-title">Backlog &amp; Pending Items</div>
         <div class="phase-desc">Items flagged for review, testing, research, or future builds — added 2026-03-23</div>
       </div>
-      <div class="phase-progress">2 / 7 done</div>
+      <div class="phase-progress">2 / 8 done</div>
     </div>
     <div class="items">
 
@@ -937,6 +937,15 @@
         <span class="item-status status-todo">❌ Not Tested</span>
       </div>
 
+      <div class="item todo" data-status="todo">
+        <div class="item-num">56</div>
+        <div class="item-body">
+          <div class="item-title">Sort all dropdown filter options alphabetically</div>
+          <div class="item-note">All dropdown filters throughout the app (Type, Tag, Category on the Library/Resources page; marker filters in Admin; etc.) should present their options in alphabetical order. Currently options appear in insertion/DB order. Fix: sort option arrays before rendering in ResourcesPage.tsx and Admin.tsx.</div>
+        </div>
+        <span class="item-status status-todo">❌ Not Built</span>
+      </div>
+
     </div>
   </section>
 
@@ -944,7 +953,7 @@
 
 <footer>
   BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-23 &nbsp;·&nbsp;
-  42 built · 4 partial · 13 not built/skipped out of 59 total items &nbsp;·&nbsp;
+  42 built · 4 partial · 14 not built/skipped out of 60 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
 </footer>
