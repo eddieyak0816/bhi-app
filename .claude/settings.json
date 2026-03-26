@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "mcp__jcodemunch__search_text"
+      "mcp__jcodemunch__search_text",
+      "mcp__jcodemunch__get_file_tree",
+      "Bash(npx tsc:*)",
+      "Bash(node_modules/.bin/tsc -p . --noEmit)",
+      "mcp__jcodemunch__get_file_outline",
+      "mcp__jcodemunch__search_symbols",
+      "WebFetch(domain:registry.modelcontextprotocol.io)",
+      "WebFetch(domain:www.builder.io)",
+      "WebFetch(domain:blog.premai.io)",
+      "Edit(/.claude/skills/new-feature/**)",
+      "Edit(/.claude/skills/db-migration/**)",
+      "Edit(/.claude/skills/supabase-rls/**)"
     ]
   }
 }

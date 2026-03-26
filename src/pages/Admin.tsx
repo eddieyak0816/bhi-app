@@ -1914,16 +1914,20 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                             try {
                               const ext = file.name.split('.').pop() || 'jpg'
                               const path = `${resourceModalData.id}.${ext}`
-                              const { error: upErr } = await supabase.storage
+                              console.log('[Thumbnail] Uploading to path:', path, 'size:', file.size, 'type:', file.type)
+                              const { data: upData, error: upErr } = await supabase.storage
                                 .from('resource-thumbnails')
                                 .upload(path, file, { upsert: true, contentType: file.type })
+                              console.log('[Thumbnail] Upload result:', { upData, upErr })
                               if (upErr) throw upErr
                               const { data: urlData } = supabase.storage
                                 .from('resource-thumbnails')
                                 .getPublicUrl(path)
+                              console.log('[Thumbnail] Public URL:', urlData.publicUrl)
                               setResourceEditForm(prev => ({...prev, thumbnail_url: urlData.publicUrl}))
                             } catch (err: any) {
-                              setThumbnailError(err.message || 'Upload failed')
+                              console.error('[Thumbnail] Upload error:', err)
+                              setThumbnailError(err.message || err.error_description || JSON.stringify(err) || 'Upload failed')
                             } finally {
                               setThumbnailUploading(false)
                               e.target.value = ''
@@ -1972,6 +1976,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                     try {
                       if (!resourceEditForm.title || !resourceEditForm.title.toString().trim()) return alert('Title required')
                       const fullUrl = resourceEditForm.link_url ? buildFullUrl(resourceEditForm.link_protocol || 'https://', resourceEditForm.link_url) : null
+                      console.log('[Save] thumbnail_url being sent:', resourceEditForm.thumbnail_url)
                       const res = await fetch(apiUrl(`/api/admin/resources/${resourceModalData.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: resourceEditForm.title, type: (resourceEditForm.type || '').toLowerCase(), tags: resourceEditForm.tags || [], categories: resourceEditForm.categories || [], link_url: fullUrl, thumbnail_url: resourceEditForm.thumbnail_url || null }) })
                       if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                       await load()

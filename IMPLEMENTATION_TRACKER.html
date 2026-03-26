@@ -896,7 +896,7 @@
         <div class="item-num">50</div>
         <div class="item-body">
           <div class="item-title">Rebrand: BHI → NHL (National Health League)</div>
-          <div class="item-note">Rename all references to "Balanced Health Institute" / "BHI" throughout the app: UI text, branding, Public ID prefix (BHI-XXXX-XXXX), BHAS score name, code comments, DB seed data, and all project docs. This is a large cross-cutting change — confirm full scope with client before starting. Public ID format change may require a migration.</div>
+          <div class="item-note">Rename all references to "Balanced Health Institute" / "BHI" throughout the app: UI text, branding, Public ID prefix (BHI-XXXX-XXXX → NHL-XXXX-XXXX), BHAS score name, code comments, localStorage keys (<code>bhi-*</code> → <code>nhl-*</code>), DB seed data, and all project docs. <strong>Scope confirmed by client 2026-03-24.</strong> Target domain: <code>national-health-league.com</code>. Public ID prefix change requires a DB migration for existing records.</div>
         </div>
         <span class="item-status status-todo">❌ Not Built</span>
       </div>
@@ -952,7 +952,7 @@
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-23 &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-24 &nbsp;·&nbsp;
   42 built · 4 partial · 14 not built/skipped out of 60 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
