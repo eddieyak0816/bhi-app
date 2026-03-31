@@ -492,6 +492,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   async function load() {
     // cancel previous load
     try { loadControllerRef.current?.abort() } catch {}
+    loadCategories()
     const controller = new AbortController()
     loadControllerRef.current = controller
     setLoading(true)
