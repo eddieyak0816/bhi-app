@@ -12,7 +12,10 @@
       "WebFetch(domain:blog.premai.io)",
       "Edit(/.claude/skills/new-feature/**)",
       "Edit(/.claude/skills/db-migration/**)",
-      "Edit(/.claude/skills/supabase-rls/**)"
+      "Edit(/.claude/skills/supabase-rls/**)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(node_modules/.bin/tsc -p tsconfig.app.json --noEmit)",
+      "Bash(grep -v \"^$\")"
     ]
   }
 }

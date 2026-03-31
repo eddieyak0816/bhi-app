@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
 import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
 import { supabase } from '../lib/supabase'
+import { getBenchmark } from '../utils/nationalBenchmarks'
 
 interface DashboardProps {
   userEmail?: string
@@ -486,6 +487,126 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
           )}
         </div>
       )}
+
+      {/* F19 — National Benchmarks */}
+      {results.length > 0 && (() => {
+        // Build rows for markers the user has entered that have benchmark data
+        const benchmarkRows = results
+          .reduce<{ markerName: string; value: number; unit: string }[]>((acc, r) => {
+            if (!acc.find(x => x.markerName === r.markerName)) {
+              acc.push({ markerName: r.markerName, value: r.value, unit: r.unit })
+            }
+            return acc
+          }, [])
+          .map(r => ({ ...r, benchmark: getBenchmark(r.markerName) }))
+          .filter(r => r.benchmark !== null)
+
+        if (benchmarkRows.length === 0) return null
+
+        return (
+          <div style={{ marginBottom: 32 }}>
+            <h3 style={{ marginBottom: 4, fontSize: 20, fontWeight: 600 }}>National Benchmarks</h3>
+            <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
+              How your latest values compare to U.S. adult averages (CDC/NHANES).
+              Green = at or better than national average. Red = below national average.
+            </p>
+            <div
+              style={{
+                background: theme.card,
+                border: `1.5px solid ${theme.borderColor}`,
+                borderRadius: 10,
+                overflow: 'hidden',
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: theme.bgSecondary, borderBottom: `1.5px solid ${theme.borderColor}` }}>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: theme.text }}>Marker</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: theme.text }}>Your Value</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: theme.text }}>US Average</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'center', fontWeight: 600, color: theme.text }}>vs. National Avg</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'center', fontWeight: 600, color: theme.text }}>Optimal Range</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {benchmarkRows.map((row, i) => {
+                    const b = row.benchmark!
+                    const diff = row.value - b.nationalMean
+                    // Better = lower for lowerIsBetter markers, higher otherwise
+                    const isBetter = b.lowerIsBetter ? diff <= 0 : diff >= 0
+                    const pct = b.nationalMean !== 0
+                      ? Math.abs(Math.round((diff / b.nationalMean) * 100))
+                      : 0
+                    const isOptimal = b.lowerIsBetter
+                      ? row.value <= b.optimalMax
+                      : row.value >= b.optimalMin
+                    const diffColor = isBetter ? '#10B981' : '#EF4444'
+                    const arrow = b.lowerIsBetter
+                      ? (diff < 0 ? '↓' : diff > 0 ? '↑' : '—')
+                      : (diff > 0 ? '↑' : diff < 0 ? '↓' : '—')
+                    const optLabel = b.optimalMax >= 999
+                      ? `≥ ${b.optimalMin} ${b.unit}`
+                      : b.optimalMin === 0
+                      ? `< ${b.optimalMax} ${b.unit}`
+                      : `${b.optimalMin}–${b.optimalMax} ${b.unit}`
+
+                    return (
+                      <tr
+                        key={row.markerName}
+                        style={{
+                          borderTop: i > 0 ? `1px solid ${theme.borderColor}` : 'none',
+                        }}
+                      >
+                        <td style={{ padding: '10px 16px', fontWeight: 600, color: theme.text }}>
+                          {row.markerName}
+                        </td>
+                        <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: theme.text }}>
+                          {row.value} {row.unit}
+                        </td>
+                        <td style={{ padding: '10px 16px', textAlign: 'right', color: theme.textMuted }}>
+                          {b.nationalMean} {b.unit}
+                        </td>
+                        <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                          <span
+                            title={b.source}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              fontWeight: 700,
+                              fontSize: 13,
+                              color: diffColor,
+                            }}
+                          >
+                            {arrow} {pct > 0 ? `${pct}%` : 'At avg'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                          <span
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              padding: '3px 10px',
+                              borderRadius: 20,
+                              background: isOptimal ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                              color: isOptimal ? '#10B981' : '#EF4444',
+                            }}
+                          >
+                            {isOptimal ? 'Optimal' : 'Below optimal'} · {optLabel}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div style={{ padding: '8px 16px', borderTop: `1px solid ${theme.borderColor}`, fontSize: 11, color: theme.textMuted }}>
+                Sources: CDC NHANES 2017–2020 · AHA/ACC 2019 · ADA 2024 · NIH/NLM. Hover the "vs. National Avg" cell for source detail.
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Quick Actions */}
       <div style={{ marginBottom: 32 }}>

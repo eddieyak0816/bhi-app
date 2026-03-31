@@ -2,6 +2,39 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-03-31 — feat: F19 — National Benchmarks (CDC/NHANES seed data)
+
+**What changed:**
+- New `src/utils/nationalBenchmarks.ts` — seed benchmark data for 15 markers (Fasting Glucose, Total/HDL/LDL Cholesterol, Triglycerides, BP Systolic/Diastolic, Vitamin D, B12, Fasting Insulin, hs-CRP, VO2 Max Percentile, Waist Circumference M/F, Grip Strength). Each entry has national mean, unit, optimal range, lowerIsBetter flag, and source citation.
+- `src/pages/Dashboard.tsx` — new "National Benchmarks" section rendered below the BHAS v2.3 panel when the user has any matching markers. Table shows: marker name, user's latest value, US national average, % above/below with directional arrow (green = at or better than average, red = below), optimal range badge (green = optimal, red = below optimal). Source footnote in table footer; per-row source on tooltip.
+- Section is hidden entirely when zero of the user's markers have benchmark data (graceful fallback).
+
+**No DB migration required** — benchmarks are seeded in code, not the database.
+
+**Files changed:** `src/utils/nationalBenchmarks.ts` (new), `src/pages/Dashboard.tsx`
+
+---
+
+## 2026-03-31 — feat: F51 — 1-year lab data retention policy (pg_cron)
+
+**What changed:**
+- New migration `db/migrations/20260331_lab_data_retention_1yr.sql` — enables `pg_cron` extension and schedules a nightly job (`nhl-lab-retention-1yr`) at 02:00 UTC that deletes `user_lab_results` rows where `date < CURRENT_DATE - INTERVAL '1 year'`. Script is idempotent (unschedules existing job before re-creating).
+
+**⚠️ Action required:**
+1. Supabase Dashboard → Database → Extensions → search "pg_cron" → Enable
+2. Run `20260331_lab_data_retention_1yr.sql` in Supabase Dashboard → SQL Editor
+3. Verify output shows the job row in `cron.job`
+
+**Files changed:** `db/migrations/20260331_lab_data_retention_1yr.sql` (new)
+
+---
+
+## 2026-03-31 — chore: F53 — Provider verification review (confirmed complete)
+
+**Reviewed:** The "▸ Add Provider Verification (optional)" section on LabsPage is complete and working end-to-end. All fields (name, credential, NPI, date, typed attestation) collect and persist correctly. Results table shows Provider/PDF/Self badges with tooltip. No code changes required.
+
+---
+
 ## 2026-03-31 — feat: F50 — Rebrand BHI → NHL (National Health League)
 
 **What changed:**

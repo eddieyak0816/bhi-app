@@ -185,15 +185,15 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-23 — Phases 1–4 complete, Phase 8 now complete (13/13). CSV export added to EmployerPage and LeaderboardPage (src/utils/csvExport.ts); Phase 5 item 22 marked partial (CSV done, PDF pending). Previously: profile save bug fixed, sex selector updated, all 15 markers updated to 2026 medical guidelines, Phase 10 backlog documented. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-03-31 — F53 provider verification reviewed (complete, no issues). F19 national benchmarks built (CDC/NHANES seed data, Dashboard table). F51 1-year data retention pg_cron migration created (⚠️ run in Supabase). Phase 5 now 4/5. Previously: F50 rebrand BHI→NHL, F54/56/57/58 done. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
-<!-- Stats bar — counts as of 2026-03-23 -->
+<!-- Stats bar — counts as of 2026-03-31 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">42</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">48</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">4</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">14</span>  Not Built / Skipped</div>
-  <div class="stat stat-total">   <span class="num" id="cnt-total">60</span>  Total Items</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">10</span>  Not Built / Skipped</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">62</span>  Total Items</div>
 </div>
 
 <!-- Filter controls -->
@@ -509,17 +509,17 @@
         <div class="phase-title">Analytics &amp; Reporting</div>
         <div class="phase-desc">Population benchmarks, corporate dashboards, insurance reports, and exportable outputs</div>
       </div>
-      <div class="phase-progress">3 / 5 done · 1 partial · 1 not built</div>
+      <div class="phase-progress">4 / 5 done · 1 partial</div>
     </div>
     <div class="items">
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">19</div>
         <div class="item-body">
           <div class="item-title">Anonymous national comparison benchmarks</div>
-          <div class="item-note">Allows public users to compare their scores against anonymized national averages. Requires sufficient user data volume and careful de-identification of aggregates.</div>
+          <div class="item-note">Dashboard "National Benchmarks" section compares user's latest value per marker against U.S. adult averages (CDC NHANES 2017–2020). Seeded with 15 markers: Fasting Glucose, Total/HDL/LDL Cholesterol, Triglycerides, BP Systolic/Diastolic, Vitamin D, Vitamin B12, Fasting Insulin, hs-CRP, VO2 Max Percentile, Waist Circumference (M/F), Grip Strength. Shows: user value, national mean, % above/below with arrow, optimal range badge. Source footnote per row on hover. Section only appears when user has at least one matching marker entered. Data lives in <code>src/utils/nationalBenchmarks.ts</code>.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-03-31</span>
       </div>
 
       <div class="item done" data-status="done">
@@ -905,13 +905,13 @@
         <span class="item-status status-done">✅ Built 2026-03-31</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">51</div>
         <div class="item-body">
           <div class="item-title">Lab data retention policy — 1-year limit on stored lab results</div>
-          <div class="item-note">Only retain lab marker results (user_lab_results) for 12 months. Implement either: (a) automated purge via Supabase scheduled function / pg_cron, or (b) admin-triggered purge tool. Also update staleCheck.ts and trend chart queries that currently assume unlimited history. Decision on approach required before building.</div>
+          <div class="item-note">pg_cron scheduled job: nightly at 02:00 UTC, deletes <code>user_lab_results</code> rows where <code>date &lt; CURRENT_DATE - INTERVAL '1 year'</code>. Migration: <code>db/migrations/20260331_lab_data_retention_1yr.sql</code>. <strong>⚠️ Action required:</strong> Enable pg_cron extension in Supabase Dashboard → Database → Extensions, then run migration in SQL Editor.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-03-31 — ⚠️ run migration in Supabase</span>
       </div>
 
       <div class="item todo" data-status="todo">
@@ -923,13 +923,13 @@
         <span class="item-status status-todo">❌ Not Built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">53</div>
         <div class="item-body">
           <div class="item-title">Review: "Add Provider Verification (optional)" section on Labs page</div>
-          <div class="item-note">The collapsible "▸ Add Provider Verification (optional)" section on the Lab Results entry page needs a UX and functionality review. Confirm: it works correctly end-to-end, it is sufficiently discoverable, and it meets the provider verification requirements from the spec (verifier name, credential, NPI, typed attestation, badge in results table). See src/pages/LabsPage.tsx.</div>
+          <div class="item-note">Reviewed 2026-03-31. Feature is complete end-to-end: toggle button in Add Lab Result form, fields for verifier name*, credential, NPI (10-digit numeric), date, typed attestation signature*. Validation gates save if required fields missing. Data persisted to Supabase via ResultsContext.addResult(). Results table shows green Provider badge with hover tooltip (name, credential, NPI, date), blue PDF badge, or plain Self. UX is discoverable and meets spec. No issues found.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Reviewed</span>
+        <span class="item-status status-done">✅ Reviewed 2026-03-31 — complete, no issues</span>
       </div>
 
       <div class="item done" data-status="done">
