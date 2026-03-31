@@ -34,7 +34,7 @@ function AppContent() {
     return hash || 'home'
   })
   const [showOnboard, setShowOnboard] = useState(() => {
-    return localStorage.getItem('bhi-onboarded') !== 'true'
+    return localStorage.getItem('nhl-onboarded') !== 'true' && localStorage.getItem('bhi-onboarded') !== 'true'
   })
   const [tags, setTags] = useState<string[]>([])
   const [refreshKey, setRefreshKey] = useState(0)
@@ -184,7 +184,7 @@ function AppContent() {
   if (!data) return <div className="center">Loading…</div>
 
   if (showOnboard) {
-    return <Onboarding onClose={() => { localStorage.setItem('bhi-onboarded', 'true'); setShowOnboard(false) }} />
+    return <Onboarding onClose={() => { localStorage.setItem('nhl-onboarded', 'true'); setShowOnboard(false) }} />
   }
 
   const handleNavigate = (page: string) => {

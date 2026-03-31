@@ -160,7 +160,7 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
       e.acute_visits ?? '',
       e.score_date ? e.score_date.slice(0, 10) : '',
     ])
-    downloadCsv(buildCsvString(headers, rows), `bhi-leaderboard-${orgSlug}-${todayIso()}.csv`)
+    downloadCsv(buildCsvString(headers, rows), `nhl-leaderboard-${orgSlug}-${todayIso()}.csv`)
   }
 
   const inputStyle: React.CSSProperties = {

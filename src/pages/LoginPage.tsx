@@ -51,10 +51,10 @@ export default function LoginPage() {
       >
         <div style={{ marginBottom: '32px', textAlign: 'center' }}>
           <h1 style={{ fontSize: '32px', fontWeight: 700, color: theme.text, margin: 0 }}>
-            BHI
+            NHL
           </h1>
           <p style={{ color: theme.textMuted, margin: '8px 0 0 0', fontSize: '14px' }}>
-            Balanced Health Institute
+            National Health League
           </p>
         </div>
 

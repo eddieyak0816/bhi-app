@@ -207,6 +207,10 @@
 
 <main>
 
+  <div style="background:#78350f;color:#fef3c7;padding:12px 20px;border-radius:6px;margin-bottom:24px;font-size:14px;line-height:1.5">
+    <strong>Rebrand note:</strong> This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
+  </div>
+
   <!-- ═══════════════════════════════════════════════════════════
        PHASE 1 – ALREADY DONE
   ═══════════════════════════════════════════════════════════ -->
@@ -892,13 +896,13 @@
         <span class="item-status status-done">✅ Built 2026-03-24</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">50</div>
         <div class="item-body">
           <div class="item-title">Rebrand: BHI → NHL (National Health League)</div>
-          <div class="item-note">Rename all references to "Balanced Health Institute" / "BHI" throughout the app: UI text, branding, Public ID prefix (BHI-XXXX-XXXX → NHL-XXXX-XXXX), BHAS score name, code comments, localStorage keys (<code>bhi-*</code> → <code>nhl-*</code>), DB seed data, and all project docs. <strong>Scope confirmed by client 2026-03-24.</strong> Target domain: <code>national-health-league.com</code>. Public ID prefix change requires a DB migration for existing records.</div>
+          <div class="item-note">All UI text, nav logo, login page, onboarding, public profile page updated to "NHL" / "National Health League". localStorage/sessionStorage keys migrated from <code>bhi-*</code> → <code>nhl-*</code> with backwards-compatibility shims so existing users don't lose data. Public ID format changed to <code>NHL-XXXX-XXXX</code> in <code>publicId.ts</code>. CSV export filenames updated. Server OpenRouter referer updated to <code>national-health-league.com</code>. DB migration <code>20260331_rebrand_public_ids_bhi_to_nhl.sql</code> created to update existing rows — run in Supabase. BHAS score name intentionally unchanged (product name, client confirmed). Historical docs left as-is; rebrand note added to CHANGELOG and tracker.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-03-31</span>
       </div>
 
       <div class="item todo" data-status="todo">
@@ -971,7 +975,7 @@
 
 <footer>
   BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-31 (F56) &nbsp;·&nbsp;
-  46 built · 4 partial · 12 not built/skipped out of 62 total items &nbsp;·&nbsp;
+  47 built · 4 partial · 11 not built/skipped out of 62 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
   <br><br>

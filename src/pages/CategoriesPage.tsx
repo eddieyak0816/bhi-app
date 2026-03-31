@@ -39,7 +39,7 @@ export default function CategoriesPage() {
 
   const openLibrary = (name: string) => {
     try {
-      localStorage.setItem('bhi-filter-category', name)
+      localStorage.setItem('nhl-filter-category', name)
     } catch {}
     window.location.hash = '#/library'
   }

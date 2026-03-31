@@ -114,9 +114,10 @@ export default function Resources() {
 
     // If navigated from Categories page, a category name may be stored in localStorage
     try {
-      const cat = localStorage.getItem('bhi-filter-category')
+      const cat = localStorage.getItem('nhl-filter-category') ?? localStorage.getItem('bhi-filter-category')
       if (cat) {
         setFilterCategory(cat)
+        localStorage.removeItem('nhl-filter-category')
         localStorage.removeItem('bhi-filter-category')
       }
     } catch {}
@@ -151,7 +152,7 @@ export default function Resources() {
 
   // Load bookmarks from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('bhi-bookmarks')
+    const saved = localStorage.getItem('nhl-bookmarks') ?? localStorage.getItem('bhi-bookmarks')
     if (saved) {
       setBookmarks(new Set(JSON.parse(saved)))
     }
@@ -201,7 +202,7 @@ export default function Resources() {
       newBookmarks.add(id)
     }
     setBookmarks(newBookmarks)
-    localStorage.setItem('bhi-bookmarks', JSON.stringify(Array.from(newBookmarks)))
+    localStorage.setItem('nhl-bookmarks', JSON.stringify(Array.from(newBookmarks)))
   }
 
   const uniqueTypes = Array.from(new Set(resources.map(r => r.type))).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))

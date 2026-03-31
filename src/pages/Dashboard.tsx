@@ -29,7 +29,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
     // Seed from sessionStorage so the panel is visible immediately on remount
     // while the async profile fetch runs in the background.
     try {
-      const cached = sessionStorage.getItem('bhi-bhas-v2-result')
+      const cached = sessionStorage.getItem('nhl-bhas-v2-result')
       return cached ? JSON.parse(cached) : null
     } catch { return null }
   })
@@ -73,7 +73,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
         )
         setBhasV2Result(v2)
         // Cache so the panel reappears instantly on next remount
-        try { sessionStorage.setItem('bhi-bhas-v2-result', JSON.stringify(v2)) } catch {}
+        try { sessionStorage.setItem('nhl-bhas-v2-result', JSON.stringify(v2)) } catch {}
 
         // F43: Persist derived values for analytics / leaderboard
         if (v2.hasEnoughData) {

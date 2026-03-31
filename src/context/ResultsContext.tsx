@@ -34,7 +34,7 @@ interface ResultsContextType {
 
 const ResultsContext = createContext<ResultsContextType | undefined>(undefined)
 
-const STORAGE_KEY = 'bhi-user-lab-results'
+const STORAGE_KEY = 'nhl-user-lab-results'
 
 function rowToResult(row: any): UserLabResult {
   const hasVerification = row.verification_type === 'provider' && row.verifier_name

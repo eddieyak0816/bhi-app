@@ -4311,7 +4311,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                                 <input
                                   value={memberPubIdSearch[org.id] || ''}
                                   onChange={e => setMemberPubIdSearch(prev => ({...prev,[org.id]:e.target.value}))}
-                                  placeholder="BHI-…"
+                                  placeholder="NHL-…"
                                   style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:12,width:130,fontFamily:'monospace'}}
                                 />
                               </div>

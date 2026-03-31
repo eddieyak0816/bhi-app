@@ -235,7 +235,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
       m.bhas_pct ?? '',
       m.result_count,
     ])
-    downloadCsv(buildCsvString(headers, rows), `bhi-members-${orgSlug}-${todayIso()}.csv`)
+    downloadCsv(buildCsvString(headers, rows), `nhl-members-${orgSlug}-${todayIso()}.csv`)
   }
 
   const inputStyle: React.CSSProperties = {

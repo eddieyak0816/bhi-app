@@ -44,7 +44,7 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: theme.text }}>BHI</h1>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: theme.text }}>NHL</h1>
           <nav style={{ display: 'flex', gap: 24 }}>
             {navItems.map(item => (
               <button

@@ -291,6 +291,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         key.includes('supabase') || key.includes('auth')
       )
       keysToRemove.forEach(key => localStorage.removeItem(key))
+      localStorage.removeItem('nhl-onboarded')
       localStorage.removeItem('bhi-onboarded')
       
       console.log('[Auth] Logout complete')

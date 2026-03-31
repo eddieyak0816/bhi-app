@@ -1,5 +1,27 @@
 # CHANGELOG
 
+> **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
+
+## 2026-03-31 — feat: F50 — Rebrand BHI → NHL (National Health League)
+
+**What changed:**
+- Nav logo, Login page, Onboarding, PublicProfilePage: "BHI" / "Balanced Health Institute" → "NHL" / "National Health League"
+- `src/utils/publicId.ts`: `generatePublicId()` now returns `NHL-XXXX-XXXX`
+- `localStorage`/`sessionStorage` keys: `bhi-*` → `nhl-*` across all files; backwards-compat shims added for existing users
+- CSV export filenames: `bhi-members-*` / `bhi-leaderboard-*` → `nhl-*`
+- `server/index.js`: OpenRouter HTTP-Referer updated to `national-health-league.com`
+- `src/lib/supabase.ts`: `x-client-info` header updated to `nhl-app`
+- `Admin.tsx`: Public ID search placeholder updated to `NHL-…`
+- DB migration created: `db/migrations/20260331_rebrand_public_ids_bhi_to_nhl.sql` — updates existing `profiles.public_id` from `BHI-` to `NHL-` prefix
+- BHAS score name intentionally unchanged (product name, confirmed by client)
+- Historical docs left intact; rebrand note added to top of CHANGELOG and IMPLEMENTATION_TRACKER
+
+**⚠️ Action required:** Run `20260331_rebrand_public_ids_bhi_to_nhl.sql` in Supabase Dashboard → SQL Editor
+
+**Files changed:** `src/components/Layout.tsx`, `src/pages/LoginPage.tsx`, `src/pages/Onboarding.tsx`, `src/pages/PublicProfilePage.tsx`, `src/utils/publicId.ts`, `src/context/ThemeContext.tsx`, `src/context/ResultsContext.tsx`, `src/context/AuthContext.tsx`, `src/App.tsx`, `src/pages/ResourcesPage.tsx`, `src/pages/CategoriesPage.tsx`, `src/pages/Dashboard.tsx`, `src/pages/EmployerPage.tsx`, `src/pages/LeaderboardPage.tsx`, `src/pages/Admin.tsx`, `src/lib/supabase.ts`, `server/index.js`
+
+---
+
 ## 2026-03-31 — test: F54 — Add Category verified end-to-end
 
 **Verified:** New category creates successfully, appears immediately in the list, and shows as a filter on the Library page. Required fix F58 (categories not loading on Resources tab) before this could pass.

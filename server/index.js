@@ -1391,7 +1391,7 @@ ${pdfText}`;
         const orResult = await postJSON(
           'openrouter.ai',
           '/api/v1/chat/completions',
-          { 'Authorization': `Bearer ${OPENROUTER_API_KEY}`, 'HTTP-Referer': 'https://bhi-app.com', 'X-Title': 'BHI Lab Extractor' },
+          { 'Authorization': `Bearer ${OPENROUTER_API_KEY}`, 'HTTP-Referer': 'https://national-health-league.com', 'X-Title': 'NHL Lab Extractor' },
           { model: orModel, messages: [{ role: 'user', content: prompt }] }
         );
         if (orResult.status === 404 || orResult.status === 400) {

@@ -42,7 +42,7 @@ export default function Onboarding({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="card onboarding">
-        <h2 style={{ color: theme.text }}>Welcome to Balanced Health Institute</h2>
+        <h2 style={{ color: theme.text }}>Welcome to National Health League</h2>
         <p style={{ fontSize: 16, lineHeight: 1.6, color: theme.textMuted, marginTop: 8 }}>
           Your trusted resource for evidence-based health education. This platform provides curated educational content to help you understand your lab results.
         </p>

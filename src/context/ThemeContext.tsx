@@ -23,12 +23,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window === 'undefined') return false
-    const saved = localStorage.getItem('bhi-dark-mode')
+    const saved = localStorage.getItem('nhl-dark-mode') ?? localStorage.getItem('bhi-dark-mode')
     return saved ? JSON.parse(saved) : false
   })
 
   useEffect(() => {
-    localStorage.setItem('bhi-dark-mode', JSON.stringify(darkMode))
+    localStorage.setItem('nhl-dark-mode', JSON.stringify(darkMode))
     if (darkMode) {
       document.body.classList.add('dark-mode')
     } else {

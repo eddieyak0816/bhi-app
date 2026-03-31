@@ -69,7 +69,7 @@ export default function PublicProfilePage({ onNavigate }: PublicProfilePageProps
             <li>Anyone with a link (no login required)</li>
             <li>Logged-in BHI users only</li>
           </ul>
-          Implement access rules and a per-user public URL (e.g. <code>/u/{publicId ?? 'BHI-XXXX-XXXX'}</code>) before enabling this in production.
+          Implement access rules and a per-user public URL (e.g. <code>/u/{publicId ?? 'NHL-XXXX-XXXX'}</code>) before enabling this in production.
         </div>
       </div>
 
@@ -121,7 +121,7 @@ export default function PublicProfilePage({ onNavigate }: PublicProfilePageProps
               {publicId ?? '—'}
             </div>
             <div style={{ fontSize: 13, color: theme.textMuted }}>
-              Balanced Health Institute Member · De-identified public ID
+              National Health League Member · De-identified public ID
             </div>
           </div>
 
