@@ -928,13 +928,13 @@
         <span class="item-status status-todo">❌ Not Reviewed</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">54</div>
         <div class="item-body">
           <div class="item-title">Test: "Add Category" pill in Admin → Resources tab</div>
-          <div class="item-note">Verify the Add Category pill/button in Admin → Resources tab works correctly: new category can be created, it appears in the category list, and resources can be assigned to it. Check for any edge cases (duplicate names, empty name, etc.). See src/pages/Admin.tsx.</div>
+          <div class="item-note">Verified 2026-03-31: new category can be created, appears in the list immediately, and shows up as a filter on the Library page. Prerequisite fix F58 (loadCategories not firing on Resources tab) was required before this could pass.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Tested</span>
+        <span class="item-status status-done">✅ Tested 2026-03-31</span>
       </div>
 
       <div class="item done" data-status="done">
@@ -959,7 +959,7 @@
         <div class="item-num">58</div>
         <div class="item-body">
           <div class="item-title">Admin Add Category modal — show full category list with alphabetical sort</div>
-          <div class="item-note">The "Add Category" modal in Admin → Resources now displays the full list of categories (with search bar) sorted alphabetically, matching the behaviour of the "Add Tag" modal. Fixed by adding .sort() to the category list in the categorySearchModalOpen modal in Admin.tsx.</div>
+          <div class="item-note">The "Add Category" modal in Admin → Resources now displays the full list of categories sorted alphabetically. Root cause: <code>loadCategories()</code> was only called when switching to the Categories tab, so the list was empty on the Resources tab. Fix: call <code>loadCategories()</code> at the start of <code>load()</code> so it fires whenever the Resources tab loads. Also added <code>.sort()</code> to the modal list rendering in Admin.tsx.</div>
         </div>
         <span class="item-status status-done">✅ Built 2026-03-31</span>
       </div>
@@ -971,7 +971,7 @@
 
 <footer>
   BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-31 (F56) &nbsp;·&nbsp;
-  45 built · 4 partial · 13 not built/skipped out of 62 total items &nbsp;·&nbsp;
+  46 built · 4 partial · 12 not built/skipped out of 62 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
   <br><br>

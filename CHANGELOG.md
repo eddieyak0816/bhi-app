@@ -1,12 +1,18 @@
 # CHANGELOG
 
+## 2026-03-31 — test: F54 — Add Category verified end-to-end
+
+**Verified:** New category creates successfully, appears immediately in the list, and shows as a filter on the Library page. Required fix F58 (categories not loading on Resources tab) before this could pass.
+
+---
+
 ## 2026-03-31 — feat: F57/F58 — resources alphabetical order + Admin Add Category list
 
 **F57 — Resources sorted A–Z by title**
 - `src/pages/ResourcesPage.tsx`: secondary sort by `title` added to `prioritized` — resources matching user tags still appear first, then A–Z within each tier.
 
 **F58 — Admin Add Category modal shows full list**
-- `src/pages/Admin.tsx`: `.sort()` added to the category list in the category search modal — categories now appear A–Z, matching the Add Tag modal behaviour.
+- `src/pages/Admin.tsx`: root cause was `loadCategories()` only firing on the Categories tab switch, leaving the list empty on the Resources tab. Fixed by calling `loadCategories()` inside `load()` so it runs whenever the Resources tab loads. Also added `.sort()` to the modal list so categories appear A–Z.
 
 **Files changed:** `src/pages/ResourcesPage.tsx`, `src/pages/Admin.tsx`
 
