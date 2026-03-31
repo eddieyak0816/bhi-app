@@ -1,5 +1,40 @@
 # CHANGELOG
 
+## 2026-03-31 — feat: F57/F58 — resources alphabetical order + Admin Add Category list
+
+**F57 — Resources sorted A–Z by title**
+- `src/pages/ResourcesPage.tsx`: secondary sort by `title` added to `prioritized` — resources matching user tags still appear first, then A–Z within each tier.
+
+**F58 — Admin Add Category modal shows full list**
+- `src/pages/Admin.tsx`: `.sort()` added to the category list in the category search modal — categories now appear A–Z, matching the Add Tag modal behaviour.
+
+**Files changed:** `src/pages/ResourcesPage.tsx`, `src/pages/Admin.tsx`
+
+---
+
+## 2026-03-31 — feat: F56 — sort all dropdown filter options alphabetically
+
+**What changed:** All dropdown filter options now appear in alphabetical order (case-insensitive).
+- `src/pages/ResourcesPage.tsx`: `.sort()` added to `uniqueTypes`, `uniqueTags`, and `uniqueCategories` derivations (lines 207–209).
+- `src/pages/Admin.tsx`: resource type selector in the resource edit form now sorts before rendering. All other Admin dynamic dropdowns were already sorted.
+
+**Files changed:** `src/pages/ResourcesPage.tsx`, `src/pages/Admin.tsx`
+
+---
+
+## 2026-03-31 — chore: Claude Code dev tooling setup
+
+**What changed:** No app code changed. Developer tooling configured for better token efficiency and cross-machine consistency.
+
+- `C:\Users\eddie\.claude\CLAUDE.md` (global) — created with jCodemunch policy, communication prefs, and new-project checklist (applies to all projects on this machine)
+- `CLAUDE.md` (project) — stripped down to enforcement-only (removed install instructions now covered globally)
+- `.claude/skills/new-feature/SKILL.md` — end-to-end feature workflow skill
+- `.claude/skills/db-migration/SKILL.md` — Supabase migration workflow + key DB facts
+- `.claude/skills/supabase-rls/SKILL.md` — RLS policy patterns and PHI rules
+- jCodemunch index confirmed: 267 symbols / 44 files, BHI App indexed 2026-03-24
+
+---
+
 ## 2026-03-24 — feat: F49 — resource thumbnails (Supabase Storage)
 
 **What changed:** Resource cards in the Library now display a thumbnail image. Admins can upload a thumbnail per resource from the Admin edit modal.

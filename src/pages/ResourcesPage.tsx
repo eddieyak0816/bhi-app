@@ -204,9 +204,9 @@ export default function Resources() {
     localStorage.setItem('bhi-bookmarks', JSON.stringify(Array.from(newBookmarks)))
   }
 
-  const uniqueTypes = Array.from(new Set(resources.map(r => r.type)))
-  const uniqueTags = Array.from(new Set(resources.flatMap(r => r.tags)))
-  const uniqueCategories = categoriesList.map(c => c.name)
+  const uniqueTypes = Array.from(new Set(resources.map(r => r.type))).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+  const uniqueTags = Array.from(new Set(resources.flatMap(r => r.tags))).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+  const uniqueCategories = categoriesList.map(c => c.name).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
 
   const filtered = resources.filter(r => {
     const matchType = !filterType || r.type === filterType
@@ -230,7 +230,8 @@ export default function Resources() {
   const prioritized = [...filtered].sort((a, b) => {
     const aMatches = a.tags.filter(t => applicableTags.includes(t)).length
     const bMatches = b.tags.filter(t => applicableTags.includes(t)).length
-    return bMatches - aMatches
+    if (bMatches !== aMatches) return bMatches - aMatches
+    return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
   })
 
   return (

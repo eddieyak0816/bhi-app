@@ -1870,7 +1870,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                       <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Type</label>
                       <select autoFocus value={resourceEditForm.type || ''} onChange={e => setResourceEditForm({...resourceEditForm, type: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box',width:'100%'}}>
                         <option value="">Select a type</option>
-                        {resourceTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                        {(resourceTypes || []).slice().sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
                     <div style={{marginBottom:12}}>
@@ -3510,6 +3510,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                      categorySearchContext === 'edit' ? (resourceModalOpen && isEditingResource ? !(resourceEditForm.categories || []).includes(c.name) : !(editData.categories || []).includes(c.name)) :
                      !filterCategories.includes(c.name))
                 })
+                .sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
                 .map((c: any) => {
                   const count = getCategoryCount(c.name)
                   const isFilterContext = categorySearchContext === 'filter'

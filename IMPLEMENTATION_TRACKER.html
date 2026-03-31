@@ -870,7 +870,7 @@
         <div class="phase-title">Backlog &amp; Pending Items</div>
         <div class="phase-desc">Items flagged for review, testing, research, or future builds — added 2026-03-23</div>
       </div>
-      <div class="phase-progress">2 / 8 done</div>
+      <div class="phase-progress">5 / 10 done</div>
     </div>
     <div class="items">
 
@@ -937,13 +937,31 @@
         <span class="item-status status-todo">❌ Not Tested</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">56</div>
         <div class="item-body">
           <div class="item-title">Sort all dropdown filter options alphabetically</div>
-          <div class="item-note">All dropdown filters throughout the app (Type, Tag, Category on the Library/Resources page; marker filters in Admin; etc.) should present their options in alphabetical order. Currently options appear in insertion/DB order. Fix: sort option arrays before rendering in ResourcesPage.tsx and Admin.tsx.</div>
+          <div class="item-note">All dropdown filters throughout the app (Type, Tag, Category on the Library/Resources page; marker filters in Admin; etc.) now present options in alphabetical order. Fixed at derivation in ResourcesPage.tsx (uniqueTypes, uniqueTags, uniqueCategories) and at render in Admin.tsx (resource type selector in edit form). All other Admin dynamic dropdowns were already sorted.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-03-31</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">57</div>
+        <div class="item-body">
+          <div class="item-title">Resources page — show results in alphabetical order by title</div>
+          <div class="item-note">Resources are sorted A–Z by title as a secondary sort after the tag-match priority sort. Resources matching the user's tags still appear first; within each match tier they are now alphabetical. Fixed in ResourcesPage.tsx prioritized sort.</div>
+        </div>
+        <span class="item-status status-done">✅ Built 2026-03-31</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">58</div>
+        <div class="item-body">
+          <div class="item-title">Admin Add Category modal — show full category list with alphabetical sort</div>
+          <div class="item-note">The "Add Category" modal in Admin → Resources now displays the full list of categories (with search bar) sorted alphabetically, matching the behaviour of the "Add Tag" modal. Fixed by adding .sort() to the category list in the categorySearchModalOpen modal in Admin.tsx.</div>
+        </div>
+        <span class="item-status status-done">✅ Built 2026-03-31</span>
       </div>
 
     </div>
@@ -952,10 +970,12 @@
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-24 &nbsp;·&nbsp;
-  42 built · 4 partial · 14 not built/skipped out of 60 total items &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-31 (F56) &nbsp;·&nbsp;
+  45 built · 4 partial · 13 not built/skipped out of 62 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
+  <br><br>
+  <strong>2026-03-31 — Dev tooling:</strong> Global Claude Code config established. jCodemunch policy moved to <code>~/.claude/CLAUDE.md</code> (applies to all projects). Project CLAUDE.md trimmed. Skills created: <code>/new-feature</code>, <code>/db-migration</code>, <code>/supabase-rls</code>. New-project checklist added to global CLAUDE.md. BHI App jCodemunch index confirmed (267 symbols / 44 files).
 </footer>
 
 <script>
