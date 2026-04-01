@@ -185,14 +185,14 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-03-31 — F53 provider verification reviewed (complete, no issues). F19 national benchmarks built (CDC/NHANES seed data, Dashboard table). F51 1-year data retention pg_cron migration created (⚠️ run in Supabase). Phase 5 now 4/5. Previously: F50 rebrand BHI→NHL, F54/56/57/58 done. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-04-01 — F21 insurance negotiation reports built (4 format variants: Org Summary, Risk Profile, CSV Export, Print/PDF). Phase 5 now 5/5 complete. Previously: F19 national benchmarks, F51 1-year retention migration, F50 rebrand. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-03-31 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">48</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">49</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">4</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">10</span>  Not Built / Skipped</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">9</span>  Not Built / Skipped</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">62</span>  Total Items</div>
 </div>
 
@@ -509,7 +509,7 @@
         <div class="phase-title">Analytics &amp; Reporting</div>
         <div class="phase-desc">Population benchmarks, corporate dashboards, insurance reports, and exportable outputs</div>
       </div>
-      <div class="phase-progress">4 / 5 done · 1 partial</div>
+      <div class="phase-progress">5 / 5 done · 1 partial</div>
     </div>
     <div class="items">
 
@@ -531,13 +531,13 @@
         <span class="item-status status-done">✅ Built 2026-03-18</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">21</div>
         <div class="item-body">
           <div class="item-title">Insurance negotiation reports</div>
-          <div class="item-note">Formatted population health reports intended to support employer insurance negotiations. Depends on corporate analytics module being complete.</div>
+          <div class="item-note">4-variant modal on Analytics tab of Employer page: (1) Org Health Summary — KPIs + score distribution + per-metric table; (2) Risk Profile — risk tier breakdown with insurance language, trend narrative, metric highlights; (3) CSV Export — aggregate-only CSV, no PHI; (4) Print/PDF — full report in new print-optimized tab. Built 2026-04-01.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-04-01</span>
       </div>
 
       <div class="item partial" data-status="partial">

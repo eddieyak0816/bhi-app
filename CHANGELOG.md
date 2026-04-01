@@ -2,6 +2,39 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-01 — feat: F21 — Insurance Negotiation Reports (4 variants)
+
+**What changed:**
+- New `src/components/InsuranceReportModal.tsx` — full-featured modal with 4 report format tabs:
+  - **Org Summary** — KPI tiles (total members, avg BHAS %, % at optimal), score distribution table, per-metric % at optimal table (sorted best to worst, color-coded)
+  - **Risk Profile** — risk tier breakdown (Optimal → High Risk mapped to insurance risk language: Low Risk → High Risk), elevated/at-risk callout box, 12-week trend narrative (auto-generated plain-English summary), top 3 / bottom 3 metric highlights
+  - **CSV Export** — downloads a structured aggregate CSV: KPIs, score distribution, risk tier breakdown, per-metric %; no individual member data or PHI
+  - **Print / PDF** — opens a clean print-ready page in a new tab (metric bars rendered as HTML elements, all data in tables); user can use browser "Save as PDF"
+- `src/pages/EmployerPage.tsx` — added "Generate Insurance Report" button to the Analytics tab header; `InsuranceReportModal` imported and wired to button state
+
+**PHI compliance:** All report variants contain only aggregate, de-identified org statistics. No individual names, public IDs, or lab values are included.
+
+**No DB migration required.**
+
+---
+
+## 2026-04-01 — chore: Dev tooling — context-mode MCP + nhl-app MCP server
+
+**context-mode** installed globally (`npm install -g context-mode`) and registered with Claude Code via `claude mcp add --scope user`. Sandboxes tool output to reduce context bloat across all projects.
+
+**nhl-app MCP server** built at `server/mcp/index.js` with 5 tools that give Claude live access to project state without reading large files each session:
+- `get_implementation_status` — reads IMPLEMENTATION_TRACKER.html
+- `get_migration_history` — lists db/migrations/
+- `get_db_schema` — live Supabase table/column query
+- `get_marker_list` — live lab_markers table query
+- `get_bhas_scoring_rules` — live logic_rules + tags query
+
+**Note:** `server/mcp/` is dev tooling only — delete before client handoff.
+
+**MCP install method documented** in `~/.claude/CLAUDE.md` for all future projects.
+
+---
+
 ## 2026-03-31 — feat: F19 — National Benchmarks (CDC/NHANES seed data)
 
 **What changed:**

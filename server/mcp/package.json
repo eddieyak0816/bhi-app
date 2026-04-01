@@ -1,0 +1,15 @@
+{
+  "name": "nhl-app-mcp",
+  "version": "1.0.0",
+  "description": "Claude Code MCP server for the NHL App — exposes project status, DB schema, and scoring rules as queryable tools",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.4.0"
+  }
+}

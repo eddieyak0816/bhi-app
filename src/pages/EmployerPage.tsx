@@ -6,6 +6,7 @@ import {
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { buildCsvString, downloadCsv, todayIso } from '../utils/csvExport'
+import InsuranceReportModal from '../components/InsuranceReportModal'
 
 interface Member {
   username: string | null
@@ -503,6 +504,8 @@ function metricBarColor(pct: number): string {
 }
 
 function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPanelProps) {
+  const [reportOpen, setReportOpen] = useState(false)
+
   const sectionStyle: React.CSSProperties = {
     background: theme.bgSecondary,
     border: `1px solid ${theme.borderColor}`,
@@ -548,6 +551,27 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
 
   return (
     <>
+      {/* Insurance Report button */}
+      {data && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <button
+            onClick={() => setReportOpen(true)}
+            style={{
+              background: 'none',
+              border: `1px solid ${theme.blue ?? '#3B82F6'}`,
+              borderRadius: 6,
+              padding: '7px 16px',
+              fontSize: 13,
+              fontWeight: 600,
+              color: theme.blue ?? '#3B82F6',
+              cursor: 'pointer',
+            }}
+          >
+            Generate Insurance Report
+          </button>
+        </div>
+      )}
+
       {/* KPI tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
         {kpiTiles.map(({ label, value }) => (
@@ -663,6 +687,15 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
         )}
 
       </>)}
+
+      {/* Insurance Report Modal */}
+      {reportOpen && data && (
+        <InsuranceReportModal
+          data={data}
+          onClose={() => setReportOpen(false)}
+          theme={theme}
+        />
+      )}
     </>
   )
 }

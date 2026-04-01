@@ -15,7 +15,12 @@
       "Edit(/.claude/skills/supabase-rls/**)",
       "Bash(node_modules/.bin/tsc --noEmit)",
       "Bash(node_modules/.bin/tsc -p tsconfig.app.json --noEmit)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "mcp__jcodemunch__invalidate_cache",
+      "Bash(\"C:/Users/eddie/AppData/Local/Programs/Python/Python313/Scripts/jcodemunch-mcp.exe\" --help)",
+      "Bash(npx context-mode:*)",
+      "Bash(claude mcp:*)",
+      "Bash(where claude:*)"
     ]
   }
 }
