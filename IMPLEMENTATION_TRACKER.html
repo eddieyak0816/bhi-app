@@ -185,14 +185,14 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-04-01 — F21 insurance negotiation reports built (4 format variants: Org Summary, Risk Profile, CSV Export, Print/PDF). Phase 5 now 5/5 complete. Previously: F19 national benchmarks, F51 1-year retention migration, F50 rebrand. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-04-01 — F30 VO2 Max calculator built (Rockport walk, resting HR, direct entry; ACSM percentile lookup; saves to VO2 Max Percentile marker). F21 insurance reports built (4 variants). Phase 5 now 5/5, Phase 7 now 4/5. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-03-31 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">49</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">50</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">4</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">9</span>  Not Built / Skipped</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">8</span>  Not Built / Skipped</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">62</span>  Total Items</div>
 </div>
 
@@ -770,7 +770,7 @@
         <div class="phase-title">Future &amp; Nice-to-Have</div>
         <div class="phase-desc">Device integrations, advanced metrics, and clinical workflow items</div>
       </div>
-      <div class="phase-progress">3 / 5 done</div>
+      <div class="phase-progress">4 / 5 done</div>
     </div>
     <div class="items">
 
@@ -783,13 +783,13 @@
         <span class="item-status status-todo">❌ Not Built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">30</div>
         <div class="item-body">
           <div class="item-title">VO2 Max calculator</div>
-          <div class="item-note">Cardiorespiratory fitness metric. Would be entered as a verified biometric (requires clinician or certified fitness professional attestation).</div>
+          <div class="item-note">3-method calculator modal on Labs page: (1) Rockport 1-Mile Walk Test (Kline 1987) — walk time + end HR; (2) Resting HR method (Uth 2004) — no equipment; (3) Direct lab entry. All methods compute VO2 Max ml/kg/min, then convert to age/sex-adjusted ACSM percentile. Saves to VO2 Max Percentile marker. Built 2026-04-01.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Built 2026-04-01</span>
       </div>
 
       <div class="item done" data-status="done">

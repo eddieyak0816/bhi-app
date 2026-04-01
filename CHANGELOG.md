@@ -2,6 +2,26 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-01 — feat: F30 — VO2 Max Calculator
+
+**What changed:**
+- New `src/utils/vo2calc.ts` — three estimation formulas + ACSM percentile lookup:
+  - **Rockport 1-Mile Walk Test** (Kline et al. 1987) — most accurate without lab equipment; inputs: walk time, end HR, age, sex, weight
+  - **Resting Heart Rate method** (Uth et al. 2004) — no-equipment quick estimate; inputs: age, resting HR
+  - **Direct entry** — user enters a lab-measured VO2 Max ml/kg/min value
+  - All three → `vo2ToPercentile()` converts ml/kg/min to age/sex-adjusted percentile using ACSM norms (11th ed.) with linear interpolation across 6 age bands
+  - `vo2PercentileLabel()` / `vo2PercentileColor()` — fitness category and color for UI
+- New `src/components/Vo2CalcModal.tsx` — 3-tab modal with:
+  - Loads user's profile (age, sex, weight_kg) from Supabase automatically
+  - Per-method input forms with inline guidance
+  - Results panel showing ml/kg/min + percentile tile + visual percentile bar + BHAS scoring tier interpretation
+  - "Save to Lab Results" button — saves percentile as `VO2 Max Percentile` marker via `addResult()`
+- `src/pages/LabsPage.tsx` — added "VO2 Max Calculator" button alongside existing "Log New Result" and "Upload Lab PDF" buttons
+
+**No DB migration required** — saves to existing `VO2 Max Percentile` lab marker.
+
+---
+
 ## 2026-04-01 — feat: F21 — Insurance Negotiation Reports (4 variants)
 
 **What changed:**

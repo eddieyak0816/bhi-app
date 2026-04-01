@@ -5,6 +5,7 @@ import { useResults } from '../context/ResultsContext'
 import { useEvaluation } from '../context/EvaluationContext'
 import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
+import Vo2CalcModal from '../components/Vo2CalcModal'
 import type { ProviderVerification } from '../context/ResultsContext'
 import {
   ComposedChart,
@@ -56,6 +57,7 @@ export default function Labs() {
   const { bhasResult } = useEvaluation()
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [showVo2Calc, setShowVo2Calc] = useState(false)
   const [labMarkers, setLabMarkers] = useState<LabMarker[]>([])
   const [loadingMarkers, setLoadingMarkers] = useState(true)
   // Map of marker_id -> { min, max } derived from optimal logic rules
@@ -319,7 +321,44 @@ export default function Labs() {
             e.target.value = ''
           }}
         />
+
+        <button
+          onClick={() => setShowVo2Calc(true)}
+          style={{
+            background: 'transparent',
+            color: theme.blue,
+            border: `1.5px solid ${theme.blue}`,
+            borderRadius: 6,
+            padding: '12px 16px',
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          VO2 Max Calculator
+        </button>
       </div>
+
+      {/* VO2 Max Calculator Modal */}
+      {showVo2Calc && (
+        <Vo2CalcModal
+          theme={theme}
+          onClose={() => setShowVo2Calc(false)}
+          onSave={(percentile) => {
+            const vo2Marker = labMarkers.find(m => m.name === 'VO2 Max Percentile')
+            addResult({
+              markerName: 'VO2 Max Percentile',
+              value: percentile,
+              unit: 'percentile',
+              date: new Date().toISOString().split('T')[0],
+              minNormal: vo2Marker?.min_normal ?? 40,
+              maxNormal: vo2Marker?.max_normal ?? 100,
+              verificationType: 'self',
+            })
+            setShowVo2Calc(false)
+          }}
+        />
+      )}
 
       {/* PDF duplicate warning */}
       {pdfDuplicateWarning && (
