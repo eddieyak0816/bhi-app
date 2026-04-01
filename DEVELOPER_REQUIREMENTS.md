@@ -7,10 +7,42 @@ and automates HSA reimbursement documentation.
 
 ---
 
+## 0. HIPAA Compliance Requirement
+
+**All features in this application must be HIPAA compliant.** The platform collects, stores, and processes Protected Health Information (PHI) including lab results, biometric data, and health scores. Every developer and every feature must adhere to the following rules at all times:
+
+### PHI Definition
+PHI includes any individually identifiable health information: lab values, diagnoses, biometric measurements, health scores tied to a real identity, and any combination of data that could identify an individual's health status.
+
+### Core Rules — Non-Negotiable
+1. **Minimum necessary access** — Only collect and display the data required for the specific function. Never expose more PHI than needed.
+2. **No PHI in employer/third-party views** — Employer pages, reports, analytics, and exports must never contain real names, email addresses, or individual lab values. Only de-identified identifiers (username, public_id), team assignments, and aggregate scores are permitted.
+3. **No PHI in logs or error messages** — Never log lab values, user names, or health data to the console, server logs, or error tracking systems.
+4. **No PHI in URLs** — Lab values, health scores, and user identifiers must never appear in URL query strings or hash fragments.
+5. **Encryption in transit** — All data transmission must use HTTPS/TLS. No plain HTTP endpoints for any PHI.
+6. **Access control** — All Supabase tables containing PHI must have Row Level Security (RLS) enabled. Users may only read/write their own records. Admins have elevated access only via server-side endpoints with authenticated service keys.
+7. **Data minimization in exports** — CSV and PDF exports must be reviewed for PHI before adding new fields. Exports going to employers or insurers must be aggregate-only.
+8. **Consent before sharing** — Public profile features require explicit user opt-in (`is_public` flag). Default is private.
+9. **Retention limits** — Lab results older than 1 year are automatically purged (pg_cron job — migration `20260331_lab_data_retention_1yr.sql`).
+10. **No third-party PHI leakage** — Do not send PHI to third-party analytics, advertising, or tracking services. AI/ML features (e.g., PDF extraction) must not retain PHI beyond the processing session.
+
+### De-identification Standard
+The app uses the HIPAA Safe Harbor method: data is de-identified by replacing name/email with a system-generated public_id token (`NHL-XXXX-XXXX`) and a user-chosen username. Neither field reveals real identity. Employer and public views use only these tokens.
+
+### Developer Checklist for Every New Feature
+Before marking any feature complete, verify:
+- [ ] No real name or email is exposed in any new UI surface
+- [ ] No raw lab values are exposed to any party other than the patient themselves
+- [ ] Any new export or report contains only aggregate or de-identified data
+- [ ] Any new Supabase table or column has appropriate RLS policies
+- [ ] Any new API endpoint requires authentication and validates the requesting user's identity
+
+---
+
 ## 1. Core Platform Goals
 
 - Secure collection of laboratory and biometric health data
-- HIPAA/PHI compliant storage and transmission *(if necessary)*
+- HIPAA compliant storage and transmission — required, not optional
 - Verified health metric scoring using Balanced Health metrics
 - Corporate wellness gamification with team analytics
 - Automated HSA reimbursement documentation
