@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { supabase, directFetch } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+import AffiliateProductsTab from '../components/AffiliateProductsTab'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
@@ -28,7 +29,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
 
-  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit' | 'organizations'>('resources')
+  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit' | 'organizations' | 'products'>('resources')
   // Use global theme context
   const { darkMode, theme: globalTheme } = useTheme()
   const { isSuperAdmin, user } = useAuth()
@@ -1241,6 +1242,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <button className={`tab ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => setActiveTab('goals')} style={{color: activeTab === 'goals' ? '#ffffff' : theme.text}}>Health Goals</button>
         <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')} style={{color: activeTab === 'criteria' ? '#ffffff' : theme.text}}>Criteria</button>
         <button className={`tab ${activeTab === 'organizations' ? 'active' : ''}`} onClick={() => setActiveTab('organizations')} style={{color: activeTab === 'organizations' ? '#ffffff' : theme.text}}>Organizations</button>
+        <button className={`tab ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')} style={{color: activeTab === 'products' ? '#ffffff' : theme.text}}>Products</button>
       </div>
 
       {/* Audit Log hidden in main UI - gated behind secret access */}
@@ -4407,6 +4409,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
           )
           })()}
         </div>
+      )}
+
+      {/* ── Products Tab (F24) ───────────────────────────────────────── */}
+      {activeTab === 'products' && (
+        <AffiliateProductsTab theme={theme} allowedTags={allowedTags} />
       )}
     </div>
   )

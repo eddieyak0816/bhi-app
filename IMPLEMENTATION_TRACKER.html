@@ -185,12 +185,12 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-04-07 — F22 individual user PDF health report built (BHAS v1 + v2.3 scores, per-marker breakdown, national benchmarks; print/PDF via window.open()). Phase 5 now 6/6. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-04-07 — F24 + F25 affiliate product catalog (Admin CRUD) + user-facing tag-matched product cards built. Phase 6 now 2/5. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-03-31 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">51</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">53</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">3</span>  Partial</div>
   <div class="stat stat-todo">    <span class="num" id="cnt-todo">8</span>  Not Built / Skipped</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">62</span>  Total Items</div>
@@ -571,26 +571,26 @@
         <div class="phase-title">Monetization, Affiliate Products &amp; HSA Reimbursement</div>
         <div class="phase-desc">Affiliate product catalog, payment gate, medical necessity document generation, and HSA bank submission</div>
       </div>
-      <div class="phase-progress">0 / 5 done</div>
+      <div class="phase-progress">2 / 5 done</div>
     </div>
     <div class="items">
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">24</div>
         <div class="item-body">
           <div class="item-title">Affiliate product catalog — Admin manages products and affiliate links</div>
-          <div class="item-note">Admin UI: new "Products" tab — create/edit/delete products (name, description, image URL, affiliate URL). Products are associated with health tags so they can be matched to users. DB: affiliate_products table + product_tags join table.</div>
+          <div class="item-note">Built 2026-04-07. AffiliateProductsTab.tsx: full CRUD (create/edit/deactivate/delete), tag picker using existing health tags, active/inactive toggle. Migration: 20260407_create_affiliate_products.sql (affiliate_products + product_tags tables, RLS enabled).</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Done — 2026-04-07</span>
       </div>
 
-      <div class="item todo" data-status="todo">
+      <div class="item done" data-status="done">
         <div class="item-num">25</div>
         <div class="item-body">
           <div class="item-title">Affiliate product display — user-facing recommendations with commission links</div>
-          <div class="item-note">Products whose tags match the user's fired result tags shown as cards on Dashboard or a "Recommendations" page. Each card links to the affiliate URL (opens new tab). Commission tracked externally by affiliate network — no in-app tracking needed for v1. PHI rule: matching is tag-based only, never exposes raw lab values.</div>
+          <div class="item-note">Built 2026-04-07. AffiliateProductCards.tsx: tag-matched product cards on Dashboard above Quick Actions. Products with no tags show to all users; tagged products match on applicableTags from EvaluationContext. PHI compliant — tag-based matching only.</div>
         </div>
-        <span class="item-status status-todo">❌ Not Built</span>
+        <span class="item-status status-done">✅ Done — 2026-04-07</span>
       </div>
 
       <div class="item todo" data-status="todo">
@@ -974,8 +974,8 @@
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-04-07 (F22) &nbsp;·&nbsp;
-  51 built · 3 partial · 8 not built/skipped out of 62 total items &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-04-07 (F24 + F25) &nbsp;·&nbsp;
+  53 built · 3 partial · 6 not built/skipped out of 62 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
   <br><br>

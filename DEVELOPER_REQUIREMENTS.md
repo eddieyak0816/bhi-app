@@ -398,9 +398,9 @@ If user metrics show non-optimal health:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Admin product catalog (add/edit/delete) | ❌ Not built | |
-| Tag-based product matching | ❌ Not built | |
-| User-facing product recommendations | ❌ Not built | |
+| Admin product catalog (add/edit/delete) | ✅ Built | AffiliateProductsTab.tsx — full CRUD, tag picker, active toggle. Built 2026-04-07. |
+| Tag-based product matching | ✅ Built | product_tags join table; matching via applicableTags set in EvaluationContext |
+| User-facing product recommendations | ✅ Built | AffiliateProductCards.tsx — tag-matched cards on Dashboard. Built 2026-04-07. |
 
 **Spec:**
 - DB: `affiliate_products` table (`id, name, description, image_url, affiliate_url, created_at`) + `product_tags` join table (`product_id, tag`)
@@ -498,8 +498,8 @@ Items are ordered by logical dependency. Last updated: 2026-04-01.
 | 22 | Exportable reports (user + corporate) | ✅ Built | CSV export built 2026-03-23; individual user PDF health report built 2026-04-07 (HealthReportModal.tsx) |
 | 23 | Lab marker trend charts | ✅ Built | Per-marker on Labs page; admin-configured named charts not yet built |
 | **Phase 6 – Monetization & HSA** | | 🔶 1/5 partial | |
-| 24 | Affiliate product catalog (Admin) | ❌ Not built | |
-| 25 | Affiliate product display (User) | ❌ Not built | |
+| 24 | Affiliate product catalog (Admin) | ✅ Built | AffiliateProductsTab.tsx — CRUD, tag picker, RLS. Migration: 20260407_create_affiliate_products.sql. Built 2026-04-07. |
+| 25 | Affiliate product display (User) | ✅ Built | AffiliateProductCards.tsx — tag-matched cards on Dashboard. Built 2026-04-07. |
 | 26 | Payment / subscription system | ❌ Not built | |
 | 27 | HSA reimbursement automation | 🔶 Partial | Detection done; document generation not built |
 | 28 | HSA bank connection | ❌ Not built | |

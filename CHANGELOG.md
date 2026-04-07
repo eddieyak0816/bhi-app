@@ -2,6 +2,30 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-07 — feat: F24 + F25 — Affiliate Product Catalog + User Display
+
+**What changed:**
+- New DB migration `db/migrations/20260407_create_affiliate_products.sql` — creates `affiliate_products` table (id, name, description, image_url, affiliate_url, is_active) and `product_tags` join table (product_id, tag). RLS enabled: authenticated users read active products; admins have full CRUD.
+- New `src/components/AffiliateProductsTab.tsx` — Admin Products tab:
+  - Full CRUD: create, edit, deactivate/activate, delete
+  - Tag picker with searchable dropdown using existing health tags (from `allowedTags`)
+  - Products with no tags show to all users; tagged products match on user result tags
+  - Inline form with name, description, image URL, affiliate URL, active toggle
+- New `src/components/AffiliateProductCards.tsx` — User-facing product recommendation cards:
+  - Fetches active products + their tags from Supabase
+  - Matches products whose tags overlap with `applicableTags` from EvaluationContext (tag-based only — no raw lab values)
+  - Products with no tags show to all users with lab results
+  - Card layout: image (if set), name, description, "Learn More" affiliate link (opens new tab)
+  - Hidden entirely when user has no applicable tags
+- `src/pages/Admin.tsx` — added "Products" tab button; renders `AffiliateProductsTab`
+- `src/pages/Dashboard.tsx` — renders `AffiliateProductCards` above Quick Actions when user has applicable tags
+
+**PHI compliance:** Product matching uses only tag names (e.g. `Normal_Glucose`) — never raw lab values, marker names, or user identity. Tags are de-identified health signals.
+
+**Action required:** Run `db/migrations/20260407_create_affiliate_products.sql` in Supabase Dashboard → SQL Editor before testing.
+
+---
+
 ## 2026-04-07 — feat: F22 — Individual User PDF Health Report
 
 **What changed:**
