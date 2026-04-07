@@ -274,7 +274,7 @@ If user metrics show non-optimal health:
 
 ## 13. Implementation Status Review
 
-> Last updated: 2026-03-23.
+> Last updated: 2026-04-01. Total: 50 built · 4 partial · 8 not built out of 62 items.
 > Legend: ✅ Built | 🔶 Partial | ❌ Not built
 
 ### Section 1 – Core Platform Goals
@@ -297,7 +297,7 @@ If user metrics show non-optimal health:
 | Public individual user accounts | ✅ Built | Email/password auth, profile, lab input, dashboard |
 | Lab upload / connect | ✅ Built | Manual entry + AI PDF upload built; direct lab API integrations skipped (blocked on agreements) |
 | Track personal health metrics | ✅ Built | Lab values stored, evaluated against rules, historical trend charts |
-| Anonymous national comparisons | ❌ Not built | No aggregate benchmark data; requires user volume |
+| Anonymous national comparisons | ✅ Built | National Benchmarks section on Dashboard — CDC/NHANES seed data for 15 markers; comparison arrow + optimal badge. Built 2026-03-31. |
 | Optional public profile (opt-in consent) | ✅ Built | Privacy toggle on Profile, Consent page, Public Profile preview |
 | Corporate portal / employer assignment | ✅ Built | Organizations + org_memberships, Employer page |
 | De-identified employer view | ✅ Built | Username, public_id, team, BHAS % only — no PHI |
@@ -315,7 +315,7 @@ If user metrics show non-optimal health:
 | AI-verified lab PDF upload | ✅ Built | Gemini → OpenRouter → Groq cascade; fuzzy marker matching; duplicate detection |
 | Biometric verification by clinician | 🔶 Partial | Biometric fields exist on Profile; no formal clinician attestation workflow for biometrics specifically |
 | CGM device integrations | ❌ Not built | Future — requires device partnerships |
-| VO2 Max calculator | ❌ Not built | Future |
+| VO2 Max calculator | ✅ Built | Rockport walk test, resting HR method, and direct lab entry — all convert to ACSM age/sex-adjusted percentile. Saves to VO2 Max Percentile marker. Built 2026-04-01. |
 
 ---
 
@@ -443,7 +443,7 @@ If user metrics show non-optimal health:
 | Team comparisons | ✅ Built | Team score summary on Employer page and Admin panel |
 | Score distribution / risk distribution | ✅ Built | BHAS distribution bar chart + health label count cards |
 | 12-week trend | ✅ Built | Org-average BHAS % line chart (last 12 weeks) |
-| Insurance negotiation reports | ❌ Not built | Formatted PDF/export for insurance negotiations |
+| Insurance negotiation reports | ✅ Built | 4-variant modal on Analytics tab: Org Summary, Risk Profile, CSV Export, Print/PDF. Aggregate-only, no PHI. Built 2026-04-01. |
 
 ---
 
@@ -456,13 +456,13 @@ If user metrics show non-optimal health:
 | Total BHAS score | ✅ Built | Both v1 (%) and v2.3 (out of 9.0) displayed |
 | Team ranking | ✅ Built | Leaderboard page + team summary on Employer page |
 | Corporate analytics dashboard | ✅ Built | Analytics tab on Employer page |
-| Exportable reports | ❌ Not built | CSV export and formatted reports not yet built |
+| Exportable reports | ✅ Built | De-identified CSV export (employer/leaderboard) + individual user PDF health report (HealthReportModal.tsx). |
 
 ---
 
 ### Summary & Recommended Build Order
 
-Items are ordered by logical dependency. Last updated: 2026-03-23.
+Items are ordered by logical dependency. Last updated: 2026-04-01.
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
@@ -491,11 +491,11 @@ Items are ordered by logical dependency. Last updated: 2026-03-23.
 | 17 | Auto team assignment (dynamic per-org teams) | ✅ Built | |
 | 18 | Team scoring display | ✅ Built | |
 | 18a | Admin org filters + sortable columns | ✅ Built | |
-| **Phase 5 – Analytics & Reporting** | | 🔶 3/5 complete | |
-| 19 | Anonymous national comparison benchmarks | ❌ Not built | Requires user data volume |
+| **Phase 5 – Analytics & Reporting** | | ✅ 5/5 complete · 1 partial | |
+| 19 | Anonymous national comparison benchmarks | ✅ Built | Dashboard National Benchmarks section — CDC/NHANES seed data for 15 markers. Built 2026-03-31. |
 | 20 | Corporate analytics dashboard | ✅ Built | Analytics tab on Employer page |
-| 21 | Insurance negotiation reports | ❌ Not built | Depends on analytics |
-| 22 | Exportable reports (user + corporate) | ❌ Not built | |
+| 21 | Insurance negotiation reports | ✅ Built | 4-variant modal (Org Summary, Risk Profile, CSV, Print/PDF). Built 2026-04-01. |
+| 22 | Exportable reports (user + corporate) | ✅ Built | CSV export built 2026-03-23; individual user PDF health report built 2026-04-07 (HealthReportModal.tsx) |
 | 23 | Lab marker trend charts | ✅ Built | Per-marker on Labs page; admin-configured named charts not yet built |
 | **Phase 6 – Monetization & HSA** | | 🔶 1/5 partial | |
 | 24 | Affiliate product catalog (Admin) | ❌ Not built | |
@@ -503,13 +503,13 @@ Items are ordered by logical dependency. Last updated: 2026-03-23.
 | 26 | Payment / subscription system | ❌ Not built | |
 | 27 | HSA reimbursement automation | 🔶 Partial | Detection done; document generation not built |
 | 28 | HSA bank connection | ❌ Not built | |
-| **Phase 7 – Future / Nice to Have** | | 🔶 3/5 complete | |
+| **Phase 7 – Future / Nice to Have** | | 🔶 4/5 complete | |
 | 29 | CGM device integrations | ❌ Not built | Requires device partnerships |
-| 30 | VO2 Max calculator | ❌ Not built | |
+| 30 | VO2 Max calculator | ✅ Built | Rockport walk, resting HR, direct entry → ACSM percentile. Built 2026-04-01. |
 | 31 | Advanced care planning status | ✅ Built | Done as part of Phase 8 |
 | 32 | Insulin usage tracking (Type 1) | ✅ Built | Done as part of Phase 8 |
 | 33 | Acute care visit tracking | ✅ Built | Done as part of Phase 8 |
-| **Phase 8 – BHAS v2.3 Scoring Engine** | | ✅ 12/13 complete | |
+| **Phase 8 – BHAS v2.3 Scoring Engine** | | ✅ 13/13 complete | |
 | 34 | New markers: Fasting Insulin, hs-CRP, VO2 Max % | ✅ Built | |
 | 35 | Height field on profiles | ✅ Built | |
 | 36 | Type 1 Diabetes flag on profiles | ✅ Built | |
@@ -522,16 +522,18 @@ Items are ordered by logical dependency. Last updated: 2026-03-23.
 | 43 | Store derived values (bhas_v2_scores table) | ✅ Built | |
 | 44 | Score interpretation label on Dashboard | ✅ Built | |
 | 45 | Leaderboard with tie-breaker ranking | ✅ Built | |
-| 46 | CSV export for employer reporting | ❌ Not built | |
+| 46 | CSV export for employer reporting | ✅ Built | De-identified member + leaderboard CSV exports. Built 2026-03-23. |
 | **Phase 9 – Scoring Engine Improvements** | | ✅ 2/2 complete | |
 | 47 | Remove hardcoded OPTIMAL_TAGS / IMPROVEMENT_TAGS | ✅ Built | scoring_tier column on tags table; EvaluationContext + evaluateRules.ts + server/index.js all read from DB. Migration: 20260323_add_scoring_tier_to_tags.sql. New Marker Wizard now fully self-contained. |
 | 48 | Multiple scoring ranges per tier in Wizard | ✅ Built | Step 2 renders per-tier sections with + Add Range / × Remove buttons. Validation requires ≥1 valid Optimal row. No backend changes needed. |
-| **Phase 10 – Pending / Backlog** | | 🔶 2/8 complete | |
+| **Phase 10 – Pending / Backlog** | | 🔶 7/10 complete | |
 | 49 | Resource Library — thumbnail/image per resource | ✅ Built | Supabase Storage bucket `resource-thumbnails` (public). `thumbnail_url` on `resources` table. Admin upload widget in edit modal. Grid/list/detail views all show thumbnail. Migration: `20260323_add_thumbnail_to_resources.sql`. |
-| 50 | Rebrand: BHI → NHL (National Health League) | ❌ Not built | Rename all UI text, branding, Public ID prefix, BHAS references, DB seeds, and docs from "BHI"/"Balanced Health Institute" to "NHL"/"National Health League". **Scope confirmed by client 2026-03-24.** Target domain: `national-health-league.com`. Scope includes: all UI text, logo/branding, Public ID prefix (BHI-XXXX-XXXX → NHL-XXXX-XXXX), BHAS name references, localStorage keys (`bhi-*` → `nhl-*`), DB seed data, and all project docs. Public ID prefix change requires a DB migration for existing records. |
-| 51 | Lab data retention policy (1-year limit) | ❌ Not built | Only retain lab marker results for 12 months. Implement automated purge (pg_cron or Supabase scheduled function) or admin purge tool. Update stale-data logic and trend charts accordingly |
+| 50 | Rebrand: BHI → NHL (National Health League) | ✅ Built | All UI text, public ID prefix (NHL-XXXX-XXXX), localStorage keys (nhl-*), DB migration run. Built 2026-03-31. |
+| 51 | Lab data retention policy (1-year limit) | ✅ Built | pg_cron migration created (20260331_lab_data_retention_1yr.sql). ⚠️ Must be run in Supabase Dashboard. |
 | 52 | Research: direct lab API integrations (Labcorp, Quest, Mako, Rhythm) | ❌ Not built | Investigate patient-facing API availability, SMART on FHIR / OAuth flows, cost, and feasibility before committing to F13 |
-| 53 | Review: "Add Provider Verification" section on Labs page | ❌ Not reviewed | Verify UX and functionality of the collapsible provider verification section on the Lab Results entry page |
-| 54 | Test: "Add Category" pill in Admin → Resources tab | ❌ Not tested | Verify category creation, list display, and resource assignment all work correctly |
-| 55 | Profile sex selector: remove "Other" | ✅ Built | Only Male and Female shown (2026-03-20) |
-| 56 | Sort all dropdown filter options alphabetically | ❌ Not built | Type, Tag, Category dropdowns in Library and Admin filters should present options in alphabetical order. Currently in DB insertion order. Fix in ResourcesPage.tsx and Admin.tsx. |
+| 53 | Review: "Add Provider Verification" section on Labs page | ✅ Reviewed | Confirmed complete and correct — no issues found. 2026-03-31. |
+| 54 | Test: "Add Category" pill in Admin → Resources tab | ✅ Tested | Confirmed working. 2026-03-31. |
+| 55 | Profile sex selector: remove "Other" | ✅ Built | Only Male and Female shown (2026-03-20). |
+| 56 | Sort all dropdown filter options alphabetically | ✅ Built | Type, Tag, Category dropdowns sorted alphabetically in ResourcesPage and Admin. Built 2026-03-31. |
+| 57 | Resources page — show results in alphabetical order by title | ✅ Built | Built 2026-03-31. |
+| 58 | Admin Add Category modal — full list with alphabetical sort | ✅ Built | Built 2026-03-31. |

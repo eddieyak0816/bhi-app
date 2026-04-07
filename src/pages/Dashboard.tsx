@@ -4,6 +4,7 @@ import { useEvaluation } from '../context/EvaluationContext'
 import { useResults } from '../context/ResultsContext'
 import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
+import HealthReportModal from '../components/HealthReportModal'
 import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
 import { supabase } from '../lib/supabase'
 import { getBenchmark } from '../utils/nationalBenchmarks'
@@ -24,6 +25,16 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
 
   // Get first name from full name
   const firstName = userName?.split(' ')[0] || ''
+
+  const [showHealthReport, setShowHealthReport] = useState(false)
+  const [publicId, setPublicId] = useState<string | null>(null)
+
+  // F22 — fetch public_id once for use in health report
+  useEffect(() => {
+    if (!user?.id) return
+    supabase.from('profiles').select('public_id').eq('id', user.id).single()
+      .then(({ data }) => { if (data?.public_id) setPublicId(data.public_id) })
+  }, [user?.id])
 
   // BHAS v2.3 — load profile fields and compute score
   const [bhasV2Result, setBhasV2Result] = useState<BhasV2Result | null>(() => {
@@ -657,8 +668,37 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
           >
             ⚙️ Edit Profile
           </button>
+          {results.length > 0 && (
+            <button
+              style={{
+                background: theme.card,
+                color: theme.text,
+                border: `1.5px solid ${theme.borderColor}`,
+                borderRadius: 6,
+                padding: '12px 16px',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+              onClick={() => setShowHealthReport(true)}
+            >
+              📄 Health Report
+            </button>
+          )}
         </div>
       </div>
+
+      {showHealthReport && (
+        <HealthReportModal
+          userName={userName}
+          publicId={publicId}
+          bhasResult={bhasResult}
+          bhasV2Result={bhasV2Result}
+          results={results}
+          onClose={() => setShowHealthReport(false)}
+          theme={theme}
+        />
+      )}
     </div>
   )
 }

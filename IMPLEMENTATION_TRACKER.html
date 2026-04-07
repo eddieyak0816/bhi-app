@@ -185,13 +185,13 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-04-01 — F30 VO2 Max calculator built (Rockport walk, resting HR, direct entry; ACSM percentile lookup; saves to VO2 Max Percentile marker). F21 insurance reports built (4 variants). Phase 5 now 5/5, Phase 7 now 4/5. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-04-07 — F22 individual user PDF health report built (BHAS v1 + v2.3 scores, per-marker breakdown, national benchmarks; print/PDF via window.open()). Phase 5 now 6/6. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-03-31 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">50</span>  Built / Done</div>
-  <div class="stat stat-partial"> <span class="num" id="cnt-partial">4</span>  Partial</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">51</span>  Built / Done</div>
+  <div class="stat stat-partial"> <span class="num" id="cnt-partial">3</span>  Partial</div>
   <div class="stat stat-todo">    <span class="num" id="cnt-todo">8</span>  Not Built / Skipped</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">62</span>  Total Items</div>
 </div>
@@ -509,7 +509,7 @@
         <div class="phase-title">Analytics &amp; Reporting</div>
         <div class="phase-desc">Population benchmarks, corporate dashboards, insurance reports, and exportable outputs</div>
       </div>
-      <div class="phase-progress">5 / 5 done · 1 partial</div>
+      <div class="phase-progress">6 / 6 done</div>
     </div>
     <div class="items">
 
@@ -540,13 +540,13 @@
         <span class="item-status status-done">✅ Built 2026-04-01</span>
       </div>
 
-      <div class="item partial" data-status="partial">
+      <div class="item done" data-status="done">
         <div class="item-num">22</div>
         <div class="item-body">
           <div class="item-title">Exportable reports — user and corporate</div>
-          <div class="item-note">CSV export built 2026-03-23 for employer members and leaderboard (de-identified). PDF export of individual user health summaries and formatted corporate reports not yet built.</div>
+          <div class="item-note">CSV export built 2026-03-23 (de-identified employer/leaderboard). Individual user PDF health report built 2026-04-07 — HealthReportModal.tsx: BHAS v1 + v2.3 scores, per-marker breakdown, national benchmarks; window.open() print/PDF.</div>
         </div>
-        <span class="item-status status-partial">⚠️ Partial — CSV export built 2026-03-23; PDF reports pending</span>
+        <span class="item-status status-done">✅ Done — 2026-04-07</span>
       </div>
 
       <div class="item done" data-status="done">
@@ -974,8 +974,8 @@
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-03-31 (F56) &nbsp;·&nbsp;
-  47 built · 4 partial · 11 not built/skipped out of 62 total items &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-04-07 (F22) &nbsp;·&nbsp;
+  51 built · 3 partial · 8 not built/skipped out of 62 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
   <br><br>
