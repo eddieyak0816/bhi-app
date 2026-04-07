@@ -2,6 +2,18 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-07 — fix: Affiliate product display — auth deadlock on navigation
+
+**What changed:**
+- `src/lib/supabase.ts` — added `getStoredJwt()` — reads JWT directly from localStorage without calling `supabase.auth.getSession()`. Removed `getSession()` call from `visibilitychange` handler (was deadlocking the Supabase JS auth client when tabs regained focus).
+- `src/components/AffiliateProductsTab.tsx` — replaced Supabase JS client reads with plain `fetch` + `getStoredJwt()`. Fixes products disappearing after navigating away and back to Admin → Products tab.
+- `src/components/AffiliateProductCards.tsx` — same fix. Fixes Recommended Products disappearing on Dashboard after clicking an affiliate link and returning.
+- `db/migrations/20260407_fix_affiliate_rls.sql` — fixed RLS policies: split `affiliate_products_read` into `affiliate_products_read_active` (users see active only) and `affiliate_products_read_admin` (admins see all). Postgres `FOR ALL` policies do not override `FOR SELECT` — separate policies required.
+
+**Root cause:** Supabase JS v2 auth client deadlocks when `getSession()` is called concurrently with an ongoing auth state change (e.g. `SIGNED_IN` event on remount). Plain `fetch` with a stored JWT bypasses this entirely.
+
+---
+
 ## 2026-04-07 — feat: F24 + F25 — Affiliate Product Catalog + User Display
 
 **What changed:**
