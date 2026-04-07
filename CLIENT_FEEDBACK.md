@@ -192,6 +192,26 @@
 - Goal: employers could pay for app utilization straight through payroll deductions
 - **Dev note:** The app itself does not need to "implement" tax codes — this is primarily a legal/plan document matter. App may need to support invoicing, receipts, or eligible expense documentation.
 
+#### Physician-Recommended App Strategy ⭐ REVIEW BEFORE FINAL DELIVERY
+
+**Key advantage:** Damon is a physician. This allows the NHL App to be positioned as a physician-prescribed medical monitoring tool rather than a general wellness app — a critical distinction for IRS qualification under §105/§213.
+
+**Steps Damon needs to take (outside the app):**
+1. **Create a Letter of Medical Necessity template** — a one-page document a physician signs per patient recommending the NHL App as part of their treatment or preventive care plan. Should reference specific diagnosable conditions being monitored (metabolic syndrome, pre-diabetes, cardiovascular risk, insulin resistance).
+2. **Position the app clinically** — document in his employer service agreements that the NHL App is a cardiometabolic monitoring tool, not a general wellness program. The BHAS metrics (HOMA-IR, hs-CRP, TG/HDL) support this framing directly.
+3. **Work with a benefits attorney** to draft the HRA plan document with language covering physician-prescribed health monitoring services.
+4. **Keep records** — each employee submitting the app for HRA reimbursement should have a signed Letter of Medical Necessity on file with the employer.
+5. **Optional:** Document the app order in the patient's clinical chart during an office visit — strongest possible paper trail for IRS and insurance purposes.
+
+**What the app needs to build to support this:**
+- A simple **employer invoice / subscription receipt** PDF: org name, number of enrolled employees, cost per employee, billing period. No individual PHI.
+- This is the only app-side requirement. The clinical documentation process lives outside the app.
+
+**Why this matters:**
+- Most wellness apps cannot qualify under §105/§213. The app's cardiometabolic focus + Damon's physician status puts it in a different category than gym memberships or step trackers.
+- This is a significant product differentiator and a strong selling point for employer clients.
+- Attorney review is essential before Damon begins offering this to employers.
+
 **Questions for Damon:**
 - **[Q]** Have you confirmed with a benefits attorney or CPA that the app qualifies as a reimbursable expense under §105/§125/§213? This will determine exactly what documentation the app needs to generate.
 - **[Q]** Do you need the app to generate invoices or payment receipts for employers (e.g., a PDF receipt showing "NHL App subscription — $X/employee/month")?
@@ -247,6 +267,8 @@
 | EOB field (tie-breaker #3) | Ready to build | New profile field: acute care visits + medical claims |
 | Brief health assessment | Needs design | Lifestyle inputs + symptom checklist |
 | Tax code compliance (§105/§125/§213) | Needs research | What app changes (if any) are required |
+| Employer invoice / receipt PDF | Ready to build (pending Damon confirmation) | Aggregate only — org name, employee count, cost, billing period. No PHI. |
+| Physician-recommended app strategy | Review before delivery | Damon needs Letter of Medical Necessity template + attorney to draft HRA plan doc. App only needs invoice/receipt PDF. |
 | League / cross-org leaderboard | Needs design | New layer above orgs |
 | Broker role | Needs design | New user role in org system |
 | Virtual provider links per org | Needs design | Org-specific affiliate links |
