@@ -7,7 +7,10 @@
  */
 
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, getStoredJwt } from '../lib/supabase'
+
+const PRODUCT_IMAGE_BUCKET = 'resource-thumbnails'
+const PRODUCT_IMAGE_PREFIX = 'product-images'
 
 interface Product {
   id: string
@@ -29,7 +32,7 @@ interface Props {
 
 export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
   const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -39,6 +42,8 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
   const [tagInput, setTagInput] = useState('')
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false)
   const tagContainerRef = useRef<HTMLDivElement>(null)
+  const [imageUploading, setImageUploading] = useState(false)
+  const [imageError, setImageError] = useState<string | null>(null)
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -59,16 +64,30 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
     setLoading(true)
     setError(null)
     try {
-      const { data: prods, error: pe } = await supabase
-        .from('affiliate_products')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (pe) throw pe
+      // Bypass the Supabase JS client entirely — read JWT directly from localStorage.
+      // This avoids auth deadlocks caused by concurrent getSession() calls in Admin.tsx
+      // when the component mounts/remounts.
+      const jwt = getStoredJwt()
+      if (!jwt) throw new Error('Not authenticated')
 
-      const { data: ptRows, error: pte } = await supabase
-        .from('product_tags')
-        .select('product_id, tag')
-      if (pte) throw pte
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const headers = {
+        'apikey': anonKey,
+        'Authorization': `Bearer ${jwt}`,
+        'Content-Type': 'application/json',
+      }
+
+      const [prodsResp, ptResp] = await Promise.all([
+        fetch(`${supabaseUrl}/rest/v1/affiliate_products?select=*&order=created_at.desc`, { headers }),
+        fetch(`${supabaseUrl}/rest/v1/product_tags?select=product_id,tag`, { headers }),
+      ])
+
+      if (!prodsResp.ok) throw new Error(`Products fetch failed: ${prodsResp.status}`)
+      if (!ptResp.ok) throw new Error(`Tags fetch failed: ${ptResp.status}`)
+
+      const prods = await prodsResp.json()
+      const ptRows = await ptResp.json()
 
       const tagMap: Record<string, string[]> = {}
       for (const row of ptRows ?? []) {
@@ -76,9 +95,9 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
         tagMap[row.product_id].push(row.tag)
       }
 
-      setProducts((prods ?? []).map(p => ({ ...p, tags: tagMap[p.id] ?? [] })))
+      setProducts((prods ?? []).map((p: any) => ({ ...p, tags: tagMap[p.id] ?? [] })))
     } catch (e: any) {
-      setError(e.message)
+      setError(e.message ?? 'Failed to load products')
     } finally {
       setLoading(false)
     }
@@ -221,8 +240,67 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
           </div>
 
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>Image URL (optional)</label>
-            <input style={input} value={form.image_url ?? ''} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://..." />
+            <label style={{ display: 'block', fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>Product Image (optional)</label>
+
+            {/* Preview */}
+            {form.image_url && (
+              <div style={{ marginBottom: 8, position: 'relative', display: 'inline-block' }}>
+                <img src={form.image_url} alt="Preview" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, border: `1px solid ${theme.borderColor}`, display: 'block' }} />
+                <button
+                  onClick={() => { setForm(f => ({ ...f, image_url: '' })); setImageError(null) }}
+                  style={{ position: 'absolute', top: -6, right: -6, background: '#dc2626', color: '#fff', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', fontSize: 13, lineHeight: '20px', textAlign: 'center', padding: 0 }}
+                >×</button>
+              </div>
+            )}
+
+            {/* Upload button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <label style={{ cursor: imageUploading ? 'wait' : 'pointer' }}>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  style={{ display: 'none' }}
+                  disabled={imageUploading}
+                  onChange={async e => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    if (file.size > 5 * 1024 * 1024) { setImageError('Image must be under 5 MB'); return }
+                    setImageUploading(true)
+                    setImageError(null)
+                    try {
+                      const ext = file.name.split('.').pop() || 'jpg'
+                      // Use product id if editing, otherwise a timestamp for new products
+                      const name = editingId ?? `new-${Date.now()}`
+                      const path = `${PRODUCT_IMAGE_PREFIX}/${name}.${ext}`
+                      const { error: upErr } = await supabase.storage
+                        .from(PRODUCT_IMAGE_BUCKET)
+                        .upload(path, file, { upsert: true, contentType: file.type })
+                      if (upErr) throw upErr
+                      const { data: urlData } = supabase.storage
+                        .from(PRODUCT_IMAGE_BUCKET)
+                        .getPublicUrl(path)
+                      setForm(f => ({ ...f, image_url: urlData.publicUrl }))
+                    } catch (err: any) {
+                      setImageError(err.message || 'Upload failed')
+                    } finally {
+                      setImageUploading(false)
+                      e.target.value = ''
+                    }
+                  }}
+                />
+                <span style={{ background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 600, color: theme.text, pointerEvents: 'none', display: 'inline-block' }}>
+                  {imageUploading ? 'Uploading…' : form.image_url ? 'Replace Image' : 'Upload Image'}
+                </span>
+              </label>
+              <span style={{ fontSize: 12, color: theme.textMuted }}>or paste a URL:</span>
+              <input
+                style={{ ...input, flex: 1, minWidth: 180 }}
+                value={form.image_url ?? ''}
+                onChange={e => { setForm(f => ({ ...f, image_url: e.target.value })); setImageError(null) }}
+                placeholder="https://..."
+              />
+            </div>
+            {imageError && <div style={{ color: '#dc2626', fontSize: 12, marginTop: 4 }}>{imageError}</div>}
           </div>
 
           {/* Tag picker */}

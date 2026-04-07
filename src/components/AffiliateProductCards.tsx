@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { getStoredJwt } from '../lib/supabase'
 
 interface Product {
   id: string
@@ -33,16 +33,24 @@ export default function AffiliateProductCards({ applicableTags, theme }: Props) 
     async function load() {
       setLoading(true)
       try {
-        const { data: prods } = await supabase
-          .from('affiliate_products')
-          .select('id, name, description, image_url, affiliate_url')
-          .eq('is_active', true)
+        const jwt = getStoredJwt()
+        if (!jwt) { setProducts([]); return }
 
-        const { data: ptRows } = await supabase
-          .from('product_tags')
-          .select('product_id, tag')
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+        const headers = {
+          'apikey': anonKey,
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json',
+        }
 
-        if (!prods) { setProducts([]); return }
+        const [prodsResp, ptResp] = await Promise.all([
+          fetch(`${supabaseUrl}/rest/v1/affiliate_products?select=id,name,description,image_url,affiliate_url&is_active=eq.true`, { headers }),
+          fetch(`${supabaseUrl}/rest/v1/product_tags?select=product_id,tag`, { headers }),
+        ])
+
+        const prods = prodsResp.ok ? await prodsResp.json() : []
+        const ptRows = ptResp.ok ? await ptResp.json() : []
 
         const tagMap: Record<string, string[]> = {}
         for (const row of ptRows ?? []) {
@@ -50,13 +58,10 @@ export default function AffiliateProductCards({ applicableTags, theme }: Props) 
           tagMap[row.product_id].push(row.tag)
         }
 
-        // A product matches if:
-        //  (a) it has no tags (show to everyone), OR
-        //  (b) at least one of its tags is in the user's applicableTags
         const tagSet = new Set(applicableTags)
-        const matched = prods
-          .map(p => ({ ...p, tags: tagMap[p.id] ?? [] }))
-          .filter(p => p.tags.length === 0 || p.tags.some(t => tagSet.has(t)))
+        const matched = (prods ?? [])
+          .map((p: any) => ({ ...p, tags: tagMap[p.id] ?? [] }))
+          .filter((p: any) => p.tags.length === 0 || p.tags.some((t: string) => tagSet.has(t)))
 
         setProducts(matched)
       } catch {

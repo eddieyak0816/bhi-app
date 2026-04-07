@@ -40,14 +40,6 @@ if (typeof window !== 'undefined') {
       console.log('[Supabase] Tab hidden')
     } else {
       lastVisibleTime = Date.now()
-      console.log('[Supabase] Tab visible again, refreshing connection...')
-
-      // Refresh auth session to wake up the connection
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        console.log('[Supabase] Session refreshed:', session ? 'active' : 'none')
-      }).catch(err => {
-        console.warn('[Supabase] Failed to refresh session:', err)
-      })
     }
   })
 }
@@ -63,6 +55,26 @@ export async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Pr
       setTimeout(() => reject(new Error(`Query timeout after ${timeoutMs}ms`)), timeoutMs)
     )
   ])
+}
+
+/**
+ * Gets the current JWT from localStorage — does NOT call supabase.auth.getSession().
+ * Safe to call at any time without risk of deadlocking the auth client.
+ */
+export function getStoredJwt(): string | null {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        const raw = localStorage.getItem(key)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          return parsed?.access_token ?? null
+        }
+      }
+    }
+  } catch {}
+  return null
 }
 
 /**
