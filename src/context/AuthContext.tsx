@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, getStoredJwt, getStoredSession } from '../lib/supabase'
 import { generatePublicId } from '../utils/publicId'
 
 export type UserRole = 'user' | 'admin' | 'super_admin'
@@ -33,73 +33,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
 
-    // Check for existing session first
+    // Read JWT directly from localStorage — never calls getSession() which can
+    // deadlock the auth client if a SIGNED_IN event is already in-flight.
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        console.log('[Auth] getSession result:', session?.user?.id, error)
+        const jwt = getStoredJwt()
+        console.log('[Auth] JWT found in localStorage:', !!jwt)
 
-        if (!mounted) return
-
-        if (error) {
-          console.error('[Auth] getSession error:', error)
-          setLoading(false)
-          initializedRef.current = true
+        if (!jwt) {
+          console.log('[Auth] No stored JWT — not logged in')
+          if (mounted) {
+            setLoading(false)
+            initializedRef.current = true
+          }
           return
         }
 
-        if (session?.user) {
-          // Set basic user info immediately
-          const basicUser = {
-            id: session.user.id,
-            email: session.user.email || '',
-            name: session.user.user_metadata?.name || '',
-            role: 'user' as UserRole,
+        // Decode user id and email from the JWT payload (no network call)
+        let userId: string
+        let userEmail: string
+        let userName: string
+        try {
+          const payload = JSON.parse(atob(jwt.split('.')[1]))
+          userId = payload.sub
+          userEmail = payload.email || ''
+          userName = payload.user_metadata?.name || ''
+        } catch {
+          console.warn('[Auth] Could not decode JWT payload — clearing session')
+          if (mounted) {
+            setLoading(false)
+            initializedRef.current = true
           }
-          setUser(basicUser)
-          console.log('[Auth] Session found, user set')
+          return
+        }
 
-          // Fetch profile for role - add retry logic
-          const fetchProfile = async (retries = 3): Promise<void> => {
-            for (let i = 0; i < retries; i++) {
-              try {
-                console.log(`[Auth] Fetching profile (attempt ${i + 1})...`)
-                const { data: profile, error: profileError } = await supabase
-                  .from('profiles')
-                  .select('name, role')
-                  .eq('id', session.user.id)
-                  .single()
+        // Hydrate the Supabase JS client session so its own queries (insert/update/delete)
+        // can authenticate via RLS. setSession() does not call getSession().
+        const storedSession = getStoredSession()
+        if (storedSession) {
+          await supabase.auth.setSession(storedSession)
+          console.log('[Auth] Supabase client session hydrated')
+        }
 
-                if (!mounted) return
+        // Set basic user immediately so the UI unblocks
+        if (mounted) {
+          setUser({ id: userId, email: userEmail, name: userName, role: 'user' })
+          console.log('[Auth] User set from JWT:', userId)
+        }
 
-                if (!profileError && profile) {
-                  console.log('[Auth] Profile loaded successfully, role:', profile.role)
-                  setUser({
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    name: profile.name || '',
-                    role: (profile.role || 'user') as UserRole,
-                  })
-                  return
-                } else if (profileError) {
-                  console.warn(`[Auth] Profile fetch error (attempt ${i + 1}):`, profileError.message, profileError.code)
-                  // If it's a "not found" error, the profile might not exist yet
-                  if (profileError.code === 'PGRST116' && i < retries - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 500))
-                    continue
-                  }
-                }
-              } catch (profileErr) {
-                console.warn(`[Auth] Profile fetch exception (attempt ${i + 1}):`, profileErr)
-                if (i < retries - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 500))
-                }
+        // Fetch profile (name + role) via plain fetch — bypasses auth client entirely
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+        const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+        for (let i = 0; i < 3; i++) {
+          try {
+            console.log(`[Auth] Fetching profile (attempt ${i + 1})...`)
+            const res = await fetch(
+              `${SUPABASE_URL}/rest/v1/profiles?select=name,role&id=eq.${userId}&limit=1`,
+              {
+                headers: {
+                  'apikey': SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${jwt}`,
+                  'Accept': 'application/json',
+                },
               }
+            )
+            if (!mounted) return
+            if (res.ok) {
+              const rows = await res.json()
+              const profile = rows?.[0]
+              if (profile) {
+                console.log('[Auth] Profile loaded, role:', profile.role)
+                setUser({ id: userId, email: userEmail, name: profile.name || userName, role: (profile.role || 'user') as UserRole })
+                break
+              }
+            } else if (res.status === 401) {
+              // JWT expired — clear user so login page shows
+              console.warn('[Auth] JWT expired (401) — clearing session')
+              if (mounted) setUser(null)
+              break
             }
+          } catch (profileErr) {
+            console.warn(`[Auth] Profile fetch exception (attempt ${i + 1}):`, profileErr)
+            if (i < 2) await new Promise(r => setTimeout(r, 500))
           }
-          await fetchProfile()
-        } else {
-          console.log('[Auth] No existing session')
         }
 
         if (mounted) {

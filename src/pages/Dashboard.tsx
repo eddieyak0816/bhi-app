@@ -42,7 +42,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
     // Seed from sessionStorage so the panel is visible immediately on remount
     // while the async profile fetch runs in the background.
     try {
-      const cached = sessionStorage.getItem('nhl-bhas-v2-result')
+      const cached = sessionStorage.getItem('nhl-bhas-v23-result')
       return cached ? JSON.parse(cached) : null
     } catch { return null }
   })
@@ -86,7 +86,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
         )
         setBhasV2Result(v2)
         // Cache so the panel reappears instantly on next remount
-        try { sessionStorage.setItem('nhl-bhas-v2-result', JSON.stringify(v2)) } catch {}
+        try { sessionStorage.setItem('nhl-bhas-v23-result', JSON.stringify(v2)) } catch {}
 
         // F43: Persist derived values for analytics / leaderboard
         if (v2.hasEnoughData) {
@@ -252,7 +252,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                 {bhasV2Result.totalScore.toFixed(1)}
               </div>
               <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                / 9.0
+                / 7.0
               </div>
             </div>
 
@@ -279,7 +279,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                 </span>
               </div>
               <div style={{ fontSize: 12, color: theme.textMuted }}>
-                {bhasV2Result.metricScores.length} of 9 metrics scored · uses derived ratios (HOMA-IR, TG/HDL, WtHR, Grip Ratio)
+                {bhasV2Result.metricScores.length} of 7 metrics scored · uses derived ratios (HOMA-IR, TG/HDL, WtHR)
               </div>
             </div>
           </div>

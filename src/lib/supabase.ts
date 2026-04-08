@@ -78,6 +78,28 @@ export function getStoredJwt(): string | null {
 }
 
 /**
+ * Gets both access_token and refresh_token from localStorage.
+ * Used to hydrate the Supabase JS client session without calling getSession().
+ */
+export function getStoredSession(): { access_token: string; refresh_token: string } | null {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        const raw = localStorage.getItem(key)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (parsed?.access_token && parsed?.refresh_token) {
+            return { access_token: parsed.access_token, refresh_token: parsed.refresh_token }
+          }
+        }
+      }
+    }
+  } catch {}
+  return null
+}
+
+/**
  * Makes a direct fetch to Supabase REST API, bypassing the JS client
  * This is more reliable when the client connection is stale
  */
