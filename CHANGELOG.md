@@ -2,6 +2,37 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-07 — feat: BHAS v2.3 spec update + Supplements tab + auth deadlock fix + Lab filter UX
+
+**What changed:**
+
+### BHAS v2.3 scoring update (`src/utils/bhasV2.ts`, `src/utils/evaluateRules.ts`)
+- Max score 9.0 → **7.0** (per Damon spec)
+- **VO2 Max Percentile** and **Grip Ratio** removed from scored metrics — now tracked as biometrics only (`biometrics` field on result)
+- HOMA-IR thresholds updated: Optimal <2.0, Improvement 2.0–3.0, Out of Range ≥3.0 (was 1.5/2.5)
+- Score interpretation bands updated: Optimal ≥6.0, Healthy ≥5.0, Needs Improvement ≥4.0, High Risk <4.0
+- Tie-breaker #2 changed from Grip Ratio → Grip Strength; #3 = acute visits; #4 = hs-CRP
+- `Optimal_Grip`, `Excellent_VO2`, `Low_Normal_Grip`, `Average_VO2` removed from hardcoded scoring sets in `evaluateRules.ts`
+- Dashboard UI updated: `/ 9.0` → `/ 7.0`, `of 9` → `of 7`, description updated, sessionStorage cache key bumped to `nhl-bhas-v23-result`
+- DB migration: `20260407_bhas_v23_homa_ir_thresholds.sql` — updates Fasting Insulin logic rules in Supabase
+
+### Supplements nav dropdown (`src/components/Layout.tsx`)
+- "25% Off Supplements" dropdown added to top nav, right of existing nav items
+- Two external links: Fullscript + Biote (both open in new tab)
+- Closes on outside click; theme-aware hover states
+
+### Auth deadlock fix (`src/context/AuthContext.tsx`, `src/lib/supabase.ts`)
+- Removed `supabase.auth.getSession()` from `AuthContext` mount `useEffect` — was deadlocking the Supabase JS auth client when called concurrently with a `SIGNED_IN` event
+- Replaced with: read JWT from localStorage via `getStoredJwt()`, decode user id/email from JWT payload, call `supabase.auth.setSession()` to hydrate the client's internal session, fetch profile via plain `fetch` with `Authorization: Bearer`
+- Added `getStoredSession()` helper to `supabase.ts` (returns both `access_token` + `refresh_token`)
+- Fixes: "Log New Result" not appearing on first click, Save Result silently failing (RLS was rejecting unauthenticated inserts), any auth-gated UI requiring a refresh to work
+
+### Lab Results filter UX (`src/pages/LabsPage.tsx`)
+- "Show all" button appears inline next to "History: X" heading when a marker filter is active
+- Clicking clears the filter; original click-to-toggle on marker chips unchanged
+
+---
+
 ## 2026-04-07 — fix: Affiliate product display — auth deadlock on navigation
 
 **What changed:**

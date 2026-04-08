@@ -185,7 +185,7 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-04-07 — F24 + F25 affiliate product catalog (Admin CRUD) + user-facing tag-matched product cards built. Phase 6 now 2/5. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-04-07 — BHAS v2.3 spec update (max 7.0, HOMA-IR thresholds, remove VO2/Grip from scoring), Supplements nav dropdown, auth deadlock fix (getSession → getStoredJwt + setSession), Lab Results filter "Show all" button. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-03-31 -->
@@ -571,9 +571,18 @@
         <div class="phase-title">Monetization, Affiliate Products &amp; HSA Reimbursement</div>
         <div class="phase-desc">Affiliate product catalog, payment gate, medical necessity document generation, and HSA bank submission</div>
       </div>
-      <div class="phase-progress">2 / 5 done</div>
+      <div class="phase-progress">3 / 6 done</div>
     </div>
     <div class="items">
+
+      <div class="item done" data-status="done">
+        <div class="item-num">59</div>
+        <div class="item-body">
+          <div class="item-title">Supplements nav dropdown — "25% Off Supplements" with Fullscript + Biote links</div>
+          <div class="item-note">Built 2026-04-07. Layout.tsx: dropdown button added to top nav bar, right of existing nav items. Opens a styled dropdown with two external links: Fullscript (us.fullscript.com/welcome/ddilorenzo1773884970) and Biote (patients.shopbiote.com). Both open in new tab. Closes on outside click. Theme-aware hover states. No DB changes.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-04-07</span>
+      </div>
 
       <div class="item done" data-status="done">
         <div class="item-num">24</div>
@@ -698,7 +707,7 @@
         <div class="item-num">40</div>
         <div class="item-body">
           <div class="item-title">BHAS v2.3 scoring engine — derived ratio scoring (parallel)</div>
-          <div class="item-note">Implemented as src/utils/bhasV2.ts — runs in parallel with v1 engine (evaluateRules.ts unchanged). calculateBhasV2Score() computes HOMA-IR, TG/HDL, Grip Ratio, WtHR, Insulin Units/kg. Max score = 9.0. Dashboard shows v2.3 panel when ≥4 of 9 metrics are scoreable.</div>
+          <div class="item-note">Implemented as src/utils/bhasV2.ts — runs in parallel with v1 engine (evaluateRules.ts unchanged). calculateBhasV2Score() computes HOMA-IR, TG/HDL, WtHR, Insulin Units/kg. Max score = 7.0 (updated 2026-04-07 per Damon spec: VO2 Max + Grip Ratio removed from scoring, moved to biometric tracking only). Dashboard shows v2.3 panel when ≥4 of 7 metrics are scoreable. HOMA-IR thresholds updated: Optimal &lt;2.0, Improvement 2.0–3.0, Out of Range ≥3.0. Score bands updated: Optimal ≥6.0, Healthy ≥5.0, Needs Improvement ≥4.0, High Risk &lt;4.0. Tie-breaker #2 changed from Grip Ratio → Grip Strength. DB migration: 20260407_bhas_v23_homa_ir_thresholds.sql.</div>
         </div>
         <span class="item-status status-done">✅ Built 2026-03-17</span>
       </div>
@@ -734,7 +743,7 @@
         <div class="item-num">44</div>
         <div class="item-body">
           <div class="item-title">Score interpretation label on Dashboard</div>
-          <div class="item-note">BHAS v2.3 panel on Dashboard shows colored label badge: Optimal (≥8.0), Healthy (≥6.0), Needs Improvement (≥4.0), High Risk (&lt;4.0). Displays score/9.0, metric chips with derived value tooltips, and missing input hints.</div>
+          <div class="item-note">BHAS v2.3 panel on Dashboard shows colored label badge: Optimal (≥6.0), Healthy (≥5.0), Needs Improvement (≥4.0), High Risk (&lt;4.0). Displays score/7.0, metric chips with derived value tooltips, and missing input hints. Updated 2026-04-07 per Damon spec (was Optimal ≥8.0, Healthy ≥6.0, max 9.0).</div>
         </div>
         <span class="item-status status-done">✅ Built 2026-03-17</span>
       </div>
@@ -874,7 +883,7 @@
         <div class="phase-title">Backlog &amp; Pending Items</div>
         <div class="phase-desc">Items flagged for review, testing, research, or future builds — added 2026-03-23</div>
       </div>
-      <div class="phase-progress">5 / 10 done</div>
+      <div class="phase-progress">7 / 12 done</div>
     </div>
     <div class="items">
 
@@ -968,14 +977,32 @@
         <span class="item-status status-done">✅ Built 2026-03-31</span>
       </div>
 
+      <div class="item done" data-status="done">
+        <div class="item-num">60</div>
+        <div class="item-body">
+          <div class="item-title">Auth deadlock fix — replace getSession() with getStoredJwt() + setSession()</div>
+          <div class="item-note">Built 2026-04-07. Root cause: supabase.auth.getSession() called from AuthContext useEffect on mount deadlocked the Supabase JS auth client when a SIGNED_IN event was already in-flight, leaving user=null and silently blocking all Supabase queries (RLS rejects unauthenticated requests). Fix: AuthContext.tsx now reads JWT from localStorage via getStoredJwt(), decodes user id/email from JWT payload directly, calls supabase.auth.setSession() to hydrate the client's internal session (required for insert/update/delete RLS), then fetches profile via plain fetch with Authorization header. getStoredSession() helper added to supabase.ts. Symptoms fixed: "Log New Result" form not appearing, Save Result silently doing nothing, any UI gated on user?.id failing on first load without refresh.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-04-07</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">61</div>
+        <div class="item-body">
+          <div class="item-title">Lab Results — "Show all" button to clear marker filter</div>
+          <div class="item-note">Built 2026-04-07. LabsPage.tsx: when a marker chip is selected and the results table is filtered, a "Show all" button appears inline next to the "History: X" heading. Clicking it calls setSelectedMarker(null). Original click-to-toggle behaviour on marker chips is unchanged.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-04-07</span>
+      </div>
+
     </div>
   </section>
 
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-04-07 (F24 + F25) &nbsp;·&nbsp;
-  53 built · 3 partial · 6 not built/skipped out of 62 total items &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-04-07 (BHAS v2.3 spec update, Supplements tab, auth fix, filter button) &nbsp;·&nbsp;
+  57 built · 3 partial · 6 not built/skipped out of 66 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
   <br><br>
