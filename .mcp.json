@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "codebase-index": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "C:\\Users\\eddie\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\mcp-codebase-index.EXE"
+      ],
+      "env": {
+        "PROJECT_ROOT": "C:\\Users\\eddie\\Google Drive\\Maximus Digital Marketing\\Customers\\Balanced Health Institute\\BHI App"
+      },
+      "type": "stdio"
+    }
+  }
+}

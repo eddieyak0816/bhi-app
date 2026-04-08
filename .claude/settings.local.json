@@ -1,12 +1,4 @@
 {
-  "mcpServers": {
-    "jcodemunch": {
-      "command": "uvx",
-      "args": ["jcodemunch-mcp"]
-    }
-  }
-}
-{
   "permissions": {
     "allow": [
       "Bash(git checkout:*)",
