@@ -31,7 +31,7 @@ export interface BhasV2MetricScore {
 export interface BhasV2Result {
   metricScores: BhasV2MetricScore[]
   totalScore: number          // sum of included scores
-  maxPossible: number         // always 9.0
+  maxPossible: number         // always 7.0
   label: 'Optimal' | 'Healthy' | 'Needs Improvement' | 'High Risk'
   // Derived values (stored for leaderboard/analytics use)
   derived: {
@@ -41,12 +41,18 @@ export interface BhasV2Result {
     wthr: number | null
     insulinUnitsPerKg: number | null
   }
+  // Biometric tracking values (not scored — analysis/leaderboard only)
+  biometrics: {
+    vo2MaxPercentile: number | null
+    gripStrengthKg: number | null
+    wthr: number | null
+  }
   // Tie-breaker inputs (for leaderboard ranking)
   tieBreaker: {
-    vo2MaxPercentile: number | null
-    wthr: number | null
-    hsCrp: number | null
-    acuteVisits: number | null
+    vo2MaxPercentile: number | null    // #1
+    gripStrengthKg: number | null     // #2 (was gripRatio)
+    acuteVisits: number | null        // #3
+    hsCrp: number | null              // #4
   }
   /** True if enough core inputs are present to display the score */
   hasEnoughData: boolean
@@ -75,8 +81,8 @@ function toLabel(score: 0 | 0.5 | 1): 'Optimal' | 'Improvement' | 'Out of Range'
 }
 
 function interpretTotal(total: number): 'Optimal' | 'Healthy' | 'Needs Improvement' | 'High Risk' {
-  if (total >= 8.0) return 'Optimal'
-  if (total >= 6.0) return 'Healthy'
+  if (total >= 6.0) return 'Optimal'
+  if (total >= 5.0) return 'Healthy'
   if (total >= 4.0) return 'Needs Improvement'
   return 'High Risk'
 }
@@ -152,13 +158,14 @@ export function calculateBhasV2Score(
   const metricScores: BhasV2MetricScore[] = []
 
   // 1. HOMA-IR (non-Type 1) OR Insulin Units/kg (Type 1)
+  // Thresholds: Optimal < 2, Improvement 2–3, Out of Range ≥ 3
   if (!isType1Diabetes) {
     if (homaIr != null) {
       metricScores.push({
         metric: 'HOMA-IR',
         derived: `HOMA-IR = ${homaIr.toFixed(2)}`,
-        score: score3(homaIr, 1.5, 2.5, true),
-        label: toLabel(score3(homaIr, 1.5, 2.5, true)),
+        score: score3(homaIr, 2.0, 3.0, true),
+        label: toLabel(score3(homaIr, 2.0, 3.0, true)),
         included: true,
       })
     } else {
@@ -234,41 +241,7 @@ export function calculateBhasV2Score(
     missingInputs.push('Vitamin B12')
   }
 
-  // 6. VO2 Max Percentile
-  if (vo2MaxPercentile != null) {
-    metricScores.push({
-      metric: 'VO2 Max',
-      derived: `${vo2MaxPercentile}th percentile`,
-      score: score3(vo2MaxPercentile, 60, 40, false),
-      label: toLabel(score3(vo2MaxPercentile, 60, 40, false)),
-      included: true,
-    })
-  } else {
-    missingInputs.push('VO2 Max Percentile')
-  }
-
-  // 7. Grip Ratio (sex-specific)
-  if (gripRatio != null && (sex === 'male' || sex === 'female')) {
-    let gripScore: 0 | 0.5 | 1
-    if (sex === 'male') {
-      gripScore = score3(gripRatio, 0.60, 0.50, false)
-    } else {
-      gripScore = score3(gripRatio, 0.45, 0.35, false)
-    }
-    metricScores.push({
-      metric: 'Grip Ratio',
-      derived: `${gripRatio.toFixed(2)} (${gripStrengthKg} kg / ${weightKg} kg body weight)`,
-      score: gripScore,
-      label: toLabel(gripScore),
-      included: true,
-    })
-  } else {
-    if (gripStrengthKg == null) missingInputs.push('Grip Strength (needed for Grip Ratio)')
-    if (weightKg == null) missingInputs.push('Body Weight (needed for Grip Ratio)')
-    if (sex !== 'male' && sex !== 'female') missingInputs.push('Sex (needed for Grip Ratio thresholds)')
-  }
-
-  // 8. Waist-to-Height Ratio
+  // 6. Waist-to-Height Ratio
   if (wthr != null) {
     metricScores.push({
       metric: 'Waist-to-Height Ratio',
@@ -282,7 +255,7 @@ export function calculateBhasV2Score(
     if (heightCm == null) missingInputs.push('Height (needed for WtHR)')
   }
 
-  // 9. Advanced Care Planning (binary)
+  // 7. Advanced Care Planning (binary)
   metricScores.push({
     metric: 'Advanced Care Plan',
     derived: hasAdvancedCarePlan ? 'Documented' : 'Not documented',
@@ -295,20 +268,25 @@ export function calculateBhasV2Score(
   const scoredMetrics = metricScores.filter(m => m.included)
   const totalScore = scoredMetrics.reduce((sum, m) => sum + m.score, 0)
 
-  // Require at least 4 of 9 metrics to show the panel
+  // Require at least 4 of 7 scored metrics to show the panel
   const hasEnoughData = scoredMetrics.length >= 4
 
   return {
     metricScores,
     totalScore,
-    maxPossible: 9,
+    maxPossible: 7,
     label: interpretTotal(totalScore),
     derived: { homaIr, tgHdlRatio, gripRatio, wthr, insulinUnitsPerKg },
-    tieBreaker: {
+    biometrics: {
       vo2MaxPercentile,
+      gripStrengthKg,
       wthr,
-      hsCrp,
-      acuteVisits,
+    },
+    tieBreaker: {
+      vo2MaxPercentile,       // #1
+      gripStrengthKg,         // #2 (was gripRatio)
+      acuteVisits,            // #3
+      hsCrp,                  // #4
     },
     hasEnoughData,
     missingInputs: [...new Set(missingInputs)],  // deduplicate

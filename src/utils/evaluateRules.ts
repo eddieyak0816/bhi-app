@@ -64,13 +64,11 @@ const OPTIMAL_TAGS = new Set([
   // Biometrics (added in migration)
   'Optimal_Waist_Male',
   'Optimal_Waist_Female',
-  'Optimal_Grip',
   // hs-CRP (added in 20260320 migration)
   'Low_CRP',
-  // VO2 Max Percentile (added in 20260320 migration)
-  'Excellent_VO2',
   // Fasting Insulin (added in 20260320 migration)
   'Optimal_Insulin',
+  // Note: Optimal_Grip and Excellent_VO2 removed from scoring (BHAS v2.3) — biometric tracking only
 ])
 
 /**
@@ -93,13 +91,11 @@ const IMPROVEMENT_TAGS = new Set([
   // Biometrics
   'Borderline_Waist_Male',
   'Borderline_Waist_Female',
-  'Low_Normal_Grip',
   // hs-CRP (added in 20260320 migration)
   'Average_CRP',
-  // VO2 Max Percentile (added in 20260320 migration)
-  'Average_VO2',
   // Fasting Insulin (added in 20260320 migration)
   'Acceptable_Insulin',
+  // Note: Low_Normal_Grip and Average_VO2 removed from scoring (BHAS v2.3) — biometric tracking only
 ])
 
 function tagToScore(tag: string, tagTierMap?: TagTierMap): BhasScore {
