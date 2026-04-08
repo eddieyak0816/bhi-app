@@ -103,7 +103,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
               grip_ratio:            v2.derived.gripRatio,
               wthr:                  v2.derived.wthr,
               insulin_units_per_kg:  v2.derived.insulinUnitsPerKg,
-              vo2_max_percentile:    v2.tieBreaker.vo2MaxPercentile,
+              vo2_max_percentile:    v2.biometrics.vo2MaxPercentile,
               hs_crp:                v2.tieBreaker.hsCrp,
               acute_visits:          v2.tieBreaker.acuteVisits,
               metric_scores:         v2.metricScores,

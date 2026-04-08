@@ -914,7 +914,25 @@ export default function Labs() {
       {/* Detailed Results Table */}
       {filteredResults.length > 0 ? (
         <div>
-          {selectedMarker && <h3 style={{ marginBottom: 16, fontSize: 18, fontWeight: 600 }}>History: {selectedMarker}</h3>}
+          {selectedMarker && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>History: {selectedMarker}</h3>
+              <button
+                onClick={() => setSelectedMarker(null)}
+                style={{
+                  background: 'none',
+                  border: `1.5px solid ${theme.borderColor}`,
+                  borderRadius: 6,
+                  padding: '3px 10px',
+                  fontSize: 12,
+                  color: theme.textMuted,
+                  cursor: 'pointer',
+                }}
+              >
+                Show all
+              </button>
+            </div>
+          )}
           <div
             style={{
               border: `1.5px solid ${theme.borderColor}`,
