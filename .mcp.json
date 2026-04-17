@@ -1,15 +1,12 @@
 {
   "mcpServers": {
-    "codebase-index": {
-      "command": "cmd",
+    "nhl-app": {
+      "type": "stdio",
+      "command": "node",
       "args": [
-        "/c",
-        "C:\\Users\\eddie\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\mcp-codebase-index.EXE"
+        "C:/Users/eddie/Google Drive/Maximus Digital Marketing/Customers/Balanced Health Institute/BHI App/server/mcp/index.js"
       ],
-      "env": {
-        "PROJECT_ROOT": "C:\\Users\\eddie\\Google Drive\\Maximus Digital Marketing\\Customers\\Balanced Health Institute\\BHI App\\src"
-      },
-      "type": "stdio"
+      "env": {}
     }
   }
 }

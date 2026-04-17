@@ -883,7 +883,7 @@
         <div class="phase-title">Backlog &amp; Pending Items</div>
         <div class="phase-desc">Items flagged for review, testing, research, or future builds — added 2026-03-23</div>
       </div>
-      <div class="phase-progress">7 / 12 done</div>
+      <div class="phase-progress">8 / 13 done</div>
     </div>
     <div class="items">
 
@@ -995,14 +995,23 @@
         <span class="item-status status-done">✅ Done — 2026-04-07</span>
       </div>
 
+      <div class="item done" data-status="done">
+        <div class="item-num">62</div>
+        <div class="item-body">
+          <div class="item-title">Male hormone markers — tracked only, not scored</div>
+          <div class="item-note">Built 2026-04-12. Migration: <code>20260412_add_male_hormone_markers.sql</code>. Adds 3 new lab markers: Free Testosterone (Male, pg/mL), Total Testosterone (Male, ng/dL), Estrogen (Male, pg/mL). Per CLIENT_FEEDBACK.md Email Exchange 2: Free T optimal ≥ 100 pg/mL; Total T low if &lt; 500 ng/dL (triggers reflex to Free T); Estrogen optimal 25–35 pg/mL. Tags: Low/Normal/High per marker with scoring_tier=out_of_range (display only) or NULL (normal). Mapped to Hormone Health category. MUST NOT appear in BHAS v2.3 scoring — no optimal/improvement tiers assigned. HIPAA: never expose in employer views, broker views, or any export. Female hormone thresholds still awaiting Damon's answer — not built yet. <strong>Action required:</strong> Run migration in Supabase Dashboard → SQL Editor.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-04-12 — ⚠️ run migration in Supabase</span>
+      </div>
+
     </div>
   </section>
 
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-04-07 (BHAS v2.3 spec update, Supplements tab, auth fix, filter button) &nbsp;·&nbsp;
-  57 built · 3 partial · 6 not built/skipped out of 66 total items &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-04-12 (male hormone markers) &nbsp;·&nbsp;
+  58 built · 3 partial · 6 not built/skipped out of 67 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
   <br><br>

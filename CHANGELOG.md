@@ -2,6 +2,25 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-12 — feat: Male hormone markers (tracked only, not scored)
+
+**What changed:**
+
+### Male hormone markers (`db/migrations/20260412_add_male_hormone_markers.sql`)
+- Added 3 new lab markers: **Free Testosterone (Male)** (pg/mL), **Total Testosterone (Male)** (ng/dL), **Estrogen (Male)** (pg/mL)
+- Per Damon's spec (CLIENT_FEEDBACK.md Email Exchange 2):
+  - Free T: optimal ≥ 100 pg/mL; normal range 100–300; low < 100
+  - Total T: low if < 500 ng/dL (clinical reflex to Free T); normal 500–1000
+  - Estrogen (male): optimal 25–35 pg/mL; low < 25; high > 35
+- Tags created per marker (Low/Normal/High). Display-only: Low/High tags set to `scoring_tier = 'out_of_range'`; Normal tags set to `NULL` (no scoring tier)
+- Tags mapped to **Hormone Health** category
+- **Not scored** — these markers must NOT appear in BHAS v2.3 scoring. No optimal/improvement tiers assigned
+- HIPAA: must never appear in employer views, broker views, or any export
+- Female hormone thresholds still awaiting Damon's answer — not built yet
+- **Action required:** Run `20260412_add_male_hormone_markers.sql` in Supabase Dashboard → SQL Editor
+
+---
+
 ## 2026-04-07 — feat: BHAS v2.3 spec update + Supplements tab + auth deadlock fix + Lab filter UX
 
 **What changed:**

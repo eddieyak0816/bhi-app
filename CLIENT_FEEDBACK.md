@@ -255,23 +255,209 @@
 
 ---
 
+## Email Exchange 5 — Pivot to Free App + De-identified Org Join (2026-04-12)
+
+**Damon's message (verbatim):**
+> "I think I'm going to pivot and make the APP for free for everyone. Our health is a god given right that has been taken from us and I want it to be accessible to everyone.
+>
+> I would like to have a way for organizations or individuals to be able to join an organization unidentified so that if a corporation wants to consult with me and analyze data with their employees they would be able to add de-identified data through their employee email.
+>
+> However I think I want to focus on making it free and building my brand with the national health league then trying to bring in my symbol and motto for sales in addition to the supplements."
+
+---
+
+### What this means for the app
+
+#### 1. Free for all users ✅ — No app changes required
+The app does not currently have a paywall or payment gate. Users can already sign up and use it for free. This is a **business/pricing decision**, not a dev task. The payment features (Phase 6) that were planned can be **deprioritized or dropped entirely**.
+
+Impact on backlog:
+- Payment processing (Phase 6) — **drop / defer indefinitely**
+- HSA bank integration (Phase 6) — **drop / defer indefinitely**
+- Employer invoice/receipt PDF — **lower priority** (no paid subscriptions to invoice)
+- Tax code compliance (§105/§125/§213) — **lower priority** (less relevant if app is free)
+
+#### 2. De-identified org join — NEW FEATURE REQUEST
+
+**What Damon wants:** An individual employee can join their employer's org without revealing their real identity. The employer/org admin sees only de-identified data (already how the employer view works), but the *join flow itself* should be anonymous — triggered by the employee's **work email domain** or an **org invite code**, not by the employee registering with personal details.
+
+**What we already have:**
+- Org structure (`organizations` + `org_memberships` tables) ✅
+- De-identified employer view (username + public_id + BHAS % only) ✅
+- Username system (user-chosen, not real name) ✅
+- `is_public` consent flag ✅
+
+**What's missing / needs clarification:**
+
+**[Q]** How does an employee signal which org they belong to?
+- Option A: Employee enters an **org invite code** at signup or in Profile — org admin generates codes
+- Option B: Employee's **email domain** is matched automatically (e.g., `@acme.com` → Acme Corp org)
+- Option C: Org admin **imports a list of work emails**; app detects match on registration
+
+**[Q]** Does "unidentified" mean:
+- The org admin never sees the employee's real name or personal email? (Already true — employer view shows username + public_id only)
+- Or that the employee doesn't even reveal their work email to the app? (Would require a different join mechanism — invite code only)
+
+**[Q]** Should the org admin be able to see *which* employees have joined (by work email), or only aggregate counts?
+
+**Dev notes:**
+- If Option A (invite code): add `invite_code` column to `organizations`, generate codes in Admin, let users enter code on Profile or at signup.
+- If Option B (email domain): add `email_domain` column to `organizations`; auto-assign membership on user creation if email domain matches.
+- Option B is simpler to build but requires the user's work email to be stored — which Damon may not want if truly "unidentified."
+- HIPAA: whichever approach, org admins must never see individual lab values, real names, or emails. Current RLS + employer view already enforces this.
+
+#### 3. Brand / merch / supplements as revenue ✅ — No app changes required
+Building the NHL brand and selling supplements/merch is a **marketing decision**. The supplements dropdown is already built (F59). No additional dev work needed for this direction.
+
+---
+
+### Impact on existing backlog
+
+| Item | Old status | New status after pivot |
+|------|-----------|----------------------|
+| Payment processing | Planned | **Drop / defer** |
+| HSA bank integration | Planned | **Drop / defer** |
+| Employer invoice PDF | Ready to build | **Deprioritize** |
+| Tax code compliance | Research needed | **Deprioritize** |
+| De-identified org join | Not planned | **New — needs design decision (Q above)** |
+| Broker role | Ready to build | **Still relevant** — brokers manage multiple free orgs |
+| League leaderboard | Ready to build | **More important now** — free app needs community engagement |
+
+---
+
+## Email Exchange 4 — Damon's Answers to Open Questions (2026-04-12)
+
+**Eddie's questions → Damon's responses:**
+
+---
+
+### BHAS v2.3 Scoring — HOMA-IR Overlap ✅ RESOLVED
+
+**Q:** Improvement is 2–3, Out of Range is ≥ 2.5 — these conflict. Should Out of Range start at ≥ 3.0?
+
+**Damon:** Simplify it — 0–2.5 is normal, > 2.5 is abnormal.
+
+**Decision:** Three tiers replaced with two effective thresholds:
+- **Optimal (1.0):** HOMA-IR 0–2.5
+- **Out of Range (0):** HOMA-IR > 2.5
+- No Improvement tier for HOMA-IR
+
+**Also:** Add a link to the HOMA-IR Wikipedia/research article as a reference for users interested in learning more.
+
+> **Action required:** Update `bhasV2.ts` HOMA-IR thresholds + logic rules in DB (new migration). The current migration `20260407_bhas_v23_homa_ir_thresholds.sql` set Improvement 2.0–2.9 / Out of Range ≥ 3.0 — that needs to be updated to match the simplified two-tier model.
+
+---
+
+### Hormone Markers — ✅ MOSTLY RESOLVED
+
+#### Male hormones
+- Free Testosterone (Male): **track only, no thresholds/ranges** — leave open-ended
+- Total Testosterone (Male): **track only, no thresholds/ranges** — leave open-ended
+- Estrogen (Male): keep tracking (per our prior build)
+- **Add PSA (Prostate-Specific Antigen)** for males: Normal 0–4 ng/mL, High > 4 ng/mL
+
+> **Impact on F62 migration already written:** The `20260412_add_male_hormone_markers.sql` assigned ranges to Free T and Total T based on Email Exchange 2 — these need to be removed. Per Damon's new direction, leave those two markers range-free (no logic rules for them). PSA is a new marker to add.
+
+#### Female hormones
+- Free Testosterone (Female): **track only, no thresholds/ranges**
+- Total Testosterone (Female): **track only, no thresholds/ranges**
+- Estradiol (Female): **track only, no thresholds/ranges**
+- (All female hormone markers are open-ended — for personal tracking + educational video links)
+
+#### Hormone Panel — separate section ✅ RESOLVED
+- Hormone markers appear in a **separate Hormone Panel section** (not alongside blood work in the main Labs section)
+- Male vs. Female hormone panels are **separate views** (shown based on user's sex)
+- Not used for insurance/employer risk assessment — personal tracking + educational content only
+- Link/tag hormone markers to Men's Health and Women's Health educational videos
+
+**HIPAA:** Hormone markers are PHI. Never exposed in employer views, broker views, or any export.
+
+---
+
+### League / Cross-Org Competition — ✅ RESOLVED
+
+| Question | Answer |
+|----------|--------|
+| Ranking method | **% of members hitting healthy ranges** (not average BHAS score) |
+| Who can see the leaderboard | **Everyone** — visible to all users to encourage competition |
+| Challenge duration | **9 months** |
+| Challenge opt-in | NHL admin creates it |
+| Lab cadence for challenges | Labs at **0 months and 6 months** (out-of-range members) |
+| Opt-in model | Not specified — assume NHL admin creates and assigns orgs |
+
+---
+
+### Broker Role — ✅ RESOLVED
+
+| Capability | Broker | Org Admin |
+|-----------|--------|-----------|
+| Manage multiple orgs | ✅ Yes | ❌ No (single org) |
+| Access reports/exports | ✅ Yes | ✅ Yes (own org only) |
+| Edit reference material | ❌ No | ❌ No |
+| Edit supplement/affiliate links | ❌ No | ❌ No |
+
+Brokers **cannot** edit reference material or any supplement/affiliate marketing links.
+
+---
+
+### Virtual Provider Links — ✅ PARTIALLY RESOLVED
+
+| Question | Answer |
+|----------|--------|
+| Who adds links | Flexible — NHL admin OR org admins (when app is licensed, org admins get control) |
+| Shown to | All members |
+| Bio display | Brief bio visible on main screen; click to expand full bio + details |
+| Location/filtering | Future: dropdown by state. For now: possibly org-specific |
+
+**[Q still open]** Should providers be state-selectable (dropdown by state) or org-specific in the initial build? Damon mentioned this but didn't give a firm decision.
+
+---
+
+### Health Assessment — ✅ MOSTLY RESOLVED
+
+| Input | Format |
+|-------|--------|
+| Alcohol use | Yes / No |
+| Smoking use | Yes / No |
+| Sleep | Yes / No (format TBD — see below) |
+| Stress | Yes / No (format TBD) |
+| Exercise | Yes / No (format TBD) |
+| Diet | **Yes / No** — "> 80% of diet from whole or minimally processed foods" with clarifying description below |
+| Symptoms | Yes / No checklist |
+
+**Diet clarification copy:** "Do 80% or more of your meals come from whole or minimally processed foods? (e.g., vegetables, fruits, legumes, whole grains, lean proteins, nuts)"
+
+**[Q still open]** Sleep — how is Yes/No framed? (e.g., "Do you get 7–9 hours of sleep most nights?")
+**[Q still open]** Stress — how is Yes/No framed? (e.g., "Do you feel your stress is generally manageable?")
+**[Q still open]** Exercise — how is Yes/No framed? (e.g., "Do you exercise at least 150 minutes per week?")
+**[Q still open]** Alcohol / Smoking — clarify threshold for Yes/No (e.g., "Do you currently smoke?" / "Do you drink more than X drinks per week?")
+**[Q still open]** Does the assessment affect BHAS scoring, or tracked separately only?
+**[Q still open]** Assessment cadence — signup only, quarterly, or with every lab entry?
+**[Q still open]** Can employers see aggregate symptom/lifestyle data (de-identified)?
+
 ---
 
 ## Summary — Pending Decisions
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Supplements tab | Ready to build | Two links provided |
-| BHAS v2.3 scoring updates | Ready to build | Max score 7.0, HOMA-IR thresholds, remove VO2/Grip from scoring |
-| New hormone markers (tracked only) | Ready to build | Free/Total Testosterone (M), Estrogen (M), Female TBD |
-| EOB field (tie-breaker #3) | Ready to build | New profile field: acute care visits + medical claims |
-| Brief health assessment | Needs design | Lifestyle inputs + symptom checklist |
+| Supplements tab | ✅ Done | Built 2026-04-07 |
+| BHAS v2.3 scoring updates | ✅ Done | Built 2026-04-07 — but HOMA-IR thresholds need update (see below) |
+| **HOMA-IR threshold fix** | **Ready to build** | Simplify: Optimal 0–2.5, Out of Range > 2.5. Update `bhasV2.ts` + new DB migration. Current migration set wrong thresholds. |
+| **HOMA-IR reference link** | **Ready to build** | Add link to HOMA-IR article in Labs/Dashboard for user education |
+| Male hormone markers | ✅ Done (migration written, not yet run) | **BUT needs revision** — Email Exchange 4 removes ranges from Free T + Total T. Add PSA. |
+| **Female hormone markers** | **Ready to build** | Estradiol + Free T + Total T — tracking only, no ranges. Separate Hormone Panel section. |
+| **PSA (Prostate-Specific Antigen)** | **Ready to build** | Male only. Normal 0–4, High > 4. Add to male Hormone Panel. |
+| **Hormone Panel UI** | **Ready to build** | Separate section in Labs (not with blood work). Male vs. Female panels. Link to Men's/Women's Health videos. |
+| EOB field (tie-breaker #3) | ✅ Done | `acute_visits` column + ProfilePage UI already built |
+| Brief health assessment | **Ready to build (partial)** | Yes/No inputs. Diet Yes/No with description. Sleep/Stress/Exercise wording still [Q]. |
 | Tax code compliance (§105/§125/§213) | Needs research | What app changes (if any) are required |
 | Employer invoice / receipt PDF | Ready to build (pending Damon confirmation) | Aggregate only — org name, employee count, cost, billing period. No PHI. |
-| Physician-recommended app strategy | Review before delivery | Damon needs Letter of Medical Necessity template + attorney to draft HRA plan doc. App only needs invoice/receipt PDF. |
-| League / cross-org leaderboard | Needs design | New layer above orgs |
-| Broker role | Needs design | New user role in org system |
-| Virtual provider links per org | Needs design | Org-specific affiliate links |
-| Challenge feature (head-to-head) | Needs design | Links 2+ orgs together |
+| Physician-recommended app strategy | Review before delivery | Damon needs Letter of Medical Necessity template + attorney to draft HRA plan doc. |
+| **League / cross-org leaderboard** | **Ready to build** | % of members at healthy ranges. All users can see. NHL admin creates challenges. 9-month duration. |
+| **Broker role** | **Ready to build** | New role: multi-org access + reports. Cannot edit reference material or affiliate links. |
+| Virtual provider links | Needs 1 more answer | Brief bio + expand. All members. NHL admin or org admin adds. State dropdown = future. |
+| Challenge feature | Ready to build | 9 months. 0 + 6 month lab cadence. NHL admin creates. |
+| Health assessment — open questions | **[Q] Still needed** | Sleep/Stress/Exercise Yes/No wording; scoring impact; cadence; employer aggregate access |
 | Public sign-up clarity | Minor | Already works, may need UX polish |
 | Domain migration | Not yet | Awaiting deployment decision |
