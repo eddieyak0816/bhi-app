@@ -208,6 +208,43 @@
     "total_items": 69
   },
   {
+    "date": "2026-04-29",
+    "session_summary": "Bug-fix session. Browser-tested items 22–28 (session 2 items). Fixed role badge showing 'user' instead of 'member' (normalization in UI + server response). Fixed delete user not removing from list (now reloads from server after delete). Fixed delete failing for seed users with no auth record (fallback to direct profile delete). Changed Export Results button to Copy to Clipboard. All 28 browser test items now passing.",
+    "features_completed": [],
+    "bugs_fixed": [
+      {
+        "id": "BUG-5",
+        "title": "Role badge shows 'user' instead of 'member'",
+        "files": ["src/components/AdminUsersTab.tsx", "server/index.js"],
+        "notes": "Legacy profiles have role='user' (pre-broker migration). Added normalizeRole() in UI. Server GET /api/admin/users now maps user→member in response. DB constraint updated to allow 'member' via SQL migration."
+      },
+      {
+        "id": "BUG-6",
+        "title": "Delete user — user not removed from list",
+        "files": ["src/components/AdminUsersTab.tsx", "server/index.js"],
+        "notes": "Frontend: replaced optimistic filter with load() after successful delete. Server: added fallback to direct profiles delete when auth.admin.deleteUser fails (seed users have no auth record). Added console.error logging on server for delete failures."
+      },
+      {
+        "id": "BUG-7",
+        "title": "Export Results button downloaded a file instead of copying to clipboard",
+        "files": ["docs/browser-test-checklist.html"],
+        "notes": "Replaced exportResults() file download with copyResults() using navigator.clipboard.writeText(). Button shows 'Copied!' for 2s."
+      }
+    ],
+    "browser_test_results": {
+      "date": "2026-04-29",
+      "total": 28,
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0,
+      "notes": "Items 22–28 verified this session after bug fixes. All previous items remain passing."
+    },
+    "total_built": 62,
+    "total_partial": 2,
+    "total_not_built": 5,
+    "total_items": 69
+  },
+  {
     "date": "2026-04-26",
     "session_summary": "Bug-fix session targeting the four F63/F64/F65 admin tab issues found during browser-test preparation. No new features built.",
     "features_completed": [],

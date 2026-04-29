@@ -2,6 +2,22 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-29 — fix: User management bugs — role normalization, delete fallback, clipboard export
+
+### `src/components/AdminUsersTab.tsx`
+- **Role normalization** — `normalizeRole()` maps legacy `'user'` DB value → `'member'` in badge, dropdown, and selected value. Users created before the broker migration no longer show "user" pill.
+- **Delete reloads from server** — replaced optimistic filter with `load()` after successful delete; confirms actual DB removal.
+- **Error detail** — role change and delete errors now include the server `detail` field for easier diagnosis.
+
+### `server/index.js`
+- **GET /api/admin/users** — normalizes `role = 'user'` → `'member'` in response so frontend always sees consistent values.
+- **DELETE /api/admin/users/:id** — falls back to direct `profiles` delete when `auth.admin.deleteUser` fails (handles seed/test users with no auth record). Logs error to server console before fallback.
+
+### `docs/browser-test-checklist.html`
+- **Export button** — replaced "Export Results as Text" (file download) with "Copy Results to Clipboard" (`navigator.clipboard.writeText`). Button shows "Copied!" for 2s on success.
+
+---
+
 ## 2026-04-28 — feat: Admin UX overhaul, slug auto-fill, User management, back button, delete user
 
 ### `src/pages/Admin.tsx`
