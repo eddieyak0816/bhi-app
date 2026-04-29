@@ -550,6 +550,164 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SESSION 3 — To be tested after next feature build                  -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">Session 3 — Health Assessment, Trigger Messages, CPT Codes, Invite Code (pending build)</div>
+
+  <div class="item" data-id="s3-assessment-form">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-assessment-form"></div>
+      <div class="item-num">29</div>
+      <div class="item-desc">
+        Health Assessment form appears for user — 6 lifestyle Yes/No questions + 12-symptom checklist
+        <div class="hint">Questions: Sleep, Stress, Exercise, Alcohol, Smoking, Diet. All Yes/No. Diet has clarifying description below it.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-assessment-form','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-assessment-form','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-assessment-form','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-assessment-form"><textarea placeholder="Notes…" oninput="saveNote('s3-assessment-form',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s3-assessment-save">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-assessment-save"></div>
+      <div class="item-num">30</div>
+      <div class="item-desc">
+        Submit health assessment → responses saved → can be re-opened and edited
+        <div class="hint">Data must NOT appear in employer or broker views — user-only.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-assessment-save','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-assessment-save','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-assessment-save','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-assessment-save"><textarea placeholder="Notes…" oninput="saveNote('s3-assessment-save',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s3-trigger-warning">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-trigger-warning"></div>
+      <div class="item-num">31</div>
+      <div class="item-desc">
+        Enter HOMA-IR value 2.0–2.5 → warning trigger message appears with action steps
+        <div class="hint">Message: "Your insulin sensitivity is starting to decline..." Must NOT appear in employer view.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-trigger-warning','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-trigger-warning','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-trigger-warning','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-trigger-warning"><textarea placeholder="Notes…" oninput="saveNote('s3-trigger-warning',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s3-trigger-critical">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-trigger-critical"></div>
+      <div class="item-num">32</div>
+      <div class="item-desc">
+        Enter HOMA-IR >2.5 → critical trigger message appears with escalation ("We recommend reviewing with a healthcare provider")
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-trigger-critical','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-trigger-critical','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-trigger-critical','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-trigger-critical"><textarea placeholder="Notes…" oninput="saveNote('s3-trigger-critical',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s3-trigger-combined">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-trigger-combined"></div>
+      <div class="item-num">33</div>
+      <div class="item-desc">
+        Enter HOMA-IR >2, TG/HDL >3, hs-CRP >3 simultaneously → combined metabolic alert appears
+        <div class="hint">"Multiple markers suggest your metabolic health may need attention..." with provider escalation.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-trigger-combined','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-trigger-combined','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-trigger-combined','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-trigger-combined"><textarea placeholder="Notes…" oninput="saveNote('s3-trigger-combined',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s3-trigger-positive">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-trigger-positive"></div>
+      <div class="item-num">34</div>
+      <div class="item-desc">
+        Enter all markers in optimal range → positive reinforcement message appears ("Great job. Your results are in an optimal range...")
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-trigger-positive','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-trigger-positive','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-trigger-positive','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-trigger-positive"><textarea placeholder="Notes…" oninput="saveNote('s3-trigger-positive',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s3-cpt-codes">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-cpt-codes"></div>
+      <div class="item-num">35</div>
+      <div class="item-desc">
+        CPT codes visible on lab marker entries in Labs page (e.g., HOMA-IR shows 83525 + 82947)
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-cpt-codes','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-cpt-codes','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-cpt-codes','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-cpt-codes"><textarea placeholder="Notes…" oninput="saveNote('s3-cpt-codes',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s3-invite-code-generate">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-invite-code-generate"></div>
+      <div class="item-num">36</div>
+      <div class="item-desc">
+        Admin → Organizations → org detail → "Invite Code" visible and copyable
+        <div class="hint">Code should be a short random string. Admin can regenerate it.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-invite-code-generate','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-invite-code-generate','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-invite-code-generate','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-invite-code-generate"><textarea placeholder="Notes…" oninput="saveNote('s3-invite-code-generate',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s3-invite-code-join">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-invite-code-join"></div>
+      <div class="item-num">37</div>
+      <div class="item-desc">
+        User enters invite code on Profile → joins org → appears in org member list as username only (no real name or email visible to org admin)
+        <div class="hint">HIPAA: org admin must never see the user's real name or email — only username and public_id.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-invite-code-join','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-invite-code-join','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-invite-code-join','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-invite-code-join"><textarea placeholder="Notes…" oninput="saveNote('s3-invite-code-join',this.value)"></textarea></div>
+  </div>
+
+</div>
+
 <button class="export-btn" onclick="copyResults(this)">Copy Results to Clipboard</button>
 <button class="reset-btn" onclick="resetAll()">Reset All</button>
 

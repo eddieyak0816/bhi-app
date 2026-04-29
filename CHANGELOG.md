@@ -2,6 +2,23 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-29 — docs: Capture Email Exchange 6 — new features spec'd, CLIENT_FEEDBACK updated, test checklist expanded
+
+### Planning / Docs only — no code changes
+- **CLIENT_FEEDBACK.md** — added Email Exchange 6 (CPT codes, lab trigger messages, org invite code, HSA form, monthly email). Resolved health assessment question wording. Resolved virtual provider org-specific decision. Updated Summary table.
+- **docs/browser-test-checklist.html** — added Session 3 items 29–37 covering health assessment, trigger messages, CPT codes, and invite code join flow. Items marked pending until features are built.
+- **IMPLEMENTATION_TRACKER.html** — updated last-updated line.
+
+### Next features to build (priority order)
+1. F67 Health Assessment — all questions resolved except cadence
+2. Lab result trigger messages — fully spec'd
+3. CPT codes on lab markers
+4. Org join via invite code
+5. F66 Challenge UI
+6. Virtual providers — per-org lists
+
+---
+
 ## 2026-04-29 — fix: User management bugs — role normalization, delete fallback, clipboard export
 
 ### `src/components/AdminUsersTab.tsx`

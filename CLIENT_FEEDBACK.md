@@ -400,40 +400,144 @@ Brokers **cannot** edit reference material or any supplement/affiliate marketing
 
 ---
 
-### Virtual Provider Links — ✅ PARTIALLY RESOLVED
+### Virtual Provider Links — ✅ RESOLVED
 
 | Question | Answer |
 |----------|--------|
 | Who adds links | Flexible — NHL admin OR org admins (when app is licensed, org admins get control) |
 | Shown to | All members |
 | Bio display | Brief bio visible on main screen; click to expand full bio + details |
-| Location/filtering | Future: dropdown by state. For now: possibly org-specific |
+| Location/filtering | Future: dropdown by state. For now: **org-specific** |
 
-**[Q still open]** Should providers be state-selectable (dropdown by state) or org-specific in the initial build? Damon mentioned this but didn't give a firm decision.
+**Decision (Email Exchange 6):** Each organization has its own provider list. State dropdown is a future enhancement. Damon is working on contracts with a national telehealth provider to integrate later.
 
 ---
 
-### Health Assessment — ✅ MOSTLY RESOLVED
+### Health Assessment — ✅ RESOLVED (cadence still TBD)
 
-| Input | Format |
-|-------|--------|
-| Alcohol use | Yes / No |
-| Smoking use | Yes / No |
-| Sleep | Yes / No (format TBD — see below) |
-| Stress | Yes / No (format TBD) |
-| Exercise | Yes / No (format TBD) |
-| Diet | **Yes / No** — "> 80% of diet from whole or minimally processed foods" with clarifying description below |
-| Symptoms | Yes / No checklist |
+| Input | Question copy | Format |
+|-------|--------------|--------|
+| Sleep | "Do you get 7–9 hours of sleep most nights?" | Yes / No |
+| Stress | "Is your stress generally manageable day to day?" | Yes / No |
+| Exercise | "Do you exercise at least 150 minutes per week? Is your job sedentary?" | Yes / No |
+| Alcohol | "Do you drink more than one alcoholic beverage daily?" | Yes / No |
+| Smoking | "Do you currently smoke or use tobacco?" | Yes / No |
+| Diet | "Do 80% or more of your meals come from whole or minimally processed foods? (e.g., vegetables, fruits, legumes, whole grains, lean proteins, nuts)" | Yes / No |
+| Symptoms | Yes / No checklist (12 items — see Email Exchange 3) | Yes / No |
 
-**Diet clarification copy:** "Do 80% or more of your meals come from whole or minimally processed foods? (e.g., vegetables, fruits, legumes, whole grains, lean proteins, nuts)"
+**BHAS impact:** Tracked separately — does NOT affect BHAS scoring.
 
-**[Q still open]** Sleep — how is Yes/No framed? (e.g., "Do you get 7–9 hours of sleep most nights?")
-**[Q still open]** Stress — how is Yes/No framed? (e.g., "Do you feel your stress is generally manageable?")
-**[Q still open]** Exercise — how is Yes/No framed? (e.g., "Do you exercise at least 150 minutes per week?")
-**[Q still open]** Alcohol / Smoking — clarify threshold for Yes/No (e.g., "Do you currently smoke?" / "Do you drink more than X drinks per week?")
-**[Q still open]** Does the assessment affect BHAS scoring, or tracked separately only?
-**[Q still open]** Assessment cadence — signup only, quarterly, or with every lab entry?
-**[Q still open]** Can employers see aggregate symptom/lifestyle data (de-identified)?
+**[Q still open]** Assessment cadence — signup only, quarterly, or with every lab entry? (Not yet answered by Damon.)
+
+---
+
+---
+
+## Email Exchange 6 — CPT Codes, Lab Trigger Messages, Org Join, New Features (2026-04-29)
+
+### CPT Codes per Lab Marker — NEW
+
+Damon wants CPT codes tied to each scored marker and displayed in the app.
+
+| Metric | CPT Code(s) |
+|--------|------------|
+| HOMA-IR | 83525 (Fasting Insulin) + 82947 (Fasting Glucose) |
+| TG/HDL Ratio | 84478 (Triglycerides) + 83718 (HDL) |
+| hs-CRP | 86141 |
+| Vitamin D | 82652 |
+| Vitamin B12 | 82607 |
+| Advanced Care Planning | 99497 (provider-input only — 30-min discussion) |
+
+**Status:** ❌ Not built — add CPT code field to `lab_markers` table and display in Labs UI.
+
+---
+
+### Lab Result Trigger Messages — NEW ⭐ HIGH PRIORITY
+
+After a user enters metrics or uploads labs, show contextual messages based on values. Fully spec'd by Damon:
+
+#### 1. Insulin Resistance (HOMA-IR)
+- ⚠️ **2.0–2.5:** "Your insulin sensitivity is starting to decline..." + action steps (protein with meals, reduce processed carbs, walk after meals, 7–8 hrs sleep)
+- 🔴 **>2.5:** "Your results suggest reduced insulin sensitivity..." + action steps (structured nutrition, resistance training 3x/week, time-restricted eating) + escalation: "We recommend reviewing these results with a healthcare provider."
+
+#### 2. Inflammation (hs-CRP)
+- ⚠️ **1–3:** "Your inflammation markers are slightly elevated..." + action steps (sleep, omega-3, reduce processed foods/alcohol)
+- 🔴 **>3:** "Your inflammation level is elevated..." + action steps (whole-food nutrition, sleep/stress, daily movement) + escalation: "A follow-up with a healthcare provider is recommended."
+
+#### 3. Vitamin D
+- ⚠️ **20–50:** "Your Vitamin D level is below optimal..." + action steps (sun exposure, supplementation, Vit D foods)
+- 🔴 **<20:** "Your Vitamin D level is low..." + action steps (supplementation with guidance, recheck) + escalation: "We recommend reviewing this with a provider."
+
+#### 4. Vitamin B12
+- ⚠️ **300–500:** "Your B12 level is in a lower range..." + action steps (B12-rich foods, supplementation)
+- 🔴 **<300:** "Your B12 level is low..." + action steps (targeted supplementation, re-evaluate) + escalation: "A provider can help determine the best approach."
+
+#### 5. Triglycerides
+- ⚠️ **100–199:** "Your triglycerides are slightly elevated..." + action steps (reduce sugar/alcohol, increase activity, meal timing)
+- 🔴 **≥200:** "Your triglyceride levels are elevated..." + action steps (whole-food nutrition, exercise, weight management) + escalation: "We recommend reviewing this with a healthcare provider."
+
+#### 6. HDL (Good Cholesterol)
+- ⚠️ **Low (Men <40, Women <50):** "Your HDL is lower than optimal..." + action steps (physical activity, healthy fats, sleep/stress)
+
+#### 7. Combined Metabolic Alert
+- 🔴 **Trigger: HOMA-IR >2 AND TG/HDL >3 AND hs-CRP >3 simultaneously**
+- Message: "Multiple markers suggest your metabolic health may need attention..." + action steps (structured lifestyle plan, nutrition/sleep/movement, track improvements) + escalation: "We recommend a comprehensive review with a healthcare provider."
+
+#### Positive Reinforcement (all markers optimal)
+- ✅ "Great job. Your results are in an optimal range. Maintaining these levels supports long-term health, energy, and performance." + "Keep doing what you're doing" + "You're building long-term health resilience"
+
+**HIPAA:** Messages shown only to the user themselves. Never logged, never in employer views.
+**Status:** ❌ Not built.
+
+---
+
+### Org Join via Invite Code — NEW ⭐
+
+**Decision (Email Exchange 6):** Option A — fully anonymous.
+- Employee enters a private invite code → joins org as their username only
+- Org admin never sees who joined by real name or email
+- Future: if employer wants to reward employees for hitting metrics, this would go through a third-party payroll administrator (outside the app)
+
+**Status:** ❌ Not built. Need to add `invite_code` to `organizations` table, generate codes in Admin, and let users enter code on Profile or signup.
+
+---
+
+### HSA Reimbursement Pre-filled Form — NEW
+
+Damon wants a downloadable pre-filled form for gym memberships / exercise equipment reimbursement. Form should have checkboxes for qualifying conditions: insulin resistance, metabolic syndrome, family history of cardiac disease, anxiety/depression.
+
+**Status:** ❌ Not built. Damon said he sent a pre-made form — need to locate it and build a download/display page.
+
+**[Q]** Can you re-send the pre-made HSA form you mentioned? We'll use it as the template.
+
+---
+
+### Monthly Educational Email — NEW
+
+10 topics (Damon to provide wording for each):
+A) B vitamin deficiency  
+B) Holistic approach to acute illness  
+C) Metabolic health  
+D) Diet and exercise  
+E) Vitamin D deficiency (send in October, pre-winter)  
+F) Hormone health — Male/Female (send to new accounts on signup)  
+G) Sleep  
+H) Stress control  
+I) Detox  
+J) Inflammation  
++ 2 more topics TBD
+
+**Status:** ❌ Not built. Blocked on Damon providing email copy. Likely requires an email service integration (Resend, SendGrid, etc.).
+
+**[Q]** Please send the wording for each email topic when ready. Also: what email service do you use or want to use for outbound emails?
+
+---
+
+### Employer Invoice PDF — REVISITED
+
+Damon now says this may be important for lab reimbursement with his first company. Status changed from deprioritized → **needs confirmation**.
+
+**[Q]** Do you need the employer invoice PDF now for your first company? If yes, what fields should it include?
 
 ---
 
@@ -442,22 +546,30 @@ Brokers **cannot** edit reference material or any supplement/affiliate marketing
 | Item | Status | Notes |
 |------|--------|-------|
 | Supplements tab | ✅ Done | Built 2026-04-07 |
-| BHAS v2.3 scoring updates | ✅ Done | Built 2026-04-07 — but HOMA-IR thresholds need update (see below) |
-| **HOMA-IR threshold fix** | **Ready to build** | Simplify: Optimal 0–2.5, Out of Range > 2.5. Update `bhasV2.ts` + new DB migration. Current migration set wrong thresholds. |
-| **HOMA-IR reference link** | **Ready to build** | Add link to HOMA-IR article in Labs/Dashboard for user education |
-| Male hormone markers | ✅ Done (migration written, not yet run) | **BUT needs revision** — Email Exchange 4 removes ranges from Free T + Total T. Add PSA. |
-| **Female hormone markers** | **Ready to build** | Estradiol + Free T + Total T — tracking only, no ranges. Separate Hormone Panel section. |
-| **PSA (Prostate-Specific Antigen)** | **Ready to build** | Male only. Normal 0–4, High > 4. Add to male Hormone Panel. |
-| **Hormone Panel UI** | **Ready to build** | Separate section in Labs (not with blood work). Male vs. Female panels. Link to Men's/Women's Health videos. |
-| EOB field (tie-breaker #3) | ✅ Done | `acute_visits` column + ProfilePage UI already built |
-| Brief health assessment | **Ready to build (partial)** | Yes/No inputs. Diet Yes/No with description. Sleep/Stress/Exercise wording still [Q]. |
-| Tax code compliance (§105/§125/§213) | Needs research | What app changes (if any) are required |
-| Employer invoice / receipt PDF | Ready to build (pending Damon confirmation) | Aggregate only — org name, employee count, cost, billing period. No PHI. |
-| Physician-recommended app strategy | Review before delivery | Damon needs Letter of Medical Necessity template + attorney to draft HRA plan doc. |
-| **League / cross-org leaderboard** | **Ready to build** | % of members at healthy ranges. All users can see. NHL admin creates challenges. 9-month duration. |
-| **Broker role** | **Ready to build** | New role: multi-org access + reports. Cannot edit reference material or affiliate links. |
-| Virtual provider links | Needs 1 more answer | Brief bio + expand. All members. NHL admin or org admin adds. State dropdown = future. |
-| Challenge feature | Ready to build | 9 months. 0 + 6 month lab cadence. NHL admin creates. |
-| Health assessment — open questions | **[Q] Still needed** | Sleep/Stress/Exercise Yes/No wording; scoring impact; cadence; employer aggregate access |
-| Public sign-up clarity | Minor | Already works, may need UX polish |
-| Domain migration | Not yet | Awaiting deployment decision |
+| BHAS v2.3 scoring updates | ✅ Done | Built 2026-04-07 |
+| HOMA-IR thresholds (0–2.5 / >2.5) | ✅ Done | Migration run 2026-04-07 |
+| HOMA-IR reference link | ❌ Not built | Add educational link on Labs/Dashboard |
+| Male hormone markers (PSA, Free T, Total T — track only) | ✅ Done | Migration run 2026-04-16 |
+| Female hormone markers (track only, no ranges) | ✅ Done | Migration run 2026-04-16 |
+| Hormone Panel UI (separate Male/Female section in Labs) | ❌ Not built | Separate section, not with blood work |
+| EOB / acute visits field | ✅ Done | `acute_visits` on profile |
+| League leaderboard | ✅ Done | Built 2026-04-16, browser-tested 2026-04-28 |
+| Broker role | ✅ Done | Built 2026-04-16, browser-tested 2026-04-28 |
+| Virtual providers (global list) | ✅ Done | Built 2026-04-16, browser-tested 2026-04-28 |
+| Virtual providers — org-specific lists | ❌ Not built | Currently one global list; needs to be per-org |
+| F66 Challenge UI | ❌ Not built | DB done; UI pending |
+| **F67 Health Assessment** | ❌ Not built | All questions answered except cadence. Ready to build. |
+| **Lab result trigger messages** | ❌ Not built | Fully spec'd (Email Exchange 6). High priority. |
+| **CPT codes on lab markers** | ❌ Not built | 6 markers × CPT code. Add to DB + Labs UI. |
+| **Org join via invite code** | ❌ Not built | Option A (anonymous). Add invite_code to organizations. |
+| **HSA reimbursement pre-filled form** | ❌ Not built | Blocked — need Damon to re-send the form template. |
+| Monthly educational email | ❌ Not built | Blocked — need Damon's email copy + email service decision. |
+| Employer invoice PDF | ❓ Needs confirmation | Damon said "might need" for first company — confirm yes/no. |
+| Tax code compliance (§105/§125/§213) | Deprioritized | Free app pivot — lower priority. |
+| Payment processing | ❌ Dropped | Free app pivot. |
+| HSA bank integration | ❌ Dropped | Free app pivot. |
+| Domain migration | Not yet | Awaiting deployment decision. |
+| Assessment cadence | **[Q] Still open** | Signup only, quarterly, or every lab entry? |
+| Monthly email wording | **[Q] Still open** | Damon to provide copy for 10+ topics. |
+| HSA form template | **[Q] Still open** | Damon to re-send the pre-made form. |
+| Employer invoice PDF confirmation | **[Q] Still open** | Do you need this now for your first company? |
