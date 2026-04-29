@@ -2094,8 +2094,13 @@ app.delete('/api/admin/users/:id', async (req, res) => {
   if (confirm !== 'DELETE') return res.status(400).json({ error: 'Must send { confirm: "DELETE" } in body' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    // Try auth.users delete first (cascades to profile). If user has no auth record (e.g. seed data), fall back to deleting profile directly.
     const { error } = await sb.auth.admin.deleteUser(id);
-    if (error) { console.error('deleteUser error:', error.message, error); return res.status(500).json({ error: error.message }); }
+    if (error) {
+      console.error('deleteUser auth error:', error.message, '— trying direct profile delete');
+      const { error: profileErr } = await sb.from('profiles').delete().eq('id', id);
+      if (profileErr) { console.error('deleteUser profile error:', profileErr.message); return res.status(500).json({ error: profileErr.message }); }
+    }
     return res.status(200).json({ deleted: id });
   } catch (err) {
     return res.status(500).json({ error: 'server_error' });
