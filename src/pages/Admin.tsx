@@ -6,11 +6,12 @@ import AffiliateProductsTab from '../components/AffiliateProductsTab'
 import AdminBrokersTab from '../components/AdminBrokersTab'
 import AdminProvidersTab from '../components/AdminProvidersTab'
 import AdminLeaguesTab from '../components/AdminLeaguesTab'
+import AdminUsersTab from '../components/AdminUsersTab'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
 
-export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () => void }) {
+export default function Admin({ onResourcesChanged, initialTab }: { onResourcesChanged?: () => void; initialTab?: string }) {
   const [resources, setResources] = useState<Resource[]>([])
   const [loading, setLoading] = useState(false)
   const [title, setTitle] = useState('')
@@ -32,7 +33,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
 
-  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit' | 'organizations' | 'products' | 'brokers' | 'providers' | 'leagues'>('resources')
+  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','leagues','users'] as const
+  type AdminTab = typeof VALID_TABS[number]
+  const [activeTab, setActiveTab] = useState<AdminTab>(VALID_TABS.includes(initialTab as AdminTab) ? (initialTab as AdminTab) : 'resources')
   // Use global theme context
   const { darkMode, theme: globalTheme } = useTheme()
   const { isSuperAdmin, user } = useAuth()
@@ -1235,21 +1238,48 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
 
       <div style={{height:12}} />
 
-      {/* Tab Navigation */}
-      <div className="tabs">
-        <button className={`tab ${activeTab === 'resources' ? 'active' : ''}`} onClick={() => setActiveTab('resources')} style={{color: activeTab === 'resources' ? '#ffffff' : theme.text}}>Resources</button>
-        <button className={`tab ${activeTab === 'types' ? 'active' : ''}`} onClick={() => setActiveTab('types')} style={{color: activeTab === 'types' ? '#ffffff' : theme.text}}>Resource Types</button>
-        <button className={`tab ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')} style={{color: activeTab === 'categories' ? '#ffffff' : theme.text}}>Categories</button>
-        <button className={`tab ${activeTab === 'tags' ? 'active' : ''}`} onClick={() => setActiveTab('tags')} style={{color: activeTab === 'tags' ? '#ffffff' : theme.text}}>Tags</button>
-        <button className={`tab ${activeTab === 'markers' ? 'active' : ''}`} onClick={() => setActiveTab('markers')} style={{color: activeTab === 'markers' ? '#ffffff' : theme.text}}>Lab Markers</button>
-        <button className={`tab ${activeTab === 'goals' ? 'active' : ''}`} onClick={() => setActiveTab('goals')} style={{color: activeTab === 'goals' ? '#ffffff' : theme.text}}>Health Goals</button>
-        <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')} style={{color: activeTab === 'criteria' ? '#ffffff' : theme.text}}>Criteria</button>
-        <button className={`tab ${activeTab === 'organizations' ? 'active' : ''}`} onClick={() => setActiveTab('organizations')} style={{color: activeTab === 'organizations' ? '#ffffff' : theme.text}}>Organizations</button>
-        <button className={`tab ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')} style={{color: activeTab === 'products' ? '#ffffff' : theme.text}}>Products</button>
-        <button className={`tab ${activeTab === 'brokers' ? 'active' : ''}`} onClick={() => setActiveTab('brokers')} style={{color: activeTab === 'brokers' ? '#ffffff' : theme.text}}>Brokers</button>
-        <button className={`tab ${activeTab === 'providers' ? 'active' : ''}`} onClick={() => setActiveTab('providers')} style={{color: activeTab === 'providers' ? '#ffffff' : theme.text}}>Providers</button>
-        <button className={`tab ${activeTab === 'leagues' ? 'active' : ''}`} onClick={() => setActiveTab('leagues')} style={{color: activeTab === 'leagues' ? '#ffffff' : theme.text}}>Leagues</button>
-      </div>
+      {/* Tab Navigation — Option D: icon + label tiles */}
+      {(() => {
+        const tabs: { id: AdminTab; icon: string; label: string }[] = [
+          { id: 'resources',     icon: '📄', label: 'Resources' },
+          { id: 'types',         icon: '🏷️', label: 'Types' },
+          { id: 'categories',    icon: '📂', label: 'Categories' },
+          { id: 'tags',          icon: '🔖', label: 'Tags' },
+          { id: 'markers',       icon: '🧪', label: 'Markers' },
+          { id: 'goals',         icon: '🎯', label: 'Goals' },
+          { id: 'criteria',      icon: '⚖️', label: 'Criteria' },
+          { id: 'organizations', icon: '🏢', label: 'Orgs' },
+          { id: 'products',      icon: '🛍️', label: 'Products' },
+          { id: 'brokers',       icon: '🤝', label: 'Brokers' },
+          { id: 'providers',     icon: '👨‍⚕️', label: 'Providers' },
+          { id: 'leagues',       icon: '🏆', label: 'Leagues' },
+          { id: 'users',         icon: '👤', label: 'Users' },
+        ]
+        return (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 28, borderBottom: `2px solid ${theme.borderColor}`, paddingBottom: 16 }}>
+            {tabs.map(t => {
+              const isActive = activeTab === t.id
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setActiveTab(t.id)}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                    padding: '10px 14px', minWidth: 68, borderRadius: 8,
+                    border: `1px solid ${isActive ? (theme.blue ?? '#3b82f6') : theme.borderColor}`,
+                    background: isActive ? `${theme.blue ?? '#3b82f6'}18` : 'transparent',
+                    color: isActive ? (theme.blue ?? '#3b82f6') : theme.textMuted,
+                    fontWeight: isActive ? 700 : 500, fontSize: 11, cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: 20, lineHeight: 1 }}>{t.icon}</span>
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>
+        )
+      })()}
 
       {/* Audit Log hidden in main UI - gated behind secret access */}
       {activeTab === 'audit' ? (
@@ -4435,6 +4465,11 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       {/* ── Leagues Tab ──────────────────────────────────────────────────── */}
       {activeTab === 'leagues' && (
         <AdminLeaguesTab theme={theme} />
+      )}
+
+      {/* ── Users Tab ────────────────────────────────────────────────────── */}
+      {activeTab === 'users' && (
+        <AdminUsersTab theme={theme} isSuperAdmin={isSuperAdmin} />
       )}
     </div>
   )

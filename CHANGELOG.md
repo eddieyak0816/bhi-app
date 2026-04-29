@@ -2,6 +2,45 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-28 — feat: Admin UX overhaul, slug auto-fill, User management, back button, delete user
+
+### `src/pages/Admin.tsx`
+- **Option D icon+label nav** — replaced flat horizontal tab bar with icon+label tile grid that wraps naturally. 13 tabs, each with emoji icon. Eliminates overflow issue.
+- **Slug auto-fill** — Org create form: typing the name now auto-populates the slug (lowercase, spaces→dashes). Slug field remains editable for override.
+- **Users tab wired** — added `AdminUsersTab` import, `'users'` to tab type union, icon tile in nav, and render block.
+- **initialTab prop** — Admin now accepts `initialTab?: string` and opens to that tab on mount. Used by "← Back to Organizations" deep-link from Employer View.
+- **VALID_TABS const** — tab type union replaced with a runtime array + derived type to support `initialTab` validation.
+
+### `src/components/AdminLeaguesTab.tsx`
+- **Slug auto-fill** — League name input now drives slug field automatically. Slug label updated to "Slug (URL-safe, auto-filled)". Manual override still works.
+
+### `src/components/AdminUsersTab.tsx` *(new file)*
+- **Create user** — `POST /api/admin/users` form: email, password, role (Member/Broker/Admin), optional username.
+- **Role change** — inline dropdown per row; PATCH fires immediately, badge updates in place.
+- **Delete user** — Super Admin only: red "Delete" column with browser confirm dialog. Calls `DELETE /api/admin/users/:id`.
+- **Search** — filters by email, username, or role.
+
+### `src/pages/EmployerPage.tsx`
+- **Back button** — "← Back to Organizations" button at top of page. Navigates to `admin/organizations` which deep-links to Admin → Organizations tab.
+
+### `src/App.tsx`
+- **Admin deep-link** — `currentPage.startsWith('admin/')` now renders Admin with `initialTab` extracted from path, e.g. `admin/organizations` → Organizations tab open.
+
+### `server/index.js`
+- **`POST /api/admin/users`** — creates user via `supabase.auth.admin.createUser()`, sets role and optional username on profile. Returns `{ id, email, role }`.
+- **`PATCH /api/admin/users/:id/role`** — updates `profiles.role`. Valid values: `member`, `broker`, `admin`.
+- **`DELETE /api/admin/users/:id`** — permanently deletes user from `auth.users` (cascades to profiles). Requires `{ confirm: "DELETE" }` in body. Both endpoints require `x-backend-api-key`.
+
+### `src/styles.css`
+- `.tabs` — added `flex-wrap: wrap` (retained as fallback; Admin no longer uses this class).
+- `.tab` — reduced `padding: 24px → 14px`, `font-size: 15px → 13px`.
+
+### `docs/`
+- **`admin-nav-options.html`** — 4 interactive nav layout options (A–D). Option D chosen and implemented.
+- **`browser-test-checklist.html`** — living test checklist; results persist in localStorage; Export to .txt; 21 items covering F62–F66 + admin improvements. All 21 passed 2026-04-28.
+
+---
+
 ## 2026-04-26 — fix: Admin tabs auth, duplicate route handler, orgs response shape, leagues admin bypass
 
 **What changed:**

@@ -165,6 +165,49 @@
     "total_items": 69
   },
   {
+    "date": "2026-04-28",
+    "session_summary": "Browser-tested F63/F64/F65 (21/21 pass). Admin UX overhaul: Option D icon+label nav, slug auto-fill for orgs and leagues, new Users tab (create/role-change/delete), back button from Employer View to Organizations, Admin deep-link via initialTab prop. All dev servers confirmed on port 3000/4242.",
+    "features_completed": [
+      {
+        "id": "ADMIN-UX-1",
+        "title": "Admin icon+label nav (Option D)",
+        "files": ["src/pages/Admin.tsx", "src/styles.css"],
+        "notes": "Replaced flat tab bar with icon+label tile grid (flex-wrap). 13 tabs with emoji icons. Eliminates horizontal overflow."
+      },
+      {
+        "id": "ADMIN-UX-2",
+        "title": "Slug auto-fill from name — Orgs and Leagues",
+        "files": ["src/pages/Admin.tsx", "src/components/AdminLeaguesTab.tsx"],
+        "notes": "Name onChange drives slug field (lowercase, spaces→dashes, strip non-alphanum). Slug field remains editable."
+      },
+      {
+        "id": "ADMIN-UX-3",
+        "title": "Admin Users tab — create, role change, delete",
+        "files": ["src/components/AdminUsersTab.tsx", "src/pages/Admin.tsx", "server/index.js"],
+        "notes": "POST /api/admin/users (create via auth.admin.createUser), PATCH /api/admin/users/:id/role, DELETE /api/admin/users/:id (super admin only, requires confirm:DELETE). All use x-backend-api-key auth."
+      },
+      {
+        "id": "ADMIN-UX-4",
+        "title": "Employer View back button → Admin Organizations tab",
+        "files": ["src/pages/EmployerPage.tsx", "src/App.tsx", "src/pages/Admin.tsx"],
+        "notes": "EmployerPage navigates to admin/organizations. App.tsx renders Admin with initialTab prop parsed from path. Admin opens to Organizations tab directly."
+      }
+    ],
+    "bugs_fixed": [],
+    "browser_test_results": {
+      "date": "2026-04-28",
+      "total": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "notes": "All F63 (Leagues), F64 (Brokers), F65 (Virtual Providers), F62 (Hormone Markers), and Admin improvement items passed."
+    },
+    "total_built": 62,
+    "total_partial": 2,
+    "total_not_built": 5,
+    "total_items": 69
+  },
+  {
     "date": "2026-04-26",
     "session_summary": "Bug-fix session targeting the four F63/F64/F65 admin tab issues found during browser-test preparation. No new features built.",
     "features_completed": [],

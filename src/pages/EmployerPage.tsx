@@ -251,6 +251,16 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
+      {/* Back to Admin / Organizations */}
+      {onNavigate && (
+        <button
+          onClick={() => onNavigate('admin/organizations')}
+          style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '6px 14px', fontSize: 13, color: theme.textMuted, cursor: 'pointer', marginBottom: 16, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        >
+          ← Back to Organizations
+        </button>
+      )}
+
       {/* PHI notice */}
       <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 6, padding: '8px 14px', marginBottom: 20, fontSize: 12, color: '#713f12' }}>
         <strong>De-identified view:</strong> Real names, emails, and individual lab values are never shown here. Only usernames, public IDs, teams, and aggregate BHAS scores are displayed.

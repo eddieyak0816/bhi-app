@@ -56,6 +56,7 @@ A health scoring and corporate wellness platform. Users enter lab results; the a
 - Update `IMPLEMENTATION_TRACKER.html` (phase progress, stats bar, last-updated line, footer)
 - Append to `CHANGELOG.md`
 - Add entry to `.ai/project-progress.json`
+- Add new test items to `docs/browser-test-checklist.html` (append only — never change existing item IDs, as they map to localStorage data)
 
 ---
 
@@ -76,27 +77,26 @@ A health scoring and corporate wellness platform. Users enter lab results; the a
 | 9 | ✅ 2/2 | DB-driven scoring tier, multiple ranges per tier in Wizard |
 | 10 | 🔶 15/17 | All backlog items done except F52 (lab API research ❌) and F66 (challenges 🔶 DB-only) |
 
-### Recently completed (sessions 4–5, 2026-04-16 to 2026-04-26)
-- **F62** — Hormone marker corrections: removed wrong logic rules for Free T/Total T (Male), added PSA (0–4 normal), added female hormone markers (Free T, Total T, Estradiol — all track-only)
-- **F63** — League leaderboard: `leagues` + `league_orgs` tables, `GET /api/leagues`, `GET /api/league/:slug` (org-level avg BHAS, PHI-safe), Admin → Leagues tab, `LeaguesListPage.tsx`, `LeaguePage.tsx`, "Leagues" in top nav
-- **F64** — Broker role: `broker_orgs` table, `profiles.role` extended to `'broker'`, Admin → Brokers tab, multi-org aggregate access
-- **F65** — Virtual providers: `virtual_providers` table, `GET /api/providers`, `VirtualProviderCards.tsx` on Dashboard (expandable cards), Admin → Providers tab
-- **F66** — Challenge DB schema only: `challenges` + `challenge_orgs` tables with RLS; UI deferred
+### Recently completed (session 6, 2026-04-28) — browser-tested ✅
+- **F63 browser-tested** — Leagues: list page, league detail, org assignment, slug auto-fill. 6/6 pass.
+- **F64 browser-tested** — Brokers tab, role assignment via new Users tab. 4/4 pass.
+- **F65 browser-tested** — Virtual Providers: Admin create, Dashboard cards, expand/collapse. 4/4 pass.
+- **F62 browser-tested** — PSA range 0–4, Free T/Total T male + female hormones track-only. 4/4 pass.
+- **Admin UX — Option D nav** — icon+label tile grid (13 tabs, wraps, no overflow). Replaces flat tab bar.
+- **Slug auto-fill** — Both org and league create forms auto-populate slug from name; editable.
+- **Admin → Users tab** — full user management: create (email/password/role/username), inline role change, delete (super admin only with confirm dialog).
+- **Employer View back button** — "← Back to Organizations" deep-links to Admin → Organizations tab via `admin/organizations` route + `initialTab` prop.
+- **3 new server endpoints** — `POST /api/admin/users`, `PATCH /api/admin/users/:id/role`, `DELETE /api/admin/users/:id`.
 
-### Bug fixes applied (2026-04-26) — already in the code
-- Duplicate `GET /api/admin/users` handler merged (role filter was unreachable)
-- `AdminBrokersTab`, `AdminProvidersTab`, `AdminLeaguesTab` — fixed wrong auth header (`Authorization: Bearer` → `x-backend-api-key`)
-- Same three tabs — fixed orgs response shape (`{ organizations: [] }` → plain array with `Array.isArray()` guard)
-- `GET /api/leagues` — added admin-key bypass so Admin → Leagues tab can load leagues without `x-user-id`
-
-### ⚠️ UI NOT YET BROWSER-TESTED
-F63/F64/F65 were built and bug-fixed but have **not been tested in the browser**. Start the next session by testing these before building anything new:
-
-**Test checklist:**
-1. **Leagues (F63):** `http://localhost:3000/#/leagues` shows empty state → Admin → Leagues tab → create a league → assign org → check standings page shows org name + avg score, no individual data
-2. **Brokers (F64):** Admin → Brokers tab shows empty state → in Supabase SQL Editor run `UPDATE profiles SET role = 'broker' WHERE email = '<test-email>';` → refresh → broker appears with org assignment toggles
-3. **Virtual Providers (F65):** Admin → Providers tab → create a provider → go to `#/home` → VirtualProviderCards section appears → click card to expand → full bio + "Book / Connect" link visible
-4. **Hormone markers:** `#/labs` → verify PSA shows 0–4 normal range; Free T Male, Total T Male, all female hormones show no reference range (track-only)
+### ⚠️ Session 2 items NOT YET browser-tested
+Items 22–28 in `docs/browser-test-checklist.html`. Start next session by testing these:
+1. Admin Option D nav renders correctly (item 22)
+2. Org slug auto-fill (item 23)
+3. League slug auto-fill (item 24)
+4. Create user with broker role (item 25)
+5. Inline role change (item 26)
+6. Delete user — Super Admin only (item 27)
+7. Employer View back button → lands on Orgs tab (item 28)
 
 ---
 
@@ -151,6 +151,16 @@ F63/F64/F65 were built and bug-fixed but have **not been tested in the browser**
 ### `/api/admin/organizations` response shape
 - Returns a **plain array** (not `{ organizations: [] }`). Many components get this wrong. Always check with `Array.isArray()`.
 
+### Admin navigation
+- **Option D icon+label tiles** — defined inline in Admin.tsx as a `tabs` array of `{ id, icon, label }`. To add a new tab: add entry to the array, add to `VALID_TABS`, add render block.
+- **Deep-link to a tab:** navigate to `admin/organizations` (or any tab id). App.tsx extracts `initialTab` from the path and passes it to Admin. Admin opens to that tab on mount.
+
+### User roles
+- `profiles.role`: `'member'` | `'broker'` | `'admin'` | `'super_admin'`
+- Broker users appear in Admin → Brokers tab for org assignment
+- Delete user: Super Admin only (UI gated by `isSuperAdmin` from `useAuth()`)
+- Server endpoints don't distinguish super_admin vs admin at API key level — UI enforcement only for delete
+
 ### Supabase RLS
 - Two separate SELECT policies are needed for tables where users see active-only but admins see all. `FOR ALL` does NOT override `FOR SELECT` in Postgres.
 
@@ -166,19 +176,22 @@ F63/F64/F65 were built and bug-fixed but have **not been tested in the browser**
 | `src/context/ResultsContext.tsx` | User lab results, persisted to Supabase |
 | `src/context/AuthContext.tsx` | Auth — uses getStoredJwt(), never getSession() |
 | `src/lib/supabase.ts` | getStoredJwt(), getStoredSession() helpers |
-| `src/pages/Admin.tsx` | Full Admin CMS (13 tabs) |
+| `src/pages/Admin.tsx` | Full Admin CMS (14 tabs). Option D icon nav. Accepts `initialTab` prop. |
 | `src/pages/Dashboard.tsx` | BHAS banner, VirtualProviderCards, AffiliateProductCards, national benchmarks |
-| `src/pages/EmployerPage.tsx` | De-identified employer view |
+| `src/pages/EmployerPage.tsx` | De-identified employer view. Has "← Back to Organizations" button. |
 | `src/pages/LeaguesListPage.tsx` | All active leagues list |
 | `src/pages/LeaguePage.tsx` | Single league standings (org-level avg BHAS) |
-| `src/components/AdminLeaguesTab.tsx` | Admin: create leagues, assign orgs |
+| `src/components/AdminLeaguesTab.tsx` | Admin: create leagues, assign orgs. Slug auto-fills from name. |
 | `src/components/AdminBrokersTab.tsx` | Admin: assign orgs to broker users |
 | `src/components/AdminProvidersTab.tsx` | Admin: create/edit/delete virtual providers |
+| `src/components/AdminUsersTab.tsx` | Admin: create users, change roles, delete (super admin only) |
 | `src/components/VirtualProviderCards.tsx` | Dashboard: expandable provider cards |
 | `src/utils/nationalBenchmarks.ts` | CDC/NHANES benchmark data, 15 markers |
 | `src/utils/publicId.ts` | generatePublicId() → NHL-XXXX-XXXX |
-| `server/index.js` | All Express endpoints (~2800 lines) |
+| `server/index.js` | All Express endpoints (~2900 lines) |
 | `db/migrations/` | All DB migrations (30 total, all run) |
+| `docs/browser-test-checklist.html` | Living test checklist — append new items, never change existing IDs |
+| `docs/admin-nav-options.html` | 4 nav layout mockups — Option D implemented |
 | `DEVELOPER_REQUIREMENTS.md` | Full feature spec — search with ctx_search, don't read directly |
 | `CLIENT_FEEDBACK.md` | All email exchanges with Damon — search with ctx_search |
 | `IMPLEMENTATION_TRACKER.html` | Phase-by-phase progress tracker |
@@ -198,6 +211,16 @@ The last 6 (all 2026-04-16):
 
 ---
 
+## Server endpoints added this session
+
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `POST` | `/api/admin/users` | `x-backend-api-key` | Create user via `auth.admin.createUser`. Body: `{ email, password, role, username? }` |
+| `PATCH` | `/api/admin/users/:id/role` | `x-backend-api-key` | Change user role. Body: `{ role }`. Valid: `member`, `broker`, `admin` |
+| `DELETE` | `/api/admin/users/:id` | `x-backend-api-key` | Permanently delete user. Body: `{ confirm: "DELETE" }` required. Irreversible. |
+
+---
+
 ## Dev tooling (present in this repo — remove before client handoff)
 
 - `server/mcp/index.js` — nhl-app MCP server (5 tools: get_implementation_status, get_migration_history, get_db_schema, get_marker_list, get_bhas_scoring_rules). Registered in `.mcp.json`.
@@ -205,6 +228,8 @@ The last 6 (all 2026-04-16):
 - `DEVELOPER_REQUIREMENTS.md` — full spec
 - `CLIENT_FEEDBACK.md` — email Q&A log
 - `CHANGELOG.md`, `.ai/`, `.claude/`, `CLAUDE.md` — all dev-only
+- `docs/browser-test-checklist.html` — living test checklist (dev only)
+- `docs/admin-nav-options.html` — nav layout mockups (dev only)
 
 See `project_handoff_cleanup.md` for the full pre-delivery checklist.
 
@@ -215,5 +240,11 @@ See `project_handoff_cleanup.md` for the full pre-delivery checklist.
 1. Call `mcp__jcodemunch__list_repos` — confirm `local/src-1b49057d` is indexed
 2. Call `mcp__context_mode__ctx_index` on `CLIENT_FEEDBACK.md` and `DEVELOPER_REQUIREMENTS.md`
 3. Start both dev servers: `npm run dev` (Vite, port 3000) + `node server/index.js` (Express, port 4242)
-4. If F63/F64/F65 haven't been browser-tested yet, do that first (see checklist above)
+4. If any session-2 items (22–28) in `docs/browser-test-checklist.html` aren't green, test those first
 5. Check `CLIENT_FEEDBACK.md` for new answers from Damon before starting new features
+
+## Test checklist rules (important)
+- `docs/browser-test-checklist.html` is a **living document** — results saved in browser localStorage survive page refreshes
+- When adding new test items, always **append** with new unique IDs (e.g. `s3-featurename`)
+- **Never** change or reuse an existing item's `data-id` — it would orphan the stored result
+- Item numbers in the UI are cosmetic; the `data-id` is what matters for persistence

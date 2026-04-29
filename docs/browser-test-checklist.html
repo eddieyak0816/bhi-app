@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NHL App — Browser Test Checklist (Living Doc)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; padding: 32px 24px; max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 700; color: #f8fafc; margin-bottom: 4px; }
+  .meta { font-size: 13px; color: #64748b; margin-bottom: 32px; }
+  .section { margin-bottom: 32px; }
+  .section-title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #3b82f6; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #1e3a5f; }
+  .item { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; }
+  .item-top { display: flex; align-items: flex-start; gap: 12px; }
+  .item-num { font-size: 11px; font-weight: 700; color: #475569; min-width: 22px; padding-top: 2px; }
+  .item-desc { flex: 1; font-size: 14px; color: #e2e8f0; line-height: 1.5; }
+  .item-desc .hint { font-size: 12px; color: #64748b; margin-top: 3px; }
+  .item-controls { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .btn { padding: 5px 14px; border-radius: 6px; border: 1px solid; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; background: transparent; }
+  .btn-pass { color: #4ade80; border-color: #4ade8066; }
+  .btn-pass:hover, .btn-pass.active { background: #16a34a; color: #fff; border-color: #16a34a; }
+  .btn-fail { color: #f87171; border-color: #f8717166; }
+  .btn-fail:hover, .btn-fail.active { background: #dc2626; color: #fff; border-color: #dc2626; }
+  .btn-skip { color: #94a3b8; border-color: #33415566; }
+  .btn-skip:hover, .btn-skip.active { background: #475569; color: #fff; border-color: #475569; }
+  .notes-area { margin-top: 10px; display: none; }
+  .notes-area.visible { display: block; }
+  .notes-area textarea { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #cbd5e1; font-size: 13px; padding: 8px 10px; resize: vertical; min-height: 60px; font-family: inherit; }
+  .status-badge { display: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+  .status-badge.pass { display: block; background: #4ade80; }
+  .status-badge.fail { display: block; background: #f87171; }
+  .status-badge.skip { display: block; background: #64748b; }
+  .summary { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px 20px; margin-bottom: 32px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+  .summary-item { text-align: center; }
+  .summary-num { font-size: 24px; font-weight: 700; }
+  .summary-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+  .num-pass { color: #4ade80; }
+  .num-fail { color: #f87171; }
+  .num-skip { color: #64748b; }
+  .num-total { color: #94a3b8; }
+  .export-btn { margin-top: 24px; padding: 10px 20px; background: #3b82f6; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .export-btn:hover { background: #2563eb; }
+  .reset-btn { margin-top: 24px; margin-left: 10px; padding: 10px 20px; background: transparent; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .reset-btn:hover { color: #e2e8f0; border-color: #475569; }
+</style>
+</head>
+<body>
+
+<h1>NHL App — Browser Test Checklist</h1>
+<p class="meta">Living document — results persist across sessions via localStorage · Last updated 2026-04-28</p>
+<p class="meta" style="margin-top:4px">Session 1 (2026-04-28): F63 Leagues · F64 Brokers · F65 Virtual Providers · Hormone Markers · Admin UX — <strong style="color:#4ade80">21/21 ✅</strong></p>
+<p class="meta" style="margin-top:4px">Session 2 (2026-04-28): Admin Option D nav · Slug auto-fill · User create/role/delete · Employer View back button</p>
+
+<div class="summary">
+  <div class="summary-item"><div class="summary-num num-pass" id="count-pass">0</div><div class="summary-label">Pass</div></div>
+  <div class="summary-item"><div class="summary-num num-fail" id="count-fail">0</div><div class="summary-label">Fail</div></div>
+  <div class="summary-item"><div class="summary-num num-skip" id="count-skip">0</div><div class="summary-label">Skipped</div></div>
+  <div class="summary-item"><div class="summary-num num-total" id="count-total">0</div><div class="summary-label">Total</div></div>
+</div>
+
+<!-- ── F63 Leagues ── -->
+<div class="section">
+  <div class="section-title">F63 — League Leaderboard</div>
+
+  <div class="item" data-id="l1">
+    <div class="item-top">
+      <div class="status-badge" id="badge-l1"></div>
+      <div class="item-num">1</div>
+      <div class="item-desc">
+        Navigate to <code>http://localhost:3000/#/leagues</code> — page loads without error
+        <div class="hint">Expected: empty state "No leagues yet" or league list</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('l1','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('l1','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('l1','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-l1"><textarea placeholder="Notes…" oninput="saveNote('l1',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="l2">
+    <div class="item-top">
+      <div class="status-badge" id="badge-l2"></div>
+      <div class="item-num">2</div>
+      <div class="item-desc">
+        Admin → Leagues tab loads without error
+        <div class="hint">Expected: "League Management" header + "+ New League" button</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('l2','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('l2','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('l2','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-l2"><textarea placeholder="Notes…" oninput="saveNote('l2',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="l3">
+    <div class="item-top">
+      <div class="status-badge" id="badge-l3"></div>
+      <div class="item-num">3</div>
+      <div class="item-desc">
+        Slug auto-fills when you type the league name
+        <div class="hint">Type "Northeast Challenge 2026" → slug should become "northeast-challenge-2026" automatically</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('l3','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('l3','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('l3','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-l3"><textarea placeholder="Notes…" oninput="saveNote('l3',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="l4">
+    <div class="item-top">
+      <div class="status-badge" id="badge-l4"></div>
+      <div class="item-num">4</div>
+      <div class="item-desc">
+        Create a league with a start and end date — league appears in the list
+        <div class="hint">Fill in all 4 fields, click "Create League"</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('l4','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('l4','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('l4','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-l4"><textarea placeholder="Notes…" oninput="saveNote('l4',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="l5">
+    <div class="item-top">
+      <div class="status-badge" id="badge-l5"></div>
+      <div class="item-num">5</div>
+      <div class="item-desc">
+        Expand the league → assign "Test Corp" org → org button turns blue with ✓
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('l5','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('l5','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('l5','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-l5"><textarea placeholder="Notes…" oninput="saveNote('l5',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="l6">
+    <div class="item-top">
+      <div class="status-badge" id="badge-l6"></div>
+      <div class="item-num">6</div>
+      <div class="item-desc">
+        Go to <code>#/leagues</code> → new league appears → click it → standings page shows org name + avg BHAS
+        <div class="hint">HIPAA check: standings must show org name only — no individual names, emails, or lab values</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('l6','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('l6','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('l6','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-l6"><textarea placeholder="Notes…" oninput="saveNote('l6',this.value)"></textarea></div>
+  </div>
+</div>
+
+<!-- ── F64 Brokers ── -->
+<div class="section">
+  <div class="section-title">F64 — Broker Role</div>
+
+  <div class="item" data-id="b1">
+    <div class="item-top">
+      <div class="status-badge" id="badge-b1"></div>
+      <div class="item-num">7</div>
+      <div class="item-desc">
+        Admin → Brokers tab loads — shows "No brokers yet" empty state
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('b1','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('b1','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('b1','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-b1"><textarea placeholder="Notes…" oninput="saveNote('b1',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="b2">
+    <div class="item-top">
+      <div class="status-badge" id="badge-b2"></div>
+      <div class="item-num">8</div>
+      <div class="item-desc">
+        Admin → Users tab → create a new user with role = Broker → user appears in list with "broker" badge
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('b2','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('b2','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('b2','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-b2"><textarea placeholder="Notes…" oninput="saveNote('b2',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="b3">
+    <div class="item-top">
+      <div class="status-badge" id="badge-b3"></div>
+      <div class="item-num">9</div>
+      <div class="item-desc">
+        Admin → Brokers tab refreshes → new broker user now appears with org assignment toggles
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('b3','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('b3','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('b3','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-b3"><textarea placeholder="Notes…" oninput="saveNote('b3',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="b4">
+    <div class="item-top">
+      <div class="status-badge" id="badge-b4"></div>
+      <div class="item-num">10</div>
+      <div class="item-desc">
+        Admin → Users tab → change an existing user's role via the dropdown → role badge updates immediately
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('b4','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('b4','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('b4','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-b4"><textarea placeholder="Notes…" oninput="saveNote('b4',this.value)"></textarea></div>
+  </div>
+</div>
+
+<!-- ── F65 Virtual Providers ── -->
+<div class="section">
+  <div class="section-title">F65 — Virtual Providers</div>
+
+  <div class="item" data-id="p1">
+    <div class="item-top">
+      <div class="status-badge" id="badge-p1"></div>
+      <div class="item-num">11</div>
+      <div class="item-desc">
+        Admin → Providers tab loads — shows empty state or provider list
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('p1','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('p1','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('p1','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-p1"><textarea placeholder="Notes…" oninput="saveNote('p1',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="p2">
+    <div class="item-top">
+      <div class="status-badge" id="badge-p2"></div>
+      <div class="item-num">12</div>
+      <div class="item-desc">
+        Create a provider (name, specialty, bio, booking URL) → provider appears in list
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('p2','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('p2','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('p2','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-p2"><textarea placeholder="Notes…" oninput="saveNote('p2',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="p3">
+    <div class="item-top">
+      <div class="status-badge" id="badge-p3"></div>
+      <div class="item-num">13</div>
+      <div class="item-desc">
+        Go to <code>#/home</code> (Dashboard) → "Virtual Providers" section appears below BHAS score
+        <div class="hint">Must be logged in as a regular user</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('p3','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('p3','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('p3','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-p3"><textarea placeholder="Notes…" oninput="saveNote('p3',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="p4">
+    <div class="item-top">
+      <div class="status-badge" id="badge-p4"></div>
+      <div class="item-num">14</div>
+      <div class="item-desc">
+        Click a provider card to expand → full bio and "Book / Connect" link are visible
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('p4','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('p4','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('p4','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-p4"><textarea placeholder="Notes…" oninput="saveNote('p4',this.value)"></textarea></div>
+  </div>
+</div>
+
+<!-- ── Hormone Markers ── -->
+<div class="section">
+  <div class="section-title">Hormone Markers (F62)</div>
+
+  <div class="item" data-id="h1">
+    <div class="item-top">
+      <div class="status-badge" id="badge-h1"></div>
+      <div class="item-num">15</div>
+      <div class="item-desc">
+        Go to <code>#/labs</code> → find PSA → reference range shows 0–4 as normal
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('h1','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('h1','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('h1','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-h1"><textarea placeholder="Notes…" oninput="saveNote('h1',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="h2">
+    <div class="item-top">
+      <div class="status-badge" id="badge-h2"></div>
+      <div class="item-num">16</div>
+      <div class="item-desc">
+        Free Testosterone (Male) — shows NO reference range (track-only)
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('h2','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('h2','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('h2','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-h2"><textarea placeholder="Notes…" oninput="saveNote('h2',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="h3">
+    <div class="item-top">
+      <div class="status-badge" id="badge-h3"></div>
+      <div class="item-num">17</div>
+      <div class="item-desc">
+        Total Testosterone (Male) — shows NO reference range (track-only)
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('h3','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('h3','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('h3','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-h3"><textarea placeholder="Notes…" oninput="saveNote('h3',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="h4">
+    <div class="item-top">
+      <div class="status-badge" id="badge-h4"></div>
+      <div class="item-num">18</div>
+      <div class="item-desc">
+        Female hormone markers (Free T, Total T, Estradiol) — all show NO reference range (track-only)
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('h4','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('h4','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('h4','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-h4"><textarea placeholder="Notes…" oninput="saveNote('h4',this.value)"></textarea></div>
+  </div>
+</div>
+
+<!-- ── Admin Improvements ── -->
+<div class="section">
+  <div class="section-title">Admin UI Improvements</div>
+
+  <div class="item" data-id="a1">
+    <div class="item-top">
+      <div class="status-badge" id="badge-a1"></div>
+      <div class="item-num">19</div>
+      <div class="item-desc">
+        Admin tab bar wraps to multiple rows instead of overflowing past the page width
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('a1','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('a1','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('a1','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-a1"><textarea placeholder="Notes…" oninput="saveNote('a1',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="a2">
+    <div class="item-top">
+      <div class="status-badge" id="badge-a2"></div>
+      <div class="item-num">20</div>
+      <div class="item-desc">
+        Admin → Organizations → Create Org → slug auto-fills when you type the name
+        <div class="hint">Type "Acme Corp" → slug becomes "acme-corp" automatically; still editable</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('a2','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('a2','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('a2','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-a2"><textarea placeholder="Notes…" oninput="saveNote('a2',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="a3">
+    <div class="item-top">
+      <div class="status-badge" id="badge-a3"></div>
+      <div class="item-num">21</div>
+      <div class="item-desc">
+        Admin → Users tab loads and shows existing users with email, username, and role
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('a3','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('a3','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('a3','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-a3"><textarea placeholder="Notes…" oninput="saveNote('a3',this.value)"></textarea></div>
+  </div>
+</div>
+
+<!-- ── Session 2: Admin UX (2026-04-28) ── -->
+<div class="section">
+  <div class="section-title">Session 2 — Admin UX (2026-04-28)</div>
+
+  <div class="item" data-id="s2-nav">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s2-nav"></div>
+      <div class="item-num">22</div>
+      <div class="item-desc">
+        Admin tab bar shows icon + label tiles (Option D) — wraps to multiple rows, no horizontal overflow
+        <div class="hint">Each tab has an emoji icon above the label. Active tab has blue border + tinted background.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s2-nav','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s2-nav','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s2-nav','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s2-nav"><textarea placeholder="Notes…" oninput="saveNote('s2-nav',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s2-orgslug">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s2-orgslug"></div>
+      <div class="item-num">23</div>
+      <div class="item-desc">
+        Admin → Orgs → Create Organization → typing name auto-fills slug
+        <div class="hint">Type "Acme Corp" → slug field shows "acme-corp" immediately. Can still edit slug manually.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s2-orgslug','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s2-orgslug','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s2-orgslug','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s2-orgslug"><textarea placeholder="Notes…" oninput="saveNote('s2-orgslug',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s2-leagueslug">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s2-leagueslug"></div>
+      <div class="item-num">24</div>
+      <div class="item-desc">
+        Admin → Leagues → New League → typing name auto-fills slug
+        <div class="hint">Type "Northeast Challenge 2026" → slug becomes "northeast-challenge-2026"</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s2-leagueslug','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s2-leagueslug','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s2-leagueslug','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s2-leagueslug"><textarea placeholder="Notes…" oninput="saveNote('s2-leagueslug',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s2-createuser">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s2-createuser"></div>
+      <div class="item-num">25</div>
+      <div class="item-desc">
+        Admin → Users → "+ New User" → create a broker account → user appears in list with "broker" badge
+        <div class="hint">Fill email, password, set role = Broker, click Create User</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s2-createuser','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s2-createuser','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s2-createuser','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s2-createuser"><textarea placeholder="Notes…" oninput="saveNote('s2-createuser',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s2-rolechange">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s2-rolechange"></div>
+      <div class="item-num">26</div>
+      <div class="item-desc">
+        Admin → Users → change a user's role via inline dropdown → role badge updates without page reload
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s2-rolechange','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s2-rolechange','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s2-rolechange','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s2-rolechange"><textarea placeholder="Notes…" oninput="saveNote('s2-rolechange',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s2-deleteuser">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s2-deleteuser"></div>
+      <div class="item-num">27</div>
+      <div class="item-desc">
+        Admin → Users (as Super Admin) → Delete button visible → clicking shows confirm dialog → user removed from list
+        <div class="hint">Delete column only visible to Super Admin. Regular Admin should NOT see it.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s2-deleteuser','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s2-deleteuser','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s2-deleteuser','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s2-deleteuser"><textarea placeholder="Notes…" oninput="saveNote('s2-deleteuser',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s2-backbtn">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s2-backbtn"></div>
+      <div class="item-num">28</div>
+      <div class="item-desc">
+        Admin → Orgs → "Employer View" → "← Back to Organizations" button → lands on Admin with Organizations tab active
+        <div class="hint">Should NOT land on the default Resources tab — must open directly on Orgs.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s2-backbtn','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s2-backbtn','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s2-backbtn','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s2-backbtn"><textarea placeholder="Notes…" oninput="saveNote('s2-backbtn',this.value)"></textarea></div>
+  </div>
+</div>
+
+<button class="export-btn" onclick="copyResults(this)">Copy Results to Clipboard</button>
+<button class="reset-btn" onclick="resetAll()">Reset All</button>
+
+<script>
+  const state = JSON.parse(localStorage.getItem('nhl-test-checklist') || '{}')
+  const notes = JSON.parse(localStorage.getItem('nhl-test-notes') || '{}')
+
+  function save() {
+    localStorage.setItem('nhl-test-checklist', JSON.stringify(state))
+    updateSummary()
+  }
+
+  function mark(id, status, btn) {
+    // Toggle off if already active
+    if (state[id] === status) {
+      state[id] = null
+      btn.closest('.item').querySelectorAll('.btn').forEach(b => b.classList.remove('active'))
+      document.getElementById('badge-' + id).className = 'status-badge'
+      document.getElementById('notes-' + id).classList.remove('visible')
+    } else {
+      state[id] = status
+      btn.closest('.item').querySelectorAll('.btn').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      const badge = document.getElementById('badge-' + id)
+      badge.className = 'status-badge ' + status
+      document.getElementById('notes-' + id).classList.add('visible')
+    }
+    save()
+  }
+
+  function saveNote(id, val) {
+    notes[id] = val
+    localStorage.setItem('nhl-test-notes', JSON.stringify(notes))
+  }
+
+  function updateSummary() {
+    const vals = Object.values(state).filter(Boolean)
+    document.getElementById('count-pass').textContent = vals.filter(v => v === 'pass').length
+    document.getElementById('count-fail').textContent = vals.filter(v => v === 'fail').length
+    document.getElementById('count-skip').textContent = vals.filter(v => v === 'skip').length
+    document.getElementById('count-total').textContent = document.querySelectorAll('.item').length
+  }
+
+  function copyResults(btn) {
+    const items = document.querySelectorAll('.item')
+    let out = 'NHL App — Browser Test Results\n' + new Date().toLocaleString() + '\n\n'
+    items.forEach(item => {
+      const id = item.dataset.id
+      const desc = item.querySelector('.item-desc').childNodes[0].textContent.trim()
+      const s = state[id] || 'not tested'
+      const n = notes[id] || ''
+      const icon = s === 'pass' ? '✅' : s === 'fail' ? '❌' : s === 'skip' ? '⏭️' : '⬜'
+      out += `${icon} ${desc}\n`
+      if (n) out += `   Notes: ${n}\n`
+    })
+    navigator.clipboard.writeText(out).then(() => {
+      const orig = btn.textContent
+      btn.textContent = 'Copied!'
+      setTimeout(() => { btn.textContent = orig }, 2000)
+    })
+  }
+
+  function resetAll() {
+    if (!confirm('Reset all test results?')) return
+    Object.keys(state).forEach(k => delete state[k])
+    Object.keys(notes).forEach(k => delete notes[k])
+    localStorage.removeItem('nhl-test-checklist')
+    localStorage.removeItem('nhl-test-notes')
+    location.reload()
+  }
+
+  // Restore state on load
+  function restore() {
+    Object.entries(state).forEach(([id, status]) => {
+      if (!status) return
+      const item = document.querySelector(`[data-id="${id}"]`)
+      if (!item) return
+      const btn = item.querySelector(`.btn-${status}`)
+      if (btn) btn.classList.add('active')
+      document.getElementById('badge-' + id).className = 'status-badge ' + status
+      document.getElementById('notes-' + id).classList.add('visible')
+    })
+    Object.entries(notes).forEach(([id, val]) => {
+      const ta = document.querySelector(`#notes-${id} textarea`)
+      if (ta) ta.value = val
+    })
+    updateSummary()
+  }
+
+  restore()
+</script>
+</body>
+</html>

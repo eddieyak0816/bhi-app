@@ -203,7 +203,7 @@ function AppContent() {
         {currentPage === 'profile' && <Profile userEmail={user?.email} userName={user?.name} onNavigate={handleNavigate} />}
         {currentPage === 'consent' && <ConsentPage onNavigate={handleNavigate} />}
         {currentPage === 'public-profile' && <PublicProfilePage onNavigate={handleNavigate} />}
-        {currentPage === 'admin' && <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} />}
+        {(currentPage === 'admin' || currentPage.startsWith('admin/')) && <Admin onResourcesChanged={() => setRefreshKey(k => k + 1)} initialTab={currentPage.startsWith('admin/') ? currentPage.slice('admin/'.length) : undefined} />}
         {currentPage.startsWith('employer/') && <EmployerPage orgSlug={currentPage.slice('employer/'.length)} onNavigate={handleNavigate} />}
         {currentPage.startsWith('leaderboard/') && <LeaderboardPage orgSlug={currentPage.slice('leaderboard/'.length)} onNavigate={handleNavigate} />}
         {currentPage === 'leagues' && <LeaguesListPage onNavigate={handleNavigate} />}

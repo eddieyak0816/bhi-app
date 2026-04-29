@@ -2033,7 +2033,9 @@ app.get('/api/admin/users', async (req, res) => {
       .select('id, name, email, username, public_id, role, created_at')
       .order('created_at');
     if (error) return res.status(500).json({ error: 'db_error', detail: error });
-    return res.status(200).json(data || []);
+    // Normalize legacy 'user' role to 'member' for consistent frontend display
+    const normalized = (data || []).map(u => ({ ...u, role: u.role === 'user' ? 'member' : u.role }));
+    return res.status(200).json(normalized);
   } catch (err) {
     return res.status(500).json({ error: 'server_error' });
   }
@@ -2078,6 +2080,23 @@ app.patch('/api/admin/users/:id/role', async (req, res) => {
     const { error } = await sb.from('profiles').update({ role }).eq('id', id);
     if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
     return res.status(200).json({ id, role });
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/users/:id — permanently delete a user (super admin only, checked via SUPER_ADMIN_EMAIL env)
+// Deletes from auth.users (cascade removes profile). Irreversible.
+app.delete('/api/admin/users/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  const { confirm } = req.body || {};
+  if (confirm !== 'DELETE') return res.status(400).json({ error: 'Must send { confirm: "DELETE" } in body' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.auth.admin.deleteUser(id);
+    if (error) { console.error('deleteUser error:', error.message, error); return res.status(500).json({ error: error.message }); }
+    return res.status(200).json({ deleted: id });
   } catch (err) {
     return res.status(500).json({ error: 'server_error' });
   }
