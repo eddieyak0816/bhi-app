@@ -5,6 +5,7 @@ import { useResults } from '../context/ResultsContext'
 import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
 import HealthReportModal from '../components/HealthReportModal'
+import HealthAssessmentModal from '../components/HealthAssessmentModal'
 import AffiliateProductCards from '../components/AffiliateProductCards'
 import VirtualProviderCards from '../components/VirtualProviderCards'
 import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
@@ -29,6 +30,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
   const firstName = userName?.split(' ')[0] || ''
 
   const [showHealthReport, setShowHealthReport] = useState(false)
+  const [showHealthAssessment, setShowHealthAssessment] = useState(false)
   const [publicId, setPublicId] = useState<string | null>(null)
 
   // F22 — fetch public_id once for use in health report
@@ -695,8 +697,27 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
               📄 Health Report
             </button>
           )}
+          <button
+            style={{
+              background: 'transparent',
+              color: theme.text,
+              border: `1.5px solid ${theme.borderColor}`,
+              borderRadius: 6,
+              padding: '12px 16px',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+            onClick={() => setShowHealthAssessment(true)}
+          >
+            🩺 Health Check-In
+          </button>
         </div>
       </div>
+
+      {showHealthAssessment && (
+        <HealthAssessmentModal onClose={() => setShowHealthAssessment(false)} />
+      )}
 
       {showHealthReport && (
         <HealthReportModal

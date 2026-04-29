@@ -2,6 +2,26 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-29 — feat: F67 Health Assessment (lifestyle check-in + symptom tracker)
+
+### `db/migrations/20260429_create_health_assessments.sql` *(run in Supabase)*
+- New `health_assessments` table — 6 lifestyle Yes/No columns + 12 symptom boolean columns + metadata
+- RLS: users read/write own rows only. Service role can read all (for future de-identified aggregate employer stats).
+- HIPAA: individual rows never exposed to employers, brokers, or leagues.
+
+### `src/components/HealthAssessmentModal.tsx` *(new)*
+- Modal with two sections: Lifestyle (6 Yes/No questions) and Symptoms (12-item checklist)
+- Loads most recent assessment on open; upserts on save (insert first time, update thereafter)
+- Uses `supabase` client with RLS — no backend API needed
+- Lifestyle question copy matches Damon's spec exactly
+- Saves and closes automatically with "Saved!" confirmation
+
+### `src/pages/Dashboard.tsx`
+- Added "🩺 Health Check-In" button alongside existing "📄 Health Report" button
+- Renders `HealthAssessmentModal` when clicked
+
+---
+
 ## 2026-04-29 — docs: Capture Email Exchange 6 — new features spec'd, CLIENT_FEEDBACK updated, test checklist expanded
 
 ### Planning / Docs only — no code changes
