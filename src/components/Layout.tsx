@@ -36,6 +36,7 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
     { id: 'library', label: 'Library' },
     { id: 'categories', label: 'Categories' },
     { id: 'labs', label: 'Lab Results' },
+    { id: 'leagues', label: 'Leagues' },
     { id: 'profile', label: 'Profile' },
     ...(isAdmin ? [{ id: 'admin', label: 'Admin' }] : []),
   ]
@@ -71,13 +72,13 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: currentPage === item.id ? theme.blue : theme.text,
+                  color: (currentPage === item.id || (item.id === 'leagues' && currentPage.startsWith('league'))) ? theme.blue : theme.text,
                   fontSize: 14,
-                  fontWeight: currentPage === item.id ? 600 : 500,
+                  fontWeight: (currentPage === item.id || (item.id === 'leagues' && currentPage.startsWith('league'))) ? 600 : 500,
                   cursor: 'pointer',
                   padding: 0,
-                  borderBottom: currentPage === item.id ? `2px solid ${theme.blue}` : 'none',
-                  paddingBottom: currentPage === item.id ? 2 : 0,
+                  borderBottom: (currentPage === item.id || (item.id === 'leagues' && currentPage.startsWith('league'))) ? `2px solid ${theme.blue}` : 'none',
+                  paddingBottom: (currentPage === item.id || (item.id === 'leagues' && currentPage.startsWith('league'))) ? 2 : 0,
                 }}
               >
                 {item.label}

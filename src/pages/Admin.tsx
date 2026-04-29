@@ -3,6 +3,9 @@ import { supabase, directFetch } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import AffiliateProductsTab from '../components/AffiliateProductsTab'
+import AdminBrokersTab from '../components/AdminBrokersTab'
+import AdminProvidersTab from '../components/AdminProvidersTab'
+import AdminLeaguesTab from '../components/AdminLeaguesTab'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
@@ -29,7 +32,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
   const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
 
-  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit' | 'organizations' | 'products'>('resources')
+  const [activeTab, setActiveTab] = useState<'resources' | 'types' | 'markers' | 'tags' | 'categories' | 'criteria' | 'goals' | 'audit' | 'organizations' | 'products' | 'brokers' | 'providers' | 'leagues'>('resources')
   // Use global theme context
   const { darkMode, theme: globalTheme } = useTheme()
   const { isSuperAdmin, user } = useAuth()
@@ -1243,6 +1246,9 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
         <button className={`tab ${activeTab === 'criteria' ? 'active' : ''}`} onClick={() => setActiveTab('criteria')} style={{color: activeTab === 'criteria' ? '#ffffff' : theme.text}}>Criteria</button>
         <button className={`tab ${activeTab === 'organizations' ? 'active' : ''}`} onClick={() => setActiveTab('organizations')} style={{color: activeTab === 'organizations' ? '#ffffff' : theme.text}}>Organizations</button>
         <button className={`tab ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')} style={{color: activeTab === 'products' ? '#ffffff' : theme.text}}>Products</button>
+        <button className={`tab ${activeTab === 'brokers' ? 'active' : ''}`} onClick={() => setActiveTab('brokers')} style={{color: activeTab === 'brokers' ? '#ffffff' : theme.text}}>Brokers</button>
+        <button className={`tab ${activeTab === 'providers' ? 'active' : ''}`} onClick={() => setActiveTab('providers')} style={{color: activeTab === 'providers' ? '#ffffff' : theme.text}}>Providers</button>
+        <button className={`tab ${activeTab === 'leagues' ? 'active' : ''}`} onClick={() => setActiveTab('leagues')} style={{color: activeTab === 'leagues' ? '#ffffff' : theme.text}}>Leagues</button>
       </div>
 
       {/* Audit Log hidden in main UI - gated behind secret access */}
@@ -3954,7 +3960,7 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
                 <label style={{display:'block',fontSize:12,color:theme.textMuted,marginBottom:4}}>Name</label>
                 <input
                   value={orgCreateName}
-                  onChange={e => setOrgCreateName(e.target.value)}
+                  onChange={e => { const v = e.target.value; setOrgCreateName(v); setOrgCreateSlug(v.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')) }}
                   placeholder="Acme Corp"
                   style={{width:'100%',padding:'8px 10px',borderRadius:6,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:14,boxSizing:'border-box'}}
                 />
@@ -4414,6 +4420,21 @@ export default function Admin({ onResourcesChanged }: { onResourcesChanged?: () 
       {/* ── Products Tab (F24) ───────────────────────────────────────── */}
       {activeTab === 'products' && (
         <AffiliateProductsTab theme={theme} allowedTags={allowedTags} />
+      )}
+
+      {/* ── Brokers Tab ──────────────────────────────────────────────────── */}
+      {activeTab === 'brokers' && (
+        <AdminBrokersTab theme={theme} />
+      )}
+
+      {/* ── Providers Tab ────────────────────────────────────────────────── */}
+      {activeTab === 'providers' && (
+        <AdminProvidersTab theme={theme} />
+      )}
+
+      {/* ── Leagues Tab ──────────────────────────────────────────────────── */}
+      {activeTab === 'leagues' && (
+        <AdminLeaguesTab theme={theme} />
       )}
     </div>
   )

@@ -185,15 +185,15 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-04-07 — BHAS v2.3 spec update (max 7.0, HOMA-IR thresholds, remove VO2/Grip from scoring), Supplements nav dropdown, auth deadlock fix (getSession → getStoredJwt + setSession), Lab Results filter "Show all" button. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-04-26 — Bug fixes: duplicate GET /api/admin/users handler (role filter unreachable), wrong auth header in AdminBrokersTab/AdminProvidersTab/AdminLeaguesTab (Authorization → x-backend-api-key), wrong orgs response shape (organizations array vs plain array), /api/leagues blocking admin callers (added admin-key bypass). · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
-<!-- Stats bar — counts as of 2026-03-31 -->
+<!-- Stats bar — counts as of 2026-04-26 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">53</span>  Built / Done</div>
-  <div class="stat stat-partial"> <span class="num" id="cnt-partial">3</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">8</span>  Not Built / Skipped</div>
-  <div class="stat stat-total">   <span class="num" id="cnt-total">62</span>  Total Items</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">62</span>  Built / Done</div>
+  <div class="stat stat-partial"> <span class="num" id="cnt-partial">2</span>  Partial</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">5</span>  Not Built / Skipped</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">69</span>  Total Items</div>
 </div>
 
 <!-- Filter controls -->
@@ -883,7 +883,7 @@
         <div class="phase-title">Backlog &amp; Pending Items</div>
         <div class="phase-desc">Items flagged for review, testing, research, or future builds — added 2026-03-23</div>
       </div>
-      <div class="phase-progress">8 / 13 done</div>
+      <div class="phase-progress">15 / 17 done · 1 partial · 1 not built</div>
     </div>
     <div class="items">
 
@@ -999,9 +999,45 @@
         <div class="item-num">62</div>
         <div class="item-body">
           <div class="item-title">Male hormone markers — tracked only, not scored</div>
-          <div class="item-note">Built 2026-04-12. Migration: <code>20260412_add_male_hormone_markers.sql</code>. Adds 3 new lab markers: Free Testosterone (Male, pg/mL), Total Testosterone (Male, ng/dL), Estrogen (Male, pg/mL). Per CLIENT_FEEDBACK.md Email Exchange 2: Free T optimal ≥ 100 pg/mL; Total T low if &lt; 500 ng/dL (triggers reflex to Free T); Estrogen optimal 25–35 pg/mL. Tags: Low/Normal/High per marker with scoring_tier=out_of_range (display only) or NULL (normal). Mapped to Hormone Health category. MUST NOT appear in BHAS v2.3 scoring — no optimal/improvement tiers assigned. HIPAA: never expose in employer views, broker views, or any export. Female hormone thresholds still awaiting Damon's answer — not built yet. <strong>Action required:</strong> Run migration in Supabase Dashboard → SQL Editor.</div>
+          <div class="item-note">Built 2026-04-12; corrected 2026-04-16. Original migration <code>20260412_add_male_hormone_markers.sql</code>. Correction migration <code>20260416_fix_hormone_markers.sql</code>: removed logic rules for Free T (Male) and Total T (Male) per Damon Email Exchange 4 (track-only, no thresholds). Added PSA (Normal 0–4, High &gt;4). Added female hormone markers: Free Testosterone (Female), Total Testosterone (Female), Estradiol (Female) — all track-only, no thresholds. <strong>Action required:</strong> Run <code>20260416_fix_hormone_markers.sql</code> in Supabase Dashboard → SQL Editor.</div>
         </div>
-        <span class="item-status status-done">✅ Done — 2026-04-12 — ⚠️ run migration in Supabase</span>
+        <span class="item-status status-done">✅ Done — 2026-04-16 — ⚠️ run correction migration in Supabase</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">63</div>
+        <div class="item-body">
+          <div class="item-title">League / cross-org leaderboard</div>
+          <div class="item-note">Built 2026-04-16. DB: <code>20260416_create_leagues.sql</code> — leagues + league_orgs tables with RLS. Server: GET /api/leagues, GET /api/league/:slug (org-level avg BHAS aggregates, PHI-safe), admin CRUD. Frontend: LeaguesListPage.tsx + LeaguePage.tsx. "Leagues" added to top nav. Admin → Leagues tab: create leagues, assign/remove orgs. <strong>Action required:</strong> Run migration in Supabase Dashboard → SQL Editor.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-04-16 — ⚠️ run migration in Supabase</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">64</div>
+        <div class="item-body">
+          <div class="item-title">Broker role — multi-org access + aggregate reports</div>
+          <div class="item-note">Built 2026-04-16. DB: <code>20260416_add_broker_role.sql</code> — broker_orgs table + profiles.role extended to 'broker'. Server: GET /api/broker/orgs, admin assignment CRUD. Admin → Brokers tab: assign/remove orgs per broker user. Brokers cannot edit resources or affiliate links. <strong>Action required:</strong> Run migration in Supabase Dashboard → SQL Editor.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-04-16 — ⚠️ run migration in Supabase</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">65</div>
+        <div class="item-body">
+          <div class="item-title">Virtual provider links — telehealth cards for members</div>
+          <div class="item-note">Built 2026-04-16. DB: <code>20260416_create_virtual_providers.sql</code> — virtual_providers table, global or org-scoped. Server: GET /api/providers, admin CRUD. Frontend: VirtualProviderCards.tsx on Dashboard (expandable cards). Admin → Providers tab: create/edit/deactivate/delete. <strong>Action required:</strong> Run migration in Supabase Dashboard → SQL Editor.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-04-16 — ⚠️ run migration in Supabase</span>
+      </div>
+
+      <div class="item partial" data-status="partial">
+        <div class="item-num">66</div>
+        <div class="item-body">
+          <div class="item-title">Challenge feature — head-to-head org competition</div>
+          <div class="item-note">DB schema built 2026-04-16: <code>20260416_create_challenges.sql</code> — challenges + challenge_orgs tables, 9-month duration, 0+6-month lab cadence. UI deferred — pending health assessment Q&amp;A from Damon. <strong>Action required:</strong> Run migration in Supabase Dashboard → SQL Editor.</div>
+        </div>
+        <span class="item-status status-partial">⏸ Partial — DB done, UI pending</span>
       </div>
 
     </div>
@@ -1010,8 +1046,8 @@
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-04-12 (male hormone markers) &nbsp;·&nbsp;
-  58 built · 3 partial · 6 not built/skipped out of 67 total items &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-04-26 (bug fixes: admin tab auth, duplicate route handler, orgs response shape) &nbsp;·&nbsp;
+  62 built · 2 partial · 5 not built/skipped out of 69 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
   <br><br>

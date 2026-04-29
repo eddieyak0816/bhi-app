@@ -2,6 +2,69 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-26 — fix: Admin tabs auth, duplicate route handler, orgs response shape, leagues admin bypass
+
+**What changed:**
+
+### `server/index.js`
+- **Duplicate `GET /api/admin/users` handler removed** — the role-filtered version (added for broker tab) was a dead second registration that Express never reached. Merged `?role=broker` filter logic into the original handler: when `?role` query param is present it returns `{ users: [...] }` with emails; without it returns the legacy plain array. Dead handler deleted.
+- **`GET /api/leagues` admin bypass** — endpoint previously required `x-user-id` with no exception, blocking the Admin → Leagues tab from loading. Added: if a valid `x-backend-api-key` is present, bypass the user-id check. Admins also see inactive leagues; regular users still see active-only.
+
+### `src/components/AdminBrokersTab.tsx`
+- **Wrong auth header fixed** — was sending `Authorization: Bearer <jwt>` but the server's `requireAdmin()` checks for `x-backend-api-key`. Replaced with `VITE_BACKEND_API_KEY` via `x-backend-api-key` header.
+- **Orgs response shape fixed** — `/api/admin/organizations` returns a plain array, not `{ organizations: [] }`. Added `Array.isArray()` guard.
+
+### `src/components/AdminProvidersTab.tsx`
+- Same auth header fix (`Authorization` → `x-backend-api-key`).
+- Same orgs response shape fix.
+
+### `src/components/AdminLeaguesTab.tsx`
+- Same auth header fix (`Authorization` → `x-backend-api-key`).
+- Same orgs response shape fix.
+- Removed stale `import { getStoredJwt }` (no longer needed).
+- Removed `'x-user-id': ''` from leagues fetch (now uses admin-key bypass).
+
+---
+
+## 2026-04-16 — feat: Hormone marker fixes, league leaderboard, broker role, virtual providers, challenges
+
+**What changed:**
+
+### Hormone marker corrections (`db/migrations/20260416_fix_hormone_markers.sql`)
+- **Removed** incorrect logic rules for Free Testosterone (Male) and Total Testosterone (Male) — per Damon Email Exchange 4, these are track-only with no thresholds
+- Cleared `min_normal`/`max_normal` on those two markers
+- **Added PSA (Prostate-Specific Antigen)**: Normal 0–4 ng/mL, High > 4 ng/mL (tracked only, not scored)
+- **Added female hormone markers** (all track-only, no thresholds): Free Testosterone (Female), Total Testosterone (Female), Estradiol (Female)
+- **Action required:** Run `20260416_fix_hormone_markers.sql` in Supabase Dashboard → SQL Editor
+
+### League / cross-org leaderboard
+- New DB migration: `db/migrations/20260416_create_leagues.sql` — `leagues` + `league_orgs` tables with RLS
+- New server endpoints: `GET /api/leagues`, `GET /api/league/:slug`, `POST /api/admin/leagues`, `POST/DELETE /api/admin/leagues/:id/orgs`
+- New frontend pages: `src/pages/LeaguesListPage.tsx` (all active leagues), `src/pages/LeaguePage.tsx` (org-level aggregate standings)
+- "Leagues" added to top nav in `Layout.tsx`
+- PHI-safe: league leaderboard shows org names + avg BHAS score only — no individual data
+- Admin can create leagues and assign orgs via new Admin → Leagues tab
+
+### Broker role
+- New DB migration: `db/migrations/20260416_add_broker_role.sql` — `broker_orgs` table + `profiles.role` extended to include `'broker'`
+- New server endpoints: `GET /api/broker/orgs`, `POST/DELETE /api/admin/brokers/:id/orgs`, `GET /api/admin/brokers/:id/orgs`
+- New Admin → Brokers tab: assign/remove orgs per broker user
+- Brokers get multi-org aggregate access; cannot edit resources or affiliate links
+
+### Virtual provider links
+- New DB migration: `db/migrations/20260416_create_virtual_providers.sql` — `virtual_providers` table with RLS
+- New server endpoints: `GET /api/providers`, `POST/PATCH/DELETE /api/admin/providers`, `GET /api/admin/providers`
+- New member-facing component: `src/components/VirtualProviderCards.tsx` — expandable provider cards on Dashboard
+- New Admin → Providers tab: create, edit, deactivate, delete providers; global or org-scoped
+- **Action required:** Run `20260416_create_virtual_providers.sql` in Supabase Dashboard
+
+### Challenges (DB only — UI pending health assessment answers)
+- New DB migration: `db/migrations/20260416_create_challenges.sql` — `challenges` + `challenge_orgs` tables with RLS
+- 9-month duration, 0 + 6-month lab cadence design in schema; UI deferred until health assessment Qs answered
+- **Action required:** Run `20260416_create_challenges.sql` in Supabase Dashboard
+
+---
+
 ## 2026-04-12 — feat: Male hormone markers (tracked only, not scored)
 
 **What changed:**

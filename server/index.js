@@ -2008,16 +2008,76 @@ app.patch('/api/username', async (req, res) => {
 
 // GET /api/admin/users — admin-only: full identity mapping (name, email, username, public_id, role)
 // PHI WARNING: intentionally privileged — must NEVER be used in employer-facing views.
+// Supports ?role=broker (or any role) to filter. When ?role is provided, response is { users: [...] }.
+// Without ?role, response is an array (legacy callers rely on this shape).
 app.get('/api/admin/users', async (req, res) => {
   if (!requireAdmin(req, res)) return;
+  const { role } = req.query;
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    if (role) {
+      // Filtered by role — returns { users: [...] } with emails from auth.users
+      let query = sb.from('profiles').select('id, username, role').eq('role', role).order('username', { ascending: true });
+      const { data: profiles, error } = await query;
+      if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+      const users = [];
+      for (const p of profiles || []) {
+        const { data: authUser } = await sb.auth.admin.getUserById(p.id);
+        users.push({ id: p.id, username: p.username, role: p.role, email: authUser?.user?.email || '' });
+      }
+      return res.status(200).json({ users });
+    }
+    // No role filter — legacy shape: plain array with full identity fields
     const { data, error } = await sb
       .from('profiles')
       .select('id, name, email, username, public_id, role, created_at')
       .order('created_at');
     if (error) return res.status(500).json({ error: 'db_error', detail: error });
     return res.status(200).json(data || []);
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/users — admin creates a new user account
+// Body: { email, password, role ('member'|'broker'|'admin'), username? }
+app.post('/api/admin/users', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { email, password, role = 'member', username } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: 'email and password required' });
+  const validRoles = ['member', 'broker', 'admin'];
+  if (!validRoles.includes(role)) return res.status(400).json({ error: 'invalid role' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data: authData, error: authErr } = await sb.auth.admin.createUser({
+      email, password, email_confirm: true,
+    });
+    if (authErr) return res.status(400).json({ error: authErr.message });
+    const userId = authData.user.id;
+    const profileUpdate = { role };
+    if (username) {
+      const clean = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (clean.length >= 3) profileUpdate.username = clean;
+    }
+    await sb.from('profiles').update(profileUpdate).eq('id', userId);
+    return res.status(201).json({ id: userId, email, role });
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// PATCH /api/admin/users/:id/role — change a user's role
+app.patch('/api/admin/users/:id/role', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  const { role } = req.body || {};
+  const validRoles = ['member', 'broker', 'admin'];
+  if (!validRoles.includes(role)) return res.status(400).json({ error: 'invalid role' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('profiles').update({ role }).eq('id', id);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ id, role });
   } catch (err) {
     return res.status(500).json({ error: 'server_error' });
   }
@@ -2390,6 +2450,399 @@ app.delete('/api/admin/organizations/:id', async (req, res) => {
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('DELETE /api/admin/organizations/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── Admin helper endpoints ────────────────────────────────────────────────────
+
+// GET /api/admin/providers — all providers (admin only, includes inactive)
+app.get('/api/admin/providers', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('virtual_providers').select('*').order('created_at', { ascending: false });
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ providers: data || [] });
+  } catch (err) {
+    console.error('GET /api/admin/providers error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// GET /api/admin/leagues/:leagueId/orgs — orgs in a league (admin only)
+app.get('/api/admin/leagues/:leagueId/orgs', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { leagueId } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data: leagueOrgs, error } = await sb.from('league_orgs').select('org_id').eq('league_id', leagueId);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    const orgIds = (leagueOrgs || []).map(lo => lo.org_id);
+    if (orgIds.length === 0) return res.status(200).json({ orgs: [] });
+    const { data: orgs } = await sb.from('organizations').select('id, name, slug').in('id', orgIds);
+    return res.status(200).json({ orgs: orgs || [] });
+  } catch (err) {
+    console.error('GET /api/admin/leagues/:id/orgs error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+
+// GET /api/admin/brokers/:brokerId/orgs — orgs assigned to a broker (admin only)
+app.get('/api/admin/brokers/:brokerId/orgs', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { brokerId } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data: assignments, error } = await sb.from('broker_orgs').select('org_id').eq('broker_id', brokerId);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    const orgIds = (assignments || []).map(a => a.org_id);
+    if (orgIds.length === 0) return res.status(200).json({ orgs: [] });
+    const { data: orgs } = await sb.from('organizations').select('id, name, slug').in('id', orgIds);
+    return res.status(200).json({ orgs: orgs || [] });
+  } catch (err) {
+    console.error('GET /api/admin/brokers/:id/orgs error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── League Leaderboard ────────────────────────────────────────────────────────
+
+// GET /api/leagues
+// Returns all active leagues. Any authenticated user or admin can view.
+app.get('/api/leagues', async (req, res) => {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(501).json({ error: 'backend-disabled' });
+  const requestingUserId = req.header('x-user-id') || '';
+  const isAdmin = BACKEND_API_KEY && (req.header('x-backend-api-key') || '') === BACKEND_API_KEY;
+  if (!requestingUserId && !isAdmin) return res.status(401).json({ error: 'unauthenticated' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    // Admin view includes inactive leagues so they can manage them; user view is active-only
+    let query = sb.from('leagues').select('id, name, slug, starts_at, ends_at, is_active').order('starts_at', { ascending: false });
+    if (!isAdmin) query = query.eq('is_active', true);
+    const { data: leagues, error } = await query;
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ leagues: leagues || [] });
+  } catch (err) {
+    console.error('GET /api/leagues error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// GET /api/league/:leagueSlug
+// Returns de-identified league leaderboard: org-level aggregate BHAS averages.
+// PHI guarantee: no individual user data — only org name + avg score + participant count.
+// Accessible by any authenticated user (community engagement feature).
+app.get('/api/league/:leagueSlug', async (req, res) => {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(501).json({ error: 'backend-disabled' });
+  const requestingUserId = req.header('x-user-id') || '';
+  if (!requestingUserId) return res.status(401).json({ error: 'unauthenticated' });
+
+  const { leagueSlug } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Resolve league
+    const { data: league, error: lErr } = await sb
+      .from('leagues')
+      .select('id, name, slug, starts_at, ends_at, is_active')
+      .eq('slug', leagueSlug)
+      .maybeSingle();
+    if (lErr) return res.status(500).json({ error: 'db_error' });
+    if (!league) return res.status(404).json({ error: 'league_not_found' });
+
+    // Get orgs in this league
+    const { data: leagueOrgs, error: loErr } = await sb
+      .from('league_orgs')
+      .select('org_id')
+      .eq('league_id', league.id);
+    if (loErr) return res.status(500).json({ error: 'db_error' });
+    const orgIds = (leagueOrgs || []).map(lo => lo.org_id);
+    if (orgIds.length === 0) {
+      return res.status(200).json({ league, entries: [] });
+    }
+
+    // Get org names
+    const { data: orgs } = await sb
+      .from('organizations')
+      .select('id, name, slug')
+      .in('id', orgIds);
+    const orgMap = {};
+    for (const o of orgs || []) orgMap[o.id] = o;
+
+    // For each org, get all member IDs
+    const { data: memberships } = await sb
+      .from('org_memberships')
+      .select('org_id, user_id')
+      .in('org_id', orgIds);
+
+    // Group member IDs by org
+    const membersByOrg = {};
+    for (const m of memberships || []) {
+      if (!membersByOrg[m.org_id]) membersByOrg[m.org_id] = [];
+      membersByOrg[m.org_id].push(m.user_id);
+    }
+
+    const allMemberIds = (memberships || []).map(m => m.user_id);
+    if (allMemberIds.length === 0) {
+      return res.status(200).json({ league, entries: [] });
+    }
+
+    // Fetch latest bhas_v2_scores per member
+    const { data: scores } = await sb
+      .from('bhas_v2_scores')
+      .select('user_id, total_score, score_date')
+      .in('user_id', allMemberIds)
+      .order('score_date', { ascending: false });
+
+    // Keep only latest score per user
+    const latestScore = {};
+    for (const row of scores || []) {
+      if (!latestScore[row.user_id]) latestScore[row.user_id] = row;
+    }
+
+    // Compute per-org aggregates
+    const entries = orgIds.map(orgId => {
+      const members = membersByOrg[orgId] || [];
+      const memberScores = members
+        .map(uid => latestScore[uid])
+        .filter(Boolean)
+        .map(s => Number(s.total_score));
+      const participantCount = memberScores.length;
+      const avgScore = participantCount > 0
+        ? memberScores.reduce((a, b) => a + b, 0) / participantCount
+        : null;
+      return {
+        org_id:            orgId,
+        org_name:          orgMap[orgId]?.name || 'Unknown',
+        org_slug:          orgMap[orgId]?.slug || '',
+        participant_count: participantCount,
+        avg_score:         avgScore !== null ? Math.round(avgScore * 100) / 100 : null,
+        member_count:      members.length,
+      };
+    }).filter(e => e.participant_count > 0);
+
+    // Sort by avg_score descending
+    entries.sort((a, b) => (b.avg_score ?? -1) - (a.avg_score ?? -1));
+
+    return res.status(200).json({ league, entries });
+  } catch (err) {
+    console.error('GET /api/league/:leagueSlug error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/leagues — create a league (app admin only)
+app.post('/api/admin/leagues', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { name, slug, starts_at, ends_at } = req.body;
+  if (!name || !slug || !starts_at || !ends_at) {
+    return res.status(400).json({ error: 'name, slug, starts_at, ends_at required' });
+  }
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const adminId = req.header('x-user-id') || null;
+    const { data, error } = await sb
+      .from('leagues')
+      .insert({ name, slug, starts_at, ends_at, created_by: adminId })
+      .select()
+      .single();
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(201).json({ league: data });
+  } catch (err) {
+    console.error('POST /api/admin/leagues error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/leagues/:leagueId/orgs — add an org to a league
+app.post('/api/admin/leagues/:leagueId/orgs', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { leagueId } = req.params;
+  const { org_id } = req.body;
+  if (!org_id) return res.status(400).json({ error: 'org_id required' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('league_orgs').insert({ league_id: leagueId, org_id });
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error('POST /api/admin/leagues/:id/orgs error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/leagues/:leagueId/orgs/:orgId — remove org from league
+app.delete('/api/admin/leagues/:leagueId/orgs/:orgId', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { leagueId, orgId } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('league_orgs')
+      .delete().eq('league_id', leagueId).eq('org_id', orgId);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/leagues/:id/orgs/:orgId error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── Broker Role ───────────────────────────────────────────────────────────────
+
+// GET /api/broker/orgs — returns all orgs assigned to the requesting broker
+app.get('/api/broker/orgs', async (req, res) => {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(501).json({ error: 'backend-disabled' });
+  const requestingUserId = req.header('x-user-id') || '';
+  if (!requestingUserId) return res.status(401).json({ error: 'unauthenticated' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Verify broker role
+    const { data: profile } = await sb.from('profiles').select('role').eq('id', requestingUserId).maybeSingle();
+    const isBroker = profile?.role === 'broker';
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
+    if (!isBroker && !isAdmin) return res.status(403).json({ error: 'not_broker' });
+
+    let orgIds;
+    if (isAdmin) {
+      // Admins can see all orgs
+      const { data: allOrgs } = await sb.from('organizations').select('id, name, slug');
+      return res.status(200).json({ orgs: allOrgs || [] });
+    }
+
+    const { data: assignments } = await sb.from('broker_orgs').select('org_id').eq('broker_id', requestingUserId);
+    orgIds = (assignments || []).map(a => a.org_id);
+    if (orgIds.length === 0) return res.status(200).json({ orgs: [] });
+
+    const { data: orgs } = await sb.from('organizations').select('id, name, slug').in('id', orgIds);
+    return res.status(200).json({ orgs: orgs || [] });
+  } catch (err) {
+    console.error('GET /api/broker/orgs error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/brokers/:brokerId/orgs — assign org to broker (admin only)
+app.post('/api/admin/brokers/:brokerId/orgs', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { brokerId } = req.params;
+  const { org_id } = req.body;
+  if (!org_id) return res.status(400).json({ error: 'org_id required' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    // Ensure user has broker role
+    const { data: p } = await sb.from('profiles').select('role').eq('id', brokerId).maybeSingle();
+    if (!p || p.role !== 'broker') return res.status(400).json({ error: 'user_not_broker' });
+    const { error } = await sb.from('broker_orgs').insert({ broker_id: brokerId, org_id });
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error('POST /api/admin/brokers/:id/orgs error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/brokers/:brokerId/orgs/:orgId — remove org from broker
+app.delete('/api/admin/brokers/:brokerId/orgs/:orgId', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { brokerId, orgId } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('broker_orgs').delete().eq('broker_id', brokerId).eq('org_id', orgId);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/brokers/:id/orgs/:orgId error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── Virtual Provider Links ────────────────────────────────────────────────────
+
+// GET /api/providers — returns active providers visible to the requesting user
+// Global providers (org_id=NULL) + providers for any org the user belongs to
+app.get('/api/providers', async (req, res) => {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(501).json({ error: 'backend-disabled' });
+  const requestingUserId = req.header('x-user-id') || '';
+  if (!requestingUserId) return res.status(401).json({ error: 'unauthenticated' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Get user's org memberships
+    const { data: memberships } = await sb
+      .from('org_memberships').select('org_id').eq('user_id', requestingUserId);
+    const userOrgIds = (memberships || []).map(m => m.org_id);
+
+    // Fetch global providers + org-specific ones the user belongs to
+    const { data: providers, error } = await sb
+      .from('virtual_providers')
+      .select('id, name, title, specialty, brief_bio, full_bio, link_url, image_url, org_id')
+      .eq('is_active', true)
+      .order('created_at', { ascending: true });
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+
+    const visible = (providers || []).filter(p =>
+      p.org_id === null || userOrgIds.includes(p.org_id)
+    );
+    return res.status(200).json({ providers: visible });
+  } catch (err) {
+    console.error('GET /api/providers error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/providers — create provider (app admin only)
+app.post('/api/admin/providers', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { name, title, specialty, brief_bio, full_bio, link_url, image_url, org_id } = req.body;
+  if (!name || !brief_bio) return res.status(400).json({ error: 'name and brief_bio required' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const adminId = req.header('x-user-id') || null;
+    const { data, error } = await sb
+      .from('virtual_providers')
+      .insert({ name, title, specialty, brief_bio, full_bio, link_url, image_url, org_id: org_id || null, created_by: adminId })
+      .select().single();
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(201).json({ provider: data });
+  } catch (err) {
+    console.error('POST /api/admin/providers error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// PATCH /api/admin/providers/:id — update provider
+app.patch('/api/admin/providers/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  const fields = ['name', 'title', 'specialty', 'brief_bio', 'full_bio', 'link_url', 'image_url', 'org_id', 'is_active'];
+  const updates = {};
+  for (const f of fields) { if (req.body[f] !== undefined) updates[f] = req.body[f]; }
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'no fields to update' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('virtual_providers').update(updates).eq('id', id);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('PATCH /api/admin/providers/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/providers/:id
+app.delete('/api/admin/providers/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('virtual_providers').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/providers/:id error:', err.message);
     return res.status(500).json({ error: 'server_error' });
   }
 });

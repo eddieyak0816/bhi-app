@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Nav — Layout Options</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; padding: 40px 24px; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #f8fafc; }
+  .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 48px; }
+  .option { margin-bottom: 56px; }
+  .option-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #64748b; margin-bottom: 10px; }
+  .option-title { font-size: 17px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+  .option-desc { font-size: 13px; color: #94a3b8; margin-bottom: 18px; }
+  .demo { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; }
+  .demo-topbar { background: #0f172a; border-bottom: 1px solid #334155; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+  .demo-logo { font-size: 13px; font-weight: 700; color: #3b82f6; }
+  .demo-title { font-size: 13px; font-weight: 600; color: #94a3b8; }
+  .demo-content { padding: 24px 20px; }
+  .demo-body { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 20px; margin-top: 16px; color: #64748b; font-size: 13px; text-align: center; height: 60px; display: flex; align-items: center; justify-content: center; }
+
+  /* ── Option A: Horizontal scrolling pill bar ── */
+  .nav-a { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .nav-a::-webkit-scrollbar { display: none; }
+  .nav-a-btn { white-space: nowrap; padding: 7px 14px; border-radius: 20px; border: 1px solid #334155; background: transparent; color: #94a3b8; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+  .nav-a-btn:hover { border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.08); }
+  .nav-a-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 600; }
+
+  /* ── Option B: Left sidebar ── */
+  .nav-b-wrap { display: flex; gap: 0; }
+  .nav-b { width: 180px; flex-shrink: 0; border-right: 1px solid #334155; padding: 8px 0; }
+  .nav-b-btn { display: block; width: 100%; text-align: left; padding: 9px 16px; border: none; background: transparent; color: #94a3b8; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
+  .nav-b-btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.04); }
+  .nav-b-btn.active { color: #3b82f6; background: rgba(59,130,246,0.1); border-left-color: #3b82f6; font-weight: 600; }
+  .nav-b-content { flex: 1; padding: 16px 20px; }
+
+  /* ── Option C: Grouped dropdown select ── */
+  .nav-c { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .nav-c-select { padding: 8px 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; font-size: 13px; cursor: pointer; }
+  .nav-c-breadcrumb { font-size: 13px; color: #64748b; display: flex; align-items: center; gap: 6px; }
+  .nav-c-breadcrumb span { color: #3b82f6; font-weight: 600; }
+  .nav-c-pills { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .nav-c-pill { padding: 5px 12px; border-radius: 6px; border: 1px solid #334155; background: transparent; color: #94a3b8; font-size: 12px; cursor: pointer; }
+  .nav-c-pill.active { background: rgba(59,130,246,0.15); border-color: #3b82f6; color: #3b82f6; font-weight: 600; }
+
+  /* ── Option D: Icon + label icon bar ── */
+  .nav-d { display: flex; gap: 4px; flex-wrap: wrap; }
+  .nav-d-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 12px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: #64748b; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s; min-width: 62px; }
+  .nav-d-btn .icon { font-size: 18px; line-height: 1; }
+  .nav-d-btn:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; border-color: #334155; }
+  .nav-d-btn.active { background: rgba(59,130,246,0.12); color: #3b82f6; border-color: rgba(59,130,246,0.3); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>Admin Nav — Layout Options</h1>
+<p class="subtitle">Current: flat horizontal tab bar that overflows. Four alternatives below — pick one to implement.</p>
+
+<!-- ── OPTION A ── -->
+<div class="option">
+  <div class="option-label">Option A</div>
+  <div class="option-title">Scrollable Pill Bar</div>
+  <div class="option-desc">Single row of rounded pills. Scrolls horizontally when there are too many — swipe on mobile, scroll on desktop. Clean and modern. Easiest to implement (one CSS change).</div>
+  <div class="demo">
+    <div class="demo-topbar">
+      <span class="demo-logo">NHL</span>
+      <span class="demo-title">Admin — Content Manager (dev)</span>
+    </div>
+    <div class="demo-content">
+      <div class="nav-a">
+        <button class="nav-a-btn active">Resources</button>
+        <button class="nav-a-btn">Resource Types</button>
+        <button class="nav-a-btn">Categories</button>
+        <button class="nav-a-btn">Tags</button>
+        <button class="nav-a-btn">Lab Markers</button>
+        <button class="nav-a-btn">Health Goals</button>
+        <button class="nav-a-btn">Criteria</button>
+        <button class="nav-a-btn">Organizations</button>
+        <button class="nav-a-btn">Products</button>
+        <button class="nav-a-btn">Brokers</button>
+        <button class="nav-a-btn">Providers</button>
+        <button class="nav-a-btn">Leagues</button>
+        <button class="nav-a-btn">Users</button>
+      </div>
+      <div class="demo-body">Tab content area</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── OPTION B ── -->
+<div class="option">
+  <div class="option-label">Option B</div>
+  <div class="option-title">Left Sidebar Navigation</div>
+  <div class="option-desc">Vertical sidebar with all tabs listed. More room for long labels, no overflow ever. Standard admin panel pattern (like Stripe, Supabase). Best for power users who switch tabs often.</div>
+  <div class="demo">
+    <div class="demo-topbar">
+      <span class="demo-logo">NHL</span>
+      <span class="demo-title">Admin — Content Manager (dev)</span>
+    </div>
+    <div class="demo-content" style="padding: 0;">
+      <div class="nav-b-wrap">
+        <nav class="nav-b">
+          <button class="nav-b-btn active">Resources</button>
+          <button class="nav-b-btn">Resource Types</button>
+          <button class="nav-b-btn">Categories</button>
+          <button class="nav-b-btn">Tags</button>
+          <button class="nav-b-btn">Lab Markers</button>
+          <button class="nav-b-btn">Health Goals</button>
+          <button class="nav-b-btn">Criteria</button>
+          <button class="nav-b-btn">Organizations</button>
+          <button class="nav-b-btn">Products</button>
+          <button class="nav-b-btn">Brokers</button>
+          <button class="nav-b-btn">Providers</button>
+          <button class="nav-b-btn">Leagues</button>
+          <button class="nav-b-btn">Users</button>
+        </nav>
+        <div class="nav-b-content">
+          <div class="demo-body" style="margin-top: 0; height: 200px;">Tab content area</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── OPTION C ── -->
+<div class="option">
+  <div class="option-label">Option C</div>
+  <div class="option-title">Grouped Dropdown + Quick Tabs</div>
+  <div class="option-desc">A "Section" dropdown groups related tabs (Content, Scoring, People, Commerce). Selecting a section reveals a small row of sub-tabs. Reduces visual clutter at the cost of one extra click to switch sections.</div>
+  <div class="demo">
+    <div class="demo-topbar">
+      <span class="demo-logo">NHL</span>
+      <span class="demo-title">Admin — Content Manager (dev)</span>
+    </div>
+    <div class="demo-content">
+      <div class="nav-c">
+        <select class="nav-c-select">
+          <option>Content</option>
+          <option>Scoring</option>
+          <option selected>People</option>
+          <option>Commerce</option>
+        </select>
+        <div class="nav-c-breadcrumb">Admin / <span>People</span></div>
+      </div>
+      <div class="nav-c-pills">
+        <button class="nav-c-pill">Organizations</button>
+        <button class="nav-c-pill active">Brokers</button>
+        <button class="nav-c-pill">Providers</button>
+        <button class="nav-c-pill">Leagues</button>
+        <button class="nav-c-pill">Users</button>
+      </div>
+      <div class="demo-body">Tab content area</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── OPTION D ── -->
+<div class="option">
+  <div class="option-label">Option D</div>
+  <div class="option-title">Icon + Label Grid</div>
+  <div class="option-desc">Each tab is a small icon + short label tile. Wraps naturally into 2–3 rows. Immediately scannable — great if you access many sections. Requires choosing an emoji or icon per tab.</div>
+  <div class="demo">
+    <div class="demo-topbar">
+      <span class="demo-logo">NHL</span>
+      <span class="demo-title">Admin — Content Manager (dev)</span>
+    </div>
+    <div class="demo-content">
+      <div class="nav-d">
+        <button class="nav-d-btn active"><span class="icon">📄</span>Resources</button>
+        <button class="nav-d-btn"><span class="icon">🏷️</span>Types</button>
+        <button class="nav-d-btn"><span class="icon">📂</span>Categories</button>
+        <button class="nav-d-btn"><span class="icon">🔖</span>Tags</button>
+        <button class="nav-d-btn"><span class="icon">🧪</span>Markers</button>
+        <button class="nav-d-btn"><span class="icon">🎯</span>Goals</button>
+        <button class="nav-d-btn"><span class="icon">⚖️</span>Criteria</button>
+        <button class="nav-d-btn"><span class="icon">🏢</span>Orgs</button>
+        <button class="nav-d-btn"><span class="icon">🛍️</span>Products</button>
+        <button class="nav-d-btn"><span class="icon">🤝</span>Brokers</button>
+        <button class="nav-d-btn"><span class="icon">👨‍⚕️</span>Providers</button>
+        <button class="nav-d-btn"><span class="icon">🏆</span>Leagues</button>
+        <button class="nav-d-btn"><span class="icon">👤</span>Users</button>
+      </div>
+      <div class="demo-body">Tab content area</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

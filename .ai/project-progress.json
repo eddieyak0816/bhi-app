@@ -57,5 +57,154 @@
     "total_partial": 4,
     "total_not_built": 11,
     "total_items": 62
+  },
+  {
+    "date": "2026-04-07",
+    "session_summary": "BHAS v2.3 spec corrections, Supplements nav dropdown, auth deadlock fix, Lab Results filter improvement, affiliate catalog + display, individual PDF health report, Supabase key migration.",
+    "features_completed": [
+      {
+        "id": "F59",
+        "title": "Supplements nav dropdown — 25% Off Supplements with Fullscript + Biote links",
+        "files": ["src/components/Layout.tsx"],
+        "notes": "Dropdown button in top nav, opens links to Fullscript and Biote in new tab. Closes on outside click. Theme-aware."
+      },
+      {
+        "id": "F24",
+        "title": "Affiliate product catalog — Admin CRUD",
+        "files": ["src/components/AffiliateProductsTab.tsx", "src/pages/Admin.tsx"],
+        "notes": "Full CRUD for affiliate products with tag picker. affiliate_products + product_tags tables."
+      },
+      {
+        "id": "F25",
+        "title": "Affiliate product display — user-facing recommendation cards",
+        "files": ["src/components/AffiliateProductCards.tsx", "src/pages/Dashboard.tsx"],
+        "notes": "Tag-matched product cards on Dashboard. Products with no tags shown to all users."
+      },
+      {
+        "id": "F60",
+        "title": "Auth deadlock fix — replace getSession() with getStoredJwt() + setSession()",
+        "files": ["src/context/AuthContext.tsx", "src/lib/supabase.ts"],
+        "notes": "getSession() from useEffect deadlocked auth client. Now reads JWT from localStorage directly, calls setSession() to hydrate, fetches profile via plain fetch."
+      },
+      {
+        "id": "F61",
+        "title": "Lab Results — Show all button to clear marker filter",
+        "files": ["src/pages/LabsPage.tsx"],
+        "notes": "Button appears inline next to History heading when a marker chip is selected. Calls setSelectedMarker(null)."
+      },
+      {
+        "id": "F22",
+        "title": "Individual PDF health report",
+        "files": ["src/components/HealthReportModal.tsx", "src/pages/Dashboard.tsx"],
+        "notes": "HealthReportModal.tsx: BHAS v1 + v2.3 scores, per-marker breakdown, national benchmarks. window.open() print/PDF."
+      }
+    ],
+    "total_built": 53,
+    "total_partial": 3,
+    "total_not_built": 8,
+    "total_items": 64
+  },
+  {
+    "date": "2026-04-16",
+    "session_summary": "Hormone marker corrections (F62), league leaderboard (F63), broker role (F64), virtual providers (F65), challenge DB schema (F66). All migrations run and verified in Supabase. UI not yet browser-tested.",
+    "features_completed": [
+      {
+        "id": "F62",
+        "title": "Hormone marker corrections",
+        "files": ["db/migrations/20260416_fix_hormone_markers.sql"],
+        "notes": "Removed wrong logic rules for Free T/Total T (Male). Added PSA (0-4 normal). Added female hormone markers (Free T, Total T, Estradiol — all track-only). DB verified."
+      },
+      {
+        "id": "F63",
+        "title": "League / cross-org leaderboard",
+        "files": [
+          "db/migrations/20260416_create_leagues.sql",
+          "src/pages/LeaguesListPage.tsx",
+          "src/pages/LeaguePage.tsx",
+          "src/components/AdminLeaguesTab.tsx",
+          "src/components/Layout.tsx",
+          "src/App.tsx",
+          "server/index.js"
+        ],
+        "notes": "leagues + league_orgs tables. GET /api/leagues, GET /api/league/:slug (org-level aggregate BHAS, PHI-safe), admin CRUD. Leagues in top nav. Admin → Leagues tab."
+      },
+      {
+        "id": "F64",
+        "title": "Broker role — multi-org access",
+        "files": [
+          "db/migrations/20260416_add_broker_role.sql",
+          "src/components/AdminBrokersTab.tsx",
+          "src/pages/Admin.tsx",
+          "server/index.js"
+        ],
+        "notes": "broker_orgs table + profiles.role extended. Admin → Brokers tab for org assignment."
+      },
+      {
+        "id": "F65",
+        "title": "Virtual provider links — telehealth cards for members",
+        "files": [
+          "db/migrations/20260416_create_virtual_providers.sql",
+          "src/components/VirtualProviderCards.tsx",
+          "src/components/AdminProvidersTab.tsx",
+          "src/pages/Dashboard.tsx",
+          "src/pages/Admin.tsx",
+          "server/index.js"
+        ],
+        "notes": "virtual_providers table. GET /api/providers, admin CRUD. Expandable cards on Dashboard."
+      },
+      {
+        "id": "F66",
+        "title": "Challenge feature DB schema (UI pending)",
+        "files": ["db/migrations/20260416_create_challenges.sql"],
+        "notes": "challenges + challenge_orgs tables with RLS. UI deferred pending health assessment Q&A from Damon."
+      }
+    ],
+    "total_built": 62,
+    "total_partial": 2,
+    "total_not_built": 5,
+    "total_items": 69
+  },
+  {
+    "date": "2026-04-26",
+    "session_summary": "Bug-fix session targeting the four F63/F64/F65 admin tab issues found during browser-test preparation. No new features built.",
+    "features_completed": [],
+    "bugs_fixed": [
+      {
+        "id": "BUG-1",
+        "title": "Duplicate GET /api/admin/users handler — role filter unreachable",
+        "files": ["server/index.js"],
+        "notes": "Second handler at line 2432 was shadowed by the first at line 2011. Merged ?role filter into single handler. When role param present: returns { users: [...] } shape. Without it: returns legacy plain array. Dead handler deleted."
+      },
+      {
+        "id": "BUG-2",
+        "title": "Admin tab components sending wrong auth header",
+        "files": [
+          "src/components/AdminBrokersTab.tsx",
+          "src/components/AdminProvidersTab.tsx",
+          "src/components/AdminLeaguesTab.tsx"
+        ],
+        "notes": "All three tabs sent Authorization: Bearer <jwt> but server requireAdmin() checks x-backend-api-key. Fixed to use VITE_BACKEND_API_KEY via x-backend-api-key header."
+      },
+      {
+        "id": "BUG-3",
+        "title": "Orgs response shape mismatch in admin tabs",
+        "files": [
+          "src/components/AdminBrokersTab.tsx",
+          "src/components/AdminProvidersTab.tsx",
+          "src/components/AdminLeaguesTab.tsx"
+        ],
+        "notes": "/api/admin/organizations returns a plain array, not { organizations: [] }. Tabs called .organizations on it, always getting undefined → []. Added Array.isArray() guard."
+      },
+      {
+        "id": "BUG-4",
+        "title": "GET /api/leagues blocking admin callers (no x-user-id)",
+        "files": ["server/index.js"],
+        "notes": "AdminLeaguesTab has no user context, so it couldn't pass x-user-id. Added: if valid x-backend-api-key present, bypass user-id check. Admins also see inactive leagues; users see active-only."
+      }
+    ],
+    "total_built": 62,
+    "total_partial": 2,
+    "total_not_built": 5,
+    "total_items": 69
   }
 ]
