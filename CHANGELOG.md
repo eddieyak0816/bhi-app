@@ -2,6 +2,23 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-04-30 — fix: Live site bug fixes (logout, lab markers, saves, OpenRouter)
+
+### `src/context/AuthContext.tsx`
+- Logout now calls `localStorage.clear()` before `signOut` and uses `scope: 'global'` — prevents session restoration on refresh
+
+### `src/pages/LabsPage.tsx`
+- `fetchMarkers` effect now depends on `user?.id` — waits for auth before querying, eliminates "Loading markers..." race condition on first load
+- `handleSaveExtracted` made async with `Promise.all()` — PDF results now save in parallel instead of hanging on sequential awaits
+
+### `src/context/ResultsContext.tsx`
+- Replaced all Supabase JS client writes (insert/delete) with direct REST `fetch` using `getStoredJwt()` — eliminates silent hangs caused by JS client session deadlock after `SIGNED_IN` event
+
+### `server/index.js`
+- Updated OpenRouter free model list — removed stale models (all 404/400). New list: `openai/gpt-oss-120b:free` (confirmed working, moved to top), Gemma 4, Llama 3.3, GLM 4.5 Air. Nemotron removed (returns empty response).
+
+---
+
 ## 2026-04-29 — feat: F67 Health Assessment (lifestyle check-in + symptom tracker)
 
 ### `db/migrations/20260429_create_health_assessments.sql` *(run in Supabase)*

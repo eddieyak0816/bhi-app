@@ -245,6 +245,47 @@
     "total_items": 69
   },
   {
+    "date": "2026-04-30",
+    "session_summary": "Bug-fix session targeting live site issues: logout not clearing session (refresh re-logged in user), lab markers stuck on 'Loading...' on first load (race condition before auth ready), lab result insert/delete/clear hanging silently (Supabase JS client session deadlock — replaced with direct REST fetch), PDF save button stuck on 'Saving...' (missing await on addResult), OpenRouter free model list stale (updated to currently available models, openai/gpt-oss-120b:free confirmed working).",
+    "features_completed": [],
+    "bugs_fixed": [
+      {
+        "id": "BUG-8",
+        "title": "Logout — refresh after logout re-enters app without login",
+        "files": ["src/context/AuthContext.tsx"],
+        "notes": "signOut({ scope: 'local' }) was not clearing localStorage fast enough — client could restore session. Fixed: localStorage.clear() before signOut, changed scope to 'global' to invalidate refresh token server-side."
+      },
+      {
+        "id": "BUG-9",
+        "title": "Lab markers stuck on 'Loading...' on first page load",
+        "files": ["src/pages/LabsPage.tsx"],
+        "notes": "fetchMarkers useEffect ran on mount with empty deps [], before auth was ready. Supabase query hung unauthenticated. Fixed: added user?.id dependency so effect waits until auth resolves."
+      },
+      {
+        "id": "BUG-10",
+        "title": "Lab result insert/delete/clear hanging silently",
+        "files": ["src/context/ResultsContext.tsx"],
+        "notes": "Supabase JS client internal session state out of sync after SIGNED_IN event — calls to supabase.from().insert/delete hung forever. Replaced all writes with direct REST fetch using getStoredJwt(). Reads still use JS client (working fine)."
+      },
+      {
+        "id": "BUG-11",
+        "title": "PDF Save Results button stuck on 'Saving...'",
+        "files": ["src/pages/LabsPage.tsx"],
+        "notes": "handleSaveExtracted called addResult() in a for loop without await — all inserts fired then function returned immediately before any resolved. Fixed: made function async, changed to Promise.all() for parallel awaited inserts."
+      },
+      {
+        "id": "BUG-12",
+        "title": "OpenRouter free models all returning 404/400/429",
+        "files": ["server/index.js"],
+        "notes": "All previously listed models (meta-llama, mistralai, qwen, google/gemini-2.0-flash-exp) removed from OpenRouter. Updated list to currently available models. openai/gpt-oss-120b:free confirmed working (extracted 9 markers). Nemotron removed (returns empty response). openai/gpt-oss-120b:free moved to top of list."
+      }
+    ],
+    "total_built": 63,
+    "total_partial": 2,
+    "total_not_built": 4,
+    "total_items": 69
+  },
+  {
     "date": "2026-04-26",
     "session_summary": "Bug-fix session targeting the four F63/F64/F65 admin tab issues found during browser-test preparation. No new features built.",
     "features_completed": [],
