@@ -433,6 +433,20 @@ Brokers **cannot** edit reference material or any supplement/affiliate marketing
 
 ---
 
+## Email Exchange 7 — YouTube Shorts / Full Video Toggle (2026-04-29)
+
+**Damon's request:** When users log in, they should be able to pick between YouTube Shorts (quick ~1 min teasers) vs full in-depth videos/podcasts. Not everyone wants a 15–60 min video — some just want a quick teaser. He wants this as a **toggle/filter on the Dashboard** (not a profile default setting).
+
+### What to build
+- Add `"short"` as a new resource type in Admin (Damon will tag his Shorts content with it)
+- Add a **Shorts / All** toggle to the Dashboard recommended resources section
+- The Resources page already has a type filter — once `"short"` is a type, it works there automatically
+- No profile preference field needed — it's a live UI toggle only
+
+**Status:** ❌ Not built.
+
+---
+
 ## Email Exchange 6 — CPT Codes, Lab Trigger Messages, Org Join, New Features (2026-04-29)
 
 ### CPT Codes per Lab Marker — NEW
@@ -569,6 +583,7 @@ Damon now says this may be important for lab reimbursement with his first compan
 | Payment processing | ❌ Dropped | Free app pivot. |
 | HSA bank integration | ❌ Dropped | Free app pivot. |
 | Domain migration | Not yet | Awaiting deployment decision. |
+| **Shorts / Full toggle on Dashboard** | ❌ Not built | Add "short" resource type + Shorts/All toggle on Dashboard recommended section |
 | Assessment cadence | **[Q] Still open** | Signup only, quarterly, or every lab entry? |
 | Monthly email wording | **[Q] Still open** | Damon to provide copy for 10+ topics. |
 | HSA form template | **[Q] Still open** | Damon to re-send the pre-made form. |

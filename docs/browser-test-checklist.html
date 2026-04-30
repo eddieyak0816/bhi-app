@@ -706,6 +706,39 @@
     <div class="notes-area" id="notes-s3-invite-code-join"><textarea placeholder="Notes…" oninput="saveNote('s3-invite-code-join',this.value)"></textarea></div>
   </div>
 
+  <div class="item" data-id="s3-shorts-toggle">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-shorts-toggle"></div>
+      <div class="item-num">38</div>
+      <div class="item-desc">
+        Dashboard → recommended resources section shows a Shorts / All toggle → clicking Shorts filters to short-format resources only
+        <div class="hint">Requires "short" resource type to exist and at least one resource tagged with it.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-shorts-toggle','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-shorts-toggle','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-shorts-toggle','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-shorts-toggle"><textarea placeholder="Notes…" oninput="saveNote('s3-shorts-toggle',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s3-shorts-resources-page">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s3-shorts-resources-page"></div>
+      <div class="item-num">39</div>
+      <div class="item-desc">
+        Resources page → type filter dropdown includes "short" → selecting it shows only Shorts content
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s3-shorts-resources-page','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s3-shorts-resources-page','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s3-shorts-resources-page','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s3-shorts-resources-page"><textarea placeholder="Notes…" oninput="saveNote('s3-shorts-resources-page',this.value)"></textarea></div>
+  </div>
+
 </div>
 
 <button class="export-btn" onclick="copyResults(this)">Copy Results to Clipboard</button>
