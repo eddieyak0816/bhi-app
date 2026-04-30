@@ -188,6 +188,7 @@ export interface Resource {
   title: string
   description: string
   tags: string[]
+  link_url?: string
 }
 
 export function getRecommendedResources(

@@ -402,6 +402,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                     {resource.tags.join(', ')}
                   </div>
                   <button
+                    onClick={() => resource.link_url && window.open(resource.link_url, '_blank', 'noopener,noreferrer')}
                     style={{
                       background: theme.blue,
                       color: '#fff',
@@ -409,8 +410,9 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                       borderRadius: 6,
                       padding: '8px 12px',
                       fontSize: 13,
-                      cursor: 'pointer',
+                      cursor: resource.link_url ? 'pointer' : 'not-allowed',
                       width: '100%',
+                      opacity: resource.link_url ? 1 : 0.5,
                     }}
                   >
                     View Resource
