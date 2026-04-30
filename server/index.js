@@ -1380,7 +1380,6 @@ ${pdfText}`;
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
   if (OPENROUTER_API_KEY) {
     const orModels = [
-      'nvidia/nemotron-3-super-120b-a12b:free',
       'openai/gpt-oss-120b:free',
       'google/gemma-4-31b-it:free',
       'meta-llama/llama-3.3-70b-instruct:free',
