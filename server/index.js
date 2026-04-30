@@ -1405,6 +1405,7 @@ ${pdfText}`;
         }
         const orJson = JSON.parse(orResult.body);
         const orText = orJson.choices?.[0]?.message?.content || '';
+        console.info(`extract-labs: OpenRouter ${orModel} raw response (first 500 chars):`, orText.slice(0, 500));
         const { meta, results } = parseAIResponse(orText);
         console.info(`extract-labs: ${results.length} markers via OpenRouter (${orModel})`);
         await recordUpload(userId, fileHash, meta, req.file.originalname);
