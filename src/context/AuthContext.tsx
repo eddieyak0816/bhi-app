@@ -298,23 +298,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Clear user state immediately for responsive UI
       setUser(null)
-      
-      // Clear all Supabase session storage
-      await supabase.auth.signOut({ scope: 'local' })
-      
-      // Also clear any auth-related localStorage keys manually
-      const keysToRemove = Object.keys(localStorage).filter(key =>
-        key.includes('supabase') || key.includes('auth')
-      )
-      keysToRemove.forEach(key => localStorage.removeItem(key))
-      localStorage.removeItem('nhl-onboarded')
-      localStorage.removeItem('bhi-onboarded')
-      
+
+      // Wipe all localStorage first so the Supabase client cannot restore
+      // the session after signOut rewrites its internal state
+      localStorage.clear()
+
+      // Now sign out — scope: 'global' invalidates the refresh token server-side
+      // so the cleared token cannot be used to re-authenticate
+      await supabase.auth.signOut({ scope: 'global' })
+
       console.log('[Auth] Logout complete')
     } catch (err) {
       console.error('[Auth] Logout error:', err)
-      // Still clear user even if signOut fails
       setUser(null)
+      localStorage.clear()
     }
   }
 
