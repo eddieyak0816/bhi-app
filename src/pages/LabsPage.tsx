@@ -132,10 +132,10 @@ export default function Labs() {
     if (!extractedRows) return
     setSavingExtracted(true)
     const toSave = extractedRows.filter(r => r.include && r.value !== '' && r.value !== null && r.value !== undefined)
-    for (const row of toSave) {
+    await Promise.all(toSave.map(row => {
       const matched = labMarkers.find(m => m.id === row.matchedMarkerId)
       const optimal = row.matchedMarkerId ? optimalRanges[row.matchedMarkerId] : null
-      await addResult({
+      return addResult({
         markerName: matched?.name || String(row.name),
         value: parseFloat(String(row.value)),
         unit: row.unit || matched?.unit || '',
@@ -143,7 +143,7 @@ export default function Labs() {
         minNormal: row.min_normal ?? optimal?.min ?? matched?.min_normal ?? 0,
         maxNormal: row.max_normal ?? optimal?.max ?? matched?.max_normal ?? 100,
       })
-    }
+    }))
     setExtractedRows(null)
     setSavingExtracted(false)
   }
