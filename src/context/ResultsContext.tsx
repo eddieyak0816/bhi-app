@@ -145,6 +145,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   }
 
   const removeResult = async (id: string) => {
+    console.log('[Results] removeResult called, user?.id:', user?.id, 'result id:', id)
     if (user?.id) {
       await ensureSession()
       const { error } = await supabase
@@ -153,6 +154,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
         .eq('id', id)
         .eq('user_id', user.id)
 
+      console.log('[Results] delete error:', error)
       if (error) {
         console.error('Error deleting lab result:', error)
         return

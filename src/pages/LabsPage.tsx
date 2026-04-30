@@ -149,7 +149,10 @@ export default function Labs() {
   }
 
   // Fetch lab markers and optimal ranges from logic_rules in one go
+  // Depends on user?.id so it waits until auth is ready before querying
   useEffect(() => {
+    if (!user?.id) return
+
     async function fetchMarkers() {
       try {
         const stored = getStoredSession()
@@ -182,7 +185,7 @@ export default function Labs() {
     }
 
     fetchMarkers()
-  }, [])
+  }, [user?.id])
 
   const [chartOpenMarker, setChartOpenMarker] = useState<string | null>(null)
 
