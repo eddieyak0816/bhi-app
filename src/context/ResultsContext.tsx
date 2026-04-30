@@ -1,6 +1,25 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, getStoredJwt } from '../lib/supabase'
 import { useAuth } from './AuthContext'
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+
+// Direct REST fetch using the user's JWT — bypasses the Supabase JS client
+// which can hang on writes when its internal session state is out of sync.
+async function sbFetch(path: string, options: RequestInit): Promise<Response> {
+  const jwt = getStoredJwt()
+  return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${jwt ?? SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      ...(options.headers ?? {}),
+    },
+  })
+}
 
 export interface ProviderVerification {
   verifierName: string
@@ -97,7 +116,6 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
 
   const addResult = async (result: Omit<UserLabResult, 'id'>) => {
     if (!user?.id) {
-      // Not logged in — fall back to localStorage-only (offline mode)
       const newResult: UserLabResult = {
         ...result,
         id: `${result.markerName}-${Date.now()}`,
@@ -124,30 +142,34 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       row.verified_at = result.verification.verifiedAt || null
     }
 
-    const { data, error } = await supabase
-      .from('user_lab_results')
-      .insert(row)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error saving lab result:', error)
-      return
+    try {
+      const res = await sbFetch('user_lab_results', {
+        method: 'POST',
+        body: JSON.stringify(row),
+      })
+      if (!res.ok) {
+        console.error('Error saving lab result:', res.status, await res.text())
+        return
+      }
+      const [data] = await res.json()
+      setResults(prev => [rowToResult(data), ...prev])
+    } catch (err) {
+      console.error('Error saving lab result:', err)
     }
-
-    setResults(prev => [rowToResult(data), ...prev])
   }
 
   const removeResult = async (id: string) => {
     if (user?.id) {
-      const { error } = await supabase
-        .from('user_lab_results')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id)
-
-      if (error) {
-        console.error('Error deleting lab result:', error)
+      try {
+        const res = await sbFetch(`user_lab_results?id=eq.${id}&user_id=eq.${user.id}`, {
+          method: 'DELETE',
+        })
+        if (!res.ok) {
+          console.error('Error deleting lab result:', res.status, await res.text())
+          return
+        }
+      } catch (err) {
+        console.error('Error deleting lab result:', err)
         return
       }
     }
@@ -176,13 +198,16 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
 
   const clearAllResults = async () => {
     if (user?.id) {
-      const { error } = await supabase
-        .from('user_lab_results')
-        .delete()
-        .eq('user_id', user.id)
-
-      if (error) {
-        console.error('Error clearing lab results:', error)
+      try {
+        const res = await sbFetch(`user_lab_results?user_id=eq.${user.id}`, {
+          method: 'DELETE',
+        })
+        if (!res.ok) {
+          console.error('Error clearing lab results:', res.status, await res.text())
+          return
+        }
+      } catch (err) {
+        console.error('Error clearing lab results:', err)
         return
       }
     }
