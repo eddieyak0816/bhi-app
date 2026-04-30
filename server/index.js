@@ -1380,11 +1380,11 @@ ${pdfText}`;
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
   if (OPENROUTER_API_KEY) {
     const orModels = [
-      'google/gemma-4-31b-it:free',
-      'google/gemma-4-26b-a4b-it:free',
       'nvidia/nemotron-3-super-120b-a12b:free',
-      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-      'minimax/minimax-m2.5:free',
+      'openai/gpt-oss-120b:free',
+      'google/gemma-4-31b-it:free',
+      'meta-llama/llama-3.3-70b-instruct:free',
+      'z-ai/glm-4.5-air:free',
     ];
     for (const orModel of orModels) {
       try {
