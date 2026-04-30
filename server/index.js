@@ -1380,10 +1380,11 @@ ${pdfText}`;
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
   if (OPENROUTER_API_KEY) {
     const orModels = [
-      'meta-llama/llama-3.3-70b-instruct:free',  // confirmed working
-      'google/gemini-2.0-flash-exp:free',         // Gemini via OpenRouter (free experimental)
-      'mistralai/mistral-7b-instruct:free',
-      'qwen/qwen2.5-72b-instruct:free',
+      'google/gemma-4-31b-it:free',
+      'google/gemma-4-26b-a4b-it:free',
+      'nvidia/nemotron-3-super-120b-a12b:free',
+      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+      'minimax/minimax-m2.5:free',
     ];
     for (const orModel of orModels) {
       try {
