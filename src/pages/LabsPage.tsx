@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { supabase, getStoredSession } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import { useTheme } from '../context/ThemeContext'
 import { useResults } from '../context/ResultsContext'
 import { useEvaluation } from '../context/EvaluationContext'
@@ -155,9 +155,6 @@ export default function Labs() {
 
     async function fetchMarkers() {
       try {
-        const stored = getStoredSession()
-        if (stored) await supabase.auth.setSession(stored)
-
         const [markersRes, rulesRes] = await Promise.all([
           supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal').order('name'),
           supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),

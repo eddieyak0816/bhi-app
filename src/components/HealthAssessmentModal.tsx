@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { supabase, getStoredSession } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
@@ -82,8 +82,6 @@ export default function HealthAssessmentModal({ onClose }: Props) {
   // Load most recent assessment on mount
   useEffect(() => {
     if (!user?.id) return
-    const stored = getStoredSession()
-    if (stored) supabase.auth.setSession(stored)
     supabase
       .from('health_assessments')
       .select('*')
@@ -121,9 +119,6 @@ export default function HealthAssessmentModal({ onClose }: Props) {
   async function handleSave() {
     if (!user?.id) return
     setSaving(true); setError(null)
-    // Hydrate Supabase client session so RLS auth.uid() works on insert/update
-    const stored = getStoredSession()
-    if (stored) await supabase.auth.setSession(stored)
     const payload = { ...assessment, user_id: user.id, completed_at: new Date().toISOString() }
     let err
     if (existingId) {

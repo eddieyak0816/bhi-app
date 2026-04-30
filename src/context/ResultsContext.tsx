@@ -1,11 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { supabase, getStoredSession } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
-
-async function ensureSession() {
-  const stored = getStoredSession()
-  if (stored) await supabase.auth.setSession(stored)
-}
 
 export interface ProviderVerification {
   verifierName: string
@@ -129,7 +124,6 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       row.verified_at = result.verification.verifiedAt || null
     }
 
-    await ensureSession()
     const { data, error } = await supabase
       .from('user_lab_results')
       .insert(row)
@@ -145,16 +139,13 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   }
 
   const removeResult = async (id: string) => {
-    console.log('[Results] removeResult called, user?.id:', user?.id, 'result id:', id)
     if (user?.id) {
-      await ensureSession()
       const { error } = await supabase
         .from('user_lab_results')
         .delete()
         .eq('id', id)
         .eq('user_id', user.id)
 
-      console.log('[Results] delete error:', error)
       if (error) {
         console.error('Error deleting lab result:', error)
         return
@@ -185,7 +176,6 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
 
   const clearAllResults = async () => {
     if (user?.id) {
-      await ensureSession()
       const { error } = await supabase
         .from('user_lab_results')
         .delete()
