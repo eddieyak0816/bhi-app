@@ -128,14 +128,14 @@ export default function Labs() {
     }
   }
 
-  const handleSaveExtracted = () => {
+  const handleSaveExtracted = async () => {
     if (!extractedRows) return
     setSavingExtracted(true)
     const toSave = extractedRows.filter(r => r.include && r.value !== '' && r.value !== null && r.value !== undefined)
     for (const row of toSave) {
       const matched = labMarkers.find(m => m.id === row.matchedMarkerId)
       const optimal = row.matchedMarkerId ? optimalRanges[row.matchedMarkerId] : null
-      addResult({
+      await addResult({
         markerName: matched?.name || String(row.name),
         value: parseFloat(String(row.value)),
         unit: row.unit || matched?.unit || '',
