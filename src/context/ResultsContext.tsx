@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, getStoredSession } from '../lib/supabase'
 import { useAuth } from './AuthContext'
+
+async function ensureSession() {
+  const stored = getStoredSession()
+  if (stored) await supabase.auth.setSession(stored)
+}
 
 export interface ProviderVerification {
   verifierName: string
@@ -124,6 +129,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       row.verified_at = result.verification.verifiedAt || null
     }
 
+    await ensureSession()
     const { data, error } = await supabase
       .from('user_lab_results')
       .insert(row)
@@ -140,6 +146,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
 
   const removeResult = async (id: string) => {
     if (user?.id) {
+      await ensureSession()
       const { error } = await supabase
         .from('user_lab_results')
         .delete()
@@ -176,6 +183,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
 
   const clearAllResults = async () => {
     if (user?.id) {
+      await ensureSession()
       const { error } = await supabase
         .from('user_lab_results')
         .delete()
