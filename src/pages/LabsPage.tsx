@@ -113,13 +113,16 @@ export default function Labs() {
       if (data.duplicate) {
         setPdfDuplicateWarning(data.duplicate_detail || 'This PDF appears to have been uploaded before.')
       }
-      // Match extracted names to known lab markers (case-insensitive substring match)
+      // Match extracted names to known lab markers (case-insensitive substring match).
+      // Active matched markers → checked by default.
+      // Inactive matched markers and unknown markers → unchecked by default.
       const rows: ExtractedRow[] = (data.results || []).map((r: any) => {
         const matched = labMarkers.find(m =>
           m.name.toLowerCase().includes(r.name.toLowerCase()) ||
           r.name.toLowerCase().includes(m.name.toLowerCase())
         )
-        return { ...r, include: true, matchedMarkerId: matched?.id }
+        const isActive = matched ? matched.is_active !== false : false
+        return { ...r, include: isActive, matchedMarkerId: matched?.id }
       })
       setExtractedRows(rows)
     } catch (err: any) {
@@ -171,7 +174,7 @@ export default function Labs() {
     async function fetchMarkers() {
       try {
         const [markersRes, rulesRes] = await Promise.all([
-          supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal').eq('is_active', true).order('name'),
+          supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active').order('name'),
           supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
         ])
 
@@ -421,7 +424,7 @@ export default function Labs() {
             <div>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Review Extracted Labs</h3>
               <p style={{ margin: '4px 0 0', fontSize: 13, color: theme.textMuted }}>
-                Review the values Gemini extracted from your PDF. Uncheck any you don't want to save, then click Save.
+                Active markers are checked by default. Unknown markers are unchecked — uncheck to skip or leave checked to save as-is.
               </p>
             </div>
             <button
@@ -465,8 +468,13 @@ export default function Labs() {
                             />
                           </td>
                           <td style={{ padding: '8px 12px' }}>{row.name}</td>
-                          <td style={{ padding: '8px 12px', color: matched ? theme.blue : theme.textMuted }}>
-                            {matched ? matched.name : <span style={{ fontSize: 12 }}>No match — will save as-is</span>}
+                          <td style={{ padding: '8px 12px' }}>
+                            {matched
+                              ? <span style={{ color: matched.is_active !== false ? theme.blue : theme.textMuted }}>
+                                  {matched.name}{matched.is_active === false ? ' (inactive)' : ''}
+                                </span>
+                              : <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600 }}>New — not in system</span>
+                            }
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
@@ -574,7 +582,7 @@ export default function Labs() {
 
           {loadingMarkers ? (
             <div style={{ color: theme.textMuted }}>Loading markers...</div>
-          ) : labMarkers.length === 0 ? (
+          ) : labMarkers.filter(m => m.is_active !== false).length === 0 ? (
             <div style={{ color: theme.textMuted }}>No lab markers available. Please check with an administrator.</div>
           ) : (
             <>
@@ -583,7 +591,7 @@ export default function Labs() {
                   Select Marker or Enter Custom
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 16 }}>
-                  {labMarkers.map(marker => (
+                  {labMarkers.filter(m => m.is_active !== false).map(marker => (
                     <button
                       key={marker.id}
                       onClick={() => handleSelectCommonMarker(marker)}

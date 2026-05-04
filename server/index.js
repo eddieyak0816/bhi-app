@@ -1179,21 +1179,7 @@ app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
     return res.status(422).json({ error: 'empty-pdf', message: 'No text found in this PDF. It may be a scanned image — please upload a text-based PDF.' });
   }
 
-  // ── Step 3b: Fetch active markers to restrict extraction scope ────────────
-  let activeMarkerNames = [];
-  try {
-    const sbM = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const { data: activeMarkers } = await sbM.from('lab_markers').select('name').eq('is_active', true);
-    activeMarkerNames = (activeMarkers || []).map(m => m.name);
-  } catch (err) {
-    console.warn('extract-labs: could not fetch active markers, extracting all', err.message);
-  }
-  const activeMarkerSection = activeMarkerNames.length > 0
-    ? `\nOnly extract results for the following markers (ignore all others):\n${activeMarkerNames.map(n => `- ${n}`).join('\n')}\n`
-    : '';
-
-  const prompt = `You are a medical lab report parser. Extract lab test results from the following lab report text.
-${activeMarkerSection}
+  const prompt = `You are a medical lab report parser. Extract ALL lab test results from the following lab report text.
 
 The report columns are: TEST NAME | CURRENT RESULT | [FLAG] | [PREVIOUS RESULT] | [DATE] | UNITS | REFERENCE RANGE
 - The CURRENT RESULT is the first number after the test name.
@@ -1342,7 +1328,32 @@ ${pdfText}`;
     });
   }
 
-  // ── Step 4: Try Gemini keys ────────────────────────────────────────────────
+  // ── Step 4: Try Groq first (llama-3.3-70b-versatile) ─────────────────────
+  const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
+  if (GROQ_API_KEY) {
+    try {
+      console.info('extract-labs: trying Groq (primary)');
+      const groqResult = await postJSON(
+        'api.groq.com',
+        '/openai/v1/chat/completions',
+        { 'Authorization': `Bearer ${GROQ_API_KEY}` },
+        { model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], temperature: 0.1 }
+      );
+      if (groqResult.status === 200) {
+        const groqJson = JSON.parse(groqResult.body);
+        const groqText = groqJson.choices?.[0]?.message?.content || '';
+        const { meta, results } = parseAIResponse(groqText);
+        console.info(`extract-labs: ${results.length} markers via Groq (primary)`);
+        await recordUpload(userId, fileHash, meta, req.file.originalname);
+        return res.status(200).json({ results, meta, ...earlyDuplicateWarning });
+      }
+      console.warn('extract-labs: Groq error', groqResult.status, groqResult.body);
+    } catch (groqErr) {
+      console.error('extract-labs: Groq threw:', groqErr.message);
+    }
+  }
+
+  // ── Step 5: Try Gemini keys ────────────────────────────────────────────────
   const geminiKeys = [
     process.env.GEMINI_API_KEY,
     process.env.GEMINI_API_KEY_2,
@@ -1427,31 +1438,6 @@ ${pdfText}`;
       } catch (orErr) {
         console.warn(`extract-labs: OpenRouter model ${orModel} threw:`, orErr.message);
       }
-    }
-  }
-
-  // ── Step 6: Groq fallback (text → llama free tier) ────────────────────────
-  const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-  if (GROQ_API_KEY) {
-    try {
-      console.info('extract-labs: trying Groq');
-      const groqResult = await postJSON(
-        'api.groq.com',
-        '/openai/v1/chat/completions',
-        { 'Authorization': `Bearer ${GROQ_API_KEY}` },
-        { model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], temperature: 0.1 }
-      );
-      if (groqResult.status === 200) {
-        const groqJson = JSON.parse(groqResult.body);
-        const groqText = groqJson.choices?.[0]?.message?.content || '';
-        const { meta, results } = parseAIResponse(groqText);
-        console.info(`extract-labs: ${results.length} markers via Groq`);
-        await recordUpload(userId, fileHash, meta, req.file.originalname);
-        return res.status(200).json({ results, meta, ...earlyDuplicateWarning });
-      }
-      console.warn('extract-labs: Groq error', groqResult.status, groqResult.body);
-    } catch (groqErr) {
-      console.error('extract-labs: Groq threw:', groqErr.message);
     }
   }
 
