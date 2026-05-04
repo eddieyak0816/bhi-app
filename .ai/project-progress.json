@@ -1,5 +1,46 @@
 [
   {
+    "date": "2026-05-01",
+    "session_summary": "Session 9 — Lab marker active/inactive toggle feature, BHAS score display bug fix, profile save bug fix for non-admin users, demo test user SQL script.",
+    "features_completed": [
+      {
+        "id": "F-MARKER-ACTIVE",
+        "title": "Lab marker active/inactive toggle",
+        "files": [
+          "db/migrations/20260501_add_is_active_to_lab_markers.sql",
+          "server/index.js",
+          "src/pages/Admin.tsx",
+          "src/pages/LabsPage.tsx"
+        ],
+        "notes": "Admin can toggle each lab marker on/off via an animated slider in the Markers tab. Inactive markers are hidden from the user-facing manual entry grid. PDF AI extraction only sends active marker names to the AI prompt. Server PATCH endpoint accepts is_active field. Status filter added to Markers tab filter bar."
+      }
+    ],
+    "bugs_fixed": [
+      {
+        "id": "BUG-BHAS-SCORE-LABEL",
+        "title": "Health Report Modal showing / 9.00 instead of / 7.00",
+        "files": ["src/components/HealthReportModal.tsx"],
+        "notes": "Stale hardcoded string from before BHAS v2.3 update. Fixed to / 7.00."
+      },
+      {
+        "id": "BUG-PROFILE-SAVE",
+        "title": "Profile save failing silently for non-super-admin users",
+        "files": ["src/pages/ProfilePage.tsx"],
+        "notes": "Three compounding issues: (1) Authorization header was using the anon key instead of the user JWT — RLS blocked non-admin saves. Fixed to use getStoredJwt(). (2) PATCH silently matched 0 rows because the profile row didn't exist for new users. Switched to upsert (POST + Prefer: resolution=merge-duplicates). (3) Upsert failed with NOT NULL violations on email, name, public_id. Fixed by including all required fields with safe defaults in the payload, including generatePublicId() for new rows."
+      },
+      {
+        "id": "BUG-MARKER-TOGGLE-RELOAD",
+        "title": "Marker active toggle causing full page reload",
+        "files": ["src/pages/Admin.tsx"],
+        "notes": "Toggle was calling await load() which re-fetched all admin data. Replaced with optimistic local state update via setLabMarkers. Reverts on server failure."
+      }
+    ],
+    "total_built": 63,
+    "total_partial": 2,
+    "total_not_built": 4,
+    "total_items": 69
+  },
+  {
     "date": "2026-03-31",
     "session_summary": "Completed F56, F57, F58, F54, F50 in one session.",
     "features_completed": [

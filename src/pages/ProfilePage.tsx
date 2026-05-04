@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
-import { directFetch, supabase } from '../lib/supabase'
+import { directFetch, supabase, getStoredJwt } from '../lib/supabase'
+import { generatePublicId } from '../utils/publicId'
 
 interface ProfilePageProps {
   userEmail?: string
@@ -134,17 +135,27 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 10000)
 
+      const jwt = getStoredJwt()
+      console.debug('[ProfilePage] jwt present:', !!jwt, 'user.id:', user.id)
+
       const res = await fetch(
-        `${((import.meta as any).env.VITE_SUPABASE_URL as string)}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}`,
+        `${((import.meta as any).env.VITE_SUPABASE_URL as string)}/rest/v1/profiles`,
         {
-          method: 'PATCH',
+          method: 'POST',
           headers: {
             'apikey': (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string,
-            'Authorization': `Bearer ${(import.meta as any).env.VITE_SUPABASE_ANON_KEY as string}`,
+            'Authorization': `Bearer ${jwt ?? (import.meta as any).env.VITE_SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
-            'Prefer': 'return=minimal',
+            'Prefer': 'resolution=merge-duplicates,return=minimal',
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            id: user.id,
+            email: user.email ?? userEmail ?? '',
+            name: payload.name || user.email || 'User',
+            role: 'user',
+            public_id: generatePublicId(),
+            ...payload,
+          }),
           signal: controller.signal,
         }
       )

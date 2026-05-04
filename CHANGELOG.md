@@ -2,6 +2,41 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-05-01 — feat: Lab marker active/inactive toggle + bug fixes (session 9)
+
+### `db/migrations/20260501_add_is_active_to_lab_markers.sql` *(run in Supabase)*
+- Added `is_active BOOLEAN NOT NULL DEFAULT true` column to `lab_markers` table
+- All existing markers default to active — no data loss
+
+### `server/index.js`
+- `PATCH /api/admin/lab-markers/:id` — now accepts `is_active` in the request body
+- `POST /api/extract-labs` — fetches active markers before AI extraction; injects list into AI prompt so only active markers are extracted from uploaded PDFs
+
+### `src/pages/Admin.tsx` (Markers tab)
+- Added animated green/grey slider toggle on every marker row (table view) and card (card view)
+- Inactive markers dim to 45% opacity so they're visually distinct
+- Added "Status" filter dropdown (All / Active only / Inactive only) to the filter bar
+- Toggle updates local state immediately (no full page reload) and syncs to server in background; reverts on failure
+
+### `src/pages/LabsPage.tsx`
+- Manual lab entry now only fetches and displays active markers (`is_active = true`) — inactive markers are hidden from the quick-select grid
+
+### `src/components/HealthReportModal.tsx`
+- Fixed stale `/ 9.00` label — now correctly shows `/ 7.00` (BHAS v2.3 max score)
+
+### `src/pages/ProfilePage.tsx`
+- Fixed profile save failing for non-super-admin users — was using anon key as Bearer token; now uses `getStoredJwt()` (the logged-in user's JWT)
+- Switched from PATCH to upsert (`POST` with `Prefer: resolution=merge-duplicates`) — creates profile row if it doesn't exist yet
+- Includes all NOT NULL fields (`email`, `name`, `role`, `public_id`) in upsert so new users without a profile row can save successfully
+- Imported `generatePublicId()` to generate a public ID when creating a new profile row
+- **Verified working** — confirmed by Eddie 2026-05-01. Any user created outside the normal signup trigger (e.g. via Admin → Users tab or SQL) will not have a profile row until they visit Profile and hit Save once.
+
+### `db/migrations/20260501_create_demo_users.sql` *(run in Supabase)*
+- Creates 4 demo test accounts (one per role): `test.user@nhl-demo.com`, `test.admin@nhl-demo.com`, `test.superadmin@nhl-demo.com`, `test.broker@nhl-demo.com`
+- All password: `Demo123` — email pre-confirmed, idempotent (safe to run multiple times)
+
+---
+
 ## 2026-04-30 — fix: Live site bug fixes (logout, lab markers, saves, OpenRouter)
 
 ### `src/context/AuthContext.tsx`
