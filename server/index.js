@@ -132,7 +132,7 @@ app.get('/api/admin/content', async (req, res) => {
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const [{ data: lab_markers }, { data: logic_rules }, { data: resources }] = await Promise.all([
-      sb.from('lab_markers').select('*'),
+      sb.from('lab_markers').select('*').order('name'),
       sb.from('logic_rules').select('*'),
       sb.from('resources').select('*')
     ]);
@@ -791,12 +791,13 @@ app.patch('/api/admin/lab-markers/:id', async (req, res) => {
   const id = req.params.id;
   if (!id) return res.status(400).json({ error: 'missing-id' });
   
-  const { name, unit, min_normal, max_normal } = req.body || {};
+  const { name, unit, min_normal, max_normal, is_active } = req.body || {};
   const updateData = {};
   if (name !== undefined) updateData.name = name;
   if (unit !== undefined) updateData.unit = unit;
   if (min_normal !== undefined) updateData.min_normal = min_normal;
   if (max_normal !== undefined) updateData.max_normal = max_normal;
+  if (is_active !== undefined) updateData.is_active = is_active;
   
   if (Object.keys(updateData).length === 0) return res.status(400).json({ error: 'no-fields-to-update' });
   
@@ -1178,7 +1179,21 @@ app.post('/api/extract-labs', upload.single('pdf'), async (req, res) => {
     return res.status(422).json({ error: 'empty-pdf', message: 'No text found in this PDF. It may be a scanned image — please upload a text-based PDF.' });
   }
 
-  const prompt = `You are a medical lab report parser. Extract all lab test results from the following lab report text.
+  // ── Step 3b: Fetch active markers to restrict extraction scope ────────────
+  let activeMarkerNames = [];
+  try {
+    const sbM = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data: activeMarkers } = await sbM.from('lab_markers').select('name').eq('is_active', true);
+    activeMarkerNames = (activeMarkers || []).map(m => m.name);
+  } catch (err) {
+    console.warn('extract-labs: could not fetch active markers, extracting all', err.message);
+  }
+  const activeMarkerSection = activeMarkerNames.length > 0
+    ? `\nOnly extract results for the following markers (ignore all others):\n${activeMarkerNames.map(n => `- ${n}`).join('\n')}\n`
+    : '';
+
+  const prompt = `You are a medical lab report parser. Extract lab test results from the following lab report text.
+${activeMarkerSection}
 
 The report columns are: TEST NAME | CURRENT RESULT | [FLAG] | [PREVIOUS RESULT] | [DATE] | UNITS | REFERENCE RANGE
 - The CURRENT RESULT is the first number after the test name.

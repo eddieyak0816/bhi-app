@@ -108,7 +108,7 @@ function buildPrintHtml(props: Omit<Props, 'onClose' | 'theme'>): string {
     ? `${bhasResult.totalScore.toFixed(1)} / ${bhasResult.maxPossible.toFixed(1)}`
     : '—'
 
-  const v2Score = bhasV2Result?.hasEnoughData ? `${bhasV2Result.totalScore.toFixed(2)} / 9.00` : '—'
+  const v2Score = bhasV2Result?.hasEnoughData ? `${bhasV2Result.totalScore.toFixed(2)} / 7.00` : '—'
   const v2Label = bhasV2Result?.hasEnoughData ? bhasV2Result.label : '—'
   const v2LabelC = bhasV2Result?.hasEnoughData ? v2LabelColor(bhasV2Result.label) : '#374151'
 

@@ -156,7 +156,7 @@ export default function Labs() {
     async function fetchMarkers() {
       try {
         const [markersRes, rulesRes] = await Promise.all([
-          supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal').order('name'),
+          supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal').eq('is_active', true).order('name'),
           supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
         ])
 

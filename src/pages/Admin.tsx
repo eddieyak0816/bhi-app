@@ -79,6 +79,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   // lab markers filter state
   const [filterLabMarkerName, setFilterLabMarkerName] = useState<string>('')
   const [filterLabMarkerUnit, setFilterLabMarkerUnit] = useState<string>('')
+  const [filterLabMarkerActive, setFilterLabMarkerActive] = useState<string>('')
   // resource types filter state
   const [filterResourceTypeName, setFilterResourceTypeName] = useState<string>('')
   // tags filter state
@@ -2761,7 +2762,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               {/* Lab Markers Filters */}
               <div style={styles.filterBox}>
                 <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Lab Markers</h3>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'end'}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
                   <div>
                     <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Marker Name</label>
                     <input
@@ -2774,7 +2775,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     />
                     <datalist id="lab-marker-names-list">
                       {Array.from(new Set(labMarkers
-                        .filter(m => 
+                        .filter(m =>
                           (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                         )
                         .map(m => m.name)
@@ -2794,7 +2795,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     >
                       <option value="">(All Units)</option>
                       {Array.from(new Set(labMarkers
-                        .filter(m => 
+                        .filter(m =>
                           (!filterLabMarkerName || m.name === filterLabMarkerName)
                         )
                         .map(m => m.unit).filter(u => u)))
@@ -2803,23 +2804,37 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       }
                     </select>
                   </div>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Status</label>
+                    <select
+                      value={filterLabMarkerActive}
+                      onChange={e => setFilterLabMarkerActive(e.target.value)}
+                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                    >
+                      <option value="">(All)</option>
+                      <option value="active">Active only</option>
+                      <option value="inactive">Inactive only</option>
+                    </select>
+                  </div>
                   <button
                     className="btn-ghost"
                     onClick={() => {
                       setFilterLabMarkerName('')
                       setFilterLabMarkerUnit('')
+                      setFilterLabMarkerActive('')
                     }}
-                    style={{opacity: (filterLabMarkerName || filterLabMarkerUnit) ? 1 : 0.5,cursor: (filterLabMarkerName || filterLabMarkerUnit) ? 'pointer' : 'default',padding:'6px 12px',fontSize:14}}
+                    style={{opacity: (filterLabMarkerName || filterLabMarkerUnit || filterLabMarkerActive) ? 1 : 0.5,cursor: (filterLabMarkerName || filterLabMarkerUnit || filterLabMarkerActive) ? 'pointer' : 'default',padding:'6px 12px',fontSize:14}}
                   >
                     Clear
                   </button>
                 </div>
-                {(filterLabMarkerName || filterLabMarkerUnit) && (
+                {(filterLabMarkerName || filterLabMarkerUnit || filterLabMarkerActive) && (
                   <div style={{fontSize:12,marginTop:8,color:theme.text}}>
                     Showing {labMarkers
-                      .filter(m => 
+                      .filter(m =>
                         (!filterLabMarkerName || m.name === filterLabMarkerName)
                         && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                        && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
                       )
                       .length
                     } of {labMarkers.length} markers
@@ -2842,22 +2857,25 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('unit')}>Unit{getSortIndicator('unit')}</th>
                       <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Min Value</th>
                       <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Max Value</th>
+                      <th style={{padding:8,textAlign:'center',color:'#ffffff',fontWeight:500}}>Active</th>
                       <th style={{padding:8,textAlign:'right',color:'#ffffff',fontWeight:500}}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(
                       sortColumn ? sortData(labMarkers
-                        .filter(m => 
+                        .filter(m =>
                           (!filterLabMarkerName || m.name === filterLabMarkerName)
                           && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                          && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
                         ), sortColumn) : (labMarkers || [])
-                        .filter(m => 
+                        .filter(m =>
                           (!filterLabMarkerName || m.name === filterLabMarkerName)
                           && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                          && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
                         ).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
                     ).map(m => (
-                      <tr key={m.id} style={{borderTop:`1px solid ${theme.borderColor}`}}>
+                      <tr key={m.id} style={{borderTop:`1px solid ${theme.borderColor}`,opacity: m.is_active === false ? 0.45 : 1}}>
                         {editingId === m.id ? (
                           <>
                             <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
@@ -2886,6 +2904,25 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             <td style={{padding:8}} className="small muted">{m.unit || '—'}</td>
                             <td style={{padding:8}} className="small muted">{m.min_normal ?? '—'}</td>
                             <td style={{padding:8}} className="small muted">{m.max_normal ?? '—'}</td>
+                            <td style={{padding:8,textAlign:'center',verticalAlign:'middle'}}>
+                              <div
+                                title={m.is_active === false ? 'Inactive — click to activate' : 'Active — click to deactivate'}
+                                onClick={async () => {
+                                  const next = m.is_active === false ? true : false
+                                  setLabMarkers(prev => prev.map(x => x.id === m.id ? { ...x, is_active: next } : x))
+                                  try {
+                                    const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ is_active: next }) })
+                                    if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                  } catch (err) {
+                                    setLabMarkers(prev => prev.map(x => x.id === m.id ? { ...x, is_active: !next } : x))
+                                    alert('Toggle failed — ' + ((err as any)?.message || 'check server logs'))
+                                  }
+                                }}
+                                style={{display:'inline-flex',alignItems:'center',cursor:'pointer',width:40,height:22,borderRadius:11,background: m.is_active === false ? '#d1d5db' : '#16a34a',position:'relative',transition:'background 0.2s',flexShrink:0}}
+                              >
+                                <div style={{position:'absolute',width:16,height:16,borderRadius:'50%',background:'#fff',boxShadow:'0 1px 3px rgba(0,0,0,0.3)',top:3,left: m.is_active === false ? 3 : 21,transition:'left 0.2s'}} />
+                              </div>
+                            </td>
                             <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
                               <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button onClick={() => {
@@ -2922,12 +2959,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               ) : (
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
                 {(labMarkers || [])
-                  .filter(m => 
+                  .filter(m =>
                     (!filterLabMarkerName || m.name === filterLabMarkerName)
                     && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
+                    && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
                   ).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
                   .map(m => (
-                  <div key={m.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%'}}>
+                  <div key={m.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%',opacity: m.is_active === false ? 0.45 : 1}}>
                     {editingId === m.id ? (
                       <>
                         <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={styles.input} />
@@ -2950,7 +2988,25 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       </>
                     ) : (
                       <>
-                        <h5 style={{margin:'0 0 4px 0',fontSize:16,fontWeight:600}}>{m.name}</h5>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
+                          <h5 style={{margin:0,fontSize:16,fontWeight:600}}>{m.name}</h5>
+                          <div
+                            title={m.is_active === false ? 'Inactive — click to activate' : 'Active — click to deactivate'}
+                            onClick={async () => {
+                              const next = m.is_active === false ? true : false
+                              try {
+                                const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ is_active: next }) })
+                                if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
+                                await load()
+                              } catch (err) {
+                                alert('Toggle failed — ' + ((err as any)?.message || 'check server logs'))
+                              }
+                            }}
+                            style={{display:'inline-flex',alignItems:'center',cursor:'pointer',width:40,height:22,borderRadius:11,background: m.is_active === false ? '#d1d5db' : '#16a34a',position:'relative',transition:'background 0.2s',flexShrink:0}}
+                          >
+                            <div style={{position:'absolute',width:16,height:16,borderRadius:'50%',background:'#fff',boxShadow:'0 1px 3px rgba(0,0,0,0.3)',top:3,left: m.is_active === false ? 3 : 21,transition:'left 0.2s'}} />
+                          </div>
+                        </div>
                         {m.unit && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Unit: {m.unit}</p>}
                         {m.min_normal !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Min: {m.min_normal}</p>}
                         {m.max_normal !== null && <p style={{margin:'0 0 12px 0',fontSize:12,color:theme.text}}>Max: {m.max_normal}</p>}
