@@ -208,18 +208,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data?.user) {
-        // Fetch user role
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('name, role')
-          .eq('id', data.user.id)
-          .single()
+        // Use plain fetch for profile — avoids deadlock against the SIGNED_IN
+        // event that signInWithPassword fires on the Supabase auth client.
+        const jwt = data.session?.access_token
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+        const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+        let resolvedName = data.user.user_metadata?.name || ''
+        let resolvedRole: UserRole = 'user'
+
+        if (jwt) {
+          try {
+            const res = await fetch(
+              `${SUPABASE_URL}/rest/v1/profiles?select=name,role&id=eq.${data.user.id}&limit=1`,
+              {
+                headers: {
+                  'apikey': SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${jwt}`,
+                  'Accept': 'application/json',
+                },
+              }
+            )
+            if (res.ok) {
+              const rows = await res.json()
+              const profile = rows?.[0]
+              if (profile) {
+                resolvedName = profile.name || resolvedName
+                resolvedRole = (profile.role || 'user') as UserRole
+              }
+            }
+          } catch {
+            // profile fetch failed — role stays 'user', will be corrected on next load
+          }
+        }
 
         setUser({
           id: data.user.id,
           email: data.user.email || '',
-          name: profile?.name || '',
-          role: (profile?.role || 'user') as UserRole,
+          name: resolvedName,
+          role: resolvedRole,
         })
 
         return { success: true }
