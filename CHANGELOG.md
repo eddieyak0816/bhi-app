@@ -2,6 +2,13 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-05-03 — fix: Admin tab missing after logout/login as different user (session 10b)
+
+### `src/context/AuthContext.tsx`
+- **`login()` profile fetch rewritten to use plain `fetch`** — was using `supabase.from('profiles')` immediately after `signInWithPassword`, which deadlocked against the in-flight `SIGNED_IN` auth event. Profile returned `null`, role defaulted to `'user'`, Admin tab never appeared. Fixed by using `data.session.access_token` with a direct REST fetch to profiles — same pattern as `initializeAuth`. Repro: login as non-admin → logout → login as admin → Admin tab now appears without a page refresh.
+
+---
+
 ## 2026-05-03 — fix: PDF extraction overhaul + profile load fix + Admin card toggle (session 10)
 
 ### `server/index.js`
