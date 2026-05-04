@@ -933,11 +933,11 @@ app.post('/api/admin/lab-markers', async (req, res) => {
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
   const incomingKey = req.header('x-backend-api-key') || '';
   if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
-  const { id, name, unit, min_normal, max_normal } = req.body || {};
+  const { id, name, unit, min_normal, max_normal, is_active } = req.body || {};
   if (!name) return res.status(400).json({ error: 'missing-name' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const payload = { id: id || uuidv4(), name, unit: unit || null, min_normal: min_normal || null, max_normal: max_normal || null };
+    const payload = { id: id || uuidv4(), name, unit: unit || null, min_normal: min_normal || null, max_normal: max_normal || null, is_active: is_active !== false };
     const { data, error } = await sb.from('lab_markers').insert([payload]).select('*');
     if (error) {
       console.error('admin-insert-lab-marker-error', error);

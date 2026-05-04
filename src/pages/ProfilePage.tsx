@@ -73,14 +73,27 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
   }, [displayName, displayEmail])
 
   // Load saved profile fields from Supabase
+  // Uses plain fetch + user JWT to avoid Supabase client auth deadlock
   useEffect(() => {
     if (!user?.id) return
-    supabase
-      .from('profiles')
-      .select('name, age, sex, waist_circumference, waist_unit, grip_strength, is_public, public_id, username, height_cm, weight_kg, is_type1_diabetes, total_daily_insulin_units, has_advanced_care_plan, acute_visits')
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => {
+    const jwt = getStoredJwt()
+    if (!jwt) return
+    const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL as string
+    const anonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string
+    const cols = 'name,age,sex,waist_circumference,waist_unit,grip_strength,is_public,public_id,username,height_cm,weight_kg,is_type1_diabetes,total_daily_insulin_units,has_advanced_care_plan,acute_visits'
+    fetch(
+      `${supabaseUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=${cols}&limit=1`,
+      {
+        headers: {
+          'apikey': anonKey,
+          'Authorization': `Bearer ${jwt}`,
+          'Accept': 'application/json',
+        },
+      }
+    )
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then((rows: any[]) => {
+        const data = rows?.[0]
         if (!data) return
         setFormData(prev => ({
           ...prev,
@@ -105,6 +118,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
         setUsername(data.username ?? '')
         setUsernameInput(data.username ?? '')
       })
+      .catch(err => console.error('[ProfilePage] profile load failed:', err))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

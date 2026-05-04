@@ -48,6 +48,7 @@ interface LabMarker {
   unit?: string
   min_normal?: number
   max_normal?: number
+  is_active?: boolean
 }
 
 export default function Labs() {
@@ -131,6 +132,8 @@ export default function Labs() {
   const handleSaveExtracted = async () => {
     if (!extractedRows) return
     setSavingExtracted(true)
+
+    // Save checked rows as lab results
     const toSave = extractedRows.filter(r => r.include && r.value !== '' && r.value !== null && r.value !== undefined)
     await Promise.all(toSave.map(row => {
       const matched = labMarkers.find(m => m.id === row.matchedMarkerId)
@@ -144,6 +147,18 @@ export default function Labs() {
         maxNormal: row.max_normal ?? optimal?.max ?? matched?.max_normal ?? 100,
       })
     }))
+
+    // For unchecked rows that have no matching marker, register them as inactive markers
+    // so the system recognises them if they appear on future lab uploads
+    const toRegister = extractedRows.filter(r => !r.include && !r.matchedMarkerId && r.name)
+    await Promise.all(toRegister.map(row =>
+      fetch(`${BACKEND_URL}/api/admin/lab-markers`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-backend-api-key': BACKEND_KEY },
+        body: JSON.stringify({ name: String(row.name), unit: row.unit || null, is_active: false }),
+      }).catch(() => { /* best-effort — don't block save on registration failure */ })
+    ))
+
     setExtractedRows(null)
     setSavingExtracted(false)
   }

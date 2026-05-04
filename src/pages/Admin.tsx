@@ -2994,11 +2994,12 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             title={m.is_active === false ? 'Inactive — click to activate' : 'Active — click to deactivate'}
                             onClick={async () => {
                               const next = m.is_active === false ? true : false
+                              setLabMarkers(prev => prev.map(x => x.id === m.id ? { ...x, is_active: next } : x))
                               try {
                                 const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ is_active: next }) })
                                 if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                                await load()
                               } catch (err) {
+                                setLabMarkers(prev => prev.map(x => x.id === m.id ? { ...x, is_active: !next } : x))
                                 alert('Toggle failed — ' + ((err as any)?.message || 'check server logs'))
                               }
                             }}
