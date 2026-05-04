@@ -2,6 +2,27 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-05-03 — feat: Lab result trigger messages (F68, session 11)
+
+### `src/utils/labTriggerMessages.ts` *(new)*
+- Pure logic module — maps marker name + value (+ optional sex) to a `TriggerMessage` object with `level`, `headline`, `body`, `actions[]`, and optional `escalate` string.
+- Covers 8 markers: Fasting Glucose, Fasting Insulin, hs-CRP, Vitamin D, Vitamin B12, Triglycerides, HDL (sex-specific threshold), and combined metabolic alert (HOMA-IR >2 + TG/HDL >3 + hs-CRP >3 simultaneously).
+- Positive reinforcement message shown when all entered values are in optimal range.
+- `getTriggerMessages(results, sex)` evaluates a batch of saved results and returns all applicable messages.
+
+### `src/components/LabTriggerMessagesModal.tsx` *(new)*
+- Modal component displaying trigger messages after save. Color-coded by tier (green/amber/red). Each card shows: tier badge (Optimal / Needs Attention / Out of Range), headline, body, action steps list, and provider escalation notice for danger-level markers.
+- HIPAA footer: "These insights are shown only to you and are never shared with employers or third parties."
+- Dismisses on "Got it" or overlay click.
+
+### `src/pages/LabsPage.tsx`
+- Imports `LabTriggerMessagesModal` and `getTriggerMessages`.
+- Fetches user `sex` from profiles on mount (plain fetch + JWT) for sex-specific HDL threshold.
+- `handleAddResult` — calls `getTriggerMessages` after saving; shows modal if any messages apply.
+- `handleSaveExtracted` — same after PDF save; evaluates all saved rows as a batch (enables combined metabolic alert detection across multiple markers).
+
+---
+
 ## 2026-05-03 — fix: Admin tab missing after logout/login as different user (session 10b)
 
 ### `src/context/AuthContext.tsx`

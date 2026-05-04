@@ -185,12 +185,12 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-05-03 — Session 10b: Fixed Admin tab missing after logout/login as different user — login() profile fetch rewritten to use plain fetch with fresh JWT instead of supabase.from() which deadlocked against in-flight SIGNED_IN event, causing role to default to 'user'. · Session 10: PDF extraction overhauled — Groq promoted to primary AI provider, active-marker filter removed from prompt (AI now extracts ALL markers), unknown markers shown unchecked with amber label, inactive matched markers shown unchecked with grey label, unchecked unknowns auto-registered as inactive markers on Save. Profile load rewritten to use plain fetch + JWT (fixes intermittent field disappearing after session refresh). Admin Markers card view toggle fixed (no longer triggers full page reload — now optimistic like table view). · Next: Lab result trigger messages → CPT codes on markers → Org invite code join → F66 Challenge UI. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-05-03 — Session 11: F68 Lab result trigger messages built — contextual messages appear after manual entry or PDF save for 8 markers (HOMA-IR inputs, hs-CRP, Vitamin D, Vitamin B12, Triglycerides, HDL) plus combined metabolic alert and positive reinforcement. Modal shows tier badge, headline, action steps, and provider escalation where appropriate. HIPAA: shown only to the user, never logged. · Session 10b: Fixed Admin tab missing after logout/login. · Next: CPT codes on markers → Org invite code join → F66 Challenge UI. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-04-26 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">62</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">64</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">2</span>  Partial</div>
   <div class="stat stat-todo">    <span class="num" id="cnt-todo">5</span>  Not Built / Skipped</div>
   <div class="stat stat-total">   <span class="num" id="cnt-total">69</span>  Total Items</div>

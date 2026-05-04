@@ -537,3 +537,13 @@ Items are ordered by logical dependency. Last updated: 2026-04-01.
 | 56 | Sort all dropdown filter options alphabetically | ✅ Built | Type, Tag, Category dropdowns sorted alphabetically in ResourcesPage and Admin. Built 2026-03-31. |
 | 57 | Resources page — show results in alphabetical order by title | ✅ Built | Built 2026-03-31. |
 | 58 | Admin Add Category modal — full list with alphabetical sort | ✅ Built | Built 2026-03-31. |
+| 59 | Supplements tab | ✅ Built | Supplement links on Dashboard. Built 2026-04-07. |
+| 60 | Lab marker active/inactive toggle | ✅ Built | is_active column on lab_markers; Admin slider toggle; PDF/manual entry filter; migration 20260501_add_is_active_to_lab_markers.sql. Built 2026-05-01. |
+| 61 | PDF extraction overhaul (Groq primary) | ✅ Built | Groq promoted to primary AI provider; active-marker filter removed from prompt; unknown markers auto-registered as inactive. Built 2026-05-03. |
+| 62 | Profile load deadlock fix | ✅ Built | ProfilePage and AuthContext login() both use plain fetch + JWT instead of supabase.from(). Built 2026-05-03. |
+| 63 | League leaderboard | ✅ Built | leagues + league_orgs tables; LeaguesListPage + LeaguePage; Admin Leagues tab. Built 2026-04-16. |
+| 64 | Broker role | ✅ Built | broker_orgs table; profiles.role extended; Admin Brokers tab. Built 2026-04-16. |
+| 65 | Virtual providers | ✅ Built | virtual_providers table; VirtualProviderCards on Dashboard; Admin Providers tab. Built 2026-04-16. |
+| 66 | Challenge UI | ❌ Not built | DB schema done (challenges + challenge_orgs). UI blocked pending Damon's health assessment answers. |
+| 67 | Health Assessment | ✅ Built | health_assessments table; HealthAssessmentModal; Dashboard "Health Check-In" button. Built 2026-04-29. |
+| 68 | Lab result trigger messages | ✅ Built | Contextual messages shown after manual entry or PDF save, based on value/tier. 8 markers + combined metabolic alert + positive reinforcement. HIPAA: shown only to the user. Built 2026-05-03. |

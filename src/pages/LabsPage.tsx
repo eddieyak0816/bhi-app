@@ -6,6 +6,9 @@ import { useEvaluation } from '../context/EvaluationContext'
 import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
 import Vo2CalcModal from '../components/Vo2CalcModal'
+import LabTriggerMessagesModal from '../components/LabTriggerMessagesModal'
+import { getTriggerMessages, TriggerMessage } from '../utils/labTriggerMessages'
+import { getStoredJwt } from '../lib/supabase'
 import type { ProviderVerification } from '../context/ResultsContext'
 import {
   ComposedChart,
@@ -79,6 +82,25 @@ export default function Labs() {
   const [savingExtracted, setSavingExtracted] = useState(false)
   const pdfInputRef = useRef<HTMLInputElement>(null)
 
+  // Lab trigger messages modal
+  const [triggerMessages, setTriggerMessages] = useState<TriggerMessage[] | null>(null)
+  const [userSex, setUserSex] = useState<'male' | 'female' | ''>('')
+
+  // Fetch user sex for sex-specific thresholds (e.g. HDL)
+  useEffect(() => {
+    if (!user?.id) return
+    const jwt = getStoredJwt()
+    if (!jwt) return
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+    const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+    fetch(`${SUPABASE_URL}/rest/v1/profiles?select=sex&id=eq.${user.id}&limit=1`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${jwt}` },
+    })
+      .then(r => r.json())
+      .then(rows => { if (rows?.[0]?.sex) setUserSex(rows[0].sex) })
+      .catch(() => {})
+  }, [user?.id])
+
   // Provider verification state (for manual entry form)
   const [showVerification, setShowVerification] = useState(false)
   const [verificationForm, setVerificationForm] = useState<ProviderVerification>({
@@ -138,12 +160,16 @@ export default function Labs() {
 
     // Save checked rows as lab results
     const toSave = extractedRows.filter(r => r.include && r.value !== '' && r.value !== null && r.value !== undefined)
+    const savedItems: { markerName: string; value: number }[] = []
     await Promise.all(toSave.map(row => {
       const matched = labMarkers.find(m => m.id === row.matchedMarkerId)
       const optimal = row.matchedMarkerId ? optimalRanges[row.matchedMarkerId] : null
+      const markerName = matched?.name || String(row.name)
+      const value = parseFloat(String(row.value))
+      savedItems.push({ markerName, value })
       return addResult({
-        markerName: matched?.name || String(row.name),
-        value: parseFloat(String(row.value)),
+        markerName,
+        value,
         unit: row.unit || matched?.unit || '',
         date: new Date().toISOString().split('T')[0],
         minNormal: row.min_normal ?? optimal?.min ?? matched?.min_normal ?? 0,
@@ -164,6 +190,9 @@ export default function Labs() {
 
     setExtractedRows(null)
     setSavingExtracted(false)
+
+    const msgs = getTriggerMessages(savedItems, userSex)
+    if (msgs.length > 0) setTriggerMessages(msgs)
   }
 
   // Fetch lab markers and optimal ranges from logic_rules in one go
@@ -245,6 +274,12 @@ export default function Labs() {
       verificationType: showVerification ? 'provider' : 'self',
       verification: showVerification ? { ...verificationForm } : null,
     })
+
+    const msgs = getTriggerMessages(
+      [{ markerName: formData.markerName, value: parseFloat(formData.value) }],
+      userSex
+    )
+    if (msgs.length > 0) setTriggerMessages(msgs)
 
     setFormData({ markerName: '', value: '', unit: '', minNormal: '', maxNormal: '' })
     setShowVerification(false)
@@ -1092,6 +1127,13 @@ export default function Labs() {
         >
           <p style={{ margin: 0 }}>No lab results logged yet. Click "Log New Result" to get started.</p>
         </div>
+      )}
+
+      {triggerMessages && (
+        <LabTriggerMessagesModal
+          messages={triggerMessages}
+          onClose={() => setTriggerMessages(null)}
+        />
       )}
     </div>
   )
