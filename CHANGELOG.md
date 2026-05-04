@@ -2,6 +2,29 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-05-03 — fix: PDF extraction overhaul + profile load fix + Admin card toggle (session 10)
+
+### `server/index.js`
+- **Groq promoted to primary AI provider** — extraction order is now: Groq (llama-3.3-70b-versatile) → Gemini → OpenRouter. Previously Groq was last resort.
+- **Active-marker filter removed from AI prompt** — prompt no longer restricts extraction to known active markers. AI now extracts ALL markers found in the PDF. Removed the DB fetch for active markers that was injected into the prompt.
+- **`POST /api/admin/lab-markers`** — now accepts and persists `is_active` flag. Previously ignored it; defaults to `true` when not supplied.
+
+### `src/pages/LabsPage.tsx`
+- **Lab marker fetch now loads all markers** (active + inactive) with `is_active` column included — needed so PDF review can match against inactive markers and flag unknown ones.
+- **PDF review table — smart default checkboxes:** Active matched markers → checked. Inactive matched markers → unchecked with "(inactive)" label. Unknown markers (not in system) → unchecked with amber "New — not in system" label.
+- **Unchecked unknown markers auto-registered as inactive** — on Save, any unchecked row with no DB match is POST'd to `/api/admin/lab-markers` with `is_active: false`. It won't appear in Labs or affect scoring but will auto-match on future uploads.
+- **Manual entry form** still filters to active-only markers (unchanged behavior).
+- **Review panel subtitle** updated — no longer says "Gemini extracted".
+- **`LabMarker` interface** — added `is_active?: boolean`.
+
+### `src/pages/ProfilePage.tsx`
+- **Profile load rewritten to use plain `fetch` + user JWT** — was using `supabase.from('profiles')` which can deadlock after window focus/session refresh events (known auth issue). Replaced with direct REST fetch using `getStoredJwt()`. This fixes the intermittent disappearing of profile fields (sex, age, etc.) without requiring a page reload.
+
+### `src/pages/Admin.tsx` (Markers tab — card view)
+- **Card view toggle fixed** — was calling `await load()` after toggling, causing a full data reload and visible screen flash. Now does the same optimistic local state update the table view already used: animates instantly, syncs server in background, reverts on failure.
+
+---
+
 ## 2026-05-01 — feat: Lab marker active/inactive toggle + bug fixes (session 9)
 
 ### `db/migrations/20260501_add_is_active_to_lab_markers.sql` *(run in Supabase)*

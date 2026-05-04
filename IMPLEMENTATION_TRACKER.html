@@ -185,7 +185,7 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-05-01 — Session 9: Lab marker active/inactive toggle built (Admin slider, PDF extraction scoped to active markers, LabsPage manual entry filtered). BHAS score label fixed (/ 9.00 → / 7.00). Profile save fixed for non-admin users (wrong auth token → anon key; PATCH silently matching 0 rows → upsert; NOT NULL violations on email/name/public_id → all included in payload). Marker toggle no longer causes full page reload (optimistic local state). Demo test user SQL script created (4 roles, password Demo123). · Next: Lab result trigger messages → CPT codes on markers → Org invite code join → F66 Challenge UI. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-05-03 — Session 10: PDF extraction overhauled — Groq promoted to primary AI provider, active-marker filter removed from prompt (AI now extracts ALL markers), unknown markers shown unchecked with amber label, inactive matched markers shown unchecked with grey label, unchecked unknowns auto-registered as inactive markers on Save. Profile load rewritten to use plain fetch + JWT (fixes intermittent field disappearing after session refresh). Admin Markers card view toggle fixed (no longer triggers full page reload — now optimistic like table view). · Next: Lab result trigger messages → CPT codes on markers → Org invite code join → F66 Challenge UI. · Known bug queued: Admin tab missing after logout/login as different user until hard refresh. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-04-26 -->
