@@ -791,13 +791,14 @@ app.patch('/api/admin/lab-markers/:id', async (req, res) => {
   const id = req.params.id;
   if (!id) return res.status(400).json({ error: 'missing-id' });
   
-  const { name, unit, min_normal, max_normal, is_active } = req.body || {};
+  const { name, unit, min_normal, max_normal, is_active, cpt_code } = req.body || {};
   const updateData = {};
   if (name !== undefined) updateData.name = name;
   if (unit !== undefined) updateData.unit = unit;
   if (min_normal !== undefined) updateData.min_normal = min_normal;
   if (max_normal !== undefined) updateData.max_normal = max_normal;
   if (is_active !== undefined) updateData.is_active = is_active;
+  if (cpt_code !== undefined) updateData.cpt_code = cpt_code;
   
   if (Object.keys(updateData).length === 0) return res.status(400).json({ error: 'no-fields-to-update' });
   
@@ -2153,7 +2154,7 @@ app.get('/api/admin/organizations', async (req, res) => {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { data: orgs, error } = await sb
       .from('organizations')
-      .select('id, name, slug, created_at')
+      .select('id, name, slug, created_at, invite_code')
       .order('name');
     if (error) return res.status(500).json({ error: 'db_error', detail: error });
 
@@ -2184,9 +2185,11 @@ app.post('/api/admin/organizations', async (req, res) => {
   const slugClean = slug.toLowerCase().replace(/[^a-z0-9-]/g, '-');
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const inviteCode = Math.random().toString(36).substring(2, 6).toUpperCase() +
+                       Math.random().toString(36).substring(2, 6).toUpperCase();
     const { data, error } = await sb
       .from('organizations')
-      .insert({ name, slug: slugClean })
+      .insert({ name, slug: slugClean, invite_code: inviteCode })
       .select()
       .single();
     if (error) {
@@ -2476,6 +2479,61 @@ app.delete('/api/admin/organizations/:id', async (req, res) => {
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('DELETE /api/admin/organizations/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/organizations/:id/regenerate-code — generate a new invite code
+app.post('/api/admin/organizations/:id/regenerate-code', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const newCode = Math.random().toString(36).substring(2, 6).toUpperCase() +
+                    Math.random().toString(36).substring(2, 6).toUpperCase();
+    const { data, error } = await sb
+      .from('organizations')
+      .update({ invite_code: newCode })
+      .eq('id', id)
+      .select('invite_code')
+      .single();
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ invite_code: data.invite_code });
+  } catch (err) {
+    console.error('POST /api/admin/organizations/:id/regenerate-code error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/org/join — user joins org by invite code (anonymous — no name/email stored)
+app.post('/api/org/join', async (req, res) => {
+  const userId = req.headers['x-user-id'];
+  if (!userId) return res.status(401).json({ error: 'unauthorized' });
+  const { invite_code } = req.body;
+  if (!invite_code) return res.status(400).json({ error: 'invite_code_required' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data: org, error: orgErr } = await sb
+      .from('organizations')
+      .select('id, name')
+      .eq('invite_code', invite_code.toUpperCase().trim())
+      .single();
+    if (orgErr || !org) return res.status(404).json({ error: 'invalid_code' });
+    // Check if already a member
+    const { data: existing } = await sb
+      .from('org_memberships')
+      .select('id')
+      .eq('org_id', org.id)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (existing) return res.status(200).json({ ok: true, already_member: true, org_name: org.name });
+    const { error: insertErr } = await sb
+      .from('org_memberships')
+      .insert({ org_id: org.id, user_id: userId, role: 'member' });
+    if (insertErr) return res.status(500).json({ error: 'db_error', detail: insertErr.message });
+    return res.status(200).json({ ok: true, org_name: org.name });
+  } catch (err) {
+    console.error('POST /api/org/join error:', err.message);
     return res.status(500).json({ error: 'server_error' });
   }
 });
@@ -2874,4 +2932,76 @@ app.delete('/api/admin/providers/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4242;
+// ── Affiliate Products (admin CRUD via service role — bypasses RLS) ───────────
+
+// POST /api/admin/products — create product + tags atomically
+app.post('/api/admin/products', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { name, description, image_url, affiliate_url, is_active, tags } = req.body || {};
+  if (!name || !affiliate_url) return res.status(400).json({ error: 'missing_params', required: ['name', 'affiliate_url'] });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('affiliate_products')
+      .insert({ name, description: description || '', image_url: image_url || null, affiliate_url, is_active: is_active !== false })
+      .select('id')
+      .single();
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    if (tags && tags.length > 0) {
+      const { error: te } = await sb.from('product_tags').insert(tags.map(t => ({ product_id: data.id, tag: t })));
+      if (te) return res.status(500).json({ error: 'tag_error', detail: te.message });
+    }
+    return res.status(201).json({ id: data.id });
+  } catch (err) {
+    console.error('POST /api/admin/products error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// PATCH /api/admin/products/:id — update product + replace tags
+app.patch('/api/admin/products/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  const { name, description, image_url, affiliate_url, is_active, tags } = req.body || {};
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (description !== undefined) updates.description = description;
+    if (image_url !== undefined) updates.image_url = image_url || null;
+    if (affiliate_url !== undefined) updates.affiliate_url = affiliate_url;
+    if (is_active !== undefined) updates.is_active = is_active;
+    if (Object.keys(updates).length > 0) {
+      const { error } = await sb.from('affiliate_products').update(updates).eq('id', id);
+      if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    }
+    if (tags !== undefined) {
+      await sb.from('product_tags').delete().eq('product_id', id);
+      if (tags.length > 0) {
+        const { error: te } = await sb.from('product_tags').insert(tags.map(t => ({ product_id: id, tag: t })));
+        if (te) return res.status(500).json({ error: 'tag_error', detail: te.message });
+      }
+    }
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('PATCH /api/admin/products/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/products/:id — delete product (cascades to product_tags)
+app.delete('/api/admin/products/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('affiliate_products').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/products/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));

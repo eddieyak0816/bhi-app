@@ -185,15 +185,15 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-05-03 — Session 11: F68 Lab result trigger messages built — contextual messages appear after manual entry or PDF save for 8 markers (HOMA-IR inputs, hs-CRP, Vitamin D, Vitamin B12, Triglycerides, HDL) plus combined metabolic alert and positive reinforcement. Modal shows tier badge, headline, action steps, and provider escalation where appropriate. HIPAA: shown only to the user, never logged. · Session 10b: Fixed Admin tab missing after logout/login. · Next: CPT codes on markers → Org invite code join → F66 Challenge UI. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-05-11 — Session 13: F70 Org invite code join (anonymous, HIPAA-safe). · Bug fixes — accepted unknown markers now register as is_active=true; PDF upload re-fetches fresh markers. · Session 12: F69 CPT Codes on lab markers. · Next: F71 Teams per-org → F72 Super Admin lab viewer → investigate missing charts. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
-<!-- Stats bar — counts as of 2026-04-26 -->
+<!-- Stats bar — counts as of 2026-05-04 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">64</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">67</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">2</span>  Partial</div>
   <div class="stat stat-todo">    <span class="num" id="cnt-todo">5</span>  Not Built / Skipped</div>
-  <div class="stat stat-total">   <span class="num" id="cnt-total">69</span>  Total Items</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">72</span>  Total Items</div>
 </div>
 
 <!-- Filter controls -->
@@ -883,7 +883,7 @@
         <div class="phase-title">Backlog &amp; Pending Items</div>
         <div class="phase-desc">Items flagged for review, testing, research, or future builds — added 2026-03-23</div>
       </div>
-      <div class="phase-progress">15 / 17 done · 1 partial · 1 not built</div>
+      <div class="phase-progress">18 / 20 done · 1 partial · 1 not built</div>
     </div>
     <div class="items">
 
@@ -1040,14 +1040,50 @@
         <span class="item-status status-partial">⏸ Partial — DB done, UI pending</span>
       </div>
 
+      <div class="item done" data-status="done">
+        <div class="item-num">67</div>
+        <div class="item-body">
+          <div class="item-title">Health Assessment check-in modal</div>
+          <div class="item-note">Built 2026-04-29 (session 11). DB: <code>20260429_create_health_assessments.sql</code> — health_assessments table with RLS. Frontend: <code>HealthAssessmentModal.tsx</code> — modal with lifestyle questions (sleep, stress, exercise, alcohol, smoking). Dashboard "Health Check-In" button opens modal. Answers stored per user, timestamp-tracked.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-04-29 — ⚠️ run migration in Supabase</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">68</div>
+        <div class="item-body">
+          <div class="item-title">Lab result trigger messages — contextual insights after save</div>
+          <div class="item-note">Built 2026-05-03 (session 11). <code>src/utils/labTriggerMessages.ts</code>: pure logic module mapping marker name + value to tier'd messages (optimal / needs attention / out of range). Covers Fasting Glucose, Fasting Insulin, hs-CRP, Vitamin D, Vitamin B12, Triglycerides, HDL, and combined metabolic alert (HOMA-IR &gt;2 + TG/HDL &gt;3 + hs-CRP &gt;3). Positive reinforcement when all optimal. <code>src/components/LabTriggerMessagesModal.tsx</code>: color-coded modal shown after manual entry or PDF save. HIPAA: messages shown only to the user, never logged or exposed to employers.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-05-03</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">69</div>
+        <div class="item-body">
+          <div class="item-title">CPT codes on lab markers (F69)</div>
+          <div class="item-note">Built 2026-05-04 (session 12). DB migration: <code>20260504_add_cpt_code_to_lab_markers.sql</code> — adds <code>cpt_code TEXT</code> column to lab_markers, pre-populates 8 known codes (Fasting Insulin 83525, Fasting Glucose 82947, Triglycerides 84478, HDL 83718, hs-CRP 86141, Vitamin D 82652, Vitamin B12 82607, Advanced Care Planning 99497). Server PATCH endpoint updated to accept cpt_code. Labs page: CPT code shown as small muted label on each marker card. Admin → Markers: CPT column in table view, CPT line in card view, CPT input field in edit modal. <strong>Action required:</strong> Run migration in Supabase Dashboard → SQL Editor.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-05-04 — ⚠️ run migration in Supabase</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">70</div>
+        <div class="item-body">
+          <div class="item-title">Org invite code join (F70)</div>
+          <div class="item-note">Built 2026-05-11 (session 13). DB migration: <code>20260511_add_invite_code_to_organizations.sql</code> — adds <code>invite_code TEXT UNIQUE</code> to organizations, backfills existing orgs. New orgs auto-get a code. Admin → Organizations: invite code badge + Regenerate button per org. Profile page: "Join an Organization" section with code input. Backend: <code>POST /api/org/join</code> (user-facing, anonymous) + <code>POST /api/admin/organizations/:id/regenerate-code</code>. Fully HIPAA-safe — only user_id stored in org_memberships. <strong>Action required:</strong> Run migration in Supabase Dashboard → SQL Editor.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-05-11 — ⚠️ run migration in Supabase</span>
+      </div>
+
     </div>
   </section>
 
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-04-26 (bug fixes: admin tab auth, duplicate route handler, orgs response shape) &nbsp;·&nbsp;
-  62 built · 2 partial · 5 not built/skipped out of 69 total items &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-05-11 (F70 Org invite code join) &nbsp;·&nbsp;
+  68 built · 2 partial · 5 not built/skipped out of 73 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
   <br><br>

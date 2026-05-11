@@ -1,3 +1,14 @@
+## Session Start Checklist
+
+Do these steps at the start of every session before writing any code:
+
+1. **Read memory** — `C:\Users\eddie\.claude\projects\c--Users-eddie-Google-Drive-Maximus-Digital-Marketing-Customers-Balanced-Health-Institute-BHI-App\memory\MEMORY.md` — has full build status, pending migrations, next features in priority order, key architecture, and key file list.
+2. **Index large docs** — call `ctx_index` on `CLIENT_FEEDBACK.md` and `DEVELOPER_REQUIREMENTS.md`, then use `ctx_search` instead of reading them directly.
+3. **Index code** — call `jcodemunch list_repos`; if project not indexed, call `index_folder` on `src/` only (not root — hangs on node_modules).
+4. **Check latest progress** — read `.ai/project-progress.json` (first entry = most recent session) to see what was just completed and what pending migrations need to be run.
+
+---
+
 ## HIPAA Compliance — Mandatory
 
 Every feature must be HIPAA compliant. These rules are non-negotiable:

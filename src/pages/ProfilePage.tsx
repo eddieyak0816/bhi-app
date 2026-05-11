@@ -51,6 +51,11 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Org invite code state (F70)
+  const [inviteCode, setInviteCode] = useState('')
+  const [joinStatus, setJoinStatus] = useState<'idle' | 'loading' | 'success' | 'already_member' | 'invalid' | 'error'>('idle')
+  const [joinOrgName, setJoinOrgName] = useState('')
+
   // Username state (Feature 15)
   const [username, setUsername] = useState('')
   const [usernameInput, setUsernameInput] = useState('')
@@ -188,11 +193,35 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     }
   }
 
-  // Username: debounced availability check
+  // F70: Join org by invite code
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
-  function usernameApiUrl(path: string) {
+  function backendUrl(path: string) {
     return DEV_BACKEND_URL ? `${DEV_BACKEND_URL.replace(/\/$/, '')}${path}` : path
   }
+
+  async function handleJoinOrg() {
+    if (!inviteCode.trim() || !user?.id) return
+    setJoinStatus('loading')
+    try {
+      const jwt = getStoredJwt()
+      const res = await fetch(backendUrl('/api/org/join'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': user.id, 'Authorization': `Bearer ${jwt}` },
+        body: JSON.stringify({ invite_code: inviteCode.trim() }),
+      })
+      const body = await res.json()
+      if (res.status === 404) { setJoinStatus('invalid'); return }
+      if (!res.ok) { setJoinStatus('error'); return }
+      setJoinOrgName(body.org_name || '')
+      setJoinStatus(body.already_member ? 'already_member' : 'success')
+      setInviteCode('')
+    } catch {
+      setJoinStatus('error')
+    }
+  }
+
+  // Username: debounced availability check
+
 
   function onUsernameInputChange(val: string) {
     const clean = val.toLowerCase().replace(/[^a-z0-9_]/g, '')
@@ -204,7 +233,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     setUsernameStatus('checking')
     usernameCheckRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(usernameApiUrl(`/api/username/check?username=${encodeURIComponent(clean)}`))
+        const res = await fetch(backendUrl(`/api/username/check?username=${encodeURIComponent(clean)}`))
         const body = await res.json()
         setUsernameStatus(body.available ? 'available' : 'taken')
       } catch {
@@ -217,7 +246,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     if (!user?.id || !usernameInput || usernameStatus !== 'available') return
     setUsernameStatus('saving')
     try {
-      const res = await fetch(usernameApiUrl('/api/username'), {
+      const res = await fetch(backendUrl('/api/username'), {
         method: 'PATCH',
         headers: { 'content-type': 'application/json', 'x-user-id': user.id },
         body: JSON.stringify({ username: usernameInput }),
@@ -686,6 +715,35 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
       </div>
 
       {/* Notifications */}
+      {/* F70: Join Organization */}
+      <div style={sectionStyle}>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>Join an Organization</h3>
+        <p style={{ margin: '0 0 16px 0', fontSize: 13, color: theme.textMuted }}>
+          Enter the invite code provided by your employer or organization. Your real name and email are never shared — only your username and BHAS score are visible to org admins.
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type="text"
+            value={inviteCode}
+            onChange={e => { setInviteCode(e.target.value.toUpperCase()); setJoinStatus('idle') }}
+            placeholder="e.g. ABC12345"
+            maxLength={12}
+            style={{ ...inputStyle, flex: 1, marginBottom: 0, fontFamily: 'monospace', letterSpacing: 2 }}
+          />
+          <button
+            onClick={handleJoinOrg}
+            disabled={joinStatus === 'loading' || !inviteCode.trim()}
+            style={{ background: theme.blue, color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: joinStatus === 'loading' || !inviteCode.trim() ? 'not-allowed' : 'pointer', opacity: joinStatus === 'loading' || !inviteCode.trim() ? 0.5 : 1, whiteSpace: 'nowrap' }}
+          >
+            {joinStatus === 'loading' ? 'Joining…' : 'Join'}
+          </button>
+        </div>
+        {joinStatus === 'success' && <div style={{ marginTop: 8, fontSize: 13, color: '#16a34a', fontWeight: 600 }}>Joined {joinOrgName} successfully.</div>}
+        {joinStatus === 'already_member' && <div style={{ marginTop: 8, fontSize: 13, color: '#2563eb' }}>You're already a member of {joinOrgName}.</div>}
+        {joinStatus === 'invalid' && <div style={{ marginTop: 8, fontSize: 13, color: '#dc2626' }}>Invalid invite code — check with your organization admin.</div>}
+        {joinStatus === 'error' && <div style={{ marginTop: 8, fontSize: 13, color: '#dc2626' }}>Something went wrong — please try again.</div>}
+      </div>
+
       <div style={sectionStyle}>
         <h3 style={{ margin: '0 0 20px 0', fontSize: 16, fontWeight: 600 }}>Notifications</h3>
         <label

@@ -2,6 +2,55 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-05-11 — feat: Org invite code join (F70, session 13)
+
+### `db/migrations/20260511_add_invite_code_to_organizations.sql` *(new)*
+- Adds `invite_code TEXT UNIQUE` to `organizations` table; backfills codes for existing orgs via `md5(random() || id)`.
+
+### `server/index.js`
+- `POST /api/org/join` — user submits an invite code; if valid, creates `org_memberships` row using only `user_id` (no name/email). Returns `already_member: true` if already joined.
+- `POST /api/admin/organizations/:id/regenerate-code` — generates a new 8-char alphanumeric invite code for the org.
+- `GET /api/admin/organizations` — now includes `invite_code` in response.
+- `POST /api/admin/organizations` — now auto-generates an `invite_code` on org creation.
+
+### `src/pages/ProfilePage.tsx`
+- New "Join an Organization" section: invite code input + Join button. Shows success, already-member, invalid, or error feedback. Fully anonymous — no name or email is sent.
+
+### `src/pages/Admin.tsx`
+- Admin → Organizations: each org card now shows its invite code in a monospace badge with a Regenerate button.
+
+---
+
+## 2026-05-11 — fix: PDF upload unknown markers registered as active when accepted; stale marker state on PDF upload (session 13)
+
+### `src/pages/LabsPage.tsx`
+- **Unknown marker registration:** When a user accepts (checks) an unrecognized marker during PDF review, it is now registered in `lab_markers` with `is_active: true` (was always `is_active: false`). Accepted markers will auto-match on future PDF uploads without admin action. Rejected markers remain `is_active: false`.
+- **Stale marker state fix:** `handlePdfUpload` now re-fetches all markers from Supabase before running the PDF match pass. Previously, markers added in Admin after the Labs page loaded were invisible to the PDF matcher — they never matched and always appeared as "New — not in system". Re-fetch happens at the start of the upload handler; state is updated in place so the rest of the page reflects the fresh list.
+
+---
+
+## 2026-05-04 — feat: CPT codes on lab markers (F69, session 12)
+
+### `db/migrations/20260504_add_cpt_code_to_lab_markers.sql` *(new)*
+- Adds `cpt_code TEXT` column to `lab_markers` table.
+- Pre-populates 8 known codes: Fasting Insulin (83525), Fasting Glucose (82947), Triglycerides (84478), HDL (83718), hs-CRP (86141), Vitamin D (82652), Vitamin B12 (82607), Advanced Care Planning (99497).
+- **Action required:** Run in Supabase Dashboard → SQL Editor.
+
+### `server/index.js`
+- PATCH `/api/admin/lab-markers/:id` now accepts and persists `cpt_code` field.
+
+### `src/pages/LabsPage.tsx`
+- `LabMarker` interface extended with `cpt_code?: string`.
+- `fetchMarkers` Supabase query now selects `cpt_code` column.
+- Marker cards in "Your Markers" section show `CPT: XXXXX` label (muted, 10px) when a code is set.
+
+### `src/pages/Admin.tsx`
+- Admin → Markers **table view**: new "CPT Code" column.
+- Admin → Markers **card view**: CPT code shown below Max value.
+- Admin → Markers **edit modal**: CPT Code input field; included in PATCH body on save.
+
+---
+
 ## 2026-05-03 — feat: Lab result trigger messages (F68, session 11)
 
 ### `src/utils/labTriggerMessages.ts` *(new)*

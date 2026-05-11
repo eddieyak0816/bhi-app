@@ -1,5 +1,119 @@
 [
   {
+    "date": "2026-05-11",
+    "session_summary": "Session 13 (continued) — F70 Org invite code join. Fully anonymous org join flow: users enter an invite code on their Profile page to join an org; only user_id stored in org_memberships (no name/email). Admin → Organizations shows invite code per org with Regenerate button. New orgs auto-get a code on creation. Migration: 20260511_add_invite_code_to_organizations.sql. Also: F69 CPT codes migration confirmed run in Supabase.",
+    "features_completed": [
+      {
+        "id": "F70",
+        "title": "Org invite code join",
+        "files": [
+          "db/migrations/20260511_add_invite_code_to_organizations.sql",
+          "server/index.js",
+          "src/pages/ProfilePage.tsx",
+          "src/pages/Admin.tsx"
+        ],
+        "notes": "invite_code TEXT UNIQUE on organizations; backfilled for existing orgs; auto-generated on create. POST /api/org/join (anonymous). POST /api/admin/organizations/:id/regenerate-code. Profile page Join section. Admin org card invite badge + regenerate. HIPAA-safe."
+      }
+    ],
+    "bugs_fixed": [],
+    "pending_actions": [
+      "⚠️ Run db/migrations/20260511_add_invite_code_to_organizations.sql in Supabase Dashboard → SQL Editor (F70 invite codes)"
+    ],
+    "total_built": 68,
+    "total_partial": 2,
+    "total_not_built": 5,
+    "total_items": 73
+  },
+  {
+    "date": "2026-05-11",
+    "session_summary": "Session 13 — Bug fixes only. No new features. Two PDF upload bugs resolved: (1) accepted unknown markers now register as is_active=true so they auto-match future PDFs; (2) PDF upload now re-fetches fresh markers from Supabase before matching so markers added after page load are recognized. Also: F69 CPT codes and F68 lab trigger messages from session 12/11 reviewed and confirmed complete. Pending migrations noted. Fullscript API email reviewed and recommendation given. Handoff prompt written for next AI dev session.",
+    "features_completed": [],
+    "bugs_fixed": [
+      {
+        "id": "BUG-UNKNOWN-MARKER-ACTIVE",
+        "title": "Accepted unknown markers registered as inactive",
+        "files": ["src/pages/LabsPage.tsx"],
+        "notes": "PDF upload: when user checks an unknown marker row, it was always saved to lab_markers with is_active=false. Split registration into two arrays — checked rows get is_active=true, unchecked rows get is_active=false. Accepted markers now auto-match on future PDF uploads."
+      },
+      {
+        "id": "BUG-PDF-STALE-MARKERS",
+        "title": "Markers added after Labs page load not recognized in PDF upload",
+        "files": ["src/pages/LabsPage.tsx"],
+        "notes": "labMarkers state only populated on mount. Markers added in Admin in a separate tab were invisible to the PDF matcher. Fixed by re-fetching all markers from Supabase at the start of handlePdfUpload; currentMarkers local is used for matching, setLabMarkers updates state in place."
+      }
+    ],
+    "pending_actions": [
+      "⚠️ Run db/migrations/20260504_add_cpt_code_to_lab_markers.sql in Supabase Dashboard → SQL Editor (CPT codes, F69)",
+      "⚠️ Verify db/migrations/20260501_add_is_active_to_lab_markers.sql was run in Supabase (fixes No lab markers available bug)"
+    ],
+    "total_built": 67,
+    "total_partial": 2,
+    "total_not_built": 5,
+    "total_items": 72
+  },
+  {
+    "date": "2026-05-04",
+    "session_summary": "Session 12 — F69 CPT codes on lab markers. New feature specs captured: org invite code join (F70), Teams feature replacing Leagues concept (F71), Super Admin lab results view (F72), missing graphs investigation.",
+    "features_completed": [
+      {
+        "id": "F69",
+        "title": "CPT codes on lab markers",
+        "files": [
+          "db/migrations/20260504_add_cpt_code_to_lab_markers.sql",
+          "server/index.js",
+          "src/pages/LabsPage.tsx",
+          "src/pages/Admin.tsx"
+        ],
+        "notes": "cpt_code TEXT column added to lab_markers. Pre-populated 8 known codes from Email Exchange 6 spec. Server PATCH endpoint updated. Labs page shows CPT label on marker cards. Admin Markers: table column, card display, edit modal field."
+      }
+    ],
+    "bugs_noted": [
+      {
+        "id": "BUG-LAB-MARKERS-EMPTY",
+        "title": "No lab markers available — manual entry shows empty state",
+        "notes": "Root cause: all markers may have is_active=false in DB, OR migration 20260501_add_is_active_to_lab_markers.sql was not run in Supabase. Manual entry grid filters m.is_active !== false. Fix: run migration in Supabase, then toggle markers active in Admin → Markers tab."
+      }
+    ],
+    "new_feature_specs": [
+      "F70 — Org invite code join: users enter a code at signup to be assigned to correct org. De-identified (no employer sees real identity). Spec captured in CLIENT_FEEDBACK.md Email Exchange 6.",
+      "F71 — Teams feature replacing Leagues: per-org opt-in Teams (not cross-org). Super admin can enable Teams on org create; org admin can enable later. Teams break large org into named subgroups. HIPAA: only de-identified aggregate data in team views. Replaces the current 'Leagues' concept.",
+      "F72 — Super Admin lab results viewer: ability for super_admin to see all users' lab results and history to track health trends across the platform.",
+      "MISSING — Graphs/charts that Damon previously saw: investigate where EmployerPage/Dashboard analytics went."
+    ],
+    "total_built": 67,
+    "total_partial": 2,
+    "total_not_built": 5,
+    "total_items": 72
+  },
+  {
+    "date": "2026-05-04",
+    "session_summary": "Session 11 — F68 Lab result trigger messages. Contextual messages shown after manual entry or PDF save for 8 markers + combined metabolic alert + positive reinforcement. Also fixed Admin tab missing after logout/login (session 10b bug fix).",
+    "features_completed": [
+      {
+        "id": "F68",
+        "title": "Lab result trigger messages",
+        "files": [
+          "src/utils/labTriggerMessages.ts",
+          "src/components/LabTriggerMessagesModal.tsx",
+          "src/pages/LabsPage.tsx"
+        ],
+        "notes": "Pure logic in labTriggerMessages.ts evaluates marker value + optional sex against thresholds. Covers: Fasting Glucose, Fasting Insulin, hs-CRP, Vitamin D, Vitamin B12, Triglycerides, HDL (sex-specific). Combined metabolic alert if HOMA-IR >2 + TG/HDL >3 + hs-CRP >3 simultaneously. Positive reinforcement if all optimal. Modal shows tier badge, headline, action steps, escalation for danger markers. HIPAA: shown only to the user, never logged or in employer views. Triggers after both manual entry and PDF save."
+      }
+    ],
+    "bugs_fixed": [
+      {
+        "id": "BUG-ADMIN-TAB",
+        "title": "Admin tab missing after logout → login as different admin user",
+        "files": ["src/context/AuthContext.tsx"],
+        "notes": "login() was calling supabase.from('profiles') immediately after signInWithPassword. The in-flight SIGNED_IN event caused the Supabase auth client to deadlock, returning null for the profile. Role defaulted to 'user' so isAdmin was false and the Admin tab was hidden. Fixed by using data.session.access_token with a direct REST fetch to profiles, same pattern as initializeAuth. Tested: non-admin → logout → login as admin → Admin tab now appears immediately."
+      }
+    ],
+    "total_built": 64,
+    "total_partial": 2,
+    "total_not_built": 4,
+    "total_items": 70
+  },
+  {
     "date": "2026-05-01",
     "session_summary": "Session 9 — Lab marker active/inactive toggle feature, BHAS score display bug fix, profile save bug fix for non-admin users, demo test user SQL script.",
     "features_completed": [

@@ -52,6 +52,7 @@ interface LabMarker {
   min_normal?: number
   max_normal?: number
   is_active?: boolean
+  cpt_code?: string
 }
 
 export default function Labs() {
@@ -135,11 +136,19 @@ export default function Labs() {
       if (data.duplicate) {
         setPdfDuplicateWarning(data.duplicate_detail || 'This PDF appears to have been uploaded before.')
       }
+      // Re-fetch markers fresh so any markers added since page load are included in matching
+      const { data: freshMarkers } = await supabase
+        .from('lab_markers')
+        .select('id, name, unit, min_normal, max_normal, is_active, cpt_code')
+        .order('name')
+      const currentMarkers = (freshMarkers as LabMarker[] | null) || labMarkers
+      if (freshMarkers) setLabMarkers(freshMarkers as LabMarker[])
+
       // Match extracted names to known lab markers (case-insensitive substring match).
       // Active matched markers → checked by default.
       // Inactive matched markers and unknown markers → unchecked by default.
       const rows: ExtractedRow[] = (data.results || []).map((r: any) => {
-        const matched = labMarkers.find(m =>
+        const matched = currentMarkers.find(m =>
           m.name.toLowerCase().includes(r.name.toLowerCase()) ||
           r.name.toLowerCase().includes(m.name.toLowerCase())
         )
@@ -177,14 +186,16 @@ export default function Labs() {
       })
     }))
 
-    // For unchecked rows that have no matching marker, register them as inactive markers
-    // so the system recognises them if they appear on future lab uploads
-    const toRegister = extractedRows.filter(r => !r.include && !r.matchedMarkerId && r.name)
-    await Promise.all(toRegister.map(row =>
+    // Register unknown markers so they auto-match on future uploads:
+    // - Accepted (checked) unknown markers → is_active: true (user explicitly accepted them)
+    // - Rejected (unchecked) unknown markers → is_active: false (recognised but not active)
+    const toRegisterActive   = extractedRows.filter(r =>  r.include && !r.matchedMarkerId && r.name)
+    const toRegisterInactive = extractedRows.filter(r => !r.include && !r.matchedMarkerId && r.name)
+    await Promise.all([...toRegisterActive, ...toRegisterInactive].map(row =>
       fetch(`${BACKEND_URL}/api/admin/lab-markers`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-backend-api-key': BACKEND_KEY },
-        body: JSON.stringify({ name: String(row.name), unit: row.unit || null, is_active: false }),
+        body: JSON.stringify({ name: String(row.name), unit: row.unit || null, is_active: toRegisterActive.includes(row) }),
       }).catch(() => { /* best-effort — don't block save on registration failure */ })
     ))
 
@@ -203,7 +214,7 @@ export default function Labs() {
     async function fetchMarkers() {
       try {
         const [markersRes, rulesRes] = await Promise.all([
-          supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active').order('name'),
+          supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active, cpt_code').order('name'),
           supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
         ])
 
@@ -847,6 +858,7 @@ export default function Labs() {
               const markerHistory = getResultsForMarker(marker)
               const statusColor = latest ? getStatusColor(latest.value, latest.minNormal, latest.maxNormal) : theme.textMuted
               const isChartOpen = chartOpenMarker === marker
+              const markerDef = labMarkers.find(m => m.name === marker)
               return (
                 <div key={marker} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <button
@@ -869,6 +881,9 @@ export default function Labs() {
                         </div>
                         <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>{latest.date}</div>
                       </div>
+                    )}
+                    {markerDef?.cpt_code && (
+                      <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 6, opacity: 0.7 }}>CPT: {markerDef.cpt_code}</div>
                     )}
                   </button>
                   {markerHistory.length > 1 && (

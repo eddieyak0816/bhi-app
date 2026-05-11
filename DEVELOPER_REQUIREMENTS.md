@@ -547,3 +547,5 @@ Items are ordered by logical dependency. Last updated: 2026-04-01.
 | 66 | Challenge UI | ❌ Not built | DB schema done (challenges + challenge_orgs). UI blocked pending Damon's health assessment answers. |
 | 67 | Health Assessment | ✅ Built | health_assessments table; HealthAssessmentModal; Dashboard "Health Check-In" button. Built 2026-04-29. |
 | 68 | Lab result trigger messages | ✅ Built | Contextual messages shown after manual entry or PDF save, based on value/tier. 8 markers + combined metabolic alert + positive reinforcement. HIPAA: shown only to the user. Built 2026-05-03. |
+| 69 | CPT billing codes on lab markers | ✅ Built | cpt_code TEXT column on lab_markers; 8 pre-populated; Labs page shows CPT code; Admin Markers table/card/edit modal. Migration: 20260504_add_cpt_code_to_lab_markers.sql. Built 2026-05-04. |
+| 70 | Org invite code join | ✅ Built | invite_code TEXT UNIQUE on organizations; auto-generated on org create; admin can regenerate; POST /api/org/join; Profile page "Join an Organization" section. Fully anonymous — only user_id stored in org_memberships. Migration: 20260511_add_invite_code_to_organizations.sql. Built 2026-05-11. |

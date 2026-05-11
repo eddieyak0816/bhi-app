@@ -9,6 +9,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase, getStoredJwt } from '../lib/supabase'
 
+const BACKEND_URL = (import.meta as any).env.VITE_BACKEND_URL as string || ''
+const BACKEND_KEY = (import.meta as any).env.VITE_BACKEND_API_KEY as string || ''
+function adminFetch(path: string, options: RequestInit = {}) {
+  const url = BACKEND_URL ? `${BACKEND_URL.replace(/\/$/, '')}${path}` : path
+  return fetch(url, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', 'x-backend-api-key': BACKEND_KEY, ...(options.headers || {}) },
+  })
+}
+
 const PRODUCT_IMAGE_BUCKET = 'resource-thumbnails'
 const PRODUCT_IMAGE_PREFIX = 'product-images'
 
@@ -143,27 +153,15 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
         image_url: form.image_url.trim() || null,
         affiliate_url: form.affiliate_url.trim(),
         is_active: form.is_active,
+        tags: form.tags,
       }
-
-      let productId = editingId
-      if (editingId) {
-        const { error: ue } = await supabase.from('affiliate_products').update(payload).eq('id', editingId)
-        if (ue) throw ue
-      } else {
-        const { data, error: ie } = await supabase.from('affiliate_products').insert(payload).select('id').single()
-        if (ie) throw ie
-        productId = data.id
+      const res = editingId
+        ? await adminFetch(`/api/admin/products/${editingId}`, { method: 'PATCH', body: JSON.stringify(payload) })
+        : await adminFetch('/api/admin/products', { method: 'POST', body: JSON.stringify(payload) })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.detail || body.error || `Save failed (${res.status})`)
       }
-
-      // Replace tags: delete existing, insert new
-      await supabase.from('product_tags').delete().eq('product_id', productId)
-      if (form.tags.length > 0) {
-        const { error: te } = await supabase.from('product_tags').insert(
-          form.tags.map(tag => ({ product_id: productId, tag }))
-        )
-        if (te) throw te
-      }
-
       setShowForm(false)
       await load()
     } catch (e: any) {
@@ -174,13 +172,13 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
   }
 
   async function toggleActive(p: Product) {
-    await supabase.from('affiliate_products').update({ is_active: !p.is_active }).eq('id', p.id)
+    await adminFetch(`/api/admin/products/${p.id}`, { method: 'PATCH', body: JSON.stringify({ is_active: !p.is_active }) })
     await load()
   }
 
   async function deleteProduct(id: string) {
     if (!confirm('Delete this product?')) return
-    await supabase.from('affiliate_products').delete().eq('id', id)
+    await adminFetch(`/api/admin/products/${id}`, { method: 'DELETE' })
     await load()
   }
 

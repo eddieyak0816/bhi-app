@@ -105,7 +105,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   // Marker edit modal state
   const [markerModalOpen, setMarkerModalOpen] = useState(false)
   const [markerModalOriginalId, setMarkerModalOriginalId] = useState<string | null>(null)
-  const [markerEditForm, setMarkerEditForm] = useState<{name?: string; unit?: string; min_normal?: number | null; max_normal?: number | null}>({})
+  const [markerEditForm, setMarkerEditForm] = useState<{name?: string; unit?: string; min_normal?: number | null; max_normal?: number | null; cpt_code?: string}>({})
   // health goal modal state
   const [healthGoalModalOpen, setHealthGoalModalOpen] = useState(false)
   const [healthGoalModalData, setHealthGoalModalData] = useState<any>(null)
@@ -144,7 +144,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [wizardError, setWizardError] = useState<string | null>(null)
 
   // Organizations state (Feature 14)
-  const [orgs, setOrgs] = useState<Array<{id: string; name: string; slug: string; created_at: string; member_count: number}>>([])
+  const [orgs, setOrgs] = useState<Array<{id: string; name: string; slug: string; created_at: string; member_count: number; invite_code: string | null}>>([])
   const [orgMembers, setOrgMembers] = useState<Record<string, Array<{id: string; user_id: string; role: string; team: string|null; joined_at: string; username: string|null; public_id: string|null}>>>({})
   const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null)
   const [orgCreateName, setOrgCreateName] = useState('')
@@ -167,6 +167,10 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [orgTeamError, setOrgTeamError] = useState<Record<string, string | null>>({})
   // Feature 18: per-team BHAS score summary for each org (keyed by org.slug)
   const [orgTeamScores, setOrgTeamScores] = useState<Record<string, Array<{team: string; member_count: number; avg_bhas_pct: number | null; optimal_pct: number | null}>>>({})
+
+  // F70: invite codes per org
+  const [orgInviteCodes, setOrgInviteCodes] = useState<Record<string, string>>({})
+  const [orgInviteCodeLoading, setOrgInviteCodeLoading] = useState<Record<string, boolean>>({})
 
   // Feature 18a: Org list filters
   const [orgSearch, setOrgSearch] = useState('')
@@ -546,7 +550,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
     try {
       const res = await fetch(apiUrl('/api/admin/organizations'), { headers: authHeaders() })
       const body = await res.json()
-      setOrgs(body || [])
+      const orgsData = body || []
+      setOrgs(orgsData)
+      const codes: Record<string, string> = {}
+      for (const o of orgsData) { if (o.invite_code) codes[o.id] = o.invite_code }
+      setOrgInviteCodes(codes)
     } catch (err) {
       console.error('loadOrgs', err)
     } finally {
@@ -653,6 +661,19 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       setOrgCreateError('Network error.')
     } finally {
       setOrgCreateSaving(false)
+    }
+  }
+
+  async function regenerateInviteCode(orgId: string) {
+    setOrgInviteCodeLoading(prev => ({ ...prev, [orgId]: true }))
+    try {
+      const res = await fetch(apiUrl(`/api/admin/organizations/${orgId}/regenerate-code`), { method: 'POST', headers: authHeaders() })
+      const body = await res.json()
+      if (body.invite_code) setOrgInviteCodes(prev => ({ ...prev, [orgId]: body.invite_code }))
+    } catch (err) {
+      console.error('regenerateInviteCode', err)
+    } finally {
+      setOrgInviteCodeLoading(prev => ({ ...prev, [orgId]: false }))
     }
   }
 
@@ -2857,6 +2878,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('unit')}>Unit{getSortIndicator('unit')}</th>
                       <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Min Value</th>
                       <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Max Value</th>
+                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>CPT Code</th>
                       <th style={{padding:8,textAlign:'center',color:'#ffffff',fontWeight:500}}>Active</th>
                       <th style={{padding:8,textAlign:'right',color:'#ffffff',fontWeight:500}}>Actions</th>
                     </tr>
@@ -2904,6 +2926,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             <td style={{padding:8}} className="small muted">{m.unit || '—'}</td>
                             <td style={{padding:8}} className="small muted">{m.min_normal ?? '—'}</td>
                             <td style={{padding:8}} className="small muted">{m.max_normal ?? '—'}</td>
+                            <td style={{padding:8}} className="small muted">{m.cpt_code || '—'}</td>
                             <td style={{padding:8,textAlign:'center',verticalAlign:'middle'}}>
                               <div
                                 title={m.is_active === false ? 'Inactive — click to activate' : 'Active — click to deactivate'}
@@ -2927,7 +2950,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button onClick={() => {
                                   setMarkerModalOriginalId(m.id)
-                                  setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal })
+                                  setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal, cpt_code: m.cpt_code })
                                   setMarkerModalOpen(true)
                                 }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
                                 <button onClick={async () => {
@@ -3010,9 +3033,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         </div>
                         {m.unit && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Unit: {m.unit}</p>}
                         {m.min_normal !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Min: {m.min_normal}</p>}
-                        {m.max_normal !== null && <p style={{margin:'0 0 12px 0',fontSize:12,color:theme.text}}>Max: {m.max_normal}</p>}
+                        {m.max_normal !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Max: {m.max_normal}</p>}
+                        {m.cpt_code && <p style={{margin:'0 0 12px 0',fontSize:11,color:theme.textMuted}}>CPT: {m.cpt_code}</p>}
+                        {!m.cpt_code && <p style={{margin:'0 0 12px 0',fontSize:11,color:theme.textMuted,opacity:0.5}}>No CPT code</p>}
                         <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
-                          <button onClick={() => { setEditingId(null); setMarkerModalOriginalId(m.id); setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal }); setMarkerModalOpen(true) }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                          <button onClick={() => { setEditingId(null); setMarkerModalOriginalId(m.id); setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal, cpt_code: m.cpt_code }); setMarkerModalOpen(true) }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
                           <button onClick={async () => {
                             if (!confirm(`Delete marker "${m.name}"?`)) return
                             try {
@@ -3722,12 +3747,14 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 <input type="number" value={markerEditForm.max_normal ?? ''} onChange={e => setMarkerEditForm(prev => ({...prev, max_normal: e.target.value ? Number(e.target.value) : null}))} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text}} />
               </div>
             </div>
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>CPT Code</label>
+            <input value={markerEditForm.cpt_code || ''} onChange={e => setMarkerEditForm(prev => ({...prev, cpt_code: e.target.value}))} placeholder="e.g. 82652" style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
             <div style={{display:'flex',gap:8,marginTop:'auto'}}>
               <button onClick={async () => {
                 try {
                   const id = markerModalOriginalId
                   if (!id) throw new Error('Missing marker id')
-                  const res = await fetch(apiUrl(`/api/admin/lab-markers/${id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: markerEditForm.name, unit: markerEditForm.unit, min_normal: markerEditForm.min_normal, max_normal: markerEditForm.max_normal }) })
+                  const res = await fetch(apiUrl(`/api/admin/lab-markers/${id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: markerEditForm.name, unit: markerEditForm.unit, min_normal: markerEditForm.min_normal, max_normal: markerEditForm.max_normal, cpt_code: markerEditForm.cpt_code || null }) })
                   if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                   await load()
                   setMarkerModalOpen(false)
@@ -4176,6 +4203,20 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       {assignTeamsMsg[org.id]}
                     </div>
                   )}
+
+                  {/* F70: Invite code row */}
+                  <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 16px',borderTop:`1px solid ${theme.borderColor}`,background:theme.bg,fontSize:13}}>
+                    <span style={{color:theme.textMuted,fontWeight:500}}>Invite Code:</span>
+                    <span style={{fontFamily:'monospace',fontWeight:700,letterSpacing:2,color:theme.text,background:theme.bgSecondary,padding:'3px 10px',borderRadius:4,border:`1px solid ${theme.borderColor}`}}>
+                      {orgInviteCodes[org.id] || '—'}
+                    </span>
+                    <button
+                      onClick={() => regenerateInviteCode(org.id)}
+                      disabled={!!orgInviteCodeLoading[org.id]}
+                      style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:5,padding:'3px 10px',fontSize:12,cursor:'pointer',color:theme.textMuted,opacity:orgInviteCodeLoading[org.id]?0.5:1}}
+                    >{orgInviteCodeLoading[org.id] ? 'Regenerating…' : 'Regenerate'}</button>
+                    <span style={{fontSize:11,color:theme.textMuted}}>Share this code with employees to join anonymously.</span>
+                  </div>
 
                   {/* Expanded members panel */}
                   {expandedOrgId === org.id && (
