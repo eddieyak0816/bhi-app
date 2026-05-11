@@ -2,6 +2,25 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-05-11 — feat: Super Admin lab results viewer (F72, session 14)
+
+### `src/components/AdminLabResultsTab.tsx` *(new)*
+- Super admin only. Table showing latest lab result per user/marker across all users.
+- Filters: org, marker name, date range, user ID.
+- Values colour-coded green/amber/red vs normal range.
+- Expand button (▶) on rows with multiple entries reveals full chronological history inline.
+- HIPAA: only `username` + `public_id` exposed — no real names or emails.
+
+### `server/index.js`
+- `GET /api/admin/lab-results` — returns all `user_lab_results` joined with `profiles` (username + public_id only). Supports `org_id`, `marker_name`, `date_from`, `date_to`, `user_id`, `limit` query params. Also returns org list + active marker list for filter dropdowns.
+
+### `src/pages/Admin.tsx`
+- Added `'lab-results'` to `VALID_TABS`.
+- "Lab Data" nav tile visible only to `super_admin`.
+- Renders `AdminLabResultsTab` when active, gated behind `isSuperAdmin`.
+
+---
+
 ## 2026-05-11 — feat: My Team Dashboard card (F71, session 13)
 
 ### `src/components/MyTeamCard.tsx` *(new)*

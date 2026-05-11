@@ -1,6 +1,31 @@
 [
   {
     "date": "2026-05-11",
+    "session_summary": "Session 14 — F72 Super Admin lab results viewer. New GET /api/admin/lab-results endpoint returns all user_lab_results joined with profiles (username + public_id only, no PHI). AdminLabResultsTab.tsx: filterable table (org, marker, date range, user ID), value colour-coding vs normal range, expandable inline history per user/marker. Tab visible to super_admin only in Admin nav.",
+    "features_completed": [
+      {
+        "id": "F72",
+        "title": "Super Admin lab results viewer",
+        "files": [
+          "server/index.js",
+          "src/components/AdminLabResultsTab.tsx",
+          "src/pages/Admin.tsx"
+        ],
+        "notes": "No migration needed. Reads existing user_lab_results + lab_markers + profiles tables. HIPAA: only username + public_id returned, no real names or emails."
+      }
+    ],
+    "bugs_fixed": [],
+    "pending_actions": [
+      "Deploy server/index.js to Render (GET /api/admin/lab-results endpoint)",
+      "Deploy frontend to Netlify (AdminLabResultsTab, Admin.tsx lab-results tab)"
+    ],
+    "total_built": 70,
+    "total_partial": 2,
+    "total_not_built": 4,
+    "total_items": 74
+  },
+  {
+    "date": "2026-05-11",
     "session_summary": "Session 13 (continued) — F71 My Team Dashboard card + invite code on signup. F71: user-facing team card on Dashboard showing team name, org, personal rank within team, and team leaderboard with colour-coded BHAS % bars. Hidden if user has no team. New GET /api/my-team endpoint. Invite code on signup: SignupPage now has optional invite code field; AuthContext.signup() accepts inviteCode param and calls POST /api/org/join after account creation (non-blocking). Also fixed 'Join BHI' subtitle to 'Join NHL'.",
     "features_completed": [
       {

@@ -3109,4 +3109,90 @@ app.delete('/api/admin/products/:id', async (req, res) => {
   }
 });
 
+// ── F72: Super Admin Lab Results Viewer ───────────────────────────────────────
+
+// GET /api/admin/lab-results
+// Returns all user_lab_results joined with profile info (username, public_id).
+// No real names or emails exposed — only username + public_id (HIPAA-safe).
+// Query params (all optional):
+//   org_id      — filter to members of a specific org
+//   marker_name — filter to a specific marker (case-insensitive contains)
+//   date_from   — ISO date string (inclusive)
+//   date_to     — ISO date string (inclusive)
+//   user_id     — filter to a specific user
+//   limit       — max rows (default 500)
+app.get('/api/admin/lab-results', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { org_id, marker_name, date_from, date_to, user_id, limit: limitParam } = req.query;
+  const limit = Math.min(parseInt(limitParam) || 500, 2000);
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // If org_id filter: resolve to member user_ids first
+    let orgUserIds = null;
+    if (org_id) {
+      const { data: members } = await sb
+        .from('org_memberships')
+        .select('user_id')
+        .eq('org_id', org_id);
+      orgUserIds = (members || []).map(m => m.user_id);
+      if (orgUserIds.length === 0) return res.status(200).json({ results: [], orgs: [], markers: [] });
+    }
+
+    // Build lab results query
+    let q = sb
+      .from('user_lab_results')
+      .select('id, user_id, marker_name, value, unit, date, min_normal, max_normal, verification_type, created_at')
+      .order('date', { ascending: false })
+      .limit(limit);
+
+    if (orgUserIds) q = q.in('user_id', orgUserIds);
+    if (user_id)    q = q.eq('user_id', user_id);
+    if (date_from)  q = q.gte('date', date_from);
+    if (date_to)    q = q.lte('date', date_to);
+    if (marker_name) q = q.ilike('marker_name', `%${marker_name}%`);
+
+    const { data: results, error } = await q;
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+
+    // Fetch profiles for all unique user_ids — only public_id + username (no PHI)
+    const userIds = [...new Set((results || []).map(r => r.user_id))];
+    let profileMap = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await sb
+        .from('profiles')
+        .select('id, username, public_id')
+        .in('id', userIds);
+      for (const p of profiles || []) {
+        profileMap[p.id] = { username: p.username, public_id: p.public_id };
+      }
+    }
+
+    // Fetch orgs for filter dropdown
+    const { data: orgs } = await sb
+      .from('organizations')
+      .select('id, name')
+      .order('name');
+
+    // Distinct marker names for filter dropdown
+    const { data: markerRows } = await sb
+      .from('lab_markers')
+      .select('name')
+      .eq('is_active', true)
+      .order('name');
+    const markers = (markerRows || []).map(m => m.name);
+
+    const enriched = (results || []).map(r => ({
+      ...r,
+      username: profileMap[r.user_id]?.username || null,
+      public_id: profileMap[r.user_id]?.public_id || null,
+    }));
+
+    return res.status(200).json({ results: enriched, orgs: orgs || [], markers });
+  } catch (err) {
+    console.error('GET /api/admin/lab-results error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));
