@@ -8,6 +8,7 @@ import HealthReportModal from '../components/HealthReportModal'
 import HealthAssessmentModal from '../components/HealthAssessmentModal'
 import AffiliateProductCards from '../components/AffiliateProductCards'
 import VirtualProviderCards from '../components/VirtualProviderCards'
+import MyTeamCard from '../components/MyTeamCard'
 import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
 import { supabase } from '../lib/supabase'
 import { getBenchmark } from '../utils/nationalBenchmarks'
@@ -145,6 +146,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
       </div>
 
       <StaleLabBanner latestLabDate={latestLabDate} onNavigate={onNavigate} />
+      <MyTeamCard theme={theme} />
 
       {/* Stats Section */}
       <div

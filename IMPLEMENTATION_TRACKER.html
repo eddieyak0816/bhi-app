@@ -185,7 +185,7 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-05-11 — Session 13: F70 Org invite code join (anonymous, HIPAA-safe). · Bug fixes — accepted unknown markers now register as is_active=true; PDF upload re-fetches fresh markers. · Session 12: F69 CPT Codes on lab markers. · Next: F71 Teams per-org → F72 Super Admin lab viewer → investigate missing charts. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-05-11 — Session 13: F71 My Team Dashboard card (team leaderboard, rank, BHAS bars). F70 Org invite code join. F69 CPT codes migration run. Next: F72 Super Admin lab viewer. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-05-04 -->
@@ -1068,6 +1068,15 @@
       </div>
 
       <div class="item done" data-status="done">
+        <div class="item-num">71</div>
+        <div class="item-body">
+          <div class="item-title">My Team Dashboard card (F71)</div>
+          <div class="item-note">Built 2026-05-11 (session 13). User-facing team card on Dashboard. Shows team name, org, user rank within team, and team leaderboard (aggregate BHAS % bars + medal icons). Hidden if user has no team. No DB migration needed. New component: <code>src/components/MyTeamCard.tsx</code>. New endpoint: <code>GET /api/my-team</code>. HIPAA: aggregate only.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-05-11</span>
+      </div>
+
+      <div class="item done" data-status="done">
         <div class="item-num">70</div>
         <div class="item-body">
           <div class="item-title">Org invite code join (F70)</div>
@@ -1082,8 +1091,8 @@
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-05-11 (F70 Org invite code join) &nbsp;·&nbsp;
-  68 built · 2 partial · 5 not built/skipped out of 73 total items &nbsp;·&nbsp;
+  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-05-11 (F71 My Team card; F70 Org invite code join) &nbsp;·&nbsp;
+  69 built · 2 partial · 5 not built/skipped out of 74 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
   <br><br>

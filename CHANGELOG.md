@@ -2,6 +2,22 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-05-11 — feat: My Team Dashboard card (F71, session 13)
+
+### `src/components/MyTeamCard.tsx` *(new)*
+- User-facing team card shown on Dashboard when user has a team assignment.
+- Shows: org name, team name, user's rank within their team (e.g. "#3 of 8"), and a full team leaderboard with medal icons, member counts, and colour-coded BHAS % bars.
+- Hidden automatically if user is not in an org or has no team assigned.
+- HIPAA: team leaderboard shows team names + aggregate averages only — no individual usernames, scores, or PHI.
+
+### `server/index.js`
+- `GET /api/my-team` — returns user's org, team, rank within team, and team leaderboard. All aggregate — no individual data returned.
+
+### `src/pages/Dashboard.tsx`
+- `MyTeamCard` rendered just below `StaleLabBanner`.
+
+---
+
 ## 2026-05-11 — feat: Org invite code join (F70, session 13)
 
 ### `db/migrations/20260511_add_invite_code_to_organizations.sql` *(new)*

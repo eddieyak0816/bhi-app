@@ -2932,6 +2932,111 @@ app.delete('/api/admin/providers/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4242;
+// ── F71: My Team ──────────────────────────────────────────────────────────────
+
+// GET /api/my-team — returns the user's team + team leaderboard within their org
+// De-identified: team names + aggregate BHAS scores only. No individual PHI.
+app.get('/api/my-team', async (req, res) => {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(501).json({ error: 'backend-disabled' });
+  const userId = req.header('x-user-id') || '';
+  if (!userId) return res.status(401).json({ error: 'unauthenticated' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Find user's org membership (take first if multiple)
+    const { data: memberships, error: mErr } = await sb
+      .from('org_memberships')
+      .select('org_id, team')
+      .eq('user_id', userId)
+      .order('joined_at', { ascending: true });
+    if (mErr) return res.status(500).json({ error: 'db_error', detail: mErr.message });
+    if (!memberships || memberships.length === 0) return res.status(200).json({ member: false });
+
+    const { org_id, team: userTeam } = memberships[0];
+
+    // Get org name
+    const { data: org } = await sb.from('organizations').select('name').eq('id', org_id).single();
+
+    // Get all members of this org with their team assignments
+    const { data: allMembers } = await sb
+      .from('org_memberships')
+      .select('user_id, team')
+      .eq('org_id', org_id);
+    const memberIds = (allMembers || []).map(m => m.user_id);
+
+    // Fetch logic rules + tag tiers for BHAS computation
+    const { data: logicRules } = await sb
+      .from('logic_rules')
+      .select('min_value, max_value, operator, tag_to_apply, lab_markers(name)')
+      .order('id');
+    const rulesWithNames = (logicRules || []).map(r => ({ ...r, marker_name: r.lab_markers?.name || '' }));
+    const { data: tagRows } = await sb.from('tags').select('name, scoring_tier');
+    const tagTierMap = new Map((tagRows || []).map(t => [t.name, t.scoring_tier]));
+
+    // Latest lab result per user
+    let latestByUser = {};
+    if (memberIds.length > 0) {
+      const { data: allResults } = await sb
+        .from('user_lab_results')
+        .select('user_id, marker_name, value')
+        .in('user_id', memberIds)
+        .order('date', { ascending: false });
+      for (const row of allResults || []) {
+        if (!latestByUser[row.user_id]) latestByUser[row.user_id] = {};
+        if (!latestByUser[row.user_id][row.marker_name])
+          latestByUser[row.user_id][row.marker_name] = { value: row.value, marker_name: row.marker_name };
+      }
+    }
+
+    // Compute BHAS per member
+    const memberScores = (allMembers || []).map(m => ({
+      user_id: m.user_id,
+      team: m.team,
+      bhas_pct: computeBhasPct(Object.values(latestByUser[m.user_id] || {}), rulesWithNames, tagTierMap),
+    }));
+
+    // Get all team names for this org
+    const { data: orgTeamsData } = await sb.from('org_teams').select('name').eq('org_id', org_id).order('created_at');
+    const orgTeamNames = (orgTeamsData || []).map(t => t.name);
+    const allTeamNames = [...new Set([...orgTeamNames, ...(allMembers || []).filter(m => m.team).map(m => m.team)])];
+
+    // Build team leaderboard (aggregate only — no individual data)
+    const teamLeaderboard = allTeamNames.map(teamName => {
+      const members = memberScores.filter(m => m.team === teamName);
+      const withScores = members.filter(m => m.bhas_pct !== null);
+      const avgBhas = withScores.length > 0
+        ? Math.round(withScores.reduce((s, m) => s + m.bhas_pct, 0) / withScores.length)
+        : null;
+      return { team: teamName, member_count: members.length, avg_bhas_pct: avgBhas };
+    }).sort((a, b) => (b.avg_bhas_pct ?? -1) - (a.avg_bhas_pct ?? -1));
+
+    // User's rank within their own team (position only — no other member data)
+    let userRank = null;
+    let userTeamSize = null;
+    if (userTeam) {
+      const teamMembers = memberScores.filter(m => m.team === userTeam && m.bhas_pct !== null);
+      teamMembers.sort((a, b) => b.bhas_pct - a.bhas_pct);
+      const userIdx = teamMembers.findIndex(m => m.user_id === userId);
+      if (userIdx !== -1) {
+        userRank = userIdx + 1;
+        userTeamSize = teamMembers.length;
+      }
+    }
+
+    return res.status(200).json({
+      member: true,
+      org_name: org?.name || '',
+      user_team: userTeam || null,
+      user_rank: userRank,
+      user_team_size: userTeamSize,
+      team_leaderboard: teamLeaderboard,
+    });
+  } catch (err) {
+    console.error('GET /api/my-team error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // ── Affiliate Products (admin CRUD via service role — bypasses RLS) ───────────
 
 // POST /api/admin/products — create product + tags atomically
