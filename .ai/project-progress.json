@@ -1,6 +1,33 @@
 [
   {
     "date": "2026-05-11",
+    "session_summary": "Session 15 — F66 Challenge UI. Admin → Challenges tab (CRUD: create/edit/delete/toggle + org assignment). ChallengesSection on Dashboard (user-facing, scoped to user's org, progress bar + key dates, hidden if none). 7 new server endpoints. No new migration needed — DB schema was already in place from 20260416_create_challenges.sql.",
+    "features_completed": [
+      {
+        "id": "F66",
+        "title": "Challenge UI",
+        "files": [
+          "src/components/AdminChallengesTab.tsx",
+          "src/components/ChallengesSection.tsx",
+          "src/pages/Admin.tsx",
+          "src/pages/Dashboard.tsx",
+          "server/index.js"
+        ],
+        "notes": "DB was already done. No migration needed. Admin tab visible to all admins (not super_admin-gated). User section display-only — no scoring mechanic yet. HIPAA: user view shows only org-aggregate challenge membership, no PHI."
+      }
+    ],
+    "bugs_fixed": [],
+    "pending_actions": [
+      "Deploy server/index.js to Render (7 new /api/admin/challenges + /api/challenges endpoints)",
+      "Deploy frontend to Netlify (AdminChallengesTab, ChallengesSection, Admin.tsx, Dashboard.tsx)"
+    ],
+    "total_built": 71,
+    "total_partial": 1,
+    "total_not_built": 4,
+    "total_items": 74
+  },
+  {
+    "date": "2026-05-11",
     "session_summary": "Session 14 — F72 Super Admin lab results viewer. New GET /api/admin/lab-results endpoint returns all user_lab_results joined with profiles (username + public_id only, no PHI). AdminLabResultsTab.tsx: filterable table (org, marker, date range, user ID), value colour-coding vs normal range, expandable inline history per user/marker. Tab visible to super_admin only in Admin nav.",
     "features_completed": [
       {

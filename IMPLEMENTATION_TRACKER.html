@@ -185,7 +185,7 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-05-11 — Session 13: F71 My Team Dashboard card (team leaderboard, rank, BHAS bars). F70 Org invite code join. F69 CPT codes migration run. Next: F72 Super Admin lab viewer. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-05-11 — Session 15: F66 Challenge UI complete. Admin → Challenges tab (CRUD + org assignment). ChallengesSection on Dashboard (display-only, progress bar). · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-05-04 -->
@@ -1031,13 +1031,13 @@
         <span class="item-status status-done">✅ Done — 2026-04-16 — ⚠️ run migration in Supabase</span>
       </div>
 
-      <div class="item partial" data-status="partial">
+      <div class="item done" data-status="done">
         <div class="item-num">66</div>
         <div class="item-body">
           <div class="item-title">Challenge feature — head-to-head org competition</div>
-          <div class="item-note">DB schema built 2026-04-16: <code>20260416_create_challenges.sql</code> — challenges + challenge_orgs tables, 9-month duration, 0+6-month lab cadence. UI deferred — pending health assessment Q&amp;A from Damon. <strong>Action required:</strong> Run migration in Supabase Dashboard → SQL Editor.</div>
+          <div class="item-note">DB: <code>20260416_create_challenges.sql</code> (challenges + challenge_orgs). UI built 2026-05-11 (session 15): Admin → Challenges tab (create/edit/delete/toggle, org assignment). User-facing <code>ChallengesSection</code> on Dashboard — shows active challenges for user's org with progress bar + key dates. Display-only (no scoring mechanic). Server: GET/POST/PATCH/DELETE + org assign/remove endpoints.</div>
         </div>
-        <span class="item-status status-partial">⏸ Partial — DB done, UI pending</span>
+        <span class="item-status status-done">✅ Done — 2026-05-11</span>
       </div>
 
       <div class="item done" data-status="done">

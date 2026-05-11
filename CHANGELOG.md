@@ -2,6 +2,37 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-05-11 — feat: Challenge UI (F66, session 15)
+
+### `src/components/AdminChallengesTab.tsx` *(new)*
+- Admin → Challenges tab: create, edit, delete, activate/deactivate challenges.
+- Fields: name, slug (auto-filled from name), start/end dates, baseline date (month 0), midpoint date (month 6), active toggle.
+- Org assignment panel per challenge: add org from dropdown, remove org with × button.
+- Uses `x-backend-api-key` auth (matches all other admin tabs).
+
+### `src/components/ChallengesSection.tsx` *(new)*
+- User-facing section on Dashboard below MyTeamCard.
+- Fetches `GET /api/challenges` (scoped to user's org via `x-user-id`).
+- Hidden if user has no active challenges.
+- Shows challenge name, date range, progress bar (elapsed vs total duration), baseline/midpoint key dates.
+
+### `server/index.js`
+- `GET /api/admin/challenges` — all challenges with enrolled `org_ids` array.
+- `POST /api/admin/challenges` — create (requires name, slug, dates).
+- `PATCH /api/admin/challenges/:id` — partial update.
+- `DELETE /api/admin/challenges/:id` — delete (cascade removes challenge_orgs).
+- `POST /api/admin/challenges/:id/orgs` — assign org to challenge.
+- `DELETE /api/admin/challenges/:id/orgs/:orgId` — remove org from challenge.
+- `GET /api/challenges` — user-facing; returns active challenges for user's org (via `x-user-id`).
+
+### `src/pages/Admin.tsx`
+- Added `'challenges'` to `VALID_TABS`.
+- "Challenges" nav tile (⚡) added between Users and Lab Data.
+- Renders `AdminChallengesTab` when active.
+
+### `src/pages/Dashboard.tsx`
+- Imports and renders `ChallengesSection` below `MyTeamCard`.
+
 ## 2026-05-11 — feat: Super Admin lab results viewer (F72, session 14)
 
 ### `src/components/AdminLabResultsTab.tsx` *(new)*

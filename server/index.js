@@ -3195,4 +3195,175 @@ app.get('/api/admin/lab-results', async (req, res) => {
   }
 });
 
+// ── F66: Challenges ───────────────────────────────────────────────────────────
+
+// GET /api/admin/challenges — list all challenges with their enrolled org_ids
+app.get('/api/admin/challenges', requireAdmin, async (req, res) => {
+  try {
+    const { data: challenges, error: cErr } = await supabase
+      .from('challenges')
+      .select('*')
+      .order('starts_at', { ascending: false });
+    if (cErr) throw cErr;
+
+    const { data: coRows, error: coErr } = await supabase
+      .from('challenge_orgs')
+      .select('challenge_id, org_id');
+    if (coErr) throw coErr;
+
+    const orgMap = {};
+    (coRows || []).forEach(r => {
+      if (!orgMap[r.challenge_id]) orgMap[r.challenge_id] = [];
+      orgMap[r.challenge_id].push(r.org_id);
+    });
+
+    const result = (challenges || []).map(c => ({ ...c, org_ids: orgMap[c.id] || [] }));
+    return res.json(result);
+  } catch (err) {
+    console.error('GET /api/admin/challenges error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/challenges — create a challenge
+app.post('/api/admin/challenges', requireAdmin, async (req, res) => {
+  const { name, slug, starts_at, ends_at, baseline_at, midpoint_at, is_active } = req.body;
+  if (!name || !slug || !starts_at || !ends_at || !baseline_at || !midpoint_at) {
+    return res.status(400).json({ error: 'missing_fields' });
+  }
+  try {
+    const { data, error } = await supabase
+      .from('challenges')
+      .insert({ name, slug, starts_at, ends_at, baseline_at, midpoint_at, is_active: is_active !== false })
+      .select()
+      .single();
+    if (error) throw error;
+    return res.status(201).json(data);
+  } catch (err) {
+    console.error('POST /api/admin/challenges error:', err.message);
+    if (err.code === '23505') return res.status(409).json({ error: 'slug_taken' });
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// PATCH /api/admin/challenges/:id — update a challenge
+app.patch('/api/admin/challenges/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { name, slug, starts_at, ends_at, baseline_at, midpoint_at, is_active } = req.body;
+  const updates = {};
+  if (name !== undefined)        updates.name        = name;
+  if (slug !== undefined)        updates.slug        = slug;
+  if (starts_at !== undefined)   updates.starts_at   = starts_at;
+  if (ends_at !== undefined)     updates.ends_at     = ends_at;
+  if (baseline_at !== undefined) updates.baseline_at = baseline_at;
+  if (midpoint_at !== undefined) updates.midpoint_at = midpoint_at;
+  if (is_active !== undefined)   updates.is_active   = is_active;
+  try {
+    const { data, error } = await supabase
+      .from('challenges')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return res.json(data);
+  } catch (err) {
+    console.error('PATCH /api/admin/challenges/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/challenges/:id — delete a challenge (cascade deletes challenge_orgs)
+app.delete('/api/admin/challenges/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { error } = await supabase.from('challenges').delete().eq('id', id);
+    if (error) throw error;
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/challenges/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/challenges/:id/orgs — assign an org to a challenge
+app.post('/api/admin/challenges/:id/orgs', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { org_id } = req.body;
+  if (!org_id) return res.status(400).json({ error: 'missing org_id' });
+  try {
+    const { error } = await supabase
+      .from('challenge_orgs')
+      .insert({ challenge_id: id, org_id });
+    if (error && error.code === '23505') return res.status(409).json({ error: 'already_assigned' });
+    if (error) throw error;
+    return res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error('POST /api/admin/challenges/:id/orgs error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/challenges/:id/orgs/:orgId — remove an org from a challenge
+app.delete('/api/admin/challenges/:id/orgs/:orgId', requireAdmin, async (req, res) => {
+  const { id, orgId } = req.params;
+  try {
+    const { error } = await supabase
+      .from('challenge_orgs')
+      .delete()
+      .eq('challenge_id', id)
+      .eq('org_id', orgId);
+    if (error) throw error;
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/challenges/:id/orgs/:orgId error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// GET /api/challenges — user-facing: active challenges for the user's org
+// Returns challenges where the user's org is enrolled (or all active if no org).
+app.get('/api/challenges', async (req, res) => {
+  const userId = req.headers['x-user-id'];
+  if (!userId) return res.status(401).json({ error: 'unauthorized' });
+  try {
+    // Find user's org
+    const { data: membership } = await supabase
+      .from('org_memberships')
+      .select('org_id')
+      .eq('user_id', userId)
+      .limit(1)
+      .single();
+
+    let challengeIds = null;
+    if (membership?.org_id) {
+      const { data: coRows } = await supabase
+        .from('challenge_orgs')
+        .select('challenge_id')
+        .eq('org_id', membership.org_id);
+      challengeIds = (coRows || []).map(r => r.challenge_id);
+    }
+
+    let query = supabase
+      .from('challenges')
+      .select('id, name, slug, starts_at, ends_at, baseline_at, midpoint_at, is_active')
+      .eq('is_active', true)
+      .order('starts_at', { ascending: true });
+
+    if (challengeIds !== null && challengeIds.length > 0) {
+      query = query.in('id', challengeIds);
+    } else if (challengeIds !== null) {
+      // user has an org but it's not in any challenge
+      return res.json([]);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return res.json(data || []);
+  } catch (err) {
+    console.error('GET /api/challenges error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));

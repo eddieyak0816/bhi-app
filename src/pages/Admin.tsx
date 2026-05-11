@@ -8,6 +8,7 @@ import AdminProvidersTab from '../components/AdminProvidersTab'
 import AdminLeaguesTab from '../components/AdminLeaguesTab'
 import AdminUsersTab from '../components/AdminUsersTab'
 import AdminLabResultsTab from '../components/AdminLabResultsTab'
+import AdminChallengesTab from '../components/AdminChallengesTab'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
@@ -34,7 +35,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
 
-  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','leagues','users','lab-results'] as const
+  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','leagues','users','challenges','lab-results'] as const
   type AdminTab = typeof VALID_TABS[number]
   const [activeTab, setActiveTab] = useState<AdminTab>(VALID_TABS.includes(initialTab as AdminTab) ? (initialTab as AdminTab) : 'resources')
   // Use global theme context
@@ -1277,6 +1278,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           { id: 'providers',     icon: '👨‍⚕️', label: 'Providers' },
           { id: 'leagues',       icon: '🏆', label: 'Leagues' },
           { id: 'users',         icon: '👤', label: 'Users' },
+          { id: 'challenges',    icon: '⚡', label: 'Challenges' },
           ...(isSuperAdmin ? [{ id: 'lab-results' as AdminTab, icon: '🔬', label: 'Lab Data' }] : []),
         ]
         return (
@@ -4570,6 +4572,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       {/* ── Users Tab ────────────────────────────────────────────────────── */}
       {activeTab === 'users' && (
         <AdminUsersTab theme={theme} isSuperAdmin={isSuperAdmin} />
+      )}
+
+      {/* ── Challenges Tab (F66) ─────────────────────────────────────────── */}
+      {activeTab === 'challenges' && (
+        <AdminChallengesTab theme={theme} />
       )}
 
       {/* ── Lab Results Tab (F72 — super_admin only) ─────────────────────── */}

@@ -9,6 +9,7 @@ import HealthAssessmentModal from '../components/HealthAssessmentModal'
 import AffiliateProductCards from '../components/AffiliateProductCards'
 import VirtualProviderCards from '../components/VirtualProviderCards'
 import MyTeamCard from '../components/MyTeamCard'
+import ChallengesSection from '../components/ChallengesSection'
 import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
 import { supabase } from '../lib/supabase'
 import { getBenchmark } from '../utils/nationalBenchmarks'
@@ -635,6 +636,8 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
       <VirtualProviderCards />
 
       <MyTeamCard theme={theme} />
+
+      {user?.id && <ChallengesSection theme={theme} userId={user.id} />}
 
       {/* Quick Actions */}
       <div style={{ marginBottom: 32 }}>
