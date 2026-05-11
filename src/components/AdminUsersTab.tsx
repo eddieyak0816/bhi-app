@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 
 interface UserRow { id: string; email: string; username: string | null; role: string }
+interface OrgRow { id: string; name: string }
 
 interface Props { theme: any; isSuperAdmin?: boolean }
 
@@ -19,6 +20,9 @@ export default function AdminUsersTab({ theme, isSuperAdmin }: Props) {
   const [saving, setSaving] = useState(false)
   const [roleChanging, setRoleChanging] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [orgs, setOrgs] = useState<OrgRow[]>([])
+  const [orgAssigning, setOrgAssigning] = useState<string | null>(null)
+  const [orgAssignMsg, setOrgAssignMsg] = useState<Record<string, string>>({})
 
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   const DEV_BACKEND_KEY = ((import.meta as any).env.VITE_BACKEND_API_KEY as string) || ''
@@ -42,7 +46,40 @@ export default function AdminUsersTab({ theme, isSuperAdmin }: Props) {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load(); loadOrgs() }, [])
+
+  async function loadOrgs() {
+    try {
+      const res = await fetch(apiUrl('/api/admin/organizations'), { headers: { 'x-backend-api-key': DEV_BACKEND_KEY } })
+      const data = await res.json()
+      setOrgs((Array.isArray(data) ? data : []).map((o: any) => ({ id: o.id, name: o.name })))
+    } catch { /* non-critical */ }
+  }
+
+  async function handleAssignOrg(userId: string, orgId: string) {
+    if (!orgId) return
+    setOrgAssigning(userId)
+    setOrgAssignMsg(prev => ({ ...prev, [userId]: '' }))
+    try {
+      const res = await fetch(apiUrl(`/api/admin/organizations/${orgId}/members`), {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ user_id: userId, role: 'member' }),
+      })
+      const d = await res.json()
+      if (res.status === 409) {
+        setOrgAssignMsg(prev => ({ ...prev, [userId]: 'Already a member' }))
+      } else if (!res.ok) {
+        setOrgAssignMsg(prev => ({ ...prev, [userId]: d.error || 'Failed' }))
+      } else {
+        setOrgAssignMsg(prev => ({ ...prev, [userId]: 'Assigned' }))
+        setTimeout(() => setOrgAssignMsg(prev => ({ ...prev, [userId]: '' })), 2500)
+      }
+    } catch {
+      setOrgAssignMsg(prev => ({ ...prev, [userId]: 'Network error' }))
+    } finally {
+      setOrgAssigning(null)
+    }
+  }
 
   async function handleCreate() {
     if (!form.email || !form.password) { setError('Email and password are required.'); return }
@@ -175,6 +212,7 @@ export default function AdminUsersTab({ theme, isSuperAdmin }: Props) {
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>Username</th>
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>Role</th>
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>Change Role</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>Assign Org</th>
                 {isSuperAdmin && <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase' }}>Delete</th>}
               </tr>
             </thead>
@@ -194,6 +232,25 @@ export default function AdminUsersTab({ theme, isSuperAdmin }: Props) {
                       {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                     {roleChanging === u.id && <span style={{ marginLeft: 8, fontSize: 11, color: theme.textMuted }}>Saving…</span>}
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <select
+                        defaultValue=""
+                        disabled={orgAssigning === u.id}
+                        onChange={e => { if (e.target.value) handleAssignOrg(u.id, e.target.value); e.target.value = '' }}
+                        style={{ padding: '5px 8px', borderRadius: 6, border: `1px solid ${theme.borderColor}`, background: theme.bgInput || theme.bg, color: theme.text, fontSize: 12, cursor: 'pointer', maxWidth: 160 }}
+                      >
+                        <option value="">— select org —</option>
+                        {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                      </select>
+                      {orgAssigning === u.id && <span style={{ fontSize: 11, color: theme.textMuted }}>…</span>}
+                      {orgAssignMsg[u.id] && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: orgAssignMsg[u.id] === 'Assigned' ? '#16a34a' : '#dc2626' }}>
+                          {orgAssignMsg[u.id]}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   {isSuperAdmin && (
                     <td style={{ padding: '12px 16px' }}>

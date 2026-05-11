@@ -146,7 +146,6 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
       </div>
 
       <StaleLabBanner latestLabDate={latestLabDate} onNavigate={onNavigate} />
-      <MyTeamCard theme={theme} />
 
       {/* Stats Section */}
       <div
@@ -634,6 +633,8 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
 
       {/* Virtual Provider Links */}
       <VirtualProviderCards />
+
+      <MyTeamCard theme={theme} />
 
       {/* Quick Actions */}
       <div style={{ marginBottom: 32 }}>
