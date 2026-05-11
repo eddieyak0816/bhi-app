@@ -13,6 +13,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [inviteCode, setInviteCode] = useState('')
 
   const getPasswordErrors = () => {
     const errors: string[] = []
@@ -52,7 +53,7 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      const result = await signup(email, name, password)
+      const result = await signup(email, name, password, inviteCode || undefined)
       if (!result.success) {
         setError(result.error || 'Signup failed')
       }
@@ -89,7 +90,7 @@ export default function SignupPage() {
             Create Account
           </h1>
           <p style={{ color: theme.textMuted, margin: '8px 0 0 0', fontSize: '14px' }}>
-            Join BHI to get started
+            Join NHL to get started
           </p>
         </div>
 
@@ -237,6 +238,34 @@ export default function SignupPage() {
                 {passwordsMatch ? '✓ Passwords match' : '✗ Passwords do not match'}
               </p>
             )}
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Organization Invite Code <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={inviteCode}
+              onChange={e => setInviteCode(e.target.value.toUpperCase())}
+              placeholder="e.g. ABC12345"
+              maxLength={12}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: `1.5px solid ${theme.borderColor}`,
+                borderRadius: '6px',
+                fontSize: '14px',
+                background: theme.bg,
+                color: theme.text,
+                boxSizing: 'border-box',
+                fontFamily: 'monospace',
+                letterSpacing: 2,
+              }}
+            />
+            <p style={{ fontSize: '12px', color: theme.textMuted, margin: '6px 0 0 0' }}>
+              If your employer gave you a code, enter it here to join their organization anonymously.
+            </p>
           </div>
 
           {error && (

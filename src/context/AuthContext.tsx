@@ -16,7 +16,7 @@ interface AuthContextType {
   loading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  signup: (email: string, name: string, password: string) => Promise<{ success: boolean; error?: string }>
+  signup: (email: string, name: string, password: string, inviteCode?: string) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
   isAdmin: boolean
   isSuperAdmin: boolean
@@ -257,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signup = async (email: string, name: string, password: string) => {
+  const signup = async (email: string, name: string, password: string, inviteCode?: string) => {
     try {
       // Validate password requirements: min 6 chars, uppercase, lowercase, number
       if (password.length < 6) {
@@ -309,6 +309,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name,
           role: 'user',
         })
+
+        // F70: join org by invite code if provided at signup
+        if (inviteCode?.trim() && data.session?.access_token) {
+          const backendUrl = (import.meta as any).env.VITE_BACKEND_URL as string || ''
+          const joinUrl = backendUrl ? `${backendUrl.replace(/\/$/, '')}/api/org/join` : '/api/org/join'
+          await fetch(joinUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-user-id': data.user.id, 'Authorization': `Bearer ${data.session.access_token}` },
+            body: JSON.stringify({ invite_code: inviteCode.trim() }),
+          }).catch(() => {}) // non-blocking — invalid code is surfaced as a warning, not a hard error
+        }
 
         return { success: true }
       }

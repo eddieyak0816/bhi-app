@@ -1,6 +1,34 @@
 [
   {
     "date": "2026-05-11",
+    "session_summary": "Session 13 (continued) — F71 My Team Dashboard card + invite code on signup. F71: user-facing team card on Dashboard showing team name, org, personal rank within team, and team leaderboard with colour-coded BHAS % bars. Hidden if user has no team. New GET /api/my-team endpoint. Invite code on signup: SignupPage now has optional invite code field; AuthContext.signup() accepts inviteCode param and calls POST /api/org/join after account creation (non-blocking). Also fixed 'Join BHI' subtitle to 'Join NHL'.",
+    "features_completed": [
+      {
+        "id": "F71",
+        "title": "My Team Dashboard card + invite code at signup",
+        "files": [
+          "server/index.js",
+          "src/components/MyTeamCard.tsx",
+          "src/pages/Dashboard.tsx",
+          "src/pages/SignupPage.tsx",
+          "src/context/AuthContext.tsx"
+        ],
+        "notes": "GET /api/my-team returns team leaderboard (aggregate only, no PHI). MyTeamCard shown on Dashboard for users with a team assignment. SignupPage: optional invite code field auto-joins org after account creation. AuthContext.signup() extended with optional inviteCode param."
+      }
+    ],
+    "bugs_fixed": [],
+    "pending_actions": [
+      "⚠️ Run db/migrations/20260511_add_invite_code_to_organizations.sql in Supabase Dashboard → SQL Editor (F70 invite codes — needed for F71 team join at signup to work)",
+      "Deploy server/index.js to Render (GET /api/my-team endpoint)",
+      "Deploy frontend to Netlify (MyTeamCard, SignupPage invite code field)"
+    ],
+    "total_built": 69,
+    "total_partial": 2,
+    "total_not_built": 5,
+    "total_items": 74
+  },
+  {
+    "date": "2026-05-11",
     "session_summary": "Session 13 (continued) — F70 Org invite code join. Fully anonymous org join flow: users enter an invite code on their Profile page to join an org; only user_id stored in org_memberships (no name/email). Admin → Organizations shows invite code per org with Regenerate button. New orgs auto-get a code on creation. Migration: 20260511_add_invite_code_to_organizations.sql. Also: F69 CPT codes migration confirmed run in Supabase.",
     "features_completed": [
       {
