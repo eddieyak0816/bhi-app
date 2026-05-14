@@ -22,7 +22,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [type, setType] = useState('video')
   // tag-manager state
   const [allowedTags, setAllowedTags] = useState<string[]>([])
-  const [tagsMeta, setTagsMeta] = useState<Record<string, { categories?: string[] }>>({})
+  const [tagsMeta, setTagsMeta] = useState<Record<string, { categories?: string[]; scoring_tier?: string | null }>>({})
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
@@ -108,7 +108,14 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   // Marker edit modal state
   const [markerModalOpen, setMarkerModalOpen] = useState(false)
   const [markerModalOriginalId, setMarkerModalOriginalId] = useState<string | null>(null)
-  const [markerEditForm, setMarkerEditForm] = useState<{name?: string; unit?: string; min_normal?: number | null; max_normal?: number | null; cpt_code?: string; applicable_sex?: string}>({})
+  const [markerEditForm, setMarkerEditForm] = useState<{name?: string; unit?: string; cpt_code?: string; applicable_sex?: string}>({})
+  const [markerEditRules, setMarkerEditRules] = useState<Array<{ label: string; min_value: string; max_value: string; tag_name: string }>>([
+    { label: 'Optimal', min_value: '', max_value: '', tag_name: '' },
+    { label: 'Improvement', min_value: '', max_value: '', tag_name: '' },
+    { label: 'Out of Range', min_value: '', max_value: '', tag_name: '' },
+  ])
+  const [markerEditSaving, setMarkerEditSaving] = useState(false)
+  const [markerEditError, setMarkerEditError] = useState<string | null>(null)
   // health goal modal state
   const [healthGoalModalOpen, setHealthGoalModalOpen] = useState(false)
   const [healthGoalModalData, setHealthGoalModalData] = useState<any>(null)
@@ -250,6 +257,28 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       if (sameCount <= 1) return prev // keep at least one row per tier
       return prev.filter((_, i) => i !== index)
     })
+  }
+
+  function addMarkerEditRow(label: string) {
+    setMarkerEditRules(prev => {
+      const lastIdx = prev.map((r, i) => r.label === label ? i : -1).filter(i => i >= 0).pop() ?? prev.length - 1
+      const next = [...prev]
+      next.splice(lastIdx + 1, 0, { label, min_value: '', max_value: '', tag_name: '' })
+      return next
+    })
+  }
+
+  function removeMarkerEditRow(index: number) {
+    setMarkerEditRules(prev => {
+      const label = prev[index].label
+      const sameCount = prev.filter(r => r.label === label).length
+      if (sameCount <= 1) return prev
+      return prev.filter((_, i) => i !== index)
+    })
+  }
+
+  function updateMarkerEditRule(index: number, field: string, value: string) {
+    setMarkerEditRules(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r))
   }
 
   async function wizardSave() {
@@ -820,7 +849,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
         const names = objs.map(o => String(o.name || '')).filter(Boolean)
         setAllowedTags(names)
         const meta: Record<string, any> = {}
-        objs.forEach(o => { if (o && o.name) meta[String(o.name)] = { categories: Array.isArray(o.categories) ? o.categories : (o.category ? [o.category] : []) } })
+        objs.forEach(o => { if (o && o.name) meta[String(o.name)] = { categories: Array.isArray(o.categories) ? o.categories : (o.category ? [o.category] : []), scoring_tier: o.scoring_tier || null } })
         setTagsMeta(meta)
       } else {
         const names = Array.isArray(body) ? body.map(String) : []
@@ -2980,7 +3009,17 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button onClick={() => {
                                   setMarkerModalOriginalId(m.id)
-                                  setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both' })
+                                  setMarkerEditForm({ name: m.name, unit: m.unit, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both' })
+                                  const existing = logicRules.filter((r: any) => r.marker_id === m.id)
+                                  const TIERS = ['Optimal', 'Improvement', 'Out of Range']
+                                  const rows = TIERS.flatMap(lbl => {
+                                    const tier = lbl === 'Optimal' ? 'optimal' : lbl === 'Improvement' ? 'improvement' : 'out_of_range'
+                                    const matches = existing.filter((r: any) => (tagsMeta[r.tag_to_apply]?.scoring_tier || 'out_of_range') === tier)
+                                    if (matches.length > 0) return matches.map((r: any) => ({ label: lbl, min_value: String(r.min_value ?? ''), max_value: String(r.max_value ?? ''), tag_name: r.tag_to_apply || '' }))
+                                    return [{ label: lbl, min_value: '', max_value: '', tag_name: '' }]
+                                  })
+                                  setMarkerEditRules(rows)
+                                  setMarkerEditError(null)
                                   setMarkerModalOpen(true)
                                 }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
                                 <button onClick={async () => {
@@ -3073,7 +3112,22 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           </span>
                         )}
                         <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
-                          <button onClick={() => { setEditingId(null); setMarkerModalOriginalId(m.id); setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both' }); setMarkerModalOpen(true) }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                          <button onClick={() => {
+                            setEditingId(null)
+                            setMarkerModalOriginalId(m.id)
+                            setMarkerEditForm({ name: m.name, unit: m.unit, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both' })
+                            const existing = logicRules.filter((r: any) => r.marker_id === m.id)
+                            const TIERS = ['Optimal', 'Improvement', 'Out of Range']
+                            const rows = TIERS.flatMap(lbl => {
+                              const tier = lbl === 'Optimal' ? 'optimal' : lbl === 'Improvement' ? 'improvement' : 'out_of_range'
+                              const matches = existing.filter((r: any) => (tagsMeta[r.tag_to_apply]?.scoring_tier || 'out_of_range') === tier)
+                              if (matches.length > 0) return matches.map((r: any) => ({ label: lbl, min_value: String(r.min_value ?? ''), max_value: String(r.max_value ?? ''), tag_name: r.tag_to_apply || '' }))
+                              return [{ label: lbl, min_value: '', max_value: '', tag_name: '' }]
+                            })
+                            setMarkerEditRules(rows)
+                            setMarkerEditError(null)
+                            setMarkerModalOpen(true)
+                          }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
                           <button onClick={async () => {
                             if (!confirm(`Delete marker "${m.name}"?`)) return
                             try {
@@ -3765,51 +3819,94 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
         </div>
       )}
       {/* Marker Edit Modal */}
-      {markerModalOpen && (
+      {markerModalOpen && (() => {
+        const EDIT_TIERS: Array<{ label: string; color: string }> = [
+          { label: 'Optimal', color: '#16a34a' },
+          { label: 'Improvement', color: '#ca8a04' },
+          { label: 'Out of Range', color: '#dc2626' },
+        ]
+        return (
         <div onKeyDown={(e) => { if (e.key === 'Escape') { setMarkerModalOpen(false); setMarkerModalOriginalId(null) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
-          <div onKeyDown={handleModalKeyDown} style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',display:'flex',flexDirection:'column'}}>
-            <h3 style={{marginTop:0,marginBottom:4,color:theme.text}}>Edit Lab Marker</h3>
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Name</label>
-            <input autoFocus value={markerEditForm.name || ''} onChange={e => setMarkerEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Unit</label>
-            <input value={markerEditForm.unit || ''} onChange={e => setMarkerEditForm(prev => ({...prev, unit: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
-            <div style={{display:'flex',gap:8,marginBottom:12}}>
-              <div style={{flex:1}}>
-                <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:6}}>Min Value</label>
-                <input type="number" value={markerEditForm.min_normal ?? ''} onChange={e => setMarkerEditForm(prev => ({...prev, min_normal: e.target.value ? Number(e.target.value) : null}))} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text}} />
-              </div>
-              <div style={{flex:1}}>
-                <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:6}}>Max Value</label>
-                <input type="number" value={markerEditForm.max_normal ?? ''} onChange={e => setMarkerEditForm(prev => ({...prev, max_normal: e.target.value ? Number(e.target.value) : null}))} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text}} />
-              </div>
-            </div>
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>CPT Code</label>
-            <input value={markerEditForm.cpt_code || ''} onChange={e => setMarkerEditForm(prev => ({...prev, cpt_code: e.target.value}))} placeholder="e.g. 82652" style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Applicable Sex</label>
+          <div onKeyDown={handleModalKeyDown} style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,width:'560px',maxWidth:'95vw',maxHeight:'90vh',overflowY:'auto',overflowX:'hidden',display:'flex',flexDirection:'column',gap:0}}>
+            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>Edit Lab Marker</h3>
+
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Name</label>
+            <input autoFocus value={markerEditForm.name || ''} onChange={e => setMarkerEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,width:'100%',boxSizing:'border-box'}} />
+
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Unit</label>
+            <input value={markerEditForm.unit || ''} onChange={e => setMarkerEditForm(prev => ({...prev, unit: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,width:'100%',boxSizing:'border-box'}} />
+
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>CPT Code</label>
+            <input value={markerEditForm.cpt_code || ''} onChange={e => setMarkerEditForm(prev => ({...prev, cpt_code: e.target.value}))} placeholder="e.g. 82652" style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,width:'100%',boxSizing:'border-box'}} />
+
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Applicable Sex</label>
             <select value={markerEditForm.applicable_sex || 'both'} onChange={e => setMarkerEditForm(prev => ({...prev, applicable_sex: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:16,background:theme.bgSecondary,color:theme.text,width:'100%'}}>
               <option value="both">Both (universal)</option>
               <option value="male">Male only</option>
               <option value="female">Female only</option>
             </select>
+
+            <div style={{borderTop:`1px solid ${theme.borderColor}`,paddingTop:16,marginBottom:16}}>
+              <div style={{fontSize:13,fontWeight:700,color:theme.text,marginBottom:4}}>Scoring Rules</div>
+              <p style={{margin:'0 0 12px 0',fontSize:12,color:theme.textMuted}}>Each tier can have multiple ranges. Rows with empty Min, Max, or Tag are skipped.</p>
+              {EDIT_TIERS.map(({ label, color }) => {
+                const tierRows = markerEditRules.map((r, i) => ({ r, i })).filter(({ r }) => r.label === label)
+                return (
+                  <div key={label} style={{marginBottom:16}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+                      <div style={{fontSize:12,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</div>
+                      <button type="button" onClick={() => addMarkerEditRow(label)} style={{background:'transparent',border:`1px solid ${color}`,borderRadius:4,padding:'2px 10px',fontSize:12,color,cursor:'pointer',fontWeight:600}}>+ Add Range</button>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 28px',gap:6,marginBottom:4}}>
+                      <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Min Value</div>
+                      <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Max Value</div>
+                      <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Tag Name</div>
+                      <div />
+                    </div>
+                    {tierRows.map(({ r, i }) => (
+                      <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 28px',gap:6,marginBottom:6,alignItems:'center'}}>
+                        <input type="number" placeholder="Min" value={r.min_value} onChange={e => updateMarkerEditRule(i, 'min_value', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
+                        <input type="number" placeholder="Max" value={r.max_value} onChange={e => updateMarkerEditRule(i, 'max_value', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
+                        <input placeholder="Tag name" value={r.tag_name} onChange={e => updateMarkerEditRule(i, 'tag_name', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
+                        <button type="button" onClick={() => removeMarkerEditRow(i)} disabled={tierRows.length <= 1} title="Remove this range" style={{background:'transparent',border:'none',color:tierRows.length <= 1 ? theme.borderColor : '#dc2626',cursor:tierRows.length <= 1 ? 'default' : 'pointer',fontSize:16,padding:0,lineHeight:1}}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+
+            {markerEditError && <p style={{color:'#dc2626',fontSize:13,margin:'0 0 12px 0'}}>{markerEditError}</p>}
             <div style={{display:'flex',gap:8,marginTop:'auto'}}>
-              <button onClick={async () => {
-                try {
-                  const id = markerModalOriginalId
-                  if (!id) throw new Error('Missing marker id')
-                  const res = await fetch(apiUrl(`/api/admin/lab-markers/${id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: markerEditForm.name, unit: markerEditForm.unit, min_normal: markerEditForm.min_normal, max_normal: markerEditForm.max_normal, cpt_code: markerEditForm.cpt_code || null, applicable_sex: markerEditForm.applicable_sex || 'both' }) })
-                  if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
-                  await load()
-                  setMarkerModalOpen(false)
-                  setMarkerModalOriginalId(null)
-                } catch (err) {
-                  alert('Save marker failed — ' + ((err as any)?.message || 'check server logs'))
-                }
-              }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
+              <button
+                disabled={markerEditSaving}
+                onClick={async () => {
+                  setMarkerEditSaving(true)
+                  setMarkerEditError(null)
+                  try {
+                    const id = markerModalOriginalId
+                    if (!id) throw new Error('Missing marker id')
+                    const patchRes = await fetch(apiUrl(`/api/admin/lab-markers/${id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...authHeaders() }, body: JSON.stringify({ name: markerEditForm.name, unit: markerEditForm.unit, cpt_code: markerEditForm.cpt_code || null, applicable_sex: markerEditForm.applicable_sex || 'both' }) })
+                    if (!patchRes.ok) throw new Error(await patchRes.text().catch(() => String(patchRes.status)))
+                    const rulesRes = await fetch(apiUrl(`/api/admin/lab-markers/${id}/rules`), { method: 'PUT', headers: { 'content-type': 'application/json', ...authHeaders() }, body: JSON.stringify({ rules: markerEditRules }) })
+                    if (!rulesRes.ok) throw new Error(await rulesRes.text().catch(() => String(rulesRes.status)))
+                    await load()
+                    setMarkerModalOpen(false)
+                    setMarkerModalOriginalId(null)
+                  } catch (err) {
+                    setMarkerEditError('Save failed — ' + ((err as any)?.message || 'check server logs'))
+                  } finally {
+                    setMarkerEditSaving(false)
+                  }
+                }}
+                style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600,opacity:markerEditSaving?0.6:1}}
+              >{markerEditSaving ? 'Saving…' : 'Save'}</button>
               <button onClick={() => { setMarkerModalOpen(false); setMarkerModalOriginalId(null) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
       {/* ── New Marker Wizard Modal ── */}
       {wizardOpen && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>

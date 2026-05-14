@@ -48,7 +48,7 @@
 <body>
 
 <h1>NHL App — Browser Test Checklist</h1>
-<p class="meta">Living document — results persist across sessions via localStorage · Last updated 2026-04-28</p>
+<p class="meta">Living document — results persist across sessions via localStorage · Last updated 2026-05-13</p>
 <p class="meta" style="margin-top:4px">Session 1 (2026-04-28): F63 Leagues · F64 Brokers · F65 Virtual Providers · Hormone Markers · Admin UX — <strong style="color:#4ade80">21/21 ✅</strong></p>
 <p class="meta" style="margin-top:4px">Session 2 (2026-04-28): Admin Option D nav · Slug auto-fill · User create/role/delete · Employer View back button</p>
 
@@ -737,6 +737,233 @@
       </div>
     </div>
     <div class="notes-area" id="notes-s3-shorts-resources-page"><textarea placeholder="Notes…" oninput="saveNote('s3-shorts-resources-page',this.value)"></textarea></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SESSION 17 — Edit Marker Ranges Wizard + Lab Marker Sex Filter     -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Session 17 — Edit Marker Ranges Wizard &amp; Lab Marker Sex (2026-05-13)</div>
+
+  <!-- Edit marker ranges via wizard UI -->
+  <div class="item" data-id="s17-editmarker-open">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-editmarker-open"></div>
+      <div class="item-num">40</div>
+      <div class="item-desc">
+        Admin → Markers tab → click ✎ Edit on any marker that has existing rules (e.g. Fasting Glucose) → modal opens showing 3 tier sections (Optimal / Improvement / Out of Range) pre-populated with the existing ranges
+        <div class="hint">Each tier should show the min/max and tag name from the DB. Min/Max fields are type=number.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-editmarker-open','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-editmarker-open','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-editmarker-open','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-editmarker-open"><textarea placeholder="Notes…" oninput="saveNote('s17-editmarker-open',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s17-editmarker-add-range">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-editmarker-add-range"></div>
+      <div class="item-num">41</div>
+      <div class="item-desc">
+        In the edit modal → click "+ Add Range" under Optimal → a new empty row appears in the Optimal section
+        <div class="hint">New row should have empty Min, Max, Tag fields and a × remove button.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-editmarker-add-range','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-editmarker-add-range','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-editmarker-add-range','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-editmarker-add-range"><textarea placeholder="Notes…" oninput="saveNote('s17-editmarker-add-range',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s17-editmarker-remove-range">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-editmarker-remove-range"></div>
+      <div class="item-num">42</div>
+      <div class="item-desc">
+        With 2+ rows in a tier → click × on one row → row disappears; last remaining row in a tier cannot be deleted (× is greyed out / disabled)
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-editmarker-remove-range','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-editmarker-remove-range','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-editmarker-remove-range','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-editmarker-remove-range"><textarea placeholder="Notes…" oninput="saveNote('s17-editmarker-remove-range',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s17-editmarker-save">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-editmarker-save"></div>
+      <div class="item-num">43</div>
+      <div class="item-desc">
+        Edit the ranges for a marker (change a Min or Max value) → click Save → modal closes → no error message → open the marker again to confirm the new values are pre-populated
+        <div class="hint">Rows with empty Min, Max, or Tag are skipped — only filled rows are saved.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-editmarker-save','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-editmarker-save','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-editmarker-save','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-editmarker-save"><textarea placeholder="Notes…" oninput="saveNote('s17-editmarker-save',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s17-editmarker-name-unit">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-editmarker-name-unit"></div>
+      <div class="item-num">44</div>
+      <div class="item-desc">
+        Edit the Name and Unit fields in the modal → click Save → marker name and unit update in the markers list
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-editmarker-name-unit','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-editmarker-name-unit','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-editmarker-name-unit','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-editmarker-name-unit"><textarea placeholder="Notes…" oninput="saveNote('s17-editmarker-name-unit',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s17-editmarker-clear-rules">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-editmarker-clear-rules"></div>
+      <div class="item-num">45</div>
+      <div class="item-desc">
+        Open a marker with rules → clear all tag name fields → click Save → re-open marker → all tier rows show empty (no stale rules left in DB)
+        <div class="hint">Empty rows are skipped on save, so this effectively deletes all rules for the marker.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-editmarker-clear-rules','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-editmarker-clear-rules','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-editmarker-clear-rules','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-editmarker-clear-rules"><textarea placeholder="Notes…" oninput="saveNote('s17-editmarker-clear-rules',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s17-editmarker-cardview">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-editmarker-cardview"></div>
+      <div class="item-num">46</div>
+      <div class="item-desc">
+        Switch to card view (if toggle exists) → click ✎ Edit on a marker card → same tier range UI opens correctly
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-editmarker-cardview','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-editmarker-cardview','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-editmarker-cardview','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-editmarker-cardview"><textarea placeholder="Notes…" oninput="saveNote('s17-editmarker-cardview',this.value)"></textarea></div>
+  </div>
+
+  <!-- Lab marker sex filter -->
+  <div class="item" data-id="s17-sex-filter-labs">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-sex-filter-labs"></div>
+      <div class="item-num">47</div>
+      <div class="item-desc">
+        Profile → set sex to "Male" → go to Labs → manual entry form does NOT show female-only markers (e.g. Waist Circumference (Female)); does show male-only markers (e.g. PSA, Waist Circumference (Male))
+        <div class="hint">Requires the 20260513_add_applicable_sex migration to have been run.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-sex-filter-labs','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-sex-filter-labs','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-sex-filter-labs','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-sex-filter-labs"><textarea placeholder="Notes…" oninput="saveNote('s17-sex-filter-labs',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s17-sex-filter-female">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-sex-filter-female"></div>
+      <div class="item-num">48</div>
+      <div class="item-desc">
+        Profile → set sex to "Female" → go to Labs → female-only markers visible; male-only markers (PSA, Waist Circumference (Male)) are hidden
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-sex-filter-female','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-sex-filter-female','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-sex-filter-female','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-sex-filter-female"><textarea placeholder="Notes…" oninput="saveNote('s17-sex-filter-female',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s17-sex-not-set-warning">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-sex-not-set-warning"></div>
+      <div class="item-num">49</div>
+      <div class="item-desc">
+        Profile → clear sex field (set to blank) → go to Labs → amber warning banner appears ("Set your biological sex in Profile to see sex-specific markers")
+        <div class="hint">Banner should include a link or button to navigate to Profile.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-sex-not-set-warning','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-sex-not-set-warning','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-sex-not-set-warning','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-sex-not-set-warning"><textarea placeholder="Notes…" oninput="saveNote('s17-sex-not-set-warning',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s17-sex-badge-admin">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-sex-badge-admin"></div>
+      <div class="item-num">50</div>
+      <div class="item-desc">
+        Admin → Markers tab → markers show a sex badge (♂ Male / ♀ Female / ⚥ Both) → sex filter dropdown filters the list correctly
+        <div class="hint">PSA and Waist Circumference (Male) should show ♂ Male. Waist Circumference (Female) should show ♀ Female. Most others show ⚥ Both.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-sex-badge-admin','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-sex-badge-admin','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-sex-badge-admin','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-sex-badge-admin"><textarea placeholder="Notes…" oninput="saveNote('s17-sex-badge-admin',this.value)"></textarea></div>
+  </div>
+
+  <!-- Video Category Preferences -->
+  <div class="item" data-id="s17-catpref-profile">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-catpref-profile"></div>
+      <div class="item-num">51</div>
+      <div class="item-desc">
+        Profile page → "Video Category Preferences" section shows all available categories as toggles → toggling one on/off saves immediately (no Save button needed) or is saved on page Save
+        <div class="hint">Requires 20260513_create_user_category_preferences migration to have been run.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-catpref-profile','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-catpref-profile','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-catpref-profile','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-catpref-profile"><textarea placeholder="Notes…" oninput="saveNote('s17-catpref-profile',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s17-catpref-dashboard">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s17-catpref-dashboard"></div>
+      <div class="item-num">52</div>
+      <div class="item-desc">
+        Select 1–2 categories in Profile → go to Dashboard → Recommended Resources section shows only resources matching those categories (or all resources if no matches)
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s17-catpref-dashboard','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s17-catpref-dashboard','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s17-catpref-dashboard','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s17-catpref-dashboard"><textarea placeholder="Notes…" oninput="saveNote('s17-catpref-dashboard',this.value)"></textarea></div>
   </div>
 
 </div>

@@ -185,15 +185,15 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-05-11 — Session 15: F66 Challenge UI complete. Admin → Challenges tab (CRUD + org assignment). ChallengesSection on Dashboard (display-only, progress bar). · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-05-13 — Session 17: Edit marker ranges via wizard UI (multi-range tier UI in edit modal, PUT /api/admin/lab-markers/:id/rules). · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
-<!-- Stats bar — counts as of 2026-05-04 -->
+<!-- Stats bar — counts as of 2026-05-13 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">67</span>  Built / Done</div>
-  <div class="stat stat-partial"> <span class="num" id="cnt-partial">2</span>  Partial</div>
-  <div class="stat stat-todo">    <span class="num" id="cnt-todo">5</span>  Not Built / Skipped</div>
-  <div class="stat stat-total">   <span class="num" id="cnt-total">72</span>  Total Items</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">72</span>  Built / Done</div>
+  <div class="stat stat-partial"> <span class="num" id="cnt-partial">1</span>  Partial</div>
+  <div class="stat stat-todo">    <span class="num" id="cnt-todo">4</span>  Not Built / Skipped</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">75</span>  Total Items</div>
 </div>
 
 <!-- Filter controls -->
@@ -1085,14 +1085,94 @@
         <span class="item-status status-done">✅ Done — 2026-05-11 — ⚠️ run migration in Supabase</span>
       </div>
 
+      <div class="item done" data-status="done">
+        <div class="item-num">66</div>
+        <div class="item-body">
+          <div class="item-title">Challenges UI — Admin CRUD + user-facing Dashboard section (F66)</div>
+          <div class="item-note">Built 2026-05-11 (session 15). Admin → Challenges tab (<code>AdminChallengesTab.tsx</code>): create/edit/delete/toggle challenges, org assignment per challenge. User-facing <code>ChallengesSection.tsx</code> on Dashboard: active challenges for user's org, progress bar, key dates. 7 server endpoints. DB schema already in place (<code>20260416_create_challenges.sql</code>).</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-05-11</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">72</div>
+        <div class="item-body">
+          <div class="item-title">Super Admin lab results viewer (F72)</div>
+          <div class="item-note">Built 2026-05-11 (session 14). <code>AdminLabResultsTab.tsx</code>: filterable table of all user lab results (org, marker, date range, user ID). Values colour-coded vs normal range. Inline history per user/marker. HIPAA: username + public_id only. Endpoint: <code>GET /api/admin/lab-results</code>.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-05-11</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">73</div>
+        <div class="item-body">
+          <div class="item-title">Lab marker applicable_sex toggle (session 17)</div>
+          <div class="item-note">Built 2026-05-13 (session 17). DB migration: <code>20260513_add_applicable_sex_to_lab_markers.sql</code> — adds <code>applicable_sex TEXT CHECK IN('male','female','both') DEFAULT 'both'</code>, backfills waist/hormone markers. Server PATCH + POST accept field. Admin → Markers: sex badge (♂/♀/⚥) in table and card views, sex filter dropdown. Labs manual entry filters markers by user sex (universal markers always shown). Amber warning banner when user sex not set.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-05-13 — ⚠️ run migration in Supabase</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">74</div>
+        <div class="item-body">
+          <div class="item-title">Video Category Preferences — replaces Health Goals (session 17)</div>
+          <div class="item-note">Built 2026-05-13 (session 17). DB migration: <code>20260513_create_user_category_preferences.sql</code> — <code>user_category_preferences</code> join table (user_id, category_name, UNIQUE). Profile page: loads all categories from DB, saves per-toggle. Dashboard: fetches preferences, filters <code>recommendedResources</code> by matching <code>categories[]</code> field; falls back to all if no matches. <code>Resource.categories?</code> added to interface.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-05-13 — ⚠️ run migration in Supabase</span>
+      </div>
+
+      <div class="item done" data-status="done">
+        <div class="item-num">75</div>
+        <div class="item-body">
+          <div class="item-title">Edit marker ranges via wizard UI (session 17)</div>
+          <div class="item-note">Built 2026-05-13 (session 17). Admin → Markers edit modal now shows the same 3-tier multi-range UI as New Marker Wizard Step 2 (Optimal / Improvement / Out of Range, each with "+ Add Range" / × buttons). Modal pre-populates from existing <code>logic_rules</code> using <code>tagsMeta[tag].scoring_tier</code> to derive tier labels. Save: PATCHes marker fields, then calls new <code>PUT /api/admin/lab-markers/:id/rules</code> which atomically replaces all logic_rules for the marker. No DB migration required.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-05-13</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       NEXT FEATURES (priority order as of 2026-05-13)
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="next">
+    <div class="phase-header" style="background:linear-gradient(135deg,#1e3a5f,#374151)">
+      <span class="phase-badge" style="background:#475569">Next</span>
+      <div>
+        <div class="phase-title">Next Features — Priority Order (as of 2026-05-13)</div>
+        <div class="phase-desc">Not yet built. Work through in sequence.</div>
+      </div>
+      <div class="phase-progress">0 / 3 done</div>
+    </div>
+    <div class="items">
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">N1</div>
+        <div class="item-body">
+          <div class="item-title">Restructure NHLS score panel on Dashboard</div>
+          <div class="item-note">Move NHLS score display higher on the page (above or replacing stat cards row). Embed National Benchmarks section (currently at the bottom, F19) directly inside the score panel — show each scored metric alongside its national benchmark. Layout/display change only — no DB or calculation logic changes. Key file: <code>src/pages/Dashboard.tsx</code> (nhlsRef div, National Benchmarks section).</div>
+        </div>
+        <span class="item-status status-todo">⬜ Not built</span>
+      </div>
+
+      <div class="item todo" data-status="todo">
+        <div class="item-num">N2</div>
+        <div class="item-body">
+          <div class="item-title">YouTube Shorts / full video toggle on Dashboard</div>
+          <div class="item-note">Toggle on the Dashboard Personalized Recommendations section to filter between short-form (YouTube Shorts) and long-form content. Requires: DB migration adding <code>duration_type TEXT CHECK IN('short','long','both') DEFAULT 'both'</code> to <code>resources</code> table; Admin edit support to set duration_type per resource; Dashboard toggle filter. Discuss approach with product owner before building.</div>
+        </div>
+        <span class="item-status status-todo">⬜ Not built</span>
+      </div>
+
     </div>
   </section>
 
 </main>
 
 <footer>
-  BHI App — Implementation Tracker &nbsp;·&nbsp; Updated 2026-05-11 (F71 My Team card; F70 Org invite code join) &nbsp;·&nbsp;
-  69 built · 2 partial · 5 not built/skipped out of 74 total items &nbsp;·&nbsp;
+  NHL App (formerly BHI App) — Implementation Tracker &nbsp;·&nbsp; Updated 2026-05-13 (Session 17: edit marker ranges wizard, applicable_sex, video category prefs) &nbsp;·&nbsp;
+  72 built · 1 partial · 4 not built/skipped out of 75 total items &nbsp;·&nbsp;
   Source of truth: <strong>DEVELOPER_REQUIREMENTS.md</strong> in project root.
   Update this file and DEVELOPER_REQUIREMENTS.md together as items are completed.
   <br><br>

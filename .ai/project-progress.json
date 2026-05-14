@@ -1,6 +1,33 @@
 [
   {
     "date": "2026-05-13",
+    "session": 18,
+    "session_summary": "Session 18 — Edit marker ranges via wizard UI. Replaced the simple min/max fields in the Admin → Markers edit modal with the same 3-tier multi-range UI used in the New Marker Wizard (Optimal / Improvement / Out of Range, each with + Add Range / × buttons). Server: added scoring_tier to GET /api/admin/tags response; added PUT /api/admin/lab-markers/:id/rules (atomically replaces all logic_rules for a marker — deletes existing, upserts tags with scoring_tier, inserts new rules). Frontend: tagsMeta now stores scoring_tier per tag; new markerEditRules state + addMarkerEditRow/removeMarkerEditRow/updateMarkerEditRule helpers; both edit-button handlers (table + card view) initialize markerEditRules from existing logicRules using tagsMeta for tier labels; modal pre-populates existing ranges per tier (blank row if no rules for a tier); Save PATCHes marker fields then PUTs rules. Updated all docs (CHANGELOG, IMPLEMENTATION_TRACKER, browser-test-checklist, project-progress, MEMORY.md).",
+    "features_completed": [
+      {
+        "id": "EDIT-MARKER-RANGES",
+        "title": "Edit marker ranges via wizard UI",
+        "files": [
+          "server/index.js",
+          "src/pages/Admin.tsx"
+        ],
+        "notes": "Server: GET /api/admin/tags now returns scoring_tier per tag. New PUT /api/admin/lab-markers/:id/rules replaces all logic_rules atomically. Frontend: Admin marker edit modal shows 3-tier multi-range UI (Optimal/Improvement/Out of Range) with +Add/× per tier. Pre-populates from existing logicRules using tagsMeta[tag].scoring_tier. Save calls PATCH (marker fields) + PUT (rules). No DB migration needed."
+      }
+    ],
+    "bugs_fixed": [],
+    "pending_actions": [
+      "⚠️ Run db/migrations/20260513_create_user_category_preferences.sql in Supabase (if not done)",
+      "⚠️ Run db/migrations/20260513_add_applicable_sex_to_lab_markers.sql in Supabase (if not done)",
+      "Deploy server/index.js to Render (new PUT /api/admin/lab-markers/:id/rules + scoring_tier in tags)",
+      "Deploy frontend to Netlify"
+    ],
+    "total_built": 72,
+    "total_partial": 1,
+    "total_not_built": 4,
+    "total_items": 75
+  },
+  {
+    "date": "2026-05-13",
     "session_summary": "Session 17 — Bug fixes + 4 new features. Bug 1: fixed ProfilePage upsert clobbering role (removed hardcoded role:'user' and fixed public_id preservation). Bug 2: fixed Normal/OOR label vs NHLS score mismatch (added getEffectiveRange() to derive displayed status from logic_rules/optimalRanges). Bug 3: fixed insulin popup threshold misalignment (danger at >=3.0, not >2.5, matching DB). Rename: BHAS → NHLS and Balanced Health Assessment → Hormone Health across all UI files (no internal code renames). Sex-not-set warning on Labs page: amber banner if userSex is null/empty, links to Profile. Dashboard stat boxes as hyperlinks: statCard() gets onClick, Bookmarked Resources scrolls to resources section, Lab Results navigates to labs, Health Insights scrolls to NHLS score panel, Recommendations scrolls to personalized section. Video Category Preferences: replaced Health Goals with category preferences (migration: user_category_preferences join table, saves/loads per toggle, Dashboard resource feed filtered by preference). Lab marker sex toggle: applicable_sex column (migration), Admin Markers table/card sex badge + filter, Lab manual entry filters markers by user sex.",
     "features_completed": [
       {

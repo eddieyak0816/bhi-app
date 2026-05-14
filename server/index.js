@@ -392,7 +392,7 @@ app.get('/api/admin/tags', async (req, res) => {
     // try persistent tags table first
     let tagsData = null
     try {
-      tagsData = await sb.from('tags').select('name,category_id');
+      tagsData = await sb.from('tags').select('name,category_id,scoring_tier');
     } catch (err) {
       tagsData = null
     }
@@ -434,14 +434,15 @@ app.get('/api/admin/tags', async (req, res) => {
       const out = raw.map(r => {
         const tagName = r.name;
         const catIds = tagToCatIds[tagName] || [];
+        const scoring_tier = r.scoring_tier || null;
         if (catIds.length > 0) {
-          return { name: tagName, categories: catIds.map(id => catMap[id] || null).filter(Boolean) };
+          return { name: tagName, categories: catIds.map(id => catMap[id] || null).filter(Boolean), scoring_tier };
         }
         // fall back to legacy category_id column
         if (r.category_id) {
-          return { name: tagName, categories: [(catMap[r.category_id] || null)].filter(Boolean) };
+          return { name: tagName, categories: [(catMap[r.category_id] || null)].filter(Boolean), scoring_tier };
         }
-        return { name: tagName, categories: [] };
+        return { name: tagName, categories: [], scoring_tier };
       });
       return res.status(200).json(out);
     }
@@ -820,6 +821,78 @@ app.patch('/api/admin/lab-markers/:id', async (req, res) => {
     return res.status(200).json({ updated: id, ...updateData });
   } catch (err) {
     console.error('admin-update-lab-marker-error', err);
+    return res.status(500).json({ error: 'server_error', detail: String(err) });
+  }
+});
+
+// ADMIN: replace all logic_rules for a marker (used by edit-marker wizard UI)
+// PUT /api/admin/lab-markers/:id/rules
+// Body: { rules: [{ label, min_value, max_value, tag_name }] }
+// Deletes all existing rules for marker_id, inserts new ones, upserts tags with scoring_tier.
+app.put('/api/admin/lab-markers/:id/rules', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const markerId = req.params.id;
+  if (!markerId) return res.status(400).json({ error: 'missing-id' });
+
+  const { rules } = req.body || {};
+  if (!Array.isArray(rules)) return res.status(400).json({ error: 'missing-rules' });
+
+  const validRules = rules.filter(r =>
+    r && r.tag_name && r.tag_name.trim() &&
+    typeof r.min_value !== 'undefined' && r.min_value !== '' &&
+    typeof r.max_value !== 'undefined' && r.max_value !== ''
+  );
+
+  const labelToTier = { 'Optimal': 'optimal', 'Improvement': 'improvement', 'Out of Range': 'out_of_range' };
+
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Delete all existing rules for this marker
+    const { error: delErr } = await sb.from('logic_rules').delete().eq('marker_id', markerId);
+    if (delErr) {
+      console.error('rules-delete-error', delErr);
+      return res.status(500).json({ error: 'db_error', detail: delErr });
+    }
+
+    if (validRules.length === 0) return res.status(200).json({ rules: [] });
+
+    // Upsert tags with scoring_tier
+    const tagNames = [...new Set(validRules.map(r => r.tag_name.trim()))];
+    for (const tagName of tagNames) {
+      const rule = validRules.find(r => r.tag_name.trim() === tagName);
+      const scoring_tier = labelToTier[rule?.label] || 'out_of_range';
+      const { error: tErr } = await sb.from('tags').insert([{ name: tagName, scoring_tier }]);
+      if (tErr && tErr.code === '23505') {
+        await sb.from('tags').update({ scoring_tier }).eq('name', tagName);
+      } else if (tErr) {
+        console.warn('rules-tag-upsert-warn', tagName, tErr);
+      }
+    }
+
+    // Insert new rules
+    const rulePayloads = validRules.map(r => ({
+      marker_id: markerId,
+      min_value: Number(r.min_value),
+      max_value: Number(r.max_value),
+      tag_to_apply: r.tag_name.trim(),
+      operator: 'between'
+    }));
+    const { data: inserted, error: insErr } = await sb.from('logic_rules').insert(rulePayloads).select('id,marker_id,min_value,max_value,tag_to_apply');
+    if (insErr) {
+      console.error('rules-insert-error', insErr);
+      return res.status(500).json({ error: 'db_error', detail: insErr });
+    }
+
+    try {
+      await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'replace_marker_rules', p_target_table: 'logic_rules', p_target_id: markerId, p_details: { rules: inserted } });
+    } catch (auditErr) { console.warn('rules-audit-exception', auditErr); }
+
+    return res.status(200).json({ rules: inserted });
+  } catch (err) {
+    console.error('replace-marker-rules-error', err);
     return res.status(500).json({ error: 'server_error', detail: String(err) });
   }
 });

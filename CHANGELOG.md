@@ -2,6 +2,20 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-05-13 — feat: Edit marker ranges via wizard UI (session 17)
+
+### `server/index.js`
+- `GET /api/admin/tags` — now includes `scoring_tier` in each tag object (was missing; needed to pre-populate tier labels when opening edit modal).
+- New `PUT /api/admin/lab-markers/:id/rules` — replaces all `logic_rules` for a marker atomically: deletes existing rules, upserts tags with correct `scoring_tier`, inserts new rules. Body: `{ rules: [{ label, min_value, max_value, tag_name }] }`. Rows with empty min/max/tag are skipped.
+
+### `src/pages/Admin.tsx`
+- `tagsMeta` type updated to include `scoring_tier?: string | null`; `loadTags()` now stores it.
+- New state: `markerEditRules` (same shape as `wizardRules`), `markerEditSaving`, `markerEditError`.
+- Removed `min_normal`/`max_normal` from `markerEditForm` — ranges now live in `markerEditRules`.
+- New helpers: `addMarkerEditRow(label)`, `removeMarkerEditRow(index)`, `updateMarkerEditRule(index, field, value)` — exact mirror of wizard equivalents.
+- Both edit-button handlers (table view + card view) now initialize `markerEditRules` from existing `logicRules` for the marker, using `tagsMeta[tag].scoring_tier` to assign the correct tier label. Each tier defaults to one empty row if no rules exist for it.
+- Marker edit modal replaced with 3-tier multi-range UI (Optimal / Improvement / Out of Range), each with "+ Add Range" / × buttons — identical to New Marker Wizard Step 2. Save PATCHes marker fields then PUTs the rules.
+
 ## 2026-05-11 — feat: Challenge UI (F66, session 15)
 
 ### `src/components/AdminChallengesTab.tsx` *(new)*
