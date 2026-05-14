@@ -145,14 +145,48 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
       const currentMarkers = (freshMarkers as LabMarker[] | null) || labMarkers
       if (freshMarkers) setLabMarkers(freshMarkers as LabMarker[])
 
-      // Match extracted names to known lab markers (case-insensitive substring match).
-      // Active matched markers → checked by default.
-      // Inactive matched markers and unknown markers → unchecked by default.
+      // Match extracted names to known lab markers.
+      // Strategy (in priority order):
+      //   1. Exact match (case-insensitive)
+      //   2. PDF name contains DB name as whole words (e.g. "Glucose, Fasting" → "Fasting Glucose")
+      //      — but only if DB name is NOT a generic word like "Cholesterol" that would greedily
+      //        swallow "HDL Cholesterol", "LDL Cholesterol", etc.
+      //   3. DB name contains PDF name as whole words
+      // When multiple DB markers match, pick the most specific (longest name).
+      const normalise = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+      const wordsOf   = (s: string) => normalise(s).split(' ')
+
+      // Returns true if all words of `needle` appear as a contiguous subsequence in `haystack` words
+      const containsAsPhrase = (haystack: string, needle: string) => {
+        const hw = wordsOf(haystack)
+        const nw = wordsOf(needle)
+        if (nw.length === 0) return false
+        for (let i = 0; i <= hw.length - nw.length; i++) {
+          if (nw.every((w, j) => hw[i + j] === w)) return true
+        }
+        return false
+      }
+
+      const findBestMatch = (pdfName: string): LabMarker | undefined => {
+        const pdfNorm = normalise(pdfName)
+        const candidates: LabMarker[] = []
+
+        for (const m of currentMarkers) {
+          const dbNorm = normalise(m.name)
+          if (dbNorm === pdfNorm) return m // exact — return immediately
+          // Phrase match in either direction
+          if (containsAsPhrase(pdfNorm, dbNorm) || containsAsPhrase(dbNorm, pdfNorm)) {
+            candidates.push(m)
+          }
+        }
+
+        if (candidates.length === 0) return undefined
+        // Among candidates, prefer the most specific (longest DB name = fewest false positives)
+        return candidates.sort((a, b) => b.name.length - a.name.length)[0]
+      }
+
       const rows: ExtractedRow[] = (data.results || []).map((r: any) => {
-        const matched = currentMarkers.find(m =>
-          m.name.toLowerCase().includes(r.name.toLowerCase()) ||
-          r.name.toLowerCase().includes(m.name.toLowerCase())
-        )
+        const matched = findBestMatch(String(r.name))
         const isActive = matched ? matched.is_active !== false : false
         return { ...r, include: isActive, matchedMarkerId: matched?.id }
       })
