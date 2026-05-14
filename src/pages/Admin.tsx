@@ -82,6 +82,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [filterLabMarkerName, setFilterLabMarkerName] = useState<string>('')
   const [filterLabMarkerUnit, setFilterLabMarkerUnit] = useState<string>('')
   const [filterLabMarkerActive, setFilterLabMarkerActive] = useState<string>('')
+  const [filterLabMarkerSex, setFilterLabMarkerSex] = useState<string>('')
   // resource types filter state
   const [filterResourceTypeName, setFilterResourceTypeName] = useState<string>('')
   // tags filter state
@@ -107,7 +108,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   // Marker edit modal state
   const [markerModalOpen, setMarkerModalOpen] = useState(false)
   const [markerModalOriginalId, setMarkerModalOriginalId] = useState<string | null>(null)
-  const [markerEditForm, setMarkerEditForm] = useState<{name?: string; unit?: string; min_normal?: number | null; max_normal?: number | null; cpt_code?: string}>({})
+  const [markerEditForm, setMarkerEditForm] = useState<{name?: string; unit?: string; min_normal?: number | null; max_normal?: number | null; cpt_code?: string; applicable_sex?: string}>({})
   // health goal modal state
   const [healthGoalModalOpen, setHealthGoalModalOpen] = useState(false)
   const [healthGoalModalData, setHealthGoalModalData] = useState<any>(null)
@@ -2841,25 +2842,40 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       <option value="inactive">Inactive only</option>
                     </select>
                   </div>
+                  <div>
+                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Sex</label>
+                    <select
+                      value={filterLabMarkerSex}
+                      onChange={e => setFilterLabMarkerSex(e.target.value)}
+                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                    >
+                      <option value="">(All)</option>
+                      <option value="both">Universal</option>
+                      <option value="male">Male only</option>
+                      <option value="female">Female only</option>
+                    </select>
+                  </div>
                   <button
                     className="btn-ghost"
                     onClick={() => {
                       setFilterLabMarkerName('')
                       setFilterLabMarkerUnit('')
                       setFilterLabMarkerActive('')
+                      setFilterLabMarkerSex('')
                     }}
-                    style={{opacity: (filterLabMarkerName || filterLabMarkerUnit || filterLabMarkerActive) ? 1 : 0.5,cursor: (filterLabMarkerName || filterLabMarkerUnit || filterLabMarkerActive) ? 'pointer' : 'default',padding:'6px 12px',fontSize:14}}
+                    style={{opacity: (filterLabMarkerName || filterLabMarkerUnit || filterLabMarkerActive || filterLabMarkerSex) ? 1 : 0.5,cursor: (filterLabMarkerName || filterLabMarkerUnit || filterLabMarkerActive || filterLabMarkerSex) ? 'pointer' : 'default',padding:'6px 12px',fontSize:14}}
                   >
                     Clear
                   </button>
                 </div>
-                {(filterLabMarkerName || filterLabMarkerUnit || filterLabMarkerActive) && (
+                {(filterLabMarkerName || filterLabMarkerUnit || filterLabMarkerActive || filterLabMarkerSex) && (
                   <div style={{fontSize:12,marginTop:8,color:theme.text}}>
                     Showing {labMarkers
                       .filter(m =>
                         (!filterLabMarkerName || m.name === filterLabMarkerName)
                         && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                         && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
+                          && (!filterLabMarkerSex || (m.applicable_sex || 'both') === filterLabMarkerSex)
                       )
                       .length
                     } of {labMarkers.length} markers
@@ -2883,6 +2899,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Min Value</th>
                       <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Max Value</th>
                       <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>CPT Code</th>
+                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Sex</th>
                       <th style={{padding:8,textAlign:'center',color:'#ffffff',fontWeight:500}}>Active</th>
                       <th style={{padding:8,textAlign:'right',color:'#ffffff',fontWeight:500}}>Actions</th>
                     </tr>
@@ -2894,11 +2911,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           (!filterLabMarkerName || m.name === filterLabMarkerName)
                           && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                           && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
+                          && (!filterLabMarkerSex || (m.applicable_sex || 'both') === filterLabMarkerSex)
                         ), sortColumn) : (labMarkers || [])
                         .filter(m =>
                           (!filterLabMarkerName || m.name === filterLabMarkerName)
                           && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                           && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
+                          && (!filterLabMarkerSex || (m.applicable_sex || 'both') === filterLabMarkerSex)
                         ).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
                     ).map(m => (
                       <tr key={m.id} style={{borderTop:`1px solid ${theme.borderColor}`,opacity: m.is_active === false ? 0.45 : 1}}>
@@ -2931,6 +2950,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             <td style={{padding:8}} className="small muted">{m.min_normal ?? '—'}</td>
                             <td style={{padding:8}} className="small muted">{m.max_normal ?? '—'}</td>
                             <td style={{padding:8}} className="small muted">{m.cpt_code || '—'}</td>
+                            <td style={{padding:8}}>
+                              {m.applicable_sex && m.applicable_sex !== 'both' ? (
+                                <span style={{background: m.applicable_sex === 'male' ? '#dbeafe' : '#fce7f3', color: m.applicable_sex === 'male' ? '#1d4ed8' : '#9d174d', borderRadius:4, padding:'2px 7px', fontSize:11, fontWeight:600}}>
+                                  {m.applicable_sex === 'male' ? 'M' : 'F'}
+                                </span>
+                              ) : <span style={{color:'#9ca3af',fontSize:12}}>—</span>}
+                            </td>
                             <td style={{padding:8,textAlign:'center',verticalAlign:'middle'}}>
                               <div
                                 title={m.is_active === false ? 'Inactive — click to activate' : 'Active — click to deactivate'}
@@ -2954,7 +2980,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button onClick={() => {
                                   setMarkerModalOriginalId(m.id)
-                                  setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal, cpt_code: m.cpt_code })
+                                  setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both' })
                                   setMarkerModalOpen(true)
                                 }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
                                 <button onClick={async () => {
@@ -2990,6 +3016,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     (!filterLabMarkerName || m.name === filterLabMarkerName)
                     && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                     && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
+                          && (!filterLabMarkerSex || (m.applicable_sex || 'both') === filterLabMarkerSex)
                   ).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
                   .map(m => (
                   <div key={m.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%',opacity: m.is_active === false ? 0.45 : 1}}>
@@ -3038,10 +3065,15 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         {m.unit && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Unit: {m.unit}</p>}
                         {m.min_normal !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Min: {m.min_normal}</p>}
                         {m.max_normal !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Max: {m.max_normal}</p>}
-                        {m.cpt_code && <p style={{margin:'0 0 12px 0',fontSize:11,color:theme.textMuted}}>CPT: {m.cpt_code}</p>}
-                        {!m.cpt_code && <p style={{margin:'0 0 12px 0',fontSize:11,color:theme.textMuted,opacity:0.5}}>No CPT code</p>}
+                        {m.cpt_code && <p style={{margin:'0 0 4px 0',fontSize:11,color:theme.textMuted}}>CPT: {m.cpt_code}</p>}
+                        {!m.cpt_code && <p style={{margin:'0 0 4px 0',fontSize:11,color:theme.textMuted,opacity:0.5}}>No CPT code</p>}
+                        {m.applicable_sex && m.applicable_sex !== 'both' && (
+                          <span style={{display:'inline-block',background: m.applicable_sex === 'male' ? '#dbeafe' : '#fce7f3', color: m.applicable_sex === 'male' ? '#1d4ed8' : '#9d174d', borderRadius:4, padding:'2px 7px', fontSize:11, fontWeight:600, marginBottom:8}}>
+                            {m.applicable_sex === 'male' ? 'Male only' : 'Female only'}
+                          </span>
+                        )}
                         <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
-                          <button onClick={() => { setEditingId(null); setMarkerModalOriginalId(m.id); setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal, cpt_code: m.cpt_code }); setMarkerModalOpen(true) }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                          <button onClick={() => { setEditingId(null); setMarkerModalOriginalId(m.id); setMarkerEditForm({ name: m.name, unit: m.unit, min_normal: m.min_normal, max_normal: m.max_normal, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both' }); setMarkerModalOpen(true) }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
                           <button onClick={async () => {
                             if (!confirm(`Delete marker "${m.name}"?`)) return
                             try {
@@ -3753,12 +3785,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
             </div>
             <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>CPT Code</label>
             <input value={markerEditForm.cpt_code || ''} onChange={e => setMarkerEditForm(prev => ({...prev, cpt_code: e.target.value}))} placeholder="e.g. 82652" style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Applicable Sex</label>
+            <select value={markerEditForm.applicable_sex || 'both'} onChange={e => setMarkerEditForm(prev => ({...prev, applicable_sex: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:16,background:theme.bgSecondary,color:theme.text,width:'100%'}}>
+              <option value="both">Both (universal)</option>
+              <option value="male">Male only</option>
+              <option value="female">Female only</option>
+            </select>
             <div style={{display:'flex',gap:8,marginTop:'auto'}}>
               <button onClick={async () => {
                 try {
                   const id = markerModalOriginalId
                   if (!id) throw new Error('Missing marker id')
-                  const res = await fetch(apiUrl(`/api/admin/lab-markers/${id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: markerEditForm.name, unit: markerEditForm.unit, min_normal: markerEditForm.min_normal, max_normal: markerEditForm.max_normal, cpt_code: markerEditForm.cpt_code || null }) })
+                  const res = await fetch(apiUrl(`/api/admin/lab-markers/${id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: markerEditForm.name, unit: markerEditForm.unit, min_normal: markerEditForm.min_normal, max_normal: markerEditForm.max_normal, cpt_code: markerEditForm.cpt_code || null, applicable_sex: markerEditForm.applicable_sex || 'both' }) })
                   if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                   await load()
                   setMarkerModalOpen(false)
@@ -4351,7 +4389,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             <h5 style={{margin:0,fontSize:13,fontWeight:600,color:theme.text}}>Team Score Summary</h5>
                             <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
                               <div style={{display:'flex',alignItems:'center',gap:5}}>
-                                <label style={{fontSize:11,color:theme.textMuted}}>Min Avg BHAS %</label>
+                                <label style={{fontSize:11,color:theme.textMuted}}>Min Avg NHLS %</label>
                                 <input
                                   type="number"
                                   min={0} max={100}
@@ -4378,7 +4416,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                             <thead>
                               <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                                {([['team','Team'],['members','Members'],['avg_bhas','Avg BHAS'],['optimal','% at Optimal']] as [string,string][]).map(([col,label]) => (
+                                {([['team','Team'],['members','Members'],['avg_bhas','Avg NHLS'],['optimal','% at Optimal']] as [string,string][]).map(([col,label]) => (
                                   <th key={col} onClick={() => tToggle(col)} style={{textAlign:'left',padding:'4px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase',cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>
                                     {label}{tArrow(col)}
                                   </th>

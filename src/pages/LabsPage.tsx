@@ -53,9 +53,10 @@ interface LabMarker {
   max_normal?: number
   is_active?: boolean
   cpt_code?: string
+  applicable_sex?: string
 }
 
-export default function Labs() {
+export default function Labs({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const { theme } = useTheme()
   const { user } = useAuth()
   const { results, latestLabDate, addResult, removeResult, getResultsForMarker } = useResults()
@@ -214,7 +215,7 @@ export default function Labs() {
     async function fetchMarkers() {
       try {
         const [markersRes, rulesRes] = await Promise.all([
-          supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active, cpt_code').order('name'),
+          supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex').order('name'),
           supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
         ])
 
@@ -251,6 +252,14 @@ export default function Labs() {
     if (value < min) return '#EF4444'
     if (value > max) return '#EF4444'
     return '#10B981'
+  }
+
+  // Prefer logic-rules-derived optimal range over stored min/max on the result row.
+  // This keeps the Normal/OOR label consistent with the NHLS score source of truth.
+  const getEffectiveRange = (markerName: string, fallbackMin: number, fallbackMax: number) => {
+    const markerDef = labMarkers.find(m => m.name === markerName)
+    if (markerDef && optimalRanges[markerDef.id]) return optimalRanges[markerDef.id]
+    return { min: fallbackMin, max: fallbackMax }
   }
 
   const handleAddResult = () => {
@@ -320,6 +329,31 @@ export default function Labs() {
   return (
     <div>
       <StaleLabBanner latestLabDate={latestLabDate} />
+
+      {!userSex && (
+        <div style={{
+          background: 'rgba(217,119,6,0.08)',
+          border: '1px solid #D97706',
+          borderRadius: 6,
+          padding: '10px 16px',
+          marginBottom: 16,
+          fontSize: 13,
+          color: '#92400e',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}>
+          <span style={{ fontWeight: 600 }}>&#9888; Sex not set:</span>
+          {' '}Set your sex in{' '}
+          <button
+            onClick={() => onNavigate?.('profile')}
+            style={{ background: 'none', border: 'none', color: '#D97706', fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13, textDecoration: 'underline' }}
+          >
+            Profile
+          </button>
+          {' '}to see sex-specific lab ranges.
+        </div>
+      )}
 
       {/* Privacy Disclaimer */}
       <div
@@ -628,7 +662,7 @@ export default function Labs() {
 
           {loadingMarkers ? (
             <div style={{ color: theme.textMuted }}>Loading markers...</div>
-          ) : labMarkers.filter(m => m.is_active !== false).length === 0 ? (
+          ) : labMarkers.filter(m => m.is_active !== false && (!m.applicable_sex || m.applicable_sex === 'both' || !userSex || m.applicable_sex === userSex)).length === 0 ? (
             <div style={{ color: theme.textMuted }}>No lab markers available. Please check with an administrator.</div>
           ) : (
             <>
@@ -637,7 +671,7 @@ export default function Labs() {
                   Select Marker or Enter Custom
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 16 }}>
-                  {labMarkers.filter(m => m.is_active !== false).map(marker => (
+                  {labMarkers.filter(m => m.is_active !== false && (!m.applicable_sex || m.applicable_sex === 'both' || !userSex || m.applicable_sex === userSex)).map(marker => (
                     <button
                       key={marker.id}
                       onClick={() => handleSelectCommonMarker(marker)}
@@ -856,7 +890,8 @@ export default function Labs() {
             {uniqueMarkers.map(marker => {
               const latest = getResultsForMarker(marker)[0]
               const markerHistory = getResultsForMarker(marker)
-              const statusColor = latest ? getStatusColor(latest.value, latest.minNormal, latest.maxNormal) : theme.textMuted
+              const effectiveRange = latest ? getEffectiveRange(marker, latest.minNormal, latest.maxNormal) : null
+              const statusColor = latest && effectiveRange ? getStatusColor(latest.value, effectiveRange.min, effectiveRange.max) : theme.textMuted
               const isChartOpen = chartOpenMarker === marker
               const markerDef = labMarkers.find(m => m.name === marker)
               return (
@@ -1030,15 +1065,16 @@ export default function Labs() {
                   <th style={{ padding: 12, textAlign: 'right', fontSize: 13, fontWeight: 600, color: theme.text }}>Value</th>
                   <th style={{ padding: 12, textAlign: 'left', fontSize: 13, fontWeight: 600, color: theme.text }}>Range</th>
                   <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Status</th>
-                  <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>BHAS Score</th>
+                  <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>NHLS Score</th>
                   <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Verified</th>
                   <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredResults.map((result, i) => {
-                  const status = getStatusColor(result.value, result.minNormal, result.maxNormal)
-                  const isNormal = result.value >= result.minNormal && result.value <= result.maxNormal
+                  const effRange = getEffectiveRange(result.markerName, result.minNormal, result.maxNormal)
+                  const status = getStatusColor(result.value, effRange.min, effRange.max)
+                  const isNormal = result.value >= effRange.min && result.value <= effRange.max
                   const markerScore = bhasResult?.markerScores.find(
                     m => m.markerName.toLowerCase() === result.markerName.toLowerCase()
                   )

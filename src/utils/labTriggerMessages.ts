@@ -57,8 +57,9 @@ export function getMarkerMessage(
   }
 
   // Fasting Insulin (used to compute HOMA-IR)
+  // Thresholds match DB scoring tiers: Optimal 0–1.9, Improvement 2.0–2.9, Out of Range ≥3.0
   if (name.includes('fasting insulin') || name === 'insulin') {
-    if (value >= 2.0 && value <= 2.5) {
+    if (value >= 2.0 && value < 3.0) {
       return {
         level: 'warning',
         headline: 'Your insulin sensitivity is starting to decline',
@@ -71,7 +72,7 @@ export function getMarkerMessage(
         ],
       }
     }
-    if (value > 2.5) {
+    if (value >= 3.0) {
       return {
         level: 'danger',
         headline: 'Your results suggest reduced insulin sensitivity',

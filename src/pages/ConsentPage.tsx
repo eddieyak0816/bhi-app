@@ -92,7 +92,7 @@ export default function ConsentPage({ onNavigate }: ConsentPageProps) {
         <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 600 }}>What is shared publicly</h3>
         <ul style={{ margin: 0, paddingLeft: 20, color: theme.text, fontSize: 14, lineHeight: 2 }}>
           <li>Your display name</li>
-          <li>Your overall BHAS health score (as a percentage)</li>
+          <li>Your overall NHLS score (as a percentage)</li>
           <li>Your health tags (e.g. "Normal Glucose", "Adequate Vitamin D") — no raw numbers</li>
           <li>The month and year your data was last updated</li>
         </ul>

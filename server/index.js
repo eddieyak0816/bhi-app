@@ -791,7 +791,7 @@ app.patch('/api/admin/lab-markers/:id', async (req, res) => {
   const id = req.params.id;
   if (!id) return res.status(400).json({ error: 'missing-id' });
   
-  const { name, unit, min_normal, max_normal, is_active, cpt_code } = req.body || {};
+  const { name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex } = req.body || {};
   const updateData = {};
   if (name !== undefined) updateData.name = name;
   if (unit !== undefined) updateData.unit = unit;
@@ -799,6 +799,7 @@ app.patch('/api/admin/lab-markers/:id', async (req, res) => {
   if (max_normal !== undefined) updateData.max_normal = max_normal;
   if (is_active !== undefined) updateData.is_active = is_active;
   if (cpt_code !== undefined) updateData.cpt_code = cpt_code;
+  if (applicable_sex !== undefined && ['male', 'female', 'both'].includes(applicable_sex)) updateData.applicable_sex = applicable_sex;
   
   if (Object.keys(updateData).length === 0) return res.status(400).json({ error: 'no-fields-to-update' });
   
@@ -934,11 +935,11 @@ app.post('/api/admin/lab-markers', async (req, res) => {
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
   const incomingKey = req.header('x-backend-api-key') || '';
   if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
-  const { id, name, unit, min_normal, max_normal, is_active } = req.body || {};
+  const { id, name, unit, min_normal, max_normal, is_active, applicable_sex: asx } = req.body || {};
   if (!name) return res.status(400).json({ error: 'missing-name' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const payload = { id: id || uuidv4(), name, unit: unit || null, min_normal: min_normal || null, max_normal: max_normal || null, is_active: is_active !== false };
+    const payload = { id: id || uuidv4(), name, unit: unit || null, min_normal: min_normal || null, max_normal: max_normal || null, is_active: is_active !== false, applicable_sex: ['male','female','both'].includes(asx) ? asx : 'both' };
     const { data, error } = await sb.from('lab_markers').insert([payload]).select('*');
     if (error) {
       console.error('admin-insert-lab-marker-error', error);
@@ -3198,7 +3199,8 @@ app.get('/api/admin/lab-results', async (req, res) => {
 // ── F66: Challenges ───────────────────────────────────────────────────────────
 
 // GET /api/admin/challenges — list all challenges with their enrolled org_ids
-app.get('/api/admin/challenges', requireAdmin, async (req, res) => {
+app.get('/api/admin/challenges', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const { data: challenges, error: cErr } = await supabase
       .from('challenges')
@@ -3226,7 +3228,8 @@ app.get('/api/admin/challenges', requireAdmin, async (req, res) => {
 });
 
 // POST /api/admin/challenges — create a challenge
-app.post('/api/admin/challenges', requireAdmin, async (req, res) => {
+app.post('/api/admin/challenges', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   const { name, slug, starts_at, ends_at, baseline_at, midpoint_at, is_active } = req.body;
   if (!name || !slug || !starts_at || !ends_at || !baseline_at || !midpoint_at) {
     return res.status(400).json({ error: 'missing_fields' });
@@ -3247,7 +3250,8 @@ app.post('/api/admin/challenges', requireAdmin, async (req, res) => {
 });
 
 // PATCH /api/admin/challenges/:id — update a challenge
-app.patch('/api/admin/challenges/:id', requireAdmin, async (req, res) => {
+app.patch('/api/admin/challenges/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   const { id } = req.params;
   const { name, slug, starts_at, ends_at, baseline_at, midpoint_at, is_active } = req.body;
   const updates = {};
@@ -3274,7 +3278,8 @@ app.patch('/api/admin/challenges/:id', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/admin/challenges/:id — delete a challenge (cascade deletes challenge_orgs)
-app.delete('/api/admin/challenges/:id', requireAdmin, async (req, res) => {
+app.delete('/api/admin/challenges/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   const { id } = req.params;
   try {
     const { error } = await supabase.from('challenges').delete().eq('id', id);
@@ -3287,7 +3292,8 @@ app.delete('/api/admin/challenges/:id', requireAdmin, async (req, res) => {
 });
 
 // POST /api/admin/challenges/:id/orgs — assign an org to a challenge
-app.post('/api/admin/challenges/:id/orgs', requireAdmin, async (req, res) => {
+app.post('/api/admin/challenges/:id/orgs', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   const { id } = req.params;
   const { org_id } = req.body;
   if (!org_id) return res.status(400).json({ error: 'missing org_id' });
@@ -3305,7 +3311,8 @@ app.post('/api/admin/challenges/:id/orgs', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/admin/challenges/:id/orgs/:orgId — remove an org from a challenge
-app.delete('/api/admin/challenges/:id/orgs/:orgId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/challenges/:id/orgs/:orgId', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   const { id, orgId } = req.params;
   try {
     const { error } = await supabase

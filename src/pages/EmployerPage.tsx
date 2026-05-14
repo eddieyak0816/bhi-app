@@ -226,7 +226,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
     })
 
   function handleExportMembers() {
-    const headers = ['Username', 'Public ID', 'Team', 'Role', 'Joined Date', 'BHAS Score (%)', 'Lab Results']
+    const headers = ['Username', 'Public ID', 'Team', 'Role', 'Joined Date', 'NHLS Score (%)', 'Lab Results']
     const rows = filteredMembers.map(m => [
       m.username ?? '',
       m.public_id ?? '',
@@ -263,7 +263,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
 
       {/* PHI notice */}
       <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 6, padding: '8px 14px', marginBottom: 20, fontSize: 12, color: '#713f12' }}>
-        <strong>De-identified view:</strong> Real names, emails, and individual lab values are never shown here. Only usernames, public IDs, teams, and aggregate BHAS scores are displayed.
+        <strong>De-identified view:</strong> Real names, emails, and individual lab values are never shown here. Only usernames, public IDs, teams, and aggregate NHLS scores are displayed.
       </div>
 
       {/* Org header */}
@@ -281,7 +281,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
         )}
       </div>
       <p style={{ margin: '0 0 16px 0', color: theme.textMuted, fontSize: 14 }}>
-        {members.length} member{members.length !== 1 ? 's' : ''}{avgBhas !== null ? ` · Org avg BHAS: ${avgBhas}%` : ''}
+        {members.length} member{members.length !== 1 ? 's' : ''}{avgBhas !== null ? ` · Org avg NHLS: ${avgBhas}%` : ''}
       </p>
 
       {/* Tab bar */}
@@ -328,7 +328,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
                 <div style={{ fontWeight: 700, fontSize: 15, color: tc.color, marginBottom: 4 }}>{team}</div>
                 <div style={{ fontSize: 12, color: tc.color, marginBottom: 8 }}>{member_count} member{member_count !== 1 ? 's' : ''}</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: tc.color }}>{avg_bhas_pct !== null ? `${avg_bhas_pct}%` : '—'}</div>
-                <div style={{ fontSize: 11, color: tc.color, opacity: 0.8 }}>avg BHAS</div>
+                <div style={{ fontSize: 11, color: tc.color, opacity: 0.8 }}>avg NHLS</div>
                 {optimal_pct !== null && (
                   <div style={{ fontSize: 11, color: tc.color, opacity: 0.7, marginTop: 4 }}>{optimal_pct}% at optimal</div>
                 )}
@@ -387,7 +387,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
               </select>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
                 <span style={{ fontSize: 12, color: theme.textMuted }}>
-                  Min BHAS: <strong style={{ color: theme.text }}>{minBhas}%</strong>
+                  Min NHLS: <strong style={{ color: theme.text }}>{minBhas}%</strong>
                 </span>
                 <input
                   type="range"
@@ -427,7 +427,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
                     ['username',     'Username'],
                     ['public_id',    'Public ID'],
                     ['team',         'Team'],
-                    ['bhas_pct',     'BHAS Score'],
+                    ['bhas_pct',     'NHLS Score'],
                     ['result_count', 'Results'],
                     ['role',         'Role'],
                     ['joined_at',    'Joined'],
@@ -543,7 +543,7 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
   const kpiTiles = [
     { label: 'Total Members',     value: String(kpis.total_members) },
     { label: 'Members with Data', value: String(kpis.members_with_data) },
-    { label: 'Avg BHAS %',        value: kpis.avg_bhas_pct !== null ? `${kpis.avg_bhas_pct}%` : '—' },
+    { label: 'Avg NHLS %',        value: kpis.avg_bhas_pct !== null ? `${kpis.avg_bhas_pct}%` : '—' },
     { label: '% at Optimal',      value: kpis.pct_at_optimal !== null ? `${kpis.pct_at_optimal}%` : '—' },
   ]
 
@@ -594,15 +594,15 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
 
       {!hasScoreData && (
         <div style={{ ...sectionStyle, color: theme.textMuted, fontSize: 14 }}>
-          No BHAS v2 score data yet for this organization. Members need to calculate their score on the Dashboard for analytics to populate.
+          No NHLS score data yet for this organization. Members need to calculate their score on the Dashboard for analytics to populate.
         </div>
       )}
 
       {hasScoreData && (<>
 
-        {/* BHAS Score Distribution */}
+        {/* NHLS Score Distribution */}
         <div style={sectionStyle}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>BHAS Score Distribution</h3>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>NHLS Score Distribution</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={score_distribution} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
@@ -641,8 +641,8 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
         {/* 12-Week Trend */}
         {trend.length > 0 && (
           <div style={sectionStyle}>
-            <h3 style={{ margin: '0 0 4px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>Org BHAS Trend — Last 12 Weeks</h3>
-            <p style={{ margin: '0 0 16px 0', fontSize: 12, color: theme.textMuted }}>Weekly average BHAS % across members with data</p>
+            <h3 style={{ margin: '0 0 4px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>Org NHLS Trend — Last 12 Weeks</h3>
+            <p style={{ margin: '0 0 16px 0', fontSize: 12, color: theme.textMuted }}>Weekly average NHLS % across members with data</p>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={trend} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
@@ -654,7 +654,7 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
                 itemStyle={{ color: theme.blue ?? '#3B82F6' }}
                   formatter={(value: number, name: string) => [
                     name === 'avg_score' ? `${value}%` : value,
-                    name === 'avg_score' ? 'Avg BHAS' : 'Members',
+                    name === 'avg_score' ? 'Avg NHLS' : 'Members',
                   ]}
                 />
                 <ReferenceLine y={89} stroke="#15803d" strokeDasharray="4 2" label={{ value: 'Optimal', position: 'insideTopRight', fontSize: 10, fill: '#15803d' }} />
@@ -668,7 +668,7 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
         {metric_breakdown.length > 0 && (
           <div style={sectionStyle}>
             <h3 style={{ margin: '0 0 4px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>Per-Metric % at Optimal</h3>
-            <p style={{ margin: '0 0 16px 0', fontSize: 12, color: theme.textMuted }}>Percentage of members with data scoring Optimal on each BHAS v2 metric</p>
+            <p style={{ margin: '0 0 16px 0', fontSize: 12, color: theme.textMuted }}>Percentage of members with data scoring Optimal on each NHLS metric</p>
             <ResponsiveContainer width="100%" height={Math.max(180, metric_breakdown.length * 36)}>
               <BarChart
                 layout="vertical"

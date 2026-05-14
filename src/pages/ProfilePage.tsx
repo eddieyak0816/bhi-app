@@ -10,7 +10,7 @@ interface ProfilePageProps {
   onNavigate?: (page: string) => void
 }
 
-interface HealthGoal {
+interface Category {
   id: string
   name: string
   description?: string
@@ -41,7 +41,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     totalDailyInsulinUnits: '',
     hasAdvancedCarePlan: false,
     acuteVisits: '',
-    healthGoals: [] as string[],
+    categoryPreferences: [] as string[],
     preferredResourceTypes: [] as string[],
     notificationsEnabled: true,
     emailUpdates: false,
@@ -62,7 +62,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'saving' | 'saved' | 'error'>('idle')
   const usernameCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const [healthGoals, setHealthGoals] = useState<HealthGoal[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [resourceTypes, setResourceTypes] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -171,8 +171,9 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
             id: user.id,
             email: user.email ?? userEmail ?? '',
             name: payload.name || user.email || 'User',
-            role: 'user',
-            public_id: generatePublicId(),
+            // role intentionally omitted — only PATCH /api/admin/users/:id/role may change it
+            // public_id only set on INSERT (merge-duplicates won't overwrite existing value)
+            public_id: publicId ?? generatePublicId(),
             ...payload,
           }),
           signal: controller.signal,
@@ -263,7 +264,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     }
   }
 
-  // Load health goals and resource types using direct fetch (more reliable)
+  // Load categories and resource types using direct fetch (more reliable)
   const loadOptions = async (retryCount = 0) => {
     setLoading(true)
     setLoadError(null)
@@ -271,12 +272,9 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     const controller = new AbortController()
     loadControllerRef.current = controller
 
-    console.log(`[ProfilePage] Loading options (attempt ${retryCount + 1})...`)
-
     try {
-      // Use direct fetch for reliability - Supabase client can get stuck after window switches
-      const [goalsResult, typesResult] = await Promise.all([
-        directFetch<HealthGoal>('health_goals', {
+      const [catsResult, typesResult] = await Promise.all([
+        directFetch<Category>('categories', {
           eq: { column: 'is_active', value: true },
           order: { column: 'name', ascending: true },
           timeout: 8000
@@ -288,34 +286,19 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
         })
       ])
 
-      if (goalsResult.error) {
-        console.warn('Health goals fetch error:', goalsResult.error)
-        throw goalsResult.error
-      }
-      if (typesResult.error) {
-        console.warn('Resource types fetch error:', typesResult.error)
-        throw typesResult.error
-      }
+      if (catsResult.error) throw catsResult.error
+      if (typesResult.error) throw typesResult.error
 
       if (controller.signal.aborted) return
-      setHealthGoals(goalsResult.data || [])
+      setCategories(catsResult.data || [])
       setResourceTypes((typesResult.data || []).map((t: { name: string }) => t.name))
       setLoadError(null)
-      console.log('[ProfilePage] Successfully loaded options')
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
-      console.error(`[ProfilePage] Failed to load options: ${errorMsg}`, err)
-
-      // Auto-retry on timeout (up to 2 retries)
       if (errorMsg.includes('timeout') && retryCount < 2 && !controller.signal.aborted) {
-        console.log(`[ProfilePage] Timeout detected, auto-retrying (attempt ${retryCount + 2})...`)
         await new Promise(resolve => setTimeout(resolve, 500))
-        if (!controller.signal.aborted) {
-          loadOptions(retryCount + 1)
-          return
-        }
+        if (!controller.signal.aborted) { loadOptions(retryCount + 1); return }
       }
-
       if (!controller.signal.aborted) setLoadError(errorMsg)
     } finally {
       if (!controller.signal.aborted) setLoading(false)
@@ -323,15 +306,64 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     }
   }
 
+  // Load user's saved category preferences
+  useEffect(() => {
+    if (!user?.id) return
+    const jwt = getStoredJwt()
+    if (!jwt) return
+    const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL as string
+    const anonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string
+    fetch(
+      `${supabaseUrl}/rest/v1/user_category_preferences?user_id=eq.${encodeURIComponent(user.id)}&select=category_name`,
+      { headers: { 'apikey': anonKey, 'Authorization': `Bearer ${jwt}` } }
+    )
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then((rows: { category_name: string }[]) => {
+        setFormData(prev => ({ ...prev, categoryPreferences: rows.map(r => r.category_name) }))
+      })
+      .catch(() => {})
+  }, [user?.id])
+
   useEffect(() => {
     loadOptions()
   }, [])
 
-  const handleGoalToggle = (goal: string) => {
+  const handleCategoryToggle = async (categoryName: string) => {
+    if (!user?.id) return
+    const jwt = getStoredJwt()
+    if (!jwt) return
+    const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL as string
+    const anonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string
+    const isSelected = formData.categoryPreferences.includes(categoryName)
+
+    // Optimistic update
     setFormData(prev => ({
       ...prev,
-      healthGoals: prev.healthGoals.includes(goal) ? prev.healthGoals.filter(g => g !== goal) : [...prev.healthGoals, goal],
+      categoryPreferences: isSelected
+        ? prev.categoryPreferences.filter(c => c !== categoryName)
+        : [...prev.categoryPreferences, categoryName],
     }))
+
+    if (isSelected) {
+      await fetch(
+        `${supabaseUrl}/rest/v1/user_category_preferences?user_id=eq.${encodeURIComponent(user.id)}&category_name=eq.${encodeURIComponent(categoryName)}`,
+        { method: 'DELETE', headers: { 'apikey': anonKey, 'Authorization': `Bearer ${jwt}` } }
+      ).catch(() => {})
+    } else {
+      await fetch(
+        `${supabaseUrl}/rest/v1/user_category_preferences`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': anonKey,
+            'Authorization': `Bearer ${jwt}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=ignore-duplicates',
+          },
+          body: JSON.stringify({ user_id: user.id, category_name: categoryName }),
+        }
+      ).catch(() => {})
+    }
   }
 
   const handleResourceTypeToggle = (type: string) => {
@@ -463,7 +495,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
       <div style={sectionStyle}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>Biometrics</h3>
         <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
-          Used for BHAS scoring. Waist thresholds vary by sex — set your sex above first.
+          Used for NHLS scoring. Waist thresholds vary by sex — set your sex above first.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
@@ -556,7 +588,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
       <div style={sectionStyle}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>Clinical Information</h3>
         <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
-          Used for BHAS v2.3 scoring. These affect which metrics are calculated.
+          Used for NHLS scoring. These affect which metrics are calculated.
         </p>
 
         {/* Type 1 Diabetes toggle */}
@@ -569,7 +601,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
           />
           <div>
             <div style={{ fontWeight: 600, fontSize: 14 }}>Type 1 Diabetes</div>
-            <div style={{ fontSize: 12, color: theme.textMuted }}>Switches BHAS scoring from HOMA-IR to Insulin Units/kg</div>
+            <div style={{ fontSize: 12, color: theme.textMuted }}>Switches NHLS scoring from HOMA-IR to Insulin Units/kg</div>
           </div>
         </label>
 
@@ -598,7 +630,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
           />
           <div>
             <div style={{ fontWeight: 600, fontSize: 14 }}>Advanced Care Plan documented</div>
-            <div style={{ fontSize: 12, color: theme.textMuted }}>Living will, healthcare proxy, or similar document on file. Worth 1 point in BHAS v2.3.</div>
+            <div style={{ fontSize: 12, color: theme.textMuted }}>Living will, healthcare proxy, or similar document on file. Worth 1 point in your NHLS score.</div>
           </div>
         </label>
 
@@ -620,21 +652,21 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
         </div>
       </div>
 
-      {/* Health Goals */}
+      {/* Video Category Preferences */}
       <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Health Goals</h3>
-        <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>Select your primary health focus areas</p>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Video Category Preferences</h3>
+        <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>Select health topics you want to see content for. Your dashboard feed will filter to these categories.</p>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>Loading options...</div>
+          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>Loading categories...</div>
         ) : loadError ? (
           <div style={{ textAlign: 'center', padding: '20px', color: '#DC2626' }}>{loadError}</div>
-        ) : healthGoals.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>No health goals configured yet.</div>
+        ) : categories.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>No categories configured yet.</div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, alignItems: 'start' }}>
-            {healthGoals.map(goal => (
+            {categories.map(cat => (
               <label
-                key={goal.id}
+                key={cat.id}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -644,7 +676,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
                   boxSizing: 'border-box',
                   lineHeight: '20px',
                   background: theme.bg,
-                  border: `1.5px solid ${formData.healthGoals.includes(goal.name) ? theme.blue : theme.borderColor}`,
+                  border: `1.5px solid ${formData.categoryPreferences.includes(cat.name) ? theme.blue : theme.borderColor}`,
                   borderRadius: 6,
                   cursor: 'pointer',
                   color: theme.text,
@@ -656,11 +688,11 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
               >
                 <input
                   type="checkbox"
-                  checked={formData.healthGoals.includes(goal.name)}
-                  onChange={() => handleGoalToggle(goal.name)}
+                  checked={formData.categoryPreferences.includes(cat.name)}
+                  onChange={() => handleCategoryToggle(cat.name)}
                   style={{ cursor: 'pointer', flexShrink: 0, alignSelf: 'center' }}
                 />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{goal.name}</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{cat.name}</span>
               </label>
             ))}
           </div>
@@ -719,7 +751,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
       <div style={sectionStyle}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>Join an Organization</h3>
         <p style={{ margin: '0 0 16px 0', fontSize: 13, color: theme.textMuted }}>
-          Enter the invite code provided by your employer or organization. Your real name and email are never shared — only your username and BHAS score are visible to org admins.
+          Enter the invite code provided by your employer or organization. Your real name and email are never shared — only your username and NHLS score are visible to org admins.
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
           <input
@@ -923,7 +955,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
               {isPublic ? 'Profile is public' : 'Profile is private'}
             </div>
             <div style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
-              Share your BHAS score and health tags — no raw values or personal details are ever shared.
+              Share your NHLS score and health tags — no raw values or personal details are ever shared.
             </div>
           </div>
         </label>

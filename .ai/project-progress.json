@@ -1,5 +1,100 @@
 [
   {
+    "date": "2026-05-13",
+    "session_summary": "Session 17 — Bug fixes + 4 new features. Bug 1: fixed ProfilePage upsert clobbering role (removed hardcoded role:'user' and fixed public_id preservation). Bug 2: fixed Normal/OOR label vs NHLS score mismatch (added getEffectiveRange() to derive displayed status from logic_rules/optimalRanges). Bug 3: fixed insulin popup threshold misalignment (danger at >=3.0, not >2.5, matching DB). Rename: BHAS → NHLS and Balanced Health Assessment → Hormone Health across all UI files (no internal code renames). Sex-not-set warning on Labs page: amber banner if userSex is null/empty, links to Profile. Dashboard stat boxes as hyperlinks: statCard() gets onClick, Bookmarked Resources scrolls to resources section, Lab Results navigates to labs, Health Insights scrolls to NHLS score panel, Recommendations scrolls to personalized section. Video Category Preferences: replaced Health Goals with category preferences (migration: user_category_preferences join table, saves/loads per toggle, Dashboard resource feed filtered by preference). Lab marker sex toggle: applicable_sex column (migration), Admin Markers table/card sex badge + filter, Lab manual entry filters markers by user sex.",
+    "features_completed": [
+      {
+        "id": "NHLS-RENAME",
+        "title": "BHAS → NHLS rename across all UI",
+        "files": ["src/pages/Dashboard.tsx", "src/pages/LabsPage.tsx", "src/pages/Admin.tsx", "src/pages/EmployerPage.tsx", "src/pages/LeaderboardPage.tsx", "src/pages/LeaguePage.tsx", "src/pages/PublicProfilePage.tsx", "src/pages/ConsentPage.tsx", "src/pages/ProfilePage.tsx", "src/components/HealthReportModal.tsx", "src/components/HealthAssessmentModal.tsx", "src/components/InsuranceReportModal.tsx", "src/components/Vo2CalcModal.tsx"],
+        "notes": "Display-only rename. Internal code names (bhasV2, calculateBhasScore, etc.) unchanged. Also renamed Balanced Health Assessment → Hormone Health."
+      },
+      {
+        "id": "SEX-WARNING",
+        "title": "Sex-not-set warning on Labs page",
+        "files": ["src/pages/LabsPage.tsx", "src/App.tsx"],
+        "notes": "Amber banner shown when userSex is empty. Links to Profile via onNavigate prop (added to Labs component). Displayed between StaleLabBanner and Privacy Disclaimer."
+      },
+      {
+        "id": "STAT-HYPERLINKS",
+        "title": "Dashboard stat boxes as hyperlinks",
+        "files": ["src/pages/Dashboard.tsx"],
+        "notes": "statCard() helper gets optional onClick. Uses useRef for scroll targets (nhlsRef, resourcesRef, recommendationsRef). Bookmarked Resources → scrollIntoView resources section (falls back to onNavigate('resources') if section not rendered). Lab Results → onNavigate('labs'). Health Insights → scrollIntoView NHLS score panel. Recommendations → scrollIntoView recommendations section."
+      },
+      {
+        "id": "CATEGORY-PREFS",
+        "title": "Video Category Preferences (replaces Health Goals)",
+        "files": ["db/migrations/20260513_create_user_category_preferences.sql", "src/pages/ProfilePage.tsx", "src/pages/Dashboard.tsx", "src/utils/evaluateRules.ts"],
+        "notes": "user_category_preferences join table (user_id, category_name, UNIQUE). Loads from categories table in ProfilePage. Saves on each toggle (DELETE/POST per category). Dashboard fetches user preferences and filters recommendedResources — falls back to all resources if no preferences or no matches. Resource.categories[] field added to interface."
+      },
+      {
+        "id": "LAB-MARKER-SEX",
+        "title": "Lab marker applicable_sex toggle",
+        "files": ["db/migrations/20260513_add_applicable_sex_to_lab_markers.sql", "server/index.js", "src/pages/Admin.tsx", "src/pages/LabsPage.tsx"],
+        "notes": "applicable_sex TEXT CHECK IN ('male','female','both') DEFAULT 'both'. Backfills waist/hormone markers. Server PATCH+POST accept field. Admin Markers: sex badge in table (M/F compact) and card (Male only/Female only), sex filter dropdown. LabsPage: manual entry filters markers by user sex (universal markers always shown)."
+      }
+    ],
+    "bugs_fixed": [
+      {
+        "id": "BUG-ROLE-CLOBBER",
+        "title": "Admin role unexpectedly reset to 'user' on profile save",
+        "files": ["src/pages/ProfilePage.tsx"],
+        "notes": "handleSave() had role:'user' hardcoded in merge-duplicates upsert payload. Every profile save overwrote the role. Fixed: role omitted from payload entirely. Also fixed public_id to preserve existing value: public_id: publicId ?? generatePublicId()."
+      },
+      {
+        "id": "BUG-NORMAL-OOR",
+        "title": "Normal label vs Out-of-Range score mismatch",
+        "files": ["src/pages/LabsPage.tsx"],
+        "notes": "Display status (Normal/Out of Range badge) was derived from result.minNormal/maxNormal stored at entry time. NHLS score was derived from optimalRanges (built from logic_rules). Two sources of truth diverged. Fixed: added getEffectiveRange() helper that prefers optimalRanges over stored fallback, so display and score agree."
+      },
+      {
+        "id": "BUG-INSULIN-POPUP",
+        "title": "Insulin popup firing incorrectly (danger at 2.6 instead of 3.0)",
+        "files": ["src/utils/labTriggerMessages.ts"],
+        "notes": "Old thresholds: warning 2.0-2.5, danger >2.5. DB thresholds (migration 20260407): Optimal 0-1.9, Improvement 2.0-2.9, OOR >=3.0. A value of 2.6 scored Improvement but triggered danger popup. Fixed to match DB: warning 2.0-<3.0, danger >=3.0."
+      }
+    ],
+    "pending_actions": [
+      "⚠️ Run db/migrations/20260513_create_user_category_preferences.sql in Supabase Dashboard → SQL Editor",
+      "⚠️ Run db/migrations/20260513_add_applicable_sex_to_lab_markers.sql in Supabase Dashboard → SQL Editor",
+      "Deploy server/index.js to Render (applicable_sex in PATCH + POST lab-markers endpoints)",
+      "Deploy frontend to Netlify"
+    ],
+    "total_built": 71,
+    "total_partial": 1,
+    "total_not_built": 4,
+    "total_items": 74
+  },
+  {
+    "date": "2026-05-13",
+    "session_summary": "Session 16 — Planning + handoff prep. No new features built. Fixed F66 requireAdmin middleware bug (was passed as Express middleware instead of inline guard — caused Loading... hang). Added auto-calculated baseline/midpoint dates to challenge form (baseline = start, midpoint = halfway between start and end, both editable). Locked in stat box navigation destinations. Captured all 11 Damon meeting action items in memory. Updated all docs for handoff.",
+    "features_completed": [],
+    "bugs_fixed": [
+      {
+        "id": "F66-requireAdmin",
+        "description": "Challenge endpoints used requireAdmin as Express middleware (2nd arg) instead of inline guard (if !requireAdmin return). Handler never executed — showed Loading indefinitely. Fixed all 6 admin challenge endpoints.",
+        "files": ["server/index.js"]
+      },
+      {
+        "id": "F66-dates",
+        "description": "Challenge create/edit form now auto-calculates baseline_at = starts_at and midpoint_at = midpoint(starts_at, ends_at). Both remain manually editable. Labels show '(auto = start date)' and '(auto = halfway)' as hints.",
+        "files": ["src/components/AdminChallengesTab.tsx"]
+      }
+    ],
+    "pending_actions": [
+      "Deploy server/index.js to Render (requireAdmin fix on challenge endpoints)",
+      "Deploy frontend to Netlify (AdminChallengesTab date auto-calc fix)"
+    ],
+    "decisions_made": [
+      "Dashboard stat box destinations confirmed: Bookmarked Resources → Resources section (scroll); Lab Results → onNavigate('labs'); Health Insights → NHLS score/benchmarks section (scroll); Recommendations → Resources section (scroll)",
+      "admin@bhi.com set to super_admin via Supabase SQL Editor"
+    ],
+    "total_built": 71,
+    "total_partial": 1,
+    "total_not_built": 4,
+    "total_items": 74
+  },
+  {
     "date": "2026-05-11",
     "session_summary": "Session 15 — F66 Challenge UI. Admin → Challenges tab (CRUD: create/edit/delete/toggle + org assignment). ChallengesSection on Dashboard (user-facing, scoped to user's org, progress bar + key dates, hidden if none). 7 new server endpoints. No new migration needed — DB schema was already in place from 20260416_create_challenges.sql.",
     "features_completed": [

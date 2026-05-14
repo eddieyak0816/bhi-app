@@ -189,6 +189,7 @@ export interface Resource {
   description: string
   tags: string[]
   link_url?: string
+  categories?: string[]
 }
 
 export function getRecommendedResources(

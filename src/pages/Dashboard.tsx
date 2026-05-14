@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useEvaluation } from '../context/EvaluationContext'
 import { useResults } from '../context/ResultsContext'
@@ -34,6 +34,23 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
   const [showHealthReport, setShowHealthReport] = useState(false)
   const [showHealthAssessment, setShowHealthAssessment] = useState(false)
   const [publicId, setPublicId] = useState<string | null>(null)
+
+  const nhlsRef = useRef<HTMLDivElement>(null)
+  const resourcesRef = useRef<HTMLDivElement>(null)
+  const recommendationsRef = useRef<HTMLDivElement>(null)
+
+  const [categoryPreferences, setCategoryPreferences] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('user_category_preferences')
+      .select('category_name')
+      .eq('user_id', user.id)
+      .then(({ data }) => {
+        if (data) setCategoryPreferences(data.map((r: { category_name: string }) => r.category_name))
+      })
+  }, [user?.id])
 
   // F22 — fetch public_id once for use in health report
   useEffect(() => {
@@ -122,8 +139,9 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
     return () => { cancelled = true }
   }, [user?.id, results])
 
-  const statCard = (label: string, value: string | number, icon: string) => (
+  const statCard = (label: string, value: string | number, icon: string, onClick?: () => void) => (
     <div
+      onClick={onClick}
       style={{
         background: theme.card,
         border: `1.5px solid ${theme.borderColor}`,
@@ -131,6 +149,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
         padding: 16,
         flex: 1,
         minWidth: 200,
+        cursor: onClick ? 'pointer' : 'default',
       }}
     >
       <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>
@@ -157,10 +176,13 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
           marginBottom: 24,
         }}
       >
-        {statCard('Bookmarked Resources', bookmarkedCount, '🔖')}
-        {statCard('Lab Results', results.length, '⚗️')}
-        {statCard('Health Insights', applicableTags.length, '💡')}
-        {statCard('Recommendations', recommendedResources.length, '📚')}
+        {statCard('Bookmarked Resources', bookmarkedCount, '🔖', () => {
+          if (resourcesRef.current) resourcesRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          else onNavigate?.('resources')
+        })}
+        {statCard('Lab Results', results.length, '⚗️', () => onNavigate?.('labs'))}
+        {statCard('Health Insights', applicableTags.length, '💡', () => nhlsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))}
+        {statCard('Recommendations', recommendedResources.length, '📚', () => recommendationsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))}
       </div>
 
       {/* BHAS Score Banner */}
@@ -191,7 +213,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
               {bhasResult.percentage}%
             </div>
             <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              BHAS Score
+              NHLS Score
             </div>
           </div>
 
@@ -201,7 +223,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
           {/* Per-marker breakdown */}
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: theme.text }}>
-              Balanced Health Assessment — {bhasResult.totalScore.toFixed(1)} / {bhasResult.maxPossible} points
+              Hormone Health — {bhasResult.totalScore.toFixed(1)} / {bhasResult.maxPossible} points
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {bhasResult.markerScores.map((m, i) => (
@@ -231,9 +253,10 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
         </div>
       )}
 
-      {/* BHAS v2.3 Panel — shown only when enough data exists */}
+      {/* NHLS Score Panel — shown only when enough data exists */}
       {bhasV2Result && bhasV2Result.hasEnoughData && (
         <div
+          ref={nhlsRef}
           style={{
             background: theme.card,
             border: `1.5px solid ${theme.borderColor}`,
@@ -265,7 +288,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
 
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>BHAS v2.3</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>NHLS</div>
                 <span style={{
                   fontSize: 11,
                   fontWeight: 700,
@@ -340,7 +363,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
 
       {/* Personalized Recommendations - NEW */}
       {results.length > 0 && (
-        <div style={{ marginBottom: 32 }}>
+        <div ref={recommendationsRef} style={{ marginBottom: 32 }}>
           <h3 style={{ marginBottom: 8, fontSize: 20, fontWeight: 600 }}>Personalized for You</h3>
           <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
             Based on {applicableTags.length} health insight{applicableTags.length !== 1 ? 's' : ''}: {applicableTags.join(', ') || 'Analyzing your results...'}
@@ -367,7 +390,12 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
             </div>
           )}
 
-          {recommendedResources.length > 0 ? (
+          {(() => {
+            const filtered = categoryPreferences.length > 0
+              ? recommendedResources.filter(r => r.categories?.some(c => categoryPreferences.includes(c)))
+              : recommendedResources
+            const display = filtered.length > 0 ? filtered : recommendedResources
+            return display.length > 0 ? (
             <div
               style={{
                 display: 'grid',
@@ -375,7 +403,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                 gap: 12,
               }}
             >
-              {recommendedResources.slice(0, 3).map(resource => (
+              {display.slice(0, 3).map((resource) => (
                 <div
                   key={resource.id}
                   style={{
@@ -435,13 +463,14 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
             >
               <p style={{ margin: 0 }}>No recommendations yet. Log more lab results to get personalized suggestions!</p>
             </div>
-          )}
+          )
+          })()}
         </div>
       )}
 
       {/* Recent Resources */}
       {!results.length && (
-        <div style={{ marginBottom: 32 }}>
+        <div ref={resourcesRef} style={{ marginBottom: 32 }}>
           <h3 style={{ marginBottom: 16, fontSize: 20, fontWeight: 600 }}>Recently Viewed</h3>
           {recentResources.length > 0 ? (
             <div

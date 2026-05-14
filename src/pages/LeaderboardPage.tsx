@@ -146,7 +146,7 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
   const hasFilters = searchUsername || filterTeam || filterLabel || minScore > 0
 
   function handleExportLeaderboard() {
-    const headers = ['Rank', 'Username', 'Public ID', 'Team', 'BHAS Score (v2.3)', 'Health Label', 'VO2 Max Percentile', 'Waist-to-Height Ratio', 'hs-CRP', 'Acute Visits', 'Score Date']
+    const headers = ['Rank', 'Username', 'Public ID', 'Team', 'NHLS Score', 'Health Label', 'VO2 Max Percentile', 'Waist-to-Height Ratio', 'hs-CRP', 'Acute Visits', 'Score Date']
     const rows = filtered.map(({ entry: e, rank }) => [
       rank,
       e.username ?? '',
@@ -187,15 +187,15 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
 
       {/* PHI notice */}
       <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 6, padding: '8px 14px', marginBottom: 20, fontSize: 12, color: '#713f12' }}>
-        <strong>De-identified view:</strong> Real names, emails, and individual lab values are never shown. Only usernames, public IDs, teams, and BHAS scores are displayed.
+        <strong>De-identified view:</strong> Real names, emails, and individual lab values are never shown. Only usernames, public IDs, teams, and NHLS scores are displayed.
       </div>
 
       {/* Header */}
       <h2 style={{ margin: '0 0 4px 0', fontSize: 22, fontWeight: 700, color: theme.text }}>
-        {data.org.name} — BHAS Leaderboard
+        {data.org.name} — NHLS Leaderboard
       </h2>
       <p style={{ margin: '0 0 12px 0', color: theme.textMuted, fontSize: 14 }}>
-        {entries.length} participant{entries.length !== 1 ? 's' : ''} with a scored v2.3 result · Ranked by BHAS v2.3 score with tie-breaker logic
+        {entries.length} participant{entries.length !== 1 ? 's' : ''} with a scored result · Ranked by NHLS score with tie-breaker logic
       </p>
 
       {filtered.length > 0 && (
@@ -283,7 +283,7 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
 
       {entries.length === 0 ? (
         <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 40, textAlign: 'center', color: theme.textMuted }}>
-          No scored participants yet. Members need to log enough lab data for a BHAS v2.3 score to appear here.
+          No scored participants yet. Members need to log enough lab data for an NHLS score to appear here.
         </div>
       ) : filtered.length === 0 ? (
         <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 40, textAlign: 'center', color: theme.textMuted }}>
@@ -370,7 +370,7 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
 
           {/* Tie-breaker legend */}
           <div style={{ padding: '10px 16px', borderTop: `1px solid ${theme.borderColor}`, fontSize: 11, color: theme.textMuted }}>
-            Tie-breaker order: 1) Higher BHAS score · 2) Higher VO2 Max percentile · 3) Lower WtHR · 4) Lower hs-CRP · 5) Fewer acute care visits
+            Tie-breaker order: 1) Higher NHLS score · 2) Higher VO2 Max percentile · 3) Lower WtHR · 4) Lower hs-CRP · 5) Fewer acute care visits
           </div>
         </div>
       )}

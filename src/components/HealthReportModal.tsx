@@ -154,23 +154,23 @@ function buildPrintHtml(props: Omit<Props, 'onClose' | 'theme'>): string {
     Save as PDF / Print
   </button>
 
-  <!-- BHAS Score Summary -->
-  <h2>BHAS Score Summary</h2>
+  <!-- NHLS Score Summary -->
+  <h2>NHLS Score Summary</h2>
   <div class="score-grid">
     <div class="score-card">
-      <div class="score-sub">BHAS v1 Score (marker-based)</div>
+      <div class="score-sub">NHLS Marker Score</div>
       <div class="score-value" style="color:#1d4ed8">${bhasPct}</div>
       <div class="score-sub">${bhasLabel} markers scored</div>
     </div>
     <div class="score-card">
-      <div class="score-sub">BHAS v2.3 Score (ratio-based)</div>
+      <div class="score-sub">NHLS Score (ratio-based)</div>
       <div class="score-value" style="color:${v2LabelC}">${v2Score}</div>
       <div class="score-label" style="color:${v2LabelC}">${v2Label}</div>
     </div>
   </div>
 
-  <!-- Per-Marker BHAS v1 Breakdown -->
-  <h2>Per-Marker Breakdown (BHAS v1)</h2>
+  <!-- Per-Marker NHLS Breakdown -->
+  <h2>Per-Marker Breakdown</h2>
   <table>
     <thead>
       <tr>
@@ -183,9 +183,9 @@ function buildPrintHtml(props: Omit<Props, 'onClose' | 'theme'>): string {
     <tbody>${markerRows}</tbody>
   </table>
 
-  <!-- BHAS v2.3 Metric Breakdown -->
-  <h2>BHAS v2.3 Metric Breakdown</h2>
-  <p>Derived ratio scoring — max 9.0 points across 9 metrics.</p>
+  <!-- NHLS Metric Breakdown -->
+  <h2>NHLS Metric Breakdown</h2>
+  <p>Derived ratio scoring — max 7.0 points across 7 metrics.</p>
   <table>
     <thead>
       <tr>
@@ -265,7 +265,7 @@ export default function HealthReportModal({ userName, publicId, bhasResult, bhas
         </div>
 
         <p style={{ margin: '0 0 20px 0', fontSize: 13, color: theme.textMuted, lineHeight: 1.6 }}>
-          Generates a printable personal health summary containing your BHAS scores,
+          Generates a printable personal health summary containing your NHLS scores,
           per-marker breakdown, and national benchmark comparisons. Use your browser's
           "Save as PDF" option to download.
         </p>

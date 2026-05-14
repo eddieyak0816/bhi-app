@@ -110,7 +110,7 @@ export default function LeaguePage({ leagueSlug, onNavigate }: LeaguePageProps) 
 
       {/* PHI notice */}
       <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 6, padding: '8px 14px', marginBottom: 20, fontSize: 12, color: '#713f12' }}>
-        <strong>De-identified view:</strong> Only organization names and aggregate average BHAS scores are shown. No individual data is ever displayed.
+        <strong>De-identified view:</strong> Only organization names and aggregate average NHLS scores are shown. No individual data is ever displayed.
       </div>
 
       <h2 style={{ margin: '0 0 4px 0', fontSize: 22, fontWeight: 700, color: theme.text }}>
@@ -129,7 +129,7 @@ export default function LeaguePage({ leagueSlug, onNavigate }: LeaguePageProps) 
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${theme.borderColor}`, background: theme.bgSecondary }}>
-                {['Rank', 'Organization', 'Avg BHAS Score', 'Health Band', 'Scored Members', 'Total Members'].map(h => (
+                {['Rank', 'Organization', 'Avg NHLS Score', 'Health Band', 'Scored Members', 'Total Members'].map(h => (
                   <th key={h} style={{ textAlign: 'left', padding: '10px 14px', color: theme.textMuted, fontWeight: 600, fontSize: 11, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
                     {h}
                   </th>
@@ -177,7 +177,7 @@ export default function LeaguePage({ leagueSlug, onNavigate }: LeaguePageProps) 
             </tbody>
           </table>
           <div style={{ padding: '10px 16px', borderTop: `1px solid ${theme.borderColor}`, fontSize: 11, color: theme.textMuted }}>
-            Ranked by average BHAS v2.3 score across all scored participants in each organization.
+            Ranked by average NHLS score across all scored participants in each organization.
           </div>
         </div>
       )}

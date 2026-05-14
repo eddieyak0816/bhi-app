@@ -318,7 +318,7 @@ export default function Vo2CalcModal({ onClose, onSave, theme }: Props) {
               </div>
 
               <p style={{ margin: '0 0 16px 0', fontSize: 12, color: theme.textMuted }}>
-                Your VO2 Max percentile will be saved as the <strong>VO2 Max Percentile</strong> lab marker and scored in your BHAS v2.3 assessment.
+                Your VO2 Max percentile will be saved as the <strong>VO2 Max Percentile</strong> lab marker and tracked in your health profile.
                 {result.percentile >= 60
                   ? ' This score meets the Optimal threshold (≥60th percentile).'
                   : result.percentile >= 40

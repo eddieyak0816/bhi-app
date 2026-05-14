@@ -50,9 +50,9 @@ function trendNarrative(
   const first = trend[0].avg_score
   const last = trend[trend.length - 1].avg_score
   const diff = +(last - first).toFixed(1)
-  if (Math.abs(diff) < 1) return 'Org-average BHAS score remained stable over the past 12 weeks.'
-  if (diff > 0) return `Org-average BHAS score improved by ${diff}pp over the past 12 weeks (${first}% → ${last}%).`
-  return `Org-average BHAS score declined by ${Math.abs(diff)}pp over the past 12 weeks (${first}% → ${last}%).`
+  if (Math.abs(diff) < 1) return 'Org-average NHLS score remained stable over the past 12 weeks.'
+  if (diff > 0) return `Org-average NHLS score improved by ${diff}pp over the past 12 weeks (${first}% → ${last}%).`
+  return `Org-average NHLS score declined by ${Math.abs(diff)}pp over the past 12 weeks (${first}% → ${last}%).`
 }
 
 function topBottom(
@@ -89,7 +89,7 @@ function SummaryView({ data, theme }: { data: AnalyticsData; theme: any }) {
         {[
           { label: 'Total Members', value: kpis.total_members },
           { label: 'Members with Lab Data', value: kpis.members_with_data },
-          { label: 'Average BHAS Score', value: kpis.avg_bhas_pct !== null ? `${kpis.avg_bhas_pct}%` : '—' },
+          { label: 'Average NHLS Score', value: kpis.avg_bhas_pct !== null ? `${kpis.avg_bhas_pct}%` : '—' },
           { label: '% Members at Optimal', value: kpis.pct_at_optimal !== null ? `${kpis.pct_at_optimal}%` : '—' },
         ].map(({ label, value }) => (
           <div key={label} style={{ background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`, borderRadius: 8, padding: '12px 16px' }}>
@@ -100,7 +100,7 @@ function SummaryView({ data, theme }: { data: AnalyticsData; theme: any }) {
       </div>
 
       {/* Score distribution table */}
-      <h4 style={{ margin: '0 0 8px 0', fontSize: 13, fontWeight: 600, color: theme.text }}>BHAS Score Distribution</h4>
+      <h4 style={{ margin: '0 0 8px 0', fontSize: 13, fontWeight: 600, color: theme.text }}>NHLS Score Distribution</h4>
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20 }}>
         <thead>
           <tr>
@@ -260,11 +260,11 @@ function CsvView({ data, theme }: { data: AnalyticsData; theme: any }) {
       ['Metric', 'Value'],
       ['Total Members', kpis.total_members],
       ['Members with Lab Data', kpis.members_with_data],
-      ['Average BHAS Score (%)', kpis.avg_bhas_pct ?? ''],
+      ['Average NHLS Score (%)', kpis.avg_bhas_pct ?? ''],
       ['% Members at Optimal', kpis.pct_at_optimal ?? ''],
       [],
       // Score distribution
-      ['--- BHAS Score Distribution ---'],
+      ['--- NHLS Score Distribution ---'],
       ['Score Range', 'Member Count', '% of Population'],
       ...score_distribution.map(({ label, count }) => [
         label,
@@ -391,7 +391,7 @@ function PrintView({ data, theme }: { data: AnalyticsData; theme: any }) {
         <div class="kpi-grid">
           <div class="kpi-tile"><div class="kpi-value">${kpis.total_members}</div><div class="kpi-label">Total Members</div></div>
           <div class="kpi-tile"><div class="kpi-value">${kpis.members_with_data}</div><div class="kpi-label">Members with Data</div></div>
-          <div class="kpi-tile"><div class="kpi-value">${kpis.avg_bhas_pct !== null ? kpis.avg_bhas_pct + '%' : '—'}</div><div class="kpi-label">Avg BHAS Score</div></div>
+          <div class="kpi-tile"><div class="kpi-value">${kpis.avg_bhas_pct !== null ? kpis.avg_bhas_pct + '%' : '—'}</div><div class="kpi-label">Avg NHLS Score</div></div>
           <div class="kpi-tile"><div class="kpi-value">${kpis.pct_at_optimal !== null ? kpis.pct_at_optimal + '%' : '—'}</div><div class="kpi-label">% at Optimal</div></div>
         </div>
 
@@ -410,7 +410,7 @@ function PrintView({ data, theme }: { data: AnalyticsData; theme: any }) {
           </tbody>
         </table>
 
-        <h2>BHAS Score Distribution</h2>
+        <h2>NHLS Score Distribution</h2>
         <table>
           <thead><tr><th>Score Range</th><th>Members</th><th>% of Population</th></tr></thead>
           <tbody>
@@ -428,7 +428,7 @@ function PrintView({ data, theme }: { data: AnalyticsData; theme: any }) {
         <div class="narrative">${narrative}</div>
         ${trend.length > 0 ? `
         <table>
-          <thead><tr><th>Week</th><th>Avg BHAS Score</th><th>Members Tracked</th></tr></thead>
+          <thead><tr><th>Week</th><th>Avg NHLS Score</th><th>Members Tracked</th></tr></thead>
           <tbody>${trend.map(({ week, avg_score, member_count }) => `<tr><td>${week}</td><td>${avg_score}%</td><td>${member_count}</td></tr>`).join('')}</tbody>
         </table>` : ''}
 
@@ -510,7 +510,7 @@ function PrintView({ data, theme }: { data: AnalyticsData; theme: any }) {
           {[
             { label: 'Total Members', value: kpis.total_members },
             { label: 'With Data', value: kpis.members_with_data },
-            { label: 'Avg BHAS', value: kpis.avg_bhas_pct !== null ? `${kpis.avg_bhas_pct}%` : '—' },
+            { label: 'Avg NHLS', value: kpis.avg_bhas_pct !== null ? `${kpis.avg_bhas_pct}%` : '—' },
             { label: '% Optimal', value: kpis.pct_at_optimal !== null ? `${kpis.pct_at_optimal}%` : '—' },
           ].map(({ label, value }) => (
             <div key={label} style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '8px 10px' }}>

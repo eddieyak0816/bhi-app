@@ -152,7 +152,7 @@ export default function PublicProfilePage({ onNavigate }: PublicProfilePageProps
                 {bhasResult.percentage}%
               </div>
               <div>
-                <div style={{ fontWeight: 600, fontSize: 15 }}>Balanced Health Assessment Score</div>
+                <div style={{ fontWeight: 600, fontSize: 15 }}>NHLS Score</div>
                 <div style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
                   Last updated: {formatMonthYear(latestLabDate)}
                 </div>

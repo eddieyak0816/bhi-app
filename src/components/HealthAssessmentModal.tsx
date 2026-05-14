@@ -170,7 +170,7 @@ export default function HealthAssessmentModal({ onClose }: Props) {
           <div>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: theme.text }}>Health Check-In</h2>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: theme.textMuted }}>
-              Tracked separately from your BHAS score — for your personal health awareness only.
+              Tracked separately from your NHLS score — for your personal health awareness only.
             </p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: theme.textMuted, lineHeight: 1 }}>✕</button>

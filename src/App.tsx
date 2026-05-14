@@ -199,7 +199,7 @@ function AppContent() {
         {currentPage === 'home' && <Dashboard userEmail={user?.email} userName={user?.name} recentResources={data.resources.slice(0, 3)} bookmarkedCount={2} onNavigate={handleNavigate} />}
         {(currentPage === 'resources' || currentPage === 'library') && <Resources />}
         {currentPage === 'categories' && <Categories />}
-        {currentPage === 'labs' && <Labs />}
+        {currentPage === 'labs' && <Labs onNavigate={handleNavigate} />}
         {currentPage === 'profile' && <Profile userEmail={user?.email} userName={user?.name} onNavigate={handleNavigate} />}
         {currentPage === 'consent' && <ConsentPage onNavigate={handleNavigate} />}
         {currentPage === 'public-profile' && <PublicProfilePage onNavigate={handleNavigate} />}
