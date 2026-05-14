@@ -185,7 +185,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
         {statCard('Recommendations', recommendedResources.length, '📚', () => recommendationsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))}
       </div>
 
-      {/* BHAS Score Banner */}
+      {/* NHLS Score Banner */}
       {bhasResult && bhasResult.maxPossible > 0 && (
         <div
           style={{

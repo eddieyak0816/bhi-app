@@ -125,7 +125,7 @@ export default function PublicProfilePage({ onNavigate }: PublicProfilePageProps
             </div>
           </div>
 
-          {/* BHAS Score */}
+          {/* NHLS Score */}
           {bhasResult && bhasResult.maxPossible > 0 ? (
             <div
               style={{

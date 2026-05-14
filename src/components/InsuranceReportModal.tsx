@@ -314,8 +314,8 @@ function CsvView({ data, theme }: { data: AnalyticsData; theme: any }) {
       <div style={{ background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`, borderRadius: 8, padding: '16px 20px', marginBottom: 20, fontSize: 13, color: theme.text }}>
         <strong>File contents:</strong>
         <ul style={{ margin: '8px 0 0 0', paddingLeft: 20, lineHeight: 1.8, color: theme.textMuted }}>
-          <li>Organization KPIs (total members, members with data, avg BHAS %, % at optimal)</li>
-          <li>BHAS score distribution (by percentage range)</li>
+          <li>Organization KPIs (total members, members with data, avg NHLS %, % at optimal)</li>
+          <li>NHLS score distribution (by percentage range)</li>
           <li>Health risk tier breakdown (Optimal → High Risk)</li>
           <li>Per-metric % at optimal (sorted highest to lowest)</li>
         </ul>
