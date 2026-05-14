@@ -588,12 +588,33 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                           </td>
                           <td style={{ padding: '8px 12px' }}>{row.name}</td>
                           <td style={{ padding: '8px 12px' }}>
-                            {matched
-                              ? <span style={{ color: matched.is_active !== false ? theme.blue : theme.textMuted }}>
-                                  {matched.name}{matched.is_active === false ? ' (inactive)' : ''}
-                                </span>
-                              : <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600 }}>New — not in system</span>
-                            }
+                            <select
+                              value={row.matchedMarkerId || ''}
+                              onChange={e => {
+                                const val = e.target.value
+                                setExtractedRows(rows => rows!.map((r, j) =>
+                                  j === i ? { ...r, matchedMarkerId: val || undefined, include: true } : r
+                                ))
+                              }}
+                              style={{
+                                padding: '4px 6px',
+                                border: `1px solid ${theme.borderColor}`,
+                                borderRadius: 4,
+                                background: theme.bg,
+                                color: matched ? (matched.is_active !== false ? theme.blue : theme.textMuted) : '#f59e0b',
+                                fontSize: 12,
+                                fontWeight: matched ? 400 : 600,
+                                maxWidth: 200,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <option value=''>— New marker —</option>
+                              {[...labMarkers].sort((a, b) => a.name.localeCompare(b.name)).map(m => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name}{m.is_active === false ? ' (inactive)' : ''}
+                                </option>
+                              ))}
+                            </select>
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
