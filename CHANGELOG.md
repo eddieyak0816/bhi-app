@@ -2,6 +2,13 @@
 
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
 
+## 2026-05-14 — feat: Embed National Benchmarks inside NHLS score panel (session 19)
+
+### `src/pages/Dashboard.tsx`
+- Added `showBenchmarks` state (default `false`).
+- Inside the NHLS v2.3 panel, added a collapsible "National Benchmarks" section after the metric chips and missing-inputs hint. Toggle button shows ▶/▼ indicator. When expanded, renders the same benchmark table (marker, your value, US average, vs. avg %, optimal range) scoped to markers the user has entered that have CDC/NHANES data.
+- Removed the standalone "National Benchmarks" section (F19) that previously appeared as a separate block below Personalized Recommendations. All benchmark data is now accessible within the NHLS panel.
+
 ## 2026-05-13 — feat: Edit marker ranges via wizard UI (session 17)
 
 ### `server/index.js`

@@ -1,5 +1,26 @@
 [
   {
+    "date": "2026-05-14",
+    "session": 19,
+    "session_summary": "Session 19 — Restructure NHLS score panel on Dashboard. Embedded National Benchmarks (F19) as a collapsible section inside the NHLS v2.3 panel. Added showBenchmarks state with ▶/▼ toggle button. When expanded, shows the full benchmark table (marker, your value, US avg, vs. avg %, optimal range) for any user-entered markers that have CDC/NHANES data. Removed the standalone National Benchmarks section that was previously below Personalized Recommendations. Layout change only — no DB or calculation changes.",
+    "features_completed": [
+      {
+        "id": "NHLS-PANEL-RESTRUCTURE",
+        "title": "Embed National Benchmarks inside NHLS score panel (collapsible)",
+        "files": ["src/pages/Dashboard.tsx"],
+        "notes": "Added showBenchmarks state + collapsible toggle inside NHLS v2.3 panel. Removed standalone National Benchmarks section. Build passes. No server changes needed."
+      }
+    ],
+    "bugs_fixed": [],
+    "pending_actions": [
+      "Deploy frontend to Netlify"
+    ],
+    "total_built": 76,
+    "total_partial": 1,
+    "total_not_built": 4,
+    "total_items": 82
+  },
+  {
     "date": "2026-05-13",
     "session": 18,
     "session_summary": "Session 18 — Edit marker ranges via wizard UI. Replaced the simple min/max fields in the Admin → Markers edit modal with the same 3-tier multi-range UI used in the New Marker Wizard (Optimal / Improvement / Out of Range, each with + Add Range / × buttons). Server: added scoring_tier to GET /api/admin/tags response; added PUT /api/admin/lab-markers/:id/rules (atomically replaces all logic_rules for a marker — deletes existing, upserts tags with scoring_tier, inserts new rules). Frontend: tagsMeta now stores scoring_tier per tag; new markerEditRules state + addMarkerEditRow/removeMarkerEditRow/updateMarkerEditRule helpers; both edit-button handlers (table + card view) initialize markerEditRules from existing logicRules using tagsMeta for tier labels; modal pre-populates existing ranges per tier (blank row if no rules for a tier); Save PATCHes marker fields then PUTs rules. Updated all docs (CHANGELOG, IMPLEMENTATION_TRACKER, browser-test-checklist, project-progress, MEMORY.md).",

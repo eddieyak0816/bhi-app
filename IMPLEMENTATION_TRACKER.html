@@ -185,15 +185,15 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-05-13 — Session 17: Edit marker ranges via wizard UI (multi-range tier UI in edit modal, PUT /api/admin/lab-markers/:id/rules). · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-05-14 — Session 19: NHLS score panel restructure — National Benchmarks embedded as collapsible section inside NHLS v2.3 panel; standalone benchmarks section removed. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
-<!-- Stats bar — counts as of 2026-05-13 -->
+<!-- Stats bar — counts as of 2026-05-14 -->
 <div class="stats">
-  <div class="stat stat-done">    <span class="num" id="cnt-done">72</span>  Built / Done</div>
+  <div class="stat stat-done">    <span class="num" id="cnt-done">76</span>  Built / Done</div>
   <div class="stat stat-partial"> <span class="num" id="cnt-partial">1</span>  Partial</div>
   <div class="stat stat-todo">    <span class="num" id="cnt-todo">4</span>  Not Built / Skipped</div>
-  <div class="stat stat-total">   <span class="num" id="cnt-total">75</span>  Total Items</div>
+  <div class="stat stat-total">   <span class="num" id="cnt-total">82</span>  Total Items</div>
 </div>
 
 <!-- Filter controls -->
@@ -1130,11 +1130,20 @@
         <span class="item-status status-done">✅ Done — 2026-05-13</span>
       </div>
 
+      <div class="item done" data-status="done">
+        <div class="item-num">76</div>
+        <div class="item-body">
+          <div class="item-title">NHLS score panel restructure — National Benchmarks embedded (session 19)</div>
+          <div class="item-note">Built 2026-05-14 (session 19). National Benchmarks (F19) moved from a standalone page section into a collapsible sub-section inside the NHLS v2.3 score panel. Toggle button with ▶/▼ indicator. When expanded, shows benchmark table: marker, your value, US average (CDC/NHANES), vs. avg %, optimal range badge. Standalone "National Benchmarks" block removed. Added <code>showBenchmarks</code> state. No DB or server changes. File: <code>src/pages/Dashboard.tsx</code>.</div>
+        </div>
+        <span class="item-status status-done">✅ Done — 2026-05-14</span>
+      </div>
+
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════
-       NEXT FEATURES (priority order as of 2026-05-13)
+       NEXT FEATURES (priority order as of 2026-05-14)
   ═══════════════════════════════════════════════════════════ -->
   <section class="phase" data-phase="next">
     <div class="phase-header" style="background:linear-gradient(135deg,#1e3a5f,#374151)">

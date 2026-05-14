@@ -1388,7 +1388,7 @@ ${pdfText}`;
   }
 
   // Helper: POST JSON to any OpenAI-compatible endpoint, returns { status, body }
-  function postJSON(hostname, path, headers, bodyObj) {
+  function postJSON(hostname, path, headers, bodyObj, timeoutMs = 30000) {
     return new Promise((resolve, reject) => {
       const https = require('https');
       const bodyStr = JSON.stringify(bodyObj);
@@ -1398,6 +1398,7 @@ ${pdfText}`;
         resp.on('end', () => resolve({ status: resp.statusCode, body: data }));
       });
       req.on('error', reject);
+      req.setTimeout(timeoutMs, () => { req.destroy(new Error(`postJSON timeout after ${timeoutMs}ms`)); });
       req.write(bodyStr);
       req.end();
     });

@@ -214,19 +214,24 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
 
     async function fetchMarkers() {
       try {
-        const [markersRes, rulesRes] = await Promise.all([
+        const [markersRes, rulesRes, tagsRes] = await Promise.all([
           supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex').order('name'),
           supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
+          supabase.from('tags').select('name, scoring_tier'),
         ])
 
         if (markersRes.error) throw markersRes.error
         if (markersRes.data) setLabMarkers(markersRes.data as LabMarker[])
 
-        // Build optimal range map from logic rules
+        // Build optimal range map from logic rules, using DB scoring_tier as source of truth
+        // Falls back to hardcoded OPTIMAL_TAGS if tags table unavailable
         if (rulesRes.data) {
+          const dbOptimalTags = tagsRes.data
+            ? new Set(tagsRes.data.filter((t: { name: string; scoring_tier: string }) => t.scoring_tier === 'optimal').map((t: { name: string }) => t.name))
+            : OPTIMAL_TAGS
           const ranges: Record<string, { min: number; max: number }> = {}
           for (const rule of rulesRes.data) {
-            if (OPTIMAL_TAGS.has(rule.tag_to_apply)) {
+            if (dbOptimalTags.has(rule.tag_to_apply)) {
               ranges[rule.marker_id] = { min: rule.min_value, max: rule.max_value }
             }
           }
