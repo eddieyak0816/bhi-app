@@ -41,6 +41,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
   const recommendationsRef = useRef<HTMLDivElement>(null)
 
   const [categoryPreferences, setCategoryPreferences] = useState<string[]>([])
+  const [durationFilter, setDurationFilter] = useState<'all' | 'short' | 'long'>('all')
 
   useEffect(() => {
     if (!user?.id) return
@@ -464,7 +465,30 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
       {/* Personalized Recommendations - NEW */}
       {results.length > 0 && (
         <div ref={recommendationsRef} style={{ marginBottom: 32 }}>
-          <h3 style={{ marginBottom: 8, fontSize: 20, fontWeight: 600 }}>Personalized for You</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Personalized for You</h3>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {(['all', 'short', 'long'] as const).map(opt => (
+                <button
+                  key={opt}
+                  onClick={() => setDurationFilter(opt)}
+                  style={{
+                    padding: '4px 12px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    borderRadius: 20,
+                    border: `1.5px solid ${durationFilter === opt ? theme.blue : theme.borderColor}`,
+                    background: durationFilter === opt ? theme.blue : 'transparent',
+                    color: durationFilter === opt ? '#fff' : theme.textMuted,
+                    cursor: 'pointer',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {opt === 'all' ? 'All' : opt === 'short' ? 'Short' : 'Long'}
+                </button>
+              ))}
+            </div>
+          </div>
           <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
             Based on {applicableTags.length} health insight{applicableTags.length !== 1 ? 's' : ''}: {applicableTags.join(', ') || 'Analyzing your results...'}
           </p>
@@ -491,10 +515,14 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
           )}
 
           {(() => {
-            const filtered = categoryPreferences.length > 0
+            const catFiltered = categoryPreferences.length > 0
               ? recommendedResources.filter(r => r.categories?.some(c => categoryPreferences.includes(c)))
               : recommendedResources
-            const display = filtered.length > 0 ? filtered : recommendedResources
+            const catDisplay = catFiltered.length > 0 ? catFiltered : recommendedResources
+            const filtered = durationFilter === 'all'
+              ? catDisplay
+              : catDisplay.filter(r => !r.duration_type || r.duration_type === 'both' || r.duration_type === durationFilter)
+            const display = filtered.length > 0 ? filtered : catDisplay
             return display.length > 0 ? (
             <div
               style={{

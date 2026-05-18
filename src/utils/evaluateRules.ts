@@ -190,6 +190,7 @@ export interface Resource {
   tags: string[]
   link_url?: string
   categories?: string[]
+  duration_type?: 'short' | 'long' | 'both'
 }
 
 export function getRecommendedResources(

@@ -10,7 +10,7 @@ import AdminUsersTab from '../components/AdminUsersTab'
 import AdminLabResultsTab from '../components/AdminLabResultsTab'
 import AdminChallengesTab from '../components/AdminChallengesTab'
 
-type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null }
+type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null; duration_type?: 'short' | 'long' | 'both' }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
 
 export default function Admin({ onResourcesChanged, initialTab }: { onResourcesChanged?: () => void; initialTab?: string }) {
@@ -125,7 +125,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [resourceModalOpen, setResourceModalOpen] = useState(false)
   const [resourceModalData, setResourceModalData] = useState<any>(null)
   const [isEditingResource, setIsEditingResource] = useState(false)
-  const [resourceEditForm, setResourceEditForm] = useState<{title?: string; type?: string; tags?: string[]; categories?: string[]; link_url?: string; link_protocol?: string; thumbnail_url?: string}>({})
+  const [resourceEditForm, setResourceEditForm] = useState<{title?: string; type?: string; tags?: string[]; categories?: string[]; link_url?: string; link_protocol?: string; thumbnail_url?: string; duration_type?: string}>({})
   const [thumbnailUploading, setThumbnailUploading] = useState(false)
   const [thumbnailError, setThumbnailError] = useState<string | null>(null)
   // resource type modal state
@@ -1937,7 +1937,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                   <button onClick={() => { 
                     console.log('Edit button clicked, resourceModalData:', resourceModalData)
                     const capitalizedType = resourceModalData.type ? resourceTypes.find(t => t.toLowerCase() === resourceModalData.type.toLowerCase()) || resourceModalData.type : ''
-                    const formData = {title: resourceModalData.title, type: capitalizedType, tags: resourceModalData.tags || [], categories: resourceModalData.categories || [], link_url: stripProtocol(resourceModalData.link_url || ''), link_protocol: getProtocol(resourceModalData.link_url || ''), thumbnail_url: resourceModalData.thumbnail_url || ''}
+                    const formData = {title: resourceModalData.title, type: capitalizedType, tags: resourceModalData.tags || [], categories: resourceModalData.categories || [], link_url: stripProtocol(resourceModalData.link_url || ''), link_protocol: getProtocol(resourceModalData.link_url || ''), thumbnail_url: resourceModalData.thumbnail_url || '', duration_type: resourceModalData.duration_type || 'both'}
                     console.log('Setting form data:', formData)
                     setThumbnailError(null)
                     setResourceEditForm(formData)
@@ -2035,6 +2035,14 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       </label>
                       {thumbnailError && <div style={{color:'#dc2626',fontSize:12,marginTop:4}}>{thumbnailError}</div>}
                     </div>
+                    <div style={{marginBottom:12}}>
+                      <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Duration Type</label>
+                      <select value={resourceEditForm.duration_type || 'both'} onChange={e => setResourceEditForm({...resourceEditForm, duration_type: e.target.value})} style={{padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,width:'100%',boxSizing:'border-box'}}>
+                        <option value="both">Both (Short &amp; Long)</option>
+                        <option value="short">Short</option>
+                        <option value="long">Long</option>
+                      </select>
+                    </div>
                   </div>
 
                   {/* Right column - Tags & Categories */}
@@ -2072,7 +2080,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       if (!resourceEditForm.title || !resourceEditForm.title.toString().trim()) return alert('Title required')
                       const fullUrl = resourceEditForm.link_url ? buildFullUrl(resourceEditForm.link_protocol || 'https://', resourceEditForm.link_url) : null
                       console.log('[Save] thumbnail_url being sent:', resourceEditForm.thumbnail_url)
-                      const res = await fetch(apiUrl(`/api/admin/resources/${resourceModalData.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: resourceEditForm.title, type: (resourceEditForm.type || '').toLowerCase(), tags: resourceEditForm.tags || [], categories: resourceEditForm.categories || [], link_url: fullUrl, thumbnail_url: resourceEditForm.thumbnail_url || null }) })
+                      const res = await fetch(apiUrl(`/api/admin/resources/${resourceModalData.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ title: resourceEditForm.title, type: (resourceEditForm.type || '').toLowerCase(), tags: resourceEditForm.tags || [], categories: resourceEditForm.categories || [], link_url: fullUrl, thumbnail_url: resourceEditForm.thumbnail_url || null, duration_type: resourceEditForm.duration_type || 'both' }) })
                       if (!res.ok) throw new Error(await res.text().catch(() => String(res.status)))
                       await load()
                       setIsEditingResource(false)

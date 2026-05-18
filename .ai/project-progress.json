@@ -2,7 +2,7 @@
   {
     "date": "2026-05-14",
     "session": 19,
-    "session_summary": "Session 19 — Restructure NHLS score panel on Dashboard. Embedded National Benchmarks (F19) as a collapsible section inside the NHLS v2.3 panel. Added showBenchmarks state with ▶/▼ toggle button. When expanded, shows the full benchmark table (marker, your value, US avg, vs. avg %, optimal range) for any user-entered markers that have CDC/NHANES data. Removed the standalone National Benchmarks section that was previously below Personalized Recommendations. Layout change only — no DB or calculation changes.",
+    "session_summary": "Session 19 — NHLS score panel restructure + four bug fixes. (1) Embedded National Benchmarks as collapsible section inside NHLS v2.3 panel; removed standalone section. (2) Fixed Fasting Glucose and similar markers showing Out of Range when normal — optimalRanges now built from tags.scoring_tier in DB instead of hardcoded OPTIMAL_TAGS set. (3) PDF review Matched Marker column replaced with a dropdown so users can override automatic match inline. (4) PDF marker matching overhauled from substring to phrase-based — fixes HDL Cholesterol incorrectly matching Cholesterol. (5) Added 30s timeout to postJSON so provider hangs fail fast and fall through to next provider.",
     "features_completed": [
       {
         "id": "NHLS-PANEL-RESTRUCTURE",
@@ -11,9 +11,35 @@
         "notes": "Added showBenchmarks state + collapsible toggle inside NHLS v2.3 panel. Removed standalone National Benchmarks section. Build passes. No server changes needed."
       }
     ],
-    "bugs_fixed": [],
+    "bugs_fixed": [
+      {
+        "id": "OOR-DISPLAY-FIX",
+        "title": "Labs OOR display: use DB scoring_tier instead of hardcoded OPTIMAL_TAGS",
+        "files": ["src/pages/LabsPage.tsx"],
+        "notes": "Fetches tags table in fetchMarkers(). Builds optimalRanges from scoring_tier=optimal. Fixes markers showing Out of Range when normal."
+      },
+      {
+        "id": "PDF-MATCH-DROPDOWN",
+        "title": "PDF review: Matched Marker is now an editable dropdown",
+        "files": ["src/pages/LabsPage.tsx"],
+        "notes": "select element lists all DB markers alphabetically + New marker option. Auto-checks row on change."
+      },
+      {
+        "id": "PDF-MATCH-PHRASE",
+        "title": "PDF marker matching: phrase-based instead of substring",
+        "files": ["src/pages/LabsPage.tsx"],
+        "notes": "containsAsPhrase() replaces includes(). Picks longest match on multiple candidates. Fixes HDL Cholesterol matching Cholesterol."
+      },
+      {
+        "id": "POSTJSON-TIMEOUT",
+        "title": "postJSON 30s timeout — provider hangs fail fast",
+        "files": ["server/index.js"],
+        "notes": "req.setTimeout(30000). Falls through to next provider instead of stalling frontend indefinitely."
+      }
+    ],
     "pending_actions": [
-      "Deploy frontend to Netlify"
+      "Deploy frontend to Netlify",
+      "Deploy server/index.js to Render (postJSON timeout fix)"
     ],
     "total_built": 76,
     "total_partial": 1,

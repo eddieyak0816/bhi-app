@@ -1,6 +1,38 @@
 # CHANGELOG
 
+## 2026-05-17 — feat: YouTube Shorts / full video toggle (F82, session 20)
+
+### `db/migrations/20260517_add_duration_type_to_resources.sql`
+- Added `duration_type TEXT CHECK IN('short','long','both') DEFAULT 'both'` to `resources` table. Backfills all existing rows to `'both'`. **Run in Supabase Dashboard before deploying.**
+
+### `server/index.js`
+- `PATCH /api/admin/resources/:id` — now accepts and persists `duration_type` field.
+
+### `src/utils/evaluateRules.ts`
+- Added `duration_type?: 'short' | 'long' | 'both'` to `Resource` interface.
+
+### `src/pages/Admin.tsx`
+- Resource type definition extended with `duration_type`.
+- Edit form state includes `duration_type` (defaults to `'both'` when opening).
+- Duration Type dropdown added to left column of resource edit modal (options: Both / Short / Long).
+- PATCH save body includes `duration_type`.
+
+### `src/pages/Dashboard.tsx`
+- Added `durationFilter` state (`'all' | 'short' | 'long'`, default `'all'`).
+- All / Short / Long pill toggle added to the right of the "Personalized for You" heading.
+- Filtering logic chains: category preferences → duration filter → fallback to full list.
+
 > **Rebrand note:** This app was rebranded from BHI (Balanced Health Institute) to NHL (National Health League) on 2026-03-31. References to "BHI" in entries dated before this are historical and intentional.
+
+## 2026-05-14 — fix: PDF matching, Labs OOR display, postJSON timeout (session 19)
+
+### `server/index.js`
+- `postJSON()` — added 30-second timeout (`req.setTimeout`) so Groq/OpenRouter hangs fail fast and fall through to the next provider instead of stalling indefinitely.
+
+### `src/pages/LabsPage.tsx`
+- **Fuzzy marker matching overhaul** — replaced bidirectional substring match with a phrase-based matcher (`containsAsPhrase`). Normalises names to lowercase words, requires the DB marker name to appear as a contiguous word sequence in the PDF name (or vice versa). When multiple DB markers match, picks the most specific (longest name). Fixes "HDL Cholesterol" incorrectly matching "Cholesterol" instead of "HDL", and similar collisions.
+- **Matched Marker dropdown** — the "Matched Marker" column in the PDF review table is now a `<select>` dropdown listing all DB markers alphabetically, plus "— New marker —" at the top. Changing the selection auto-checks the row's Save checkbox. Allows users to override the automatic match without leaving the page.
+- **OOR display fix** — `optimalRanges` map now built using `tags.scoring_tier = 'optimal'` from the DB (fetched alongside markers and rules) instead of the hardcoded `OPTIMAL_TAGS` set. Fixes markers like Fasting Glucose showing "Out of Range" when they were actually normal, caused by tags added/updated in the DB after the hardcoded set was last touched.
 
 ## 2026-05-14 — feat: Embed National Benchmarks inside NHLS score panel (session 19)
 
