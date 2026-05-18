@@ -1165,13 +1165,13 @@
         <span class="item-status status-todo">⬜ Not built</span>
       </div>
 
-      <div class="item todo" data-status="todo">
-        <div class="item-num">N2</div>
+      <div class="item done" data-status="done">
+        <div class="item-num">F82</div>
         <div class="item-body">
           <div class="item-title">YouTube Shorts / full video toggle on Dashboard</div>
-          <div class="item-note">Toggle on the Dashboard Personalized Recommendations section to filter between short-form (YouTube Shorts) and long-form content. Requires: DB migration adding <code>duration_type TEXT CHECK IN('short','long','both') DEFAULT 'both'</code> to <code>resources</code> table; Admin edit support to set duration_type per resource; Dashboard toggle filter. Discuss approach with product owner before building.</div>
+          <div class="item-note">Built 2026-05-17. DB migration <code>20260517_add_duration_type_to_resources.sql</code> adds <code>duration_type</code> to <code>resources</code>. Admin resource edit modal has Duration Type dropdown (Short/Long/Both). Dashboard Personalized Recommendations section has All/Short/Long pill toggle. Filtering chains: category preferences → duration → fallback. ⚠️ Run migration in Supabase before deploying. Future: discuss auto-detection via YouTube Data API v3 with Damon.</div>
         </div>
-        <span class="item-status status-todo">⬜ Not built</span>
+        <span class="item-status status-done">✅ Built</span>
       </div>
 
     </div>

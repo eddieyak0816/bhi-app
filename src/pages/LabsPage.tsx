@@ -87,12 +87,13 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
   // Lab trigger messages modal
   const [triggerMessages, setTriggerMessages] = useState<TriggerMessage[] | null>(null)
   const [userSex, setUserSex] = useState<'male' | 'female' | ''>('')
+  const [sexLoaded, setSexLoaded] = useState(false)
 
   // Fetch user sex for sex-specific thresholds (e.g. HDL)
   useEffect(() => {
     if (!user?.id) return
     const jwt = getStoredJwt()
-    if (!jwt) return
+    if (!jwt) { setSexLoaded(true); return }
     const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
     const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
     fetch(`${SUPABASE_URL}/rest/v1/profiles?select=sex&id=eq.${user.id}&limit=1`, {
@@ -101,6 +102,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
       .then(r => r.json())
       .then(rows => { if (rows?.[0]?.sex) setUserSex(rows[0].sex) })
       .catch(() => {})
+      .finally(() => setSexLoaded(true))
   }, [user?.id])
 
   // Provider verification state (for manual entry form)
@@ -369,7 +371,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
     <div>
       <StaleLabBanner latestLabDate={latestLabDate} />
 
-      {!userSex && (
+      {sexLoaded && !userSex && (
         <div style={{
           background: 'rgba(217,119,6,0.08)',
           border: '1px solid #D97706',

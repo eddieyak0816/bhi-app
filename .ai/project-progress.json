@@ -1,5 +1,21 @@
 [
   {
+    "date": "2026-05-17",
+    "session": 20,
+    "session_summary": "Session 20 — F82 YouTube Shorts / full video toggle. Added duration_type column to resources (migration pending run). Admin resource edit modal has Duration Type dropdown. Dashboard Personalized Recommendations section has All/Short/Long pill toggle. Also added DEVELOPER_REQUIREMENTS.md note for future Damon review on YouTube API auto-detection.",
+    "features_completed": [
+      {
+        "id": "F82",
+        "title": "YouTube Shorts / full video toggle",
+        "files": ["src/pages/Dashboard.tsx", "src/pages/Admin.tsx", "src/utils/evaluateRules.ts", "server/index.js", "db/migrations/20260517_add_duration_type_to_resources.sql"],
+        "notes": "Migration 20260517_add_duration_type_to_resources.sql NOT YET RUN — must be run in Supabase before deploying. Build passes. Future: discuss YouTube Data API v3 auto-detection with Damon."
+      }
+    ],
+    "pending_migrations": [
+      "20260517_add_duration_type_to_resources.sql"
+    ]
+  },
+  {
     "date": "2026-05-14",
     "session": 19,
     "session_summary": "Session 19 — NHLS score panel restructure + four bug fixes. (1) Embedded National Benchmarks as collapsible section inside NHLS v2.3 panel; removed standalone section. (2) Fixed Fasting Glucose and similar markers showing Out of Range when normal — optimalRanges now built from tags.scoring_tier in DB instead of hardcoded OPTIMAL_TAGS set. (3) PDF review Matched Marker column replaced with a dropdown so users can override automatic match inline. (4) PDF marker matching overhauled from substring to phrase-based — fixes HDL Cholesterol incorrectly matching Cholesterol. (5) Added 30s timeout to postJSON so provider hangs fail fast and fall through to next provider.",
