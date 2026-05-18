@@ -2,13 +2,19 @@
   {
     "date": "2026-05-17",
     "session": 21,
-    "session_summary": "Session 21 — Hormone Panel UI. Split Labs 'Your Markers' grid into Blood Work and Hormone Panel sections. Hormone markers (applicable_sex = male/female) appear in their own card below blood work with a 'Personal tracking only' subtitle. Section hidden until user has logged hormone results. Trend charts scoped per section. Build passes.",
+    "session_summary": "Session 21 — Hormone Panel UI + HOMA-IR reference link. (1) Split Labs 'Your Markers' grid into Blood Work and Hormone Panel sections — hormone markers (applicable_sex = male/female) shown separately with 'Personal tracking only' subtitle, hidden until user has logged hormone results. (2) 'HOMA-IR' in NHLS v2.3 score panel subtitle is now a dotted Wikipedia link opening in a new tab. Build passes.",
     "features_completed": [
       {
         "id": "HORMONE-PANEL-UI",
         "title": "Separate Hormone Panel section in LabsPage",
         "files": ["src/pages/LabsPage.tsx"],
         "notes": "No migration. Uses existing applicable_sex column on lab_markers. UI-only change."
+      },
+      {
+        "id": "HOMA-IR-LINK",
+        "title": "HOMA-IR Wikipedia reference link in NHLS score panel",
+        "files": ["src/pages/Dashboard.tsx"],
+        "notes": "Dotted underline link to en.wikipedia.org/wiki/Homeostatic_model_assessment. Opens in new tab. Muted text color so it doesn't distract."
       }
     ],
     "bugs_fixed": []
