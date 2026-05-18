@@ -37,7 +37,7 @@ export default function VirtualProviderCards() {
   if (loading || providers.length === 0) return null
 
   return (
-    <div style={{ marginTop: 32 }}>
+    <div style={{ marginTop: 32, marginBottom: 32 }}>
       <h3 style={{ margin: '0 0 14px 0', fontSize: 16, fontWeight: 700, color: theme.text }}>
         Virtual Providers
       </h3>

@@ -115,6 +115,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id])
 
   const addResult = async (result: Omit<UserLabResult, 'id'>) => {
+    sessionStorage.removeItem('nhl-bhas-v23-result')
     if (!user?.id) {
       const newResult: UserLabResult = {
         ...result,
