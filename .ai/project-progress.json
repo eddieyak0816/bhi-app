@@ -2,17 +2,20 @@
   {
     "date": "2026-05-17",
     "session": 20,
-    "session_summary": "Session 20 — F82 YouTube Shorts / full video toggle. Added duration_type column to resources (migration pending run). Admin resource edit modal has Duration Type dropdown. Dashboard Personalized Recommendations section has All/Short/Long pill toggle. Also added DEVELOPER_REQUIREMENTS.md note for future Damon review on YouTube API auto-detection.",
+    "session_summary": "Session 20 — F82 video toggle + 4 bug fixes. (1) duration_type on resources, Admin dropdown, Dashboard All/Short/Long toggle. (2) Admin nav replaced with horizontal scroll tab bar. (3) Virtual Providers spacing fix. (4) Stale NHLS score fix — addResult() clears sessionStorage cache. (5) Sex banner flash fix — sexLoaded guard in LabsPage.",
     "features_completed": [
       {
         "id": "F82",
         "title": "YouTube Shorts / full video toggle",
         "files": ["src/pages/Dashboard.tsx", "src/pages/Admin.tsx", "src/utils/evaluateRules.ts", "server/index.js", "db/migrations/20260517_add_duration_type_to_resources.sql"],
-        "notes": "Migration 20260517_add_duration_type_to_resources.sql NOT YET RUN — must be run in Supabase before deploying. Build passes. Future: discuss YouTube Data API v3 auto-detection with Damon."
+        "notes": "Migration run 2026-05-17. Build passes. Future: discuss YouTube Data API v3 auto-detection with Damon."
       }
     ],
-    "pending_migrations": [
-      "20260517_add_duration_type_to_resources.sql"
+    "bugs_fixed": [
+      { "id": "ADMIN-NAV-SCROLL", "title": "Admin nav horizontal scroll tab bar", "files": ["src/pages/Admin.tsx"] },
+      { "id": "VP-SPACING", "title": "Virtual Providers bottom margin", "files": ["src/components/VirtualProviderCards.tsx"] },
+      { "id": "STALE-NHLS-SCORE", "title": "NHLS score not showing after lab save — clear sessionStorage cache in addResult()", "files": ["src/context/ResultsContext.tsx"] },
+      { "id": "SEX-BANNER-FLASH", "title": "Sex-not-set banner flashing on load — sexLoaded guard", "files": ["src/pages/LabsPage.tsx"] }
     ]
   },
   {

@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 2026-05-17 — fix: Admin nav, spacing, stale score cache, sex banner flash (session 20)
+
+### `src/pages/Admin.tsx`
+- Tab nav replaced wrapping tile grid with horizontal scrolling tab bar. Single row, no wrap, active tab solid blue with white text, scrolls on narrow windows.
+
+### `src/components/VirtualProviderCards.tsx`
+- Added `marginBottom: 32` to create space between Virtual Providers and My Team card.
+
+### `src/context/ResultsContext.tsx`
+- `addResult()` now clears `nhl-bhas-v23-result` from sessionStorage so Dashboard recalculates NHLS score immediately after saving lab results, without needing a page refresh.
+
+### `src/pages/LabsPage.tsx`
+- Added `sexLoaded` flag to sex fetch — banner now waits for profile fetch to resolve before rendering, eliminating the red flash on page load for users who have sex set.
+
 ## 2026-05-17 — feat: YouTube Shorts / full video toggle (F82, session 20)
 
 ### `db/migrations/20260517_add_duration_type_to_resources.sql`

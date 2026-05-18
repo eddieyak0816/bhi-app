@@ -1312,7 +1312,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           ...(isSuperAdmin ? [{ id: 'lab-results' as AdminTab, icon: '🔬', label: 'Lab Data' }] : []),
         ]
         return (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 28, borderBottom: `2px solid ${theme.borderColor}`, paddingBottom: 16 }}>
+          <div style={{
+            display: 'flex', flexWrap: 'nowrap', gap: 4, marginBottom: 28,
+            overflowX: 'auto', borderBottom: `2px solid ${theme.borderColor}`, paddingBottom: 12,
+            scrollbarWidth: 'thin',
+          }}>
             {tabs.map(t => {
               const isActive = activeTab === t.id
               return (
@@ -1320,15 +1324,15 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
                   style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                    padding: '10px 14px', minWidth: 68, borderRadius: 8,
+                    display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+                    padding: '7px 14px', borderRadius: 6, whiteSpace: 'nowrap',
                     border: `1px solid ${isActive ? (theme.blue ?? '#3b82f6') : theme.borderColor}`,
-                    background: isActive ? `${theme.blue ?? '#3b82f6'}18` : 'transparent',
-                    color: isActive ? (theme.blue ?? '#3b82f6') : theme.textMuted,
-                    fontWeight: isActive ? 700 : 500, fontSize: 11, cursor: 'pointer', transition: 'all 0.15s',
+                    background: isActive ? (theme.blue ?? '#3b82f6') : 'transparent',
+                    color: isActive ? '#fff' : theme.textMuted,
+                    fontWeight: isActive ? 600 : 500, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s',
                   }}
                 >
-                  <span style={{ fontSize: 20, lineHeight: 1 }}>{t.icon}</span>
+                  <span style={{ fontSize: 15, lineHeight: 1 }}>{t.icon}</span>
                   {t.label}
                 </button>
               )
