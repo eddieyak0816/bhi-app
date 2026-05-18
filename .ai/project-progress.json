@@ -1,6 +1,20 @@
 [
   {
     "date": "2026-05-17",
+    "session": 21,
+    "session_summary": "Session 21 — Hormone Panel UI. Split Labs 'Your Markers' grid into Blood Work and Hormone Panel sections. Hormone markers (applicable_sex = male/female) appear in their own card below blood work with a 'Personal tracking only' subtitle. Section hidden until user has logged hormone results. Trend charts scoped per section. Build passes.",
+    "features_completed": [
+      {
+        "id": "HORMONE-PANEL-UI",
+        "title": "Separate Hormone Panel section in LabsPage",
+        "files": ["src/pages/LabsPage.tsx"],
+        "notes": "No migration. Uses existing applicable_sex column on lab_markers. UI-only change."
+      }
+    ],
+    "bugs_fixed": []
+  },
+  {
+    "date": "2026-05-17",
     "session": 20,
     "session_summary": "Session 20 — F82 video toggle + 4 bug fixes. (1) duration_type on resources, Admin dropdown, Dashboard All/Short/Long toggle. (2) Admin nav replaced with horizontal scroll tab bar. (3) Virtual Providers spacing fix. (4) Stale NHLS score fix — addResult() clears sessionStorage cache. (5) Sex banner flash fix — sexLoaded guard in LabsPage.",
     "features_completed": [

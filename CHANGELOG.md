@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 2026-05-17 — feat: HOMA-IR reference link (session 21)
+
+### `src/pages/Dashboard.tsx`
+- "HOMA-IR" in the NHLS v2.3 score panel subtitle is now a dotted-underline link to the Wikipedia HOMA article, opening in a new tab.
+
+## 2026-05-17 — feat: Hormone Panel separate section in Labs (session 21)
+
+### `src/pages/LabsPage.tsx`
+- "Your Markers" overview split into two sections: **Blood Work** (markers with `applicable_sex = 'both'` or null) and **Hormone Panel** (markers with `applicable_sex = 'male'` or `'female'`).
+- Hormone Panel shows subtitle "Personal tracking only — not included in NHLS score".
+- Hormone Panel section hidden until user has at least one logged hormone marker.
+- Trend charts scoped to their section — blood work chart only opens in blood work section, hormone chart only in hormone section.
+
 ## 2026-05-17 — fix: Admin nav, spacing, stale score cache, sex banner flash (session 20)
 
 ### `src/pages/Admin.tsx`

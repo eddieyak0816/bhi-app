@@ -309,7 +309,16 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                 </span>
               </div>
               <div style={{ fontSize: 12, color: theme.textMuted }}>
-                {bhasV2Result.metricScores.length} of 7 metrics scored · uses derived ratios (HOMA-IR, TG/HDL, WtHR)
+                {bhasV2Result.metricScores.length} of 7 metrics scored · uses derived ratios ({' '}
+                <a
+                  href="https://en.wikipedia.org/wiki/Homeostatic_model_assessment"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: theme.textMuted, textDecoration: 'underline', textDecorationStyle: 'dotted' }}
+                >
+                  HOMA-IR
+                </a>
+                , TG/HDL, WtHR)
               </div>
             </div>
           </div>
