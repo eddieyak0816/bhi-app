@@ -29,6 +29,7 @@ export default function AdminProvidersTab({ theme }: Props) {
   const [editing, setEditing] = useState<Provider | null>(null)
   const [form, setForm] = useState<typeof EMPTY>({ ...EMPTY })
   const [saving, setSaving] = useState(false)
+  const [filterOrgId, setFilterOrgId] = useState<string>('all')
 
   const DEV_BACKEND_URL = ((import.meta as any).env.VITE_BACKEND_URL as string) || ''
   const DEV_BACKEND_KEY = ((import.meta as any).env.VITE_BACKEND_API_KEY as string) || ''
@@ -128,6 +129,22 @@ export default function AdminProvidersTab({ theme }: Props) {
         </button>
       </div>
 
+      {/* Org filter */}
+      {orgs.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <span style={{ fontSize: 13, color: theme.textMuted, fontWeight: 600 }}>Filter by org:</span>
+          <select
+            value={filterOrgId}
+            onChange={e => setFilterOrgId(e.target.value)}
+            style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '5px 10px', fontSize: 13, color: theme.text, cursor: 'pointer' }}
+          >
+            <option value="all">All providers</option>
+            <option value="global">Global only</option>
+            {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+          </select>
+        </div>
+      )}
+
       {error && (
         <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px', color: '#b91c1c', marginBottom: 16, fontSize: 13 }}>
           {error} <button onClick={() => setError(null)} style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c' }}>✕</button>
@@ -187,13 +204,19 @@ export default function AdminProvidersTab({ theme }: Props) {
       )}
 
       {/* Provider list */}
-      {providers.length === 0 ? (
+      {(() => {
+        const filtered = providers.filter(p => {
+          if (filterOrgId === 'all') return true
+          if (filterOrgId === 'global') return p.org_id === null
+          return p.org_id === filterOrgId
+        })
+        return filtered.length === 0 ? (
         <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 32, textAlign: 'center', color: theme.textMuted }}>
-          No providers yet. Click + Add Provider to create one.
+          {providers.length === 0 ? 'No providers yet. Click + Add Provider to create one.' : 'No providers match the selected filter.'}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {providers.map(p => (
+          {filtered.map(p => (
             <div key={p.id} style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'flex-start', opacity: p.is_active ? 1 : 0.55 }}>
               {p.image_url ? (
                 <img src={p.image_url} alt={p.name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
@@ -217,7 +240,8 @@ export default function AdminProvidersTab({ theme }: Props) {
             </div>
           ))}
         </div>
-      )}
+      )
+      })()}
     </div>
   )
 }

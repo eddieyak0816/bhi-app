@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-05-18 — feat: Virtual Providers per-org — Admin org filter (session 22)
+
+### `src/components/AdminProvidersTab.tsx`
+- Added org filter dropdown ("All providers / Global only / [Org name]") above the provider list.
+- Provider list filters in real-time by selected org without a server round-trip.
+- Empty-state message distinguishes "no providers exist" from "no providers match filter".
+
 ## 2026-05-17 — feat: HOMA-IR reference link (session 21)
 
 ### `src/pages/Dashboard.tsx`

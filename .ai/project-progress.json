@@ -1,5 +1,19 @@
 [
   {
+    "date": "2026-05-18",
+    "session": 22,
+    "session_summary": "Session 22 — Virtual Providers per-org: Admin org filter. Audited full feature — table migration (org_id), server endpoints (org-scoped GET /api/providers), and Admin form org selector were all already built. Added org filter dropdown to Admin Providers list (All/Global only/per-org). Build passes.",
+    "features_completed": [
+      {
+        "id": "VIRTUAL-PROVIDERS-PER-ORG",
+        "title": "Virtual Providers per-org — Admin org filter dropdown",
+        "files": ["src/components/AdminProvidersTab.tsx"],
+        "notes": "No migration needed — org_id already in virtual_providers table from 20260416_create_virtual_providers.sql. Server already filters by user org. Admin form org selector already present. Only gap was list filter — now added."
+      }
+    ],
+    "bugs_fixed": []
+  },
+  {
     "date": "2026-05-17",
     "session": 21,
     "session_summary": "Session 21 — Hormone Panel UI + HOMA-IR reference link. (1) Split Labs 'Your Markers' grid into Blood Work and Hormone Panel sections — hormone markers (applicable_sex = male/female) shown separately with 'Personal tracking only' subtitle, hidden until user has logged hormone results. (2) 'HOMA-IR' in NHLS v2.3 score panel subtitle is now a dotted Wikipedia link opening in a new tab. Build passes.",

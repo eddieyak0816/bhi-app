@@ -1026,9 +1026,9 @@
         <div class="item-num">65</div>
         <div class="item-body">
           <div class="item-title">Virtual provider links — telehealth cards for members</div>
-          <div class="item-note">Built 2026-04-16. DB: <code>20260416_create_virtual_providers.sql</code> — virtual_providers table, global or org-scoped. Server: GET /api/providers, admin CRUD. Frontend: VirtualProviderCards.tsx on Dashboard (expandable cards). Admin → Providers tab: create/edit/deactivate/delete. <strong>Action required:</strong> Run migration in Supabase Dashboard → SQL Editor.</div>
+          <div class="item-note">Built 2026-04-16. DB: <code>20260416_create_virtual_providers.sql</code> — virtual_providers table, global or org-scoped (org_id FK). Server: GET /api/providers (user-scoped by org membership), admin CRUD. Frontend: VirtualProviderCards.tsx on Dashboard (expandable cards). Admin → Providers tab: create/edit/deactivate/delete with org selector. Updated 2026-05-18: org filter dropdown added to Admin Providers list (All / Global only / per org).</div>
         </div>
-        <span class="item-status status-done">✅ Done — 2026-04-16 — ⚠️ run migration in Supabase</span>
+        <span class="item-status status-done">✅ Done — 2026-05-18</span>
       </div>
 
       <div class="item done" data-status="done">
