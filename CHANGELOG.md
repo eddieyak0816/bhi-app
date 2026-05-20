@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 2026-05-20 — known bug: hs-CRP duplicate marker rows break NHLS v2.3 scoring (fix queued)
+
+### Problem
+Three separate rows exist in `lab_markers` for the same marker:
+- `hs-CRP` (id: `72644039-e3df-4edb-96e4-961bdc35dfe6`) — the canonical name
+- `Hs CRP` (id: `cc758098-d765-4f4e-aa65-621d95b41ca6`) — duplicate
+- `HS CRP` (id: `8739971d-1178-4116-8250-9e2e282bf3d4`) — duplicate
+
+`bhasV2.ts` looks up `'hs-CRP'` by exact case-insensitive name match. Results saved under `Hs CRP` or `HS CRP` (common PDF extraction variants) never contribute to the NHLS v2.3 score — users get a lower score than they should.
+
+### Fix needed (two parts)
+1. **DB migration** — migrate all `user_lab_results` rows pointing to the duplicate marker IDs to the canonical `hs-CRP` id, then delete the duplicate `lab_markers` rows.
+2. **Code** — normalize marker name lookup in `bhasV2.ts` `latest()` to strip hyphens/spaces so `'hs crp'` / `'hs-crp'` / `'hscrp'` all match, preventing recurrence for any marker.
+
+### Files
+- `db/migrations/` — new migration to merge duplicates
+- `src/utils/bhasV2.ts` — harden `latest()` lookup
+
 ## 2026-05-20 — planned: Dashboard & scoring redesign per Damon feedback (session 23 — pending)
 
 ### Pending implementation — items confirmed by Damon via email 2026-05-20
