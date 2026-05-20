@@ -1,5 +1,42 @@
 [
   {
+    "date": "2026-05-20",
+    "session": "23-planning",
+    "session_summary": "Session 23 planning — No code written. Analysed Damon email requesting: (1) NHLS v2.3 score panel shown first on Dashboard (before Hormone Health v1 banner), (2) NHL score to use exactly 8 specific metrics (Vitamin D, B12, hs-CRP, HOMA-IR, HbA1c new, Height-to-Waist Ratio, TG/HDL, ACP with mydirectives.com link), (3) Marker category system so Damon can classify markers into NHLS Score / Hormone Panel / Additional Markers. All docs updated: CHANGELOG, DEVELOPER_REQUIREMENTS (Phase 13 added, BHAS v2.3 spec updated), MEMORY.md, project-progress.json.",
+    "features_completed": [],
+    "bugs_fixed": [],
+    "pending_features": [
+      {
+        "id": "F83",
+        "title": "Dashboard: NHLS v2.3 panel first, Hormone Health second",
+        "files": ["src/pages/Dashboard.tsx"],
+        "notes": "Swap JSX block order — v2.3 panel before v1 banner. No logic change."
+      },
+      {
+        "id": "F84",
+        "title": "NHLS v2.3: add HbA1c as 8th scored metric",
+        "files": ["src/utils/bhasV2.ts", "src/pages/Dashboard.tsx"],
+        "notes": "Add HbA1c lookup + score3(value, 5.7, 6.5, true). Max score 7→8. Update denominator display + 'X of 8 metrics' subtitle. interpretTotal thresholds update. Need to confirm exact thresholds with Damon if he deviates from ADA standard."
+      },
+      {
+        "id": "F85",
+        "title": "ACP metric: mydirectives.com link",
+        "files": ["src/pages/Dashboard.tsx"],
+        "notes": "Add www.mydirectives.com link in ACP metric chip and/or missing-inputs hint."
+      },
+      {
+        "id": "F86",
+        "title": "Marker category system + Additional Markers section",
+        "files": ["db/migrations/20260520_add_marker_category_to_lab_markers.sql", "server/index.js", "src/pages/Admin.tsx", "src/pages/LabsPage.tsx"],
+        "notes": "DB: marker_category TEXT CHECK IN('nhls_score','hormone','additional') DEFAULT 'nhls_score'. Admin edit modal: category dropdown. LabsPage: 3 sections — NHLS Score Markers / Hormone Panel / Additional Markers."
+      }
+    ],
+    "total_built": 78,
+    "total_partial": 1,
+    "total_not_built": 10,
+    "total_items": 88
+  },
+  {
     "date": "2026-05-18",
     "session": 22,
     "session_summary": "Session 22 — Virtual Providers per-org: Admin org filter. Audited full feature — table migration (org_id), server endpoints (org-scoped GET /api/providers), and Admin form org selector were all already built. Added org filter dropdown to Admin Providers list (All/Global only/per-org). Build passes.",

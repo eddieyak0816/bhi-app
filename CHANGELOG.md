@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 2026-05-20 — planned: Dashboard & scoring redesign per Damon feedback (session 23 — pending)
+
+### Pending implementation — items confirmed by Damon via email 2026-05-20
+
+**1. Dashboard order change**
+- NHLS v2.3 score panel (the 7-metric derived-ratio score) to appear **first** after stat cards.
+- "Hormone Health" v1 banner (NHLS % of tagged markers) to appear **second**.
+- Change: swap JSX block order in `src/pages/Dashboard.tsx`.
+
+**2. NHLS v2.3 score: add HbA1c as 8th scored metric**
+- Add HbA1c (Hemoglobin A1c, `HbA1c`) as a new scored metric in `src/utils/bhasV2.ts`.
+- Thresholds: Optimal < 5.7%, Improvement 5.7–6.4%, Out of Range ≥ 6.5%.
+- Max score increases from 7.0 → 8.0. `interpretTotal` thresholds update accordingly.
+- Update Dashboard subtitle from "7 metrics" → "8 metrics". Update `/` denominator display.
+
+**3. NHLS v2.3: Advanced Care Plan — add mydirectives.com link**
+- When ACP metric chip is shown on Dashboard, or in "missing inputs" hint, link to `www.mydirectives.com`.
+
+**4. Marker category classification system**
+- New DB migration: add `marker_category TEXT CHECK IN('nhls_score','hormone','additional') DEFAULT 'nhls_score'` to `lab_markers`.
+- Admin Markers UI: category dropdown in edit modal so Damon can classify each marker.
+- LabsPage "Your Markers": render three sections — **NHS Score Markers**, **Hormone Panel** (male/female), **Additional Markers** — driven by `marker_category` column instead of `applicable_sex` alone.
+
 ## 2026-05-18 — feat: Virtual Providers per-org — Admin org filter (session 22)
 
 ### `src/components/AdminProvidersTab.tsx`

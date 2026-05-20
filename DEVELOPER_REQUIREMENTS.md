@@ -143,6 +143,7 @@ Source: `docs/APP integration Point system and Metrics.pdf`
 | HDL | mg/dL |
 | Vitamin D 25-OH | ng/mL |
 | Vitamin B12 | pg/mL |
+| **HbA1c** | **% (added 2026-05-20 per Damon)** |
 | VO2 Max Percentile | 0–100 (age/sex adjusted) |
 | Grip Strength | kg |
 | Body Weight | kg |
@@ -150,7 +151,7 @@ Source: `docs/APP integration Point system and Metrics.pdf`
 | Waist Circumference | cm |
 | Total Daily Insulin Units | units/day (Type 1 only) |
 | Acute Care Visits | count, past 12 months (tie-breaker only) |
-| Advanced Care Plan Status | Yes/No |
+| Advanced Care Plan Status | Yes/No — link to www.mydirectives.com |
 | Sex | Male/Female (for grip scoring) |
 | Type 1 Diabetes | Yes/No |
 
@@ -164,31 +165,34 @@ Source: `docs/APP integration Point system and Metrics.pdf`
 | Insulin Units/kg | Total Daily Insulin Units / Body Weight (kg) |
 
 ### Metric Scoring Rules (1 / 0.5 / 0)
+
+> **Updated 2026-05-20 per Damon:** Damon's confirmed scored metrics for the NHL Score panel are: Vitamin D, B12, hs-CRP, HOMA-IR, HbA1c, Height-to-Waist Ratio (WtHR), TG/HDL Ratio, Advanced Care Plan. VO2 Max and Grip Ratio removed from scoring (tracked as biometrics only). HbA1c added.
+
 | Metric | 1 | 0.5 | 0 |
 |---|---|---|---|
-| HOMA-IR (non-Type 1) | < 1.5 | 1.5–2.5 | ≥ 2.5 |
+| HOMA-IR (non-Type 1) | < 2.0 | 2.0–3.0 | ≥ 3.0 |
 | hs-CRP | < 1.0 | 1.0–3.0 | > 3.0 |
 | TG/HDL Ratio | < 2.0 | 2.0–3.0 | > 3.0 |
 | Insulin Units/kg (Type 1) | < 0.6 | 0.6–0.8 | > 0.8 |
 | Vitamin D (binary) | > 50 ng/mL | — | ≤ 50 |
 | Vitamin B12 (binary) | > 750 pg/mL | — | ≤ 750 |
-| VO2 Max Percentile | ≥ 60 | 40–59 | < 40 |
-| Grip Ratio — Men | ≥ 0.60 | 0.50–0.59 | < 0.50 |
-| Grip Ratio — Women | ≥ 0.45 | 0.35–0.44 | < 0.35 |
+| **HbA1c (binary/3-tier)** | **< 5.7%** | **5.7–6.4%** | **≥ 6.5%** |
 | WtHR | ≤ 0.50 | 0.51–0.56 | > 0.56 |
-| Advanced Care Planning (binary) | Documented | — | Not documented |
+| Advanced Care Planning (binary) | Documented (link: www.mydirectives.com) | — | Not documented |
+| VO2 Max Percentile | *(biometric only — not scored)* | — | — |
+| Grip Ratio | *(biometric only — not scored)* | — | — |
 
 ### Total Score
-- 9 scored categories per participant (max = 9.0)
-- Non-Type 1: HOMA-IR + hs-CRP + TG/HDL + Vit D + B12 + VO2 + Grip Ratio + WtHR + ACP
+- **8 scored categories per participant (max = 8.0)** *(updated 2026-05-20 — was 9, HbA1c added, VO2/Grip removed)*
+- Non-Type 1: HOMA-IR + hs-CRP + TG/HDL + Vit D + B12 + HbA1c + WtHR + ACP
 - Type 1: Insulin Units/kg replaces HOMA-IR, all others same
 
 ### Score Interpretation
 | Range | Label |
 |---|---|
-| 8.0–9.0 | Optimal |
-| 6.0–7.5 | Healthy |
-| 4.0–5.5 | Needs Improvement |
+| 7.0–8.0 | Optimal |
+| 5.5–6.5 | Healthy |
+| 4.0–5.0 | Needs Improvement |
 | 0–3.5 | High Risk |
 
 ### Tie-Breaker Ranking (when scores are equal)
@@ -563,3 +567,8 @@ Items are ordered by logical dependency. Last updated: 2026-04-01.
 | 81 | Admin PHI access confirmation | ❌ Not built | Add confirmation step before Admin → Lab Data bulk-view. Covered by audit logging (#77) but UX gate adds friction as deterrent. |
 | **Phase 12 – Content & Engagement** | | 🔶 1/1 partial | |
 | 82 | YouTube Shorts / full video toggle | ✅ Built | `duration_type TEXT CHECK IN('short','long','both') DEFAULT 'both'` added to `resources`. Admin edit support + Dashboard toggle built (2026-05-17). **⚠️ Future review with Damon required:** Currently Damon must manually set duration type per resource. We explored auto-detecting duration from YouTube URLs via the YouTube Data API v3 — this would eliminate manual entry for YouTube content. Need to confirm: (1) Damon's definition of "short" vs "long" (YouTube Shorts ≤60s? or ≤3–5 min?); (2) whether a YouTube API key is acceptable; (3) whether non-YouTube resource links are common enough to need a manual fallback. |
+| **Phase 13 – NHLS Score & Lab Marker Redesign** | | ❌ 0/4 pending | *Confirmed by Damon email 2026-05-20* |
+| 83 | Dashboard: NHLS v2.3 panel first, Hormone Health second | ❌ Not built | Swap JSX block order in `src/pages/Dashboard.tsx` — NHLS v2.3 score panel (derived ratios) shown before the v1 Hormone Health banner. |
+| 84 | NHLS v2.3: add HbA1c as 8th scored metric | ❌ Not built | Add HbA1c to `src/utils/bhasV2.ts`. Thresholds: Optimal < 5.7%, Improvement 5.7–6.4%, Out of Range ≥ 6.5%. Max score 7.0 → 8.0. Update Dashboard subtitle + denominator. |
+| 85 | NHLS v2.3: Advanced Care Plan — link to mydirectives.com | ❌ Not built | Add `www.mydirectives.com` link in ACP metric chip tooltip/label and in missing-inputs hint on Dashboard. |
+| 86 | Marker category system + Additional Markers section | ❌ Not built | DB migration: `marker_category TEXT CHECK IN('nhls_score','hormone','additional') DEFAULT 'nhls_score'` on `lab_markers`. Admin Markers edit modal: category dropdown. LabsPage: render 3 sections — NHLS Score Markers / Hormone Panel / Additional Markers — driven by `marker_category`. |
