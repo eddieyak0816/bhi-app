@@ -87,9 +87,16 @@ function interpretTotal(total: number): 'Optimal' | 'Healthy' | 'Needs Improveme
   return 'High Risk'
 }
 
+// Normalize marker names for matching: lowercase, strip hyphens/spaces/dots
+// so 'hs-CRP', 'Hs CRP', 'HS CRP', 'HSCRP' all resolve to the same key.
+function normalizeName(s: string): string {
+  return s.toLowerCase().replace(/[-\s.]/g, '')
+}
+
 function latest(results: LabInput[], name: string): number | null {
+  const needle = normalizeName(name)
   const matches = results
-    .filter(r => r.markerName.toLowerCase() === name.toLowerCase())
+    .filter(r => normalizeName(r.markerName) === needle)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   return matches.length > 0 ? matches[0].value : null
 }
