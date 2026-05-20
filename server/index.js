@@ -2135,12 +2135,13 @@ app.post('/api/admin/users', async (req, res) => {
     });
     if (authErr) return res.status(400).json({ error: authErr.message });
     const userId = authData.user.id;
-    const profileUpdate = { role };
+    // Upsert so admin-created users (no handle_new_user trigger) get a profile row
+    const profileRow = { id: userId, email, role, name: email };
     if (username) {
       const clean = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
-      if (clean.length >= 3) profileUpdate.username = clean;
+      if (clean.length >= 3) profileRow.username = clean;
     }
-    await sb.from('profiles').update(profileUpdate).eq('id', userId);
+    await sb.from('profiles').upsert(profileRow, { onConflict: 'id' });
     return res.status(201).json({ id: userId, email, role });
   } catch (err) {
     return res.status(500).json({ error: 'server_error' });
