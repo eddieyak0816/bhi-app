@@ -255,6 +255,18 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
         </div>
       )}
 
+      {/* Hormone health prompt */}
+      <div style={{ fontSize: 13, color: theme.textMuted, marginBottom: 32 }}>
+        If you want to track your hormone health, you can add your metrics{' '}
+        <button
+          onClick={() => onNavigate?.('labs')}
+          style={{ background: 'none', border: 'none', color: theme.blue, cursor: 'pointer', fontSize: 13, padding: 0, textDecoration: 'underline' }}
+        >
+          here
+        </button>
+        .
+      </div>
+
       {/* NHLS Score Panel — shown only when enough data exists */}
       {bhasV2Result && bhasV2Result.hasEnoughData && (
         <div
