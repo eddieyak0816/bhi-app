@@ -116,6 +116,10 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   ])
   const [markerEditSaving, setMarkerEditSaving] = useState(false)
   const [markerEditError, setMarkerEditError] = useState<string | null>(null)
+  // Marker aliases state (F87)
+  const [markerEditAliases, setMarkerEditAliases] = useState<Array<{ id: string; alias: string }>>([])
+  const [newAliasInput, setNewAliasInput] = useState('')
+  const [aliasSaving, setAliasSaving] = useState(false)
   // health goal modal state
   const [healthGoalModalOpen, setHealthGoalModalOpen] = useState(false)
   const [healthGoalModalData, setHealthGoalModalData] = useState<any>(null)
@@ -3032,7 +3036,14 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                   })
                                   setMarkerEditRules(rows)
                                   setMarkerEditError(null)
+                                  setMarkerEditAliases([])
+                                  setNewAliasInput('')
                                   setMarkerModalOpen(true)
+                                  // Load aliases async — non-blocking
+                                  fetch(apiUrl(`/api/admin/lab-markers/${m.id}/aliases`), { headers: authHeaders() })
+                                    .then(r => r.ok ? r.json() : { aliases: [] })
+                                    .then(({ aliases }) => setMarkerEditAliases(aliases || []))
+                                    .catch(() => {})
                                 }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
                                 <button onClick={async () => {
                                   if (!confirm(`Delete marker "${m.name}"?`)) return
@@ -3864,6 +3875,76 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               <option value="hormone">Hormone Panel (tracking only)</option>
               <option value="additional">Additional Markers</option>
             </select>
+
+            <div style={{borderTop:`1px solid ${theme.borderColor}`,paddingTop:16,marginBottom:16}}>
+              <div style={{fontSize:13,fontWeight:700,color:theme.text,marginBottom:2}}>Aliases</div>
+              <p style={{margin:'0 0 10px 0',fontSize:12,color:theme.textMuted}}>Alternative names (e.g. from PDFs) that auto-route to this marker.</p>
+              <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
+                {markerEditAliases.map(a => (
+                  <span key={a.id} style={{display:'inline-flex',alignItems:'center',gap:4,background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:12,padding:'2px 10px',fontSize:12,color:theme.text}}>
+                    {a.alias}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const res = await fetch(apiUrl(`/api/admin/lab-markers/aliases/${a.id}`), { method: 'DELETE', headers: authHeaders() })
+                        if (res.ok) setMarkerEditAliases(prev => prev.filter(x => x.id !== a.id))
+                      }}
+                      style={{background:'transparent',border:'none',cursor:'pointer',color:theme.textMuted,fontSize:14,lineHeight:1,padding:0,marginLeft:2}}
+                      title="Remove alias"
+                    >×</button>
+                  </span>
+                ))}
+                {markerEditAliases.length === 0 && <span style={{fontSize:12,color:theme.textMuted}}>No aliases yet.</span>}
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                <input
+                  value={newAliasInput}
+                  onChange={e => setNewAliasInput(e.target.value)}
+                  onKeyDown={async e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      const alias = newAliasInput.trim()
+                      if (!alias || !markerModalOriginalId) return
+                      setAliasSaving(true)
+                      try {
+                        const res = await fetch(apiUrl(`/api/admin/lab-markers/${markerModalOriginalId}/aliases`), {
+                          method: 'POST', headers: { 'content-type': 'application/json', ...authHeaders() },
+                          body: JSON.stringify({ alias }),
+                        })
+                        if (res.ok) {
+                          const data = await res.json()
+                          setMarkerEditAliases(prev => [...prev, { id: data.id, alias: data.alias }])
+                          setNewAliasInput('')
+                        }
+                      } finally { setAliasSaving(false) }
+                    }
+                  }}
+                  placeholder="Type alias name…"
+                  style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text,fontSize:12}}
+                />
+                <button
+                  type="button"
+                  disabled={aliasSaving || !newAliasInput.trim()}
+                  onClick={async () => {
+                    const alias = newAliasInput.trim()
+                    if (!alias || !markerModalOriginalId) return
+                    setAliasSaving(true)
+                    try {
+                      const res = await fetch(apiUrl(`/api/admin/lab-markers/${markerModalOriginalId}/aliases`), {
+                        method: 'POST', headers: { 'content-type': 'application/json', ...authHeaders() },
+                        body: JSON.stringify({ alias }),
+                      })
+                      if (res.ok) {
+                        const data = await res.json()
+                        setMarkerEditAliases(prev => [...prev, { id: data.id, alias: data.alias }])
+                        setNewAliasInput('')
+                      }
+                    } finally { setAliasSaving(false) }
+                  }}
+                  style={{padding:'6px 12px',background:theme.blue,border:'none',borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',opacity:aliasSaving||!newAliasInput.trim()?0.5:1}}
+                >{aliasSaving ? '…' : 'Add'}</button>
+              </div>
+            </div>
 
             <div style={{borderTop:`1px solid ${theme.borderColor}`,paddingTop:16,marginBottom:16}}>
               <div style={{fontSize:13,fontWeight:700,color:theme.text,marginBottom:4}}>Scoring Rules</div>

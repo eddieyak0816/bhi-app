@@ -1056,6 +1056,81 @@ app.delete('/api/admin/lab-markers/:id', async (req, res) => {
   }
 });
 
+// ── Lab Marker Aliases (F87) ──────────────────────────────────────────────────
+
+// GET /api/admin/lab-markers/aliases-all
+// Returns all aliases across all markers — used by LabsPage to build client-side alias map.
+app.get('/api/admin/lab-markers/aliases-all', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('lab_marker_aliases').select('alias, marker_id');
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    return res.json(data || []);
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// GET /api/admin/lab-markers/:id/aliases
+// Returns aliases for a specific marker — used by Admin edit modal.
+app.get('/api/admin/lab-markers/:id/aliases', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const { id } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('lab_marker_aliases').select('id, alias').eq('marker_id', id).order('alias');
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    return res.json({ aliases: data || [] });
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/lab-markers/:id/aliases
+// Adds a single alias for a marker. Body: { alias: string }. Idempotent.
+app.post('/api/admin/lab-markers/:id/aliases', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const { id } = req.params;
+  const alias = (req.body?.alias || '').trim();
+  if (!alias) return res.status(400).json({ error: 'alias-required' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
+      .from('lab_marker_aliases')
+      .upsert({ alias, marker_id: id }, { onConflict: 'alias', ignoreDuplicates: true })
+      .select('id, alias, marker_id')
+      .single();
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    return res.status(201).json(data);
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/lab-markers/aliases/:aliasId
+// Deletes one alias by UUID.
+app.delete('/api/admin/lab-markers/aliases/:aliasId', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const { aliasId } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('lab_marker_aliases').delete().eq('id', aliasId);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error });
+    return res.json({ deleted: aliasId });
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // ADMIN: delete logic_rules by attribute (fallback when there is no id column or UI lacks id)
 app.post('/api/admin/logic-rules/delete-by-attrs', async (req, res) => {
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });

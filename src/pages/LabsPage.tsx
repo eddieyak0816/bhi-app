@@ -35,6 +35,8 @@ interface ExtractedRow {
   flag: string | null
   include: boolean       // user can deselect rows they don't want to save
   matchedMarkerId?: string
+  autoMatchedMarkerId?: string  // the original auto-match; used to detect manual overrides
+  saveAlias?: boolean           // if true, save row.name as an alias for matchedMarkerId on save
 }
 
 // Tags that represent the optimal/normal range for BHAS scoring
@@ -76,6 +78,9 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
     minNormal: '',
     maxNormal: '',
   })
+
+  // Alias map: alias.toLowerCase() → marker_id (loaded once, used to resolve PDF names at save time)
+  const aliasMapRef = useRef<Map<string, string>>(new Map())
 
   // PDF upload state
   const [pdfUploading, setPdfUploading] = useState(false)
@@ -189,9 +194,14 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
       }
 
       const rows: ExtractedRow[] = (data.results || []).map((r: any) => {
-        const matched = findBestMatch(String(r.name))
+        // Try auto-match via name; fall back to alias map for names the fuzzy matcher misses
+        let matched = findBestMatch(String(r.name))
+        if (!matched) {
+          const aliasedId = aliasMapRef.current.get(String(r.name).toLowerCase())
+          if (aliasedId) matched = currentMarkers.find(m => m.id === aliasedId)
+        }
         const isActive = matched ? matched.is_active !== false : false
-        return { ...r, include: isActive, matchedMarkerId: matched?.id }
+        return { ...r, include: isActive, matchedMarkerId: matched?.id, autoMatchedMarkerId: matched?.id }
       })
       setExtractedRows(rows)
     } catch (err: any) {
@@ -237,6 +247,20 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
       }).catch(() => { /* best-effort — don't block save on registration failure */ })
     ))
 
+    // Save new aliases for manually-overridden rows where "Save as alias" was checked
+    const toAlias = toSave.filter(r => r.saveAlias && r.matchedMarkerId && r.name)
+    if (toAlias.length > 0) {
+      await Promise.all(toAlias.map(row =>
+        fetch(`${BACKEND_URL}/api/admin/lab-markers/${row.matchedMarkerId}/aliases`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-backend-api-key': BACKEND_KEY },
+          body: JSON.stringify({ alias: String(row.name) }),
+        }).then(r => {
+          if (r.ok) aliasMapRef.current.set(String(row.name).toLowerCase(), row.matchedMarkerId!)
+        }).catch(() => {})
+      ))
+    }
+
     setExtractedRows(null)
     setSavingExtracted(false)
 
@@ -251,11 +275,21 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
 
     async function fetchMarkers() {
       try {
-        const [markersRes, rulesRes, tagsRes] = await Promise.all([
+        const [markersRes, rulesRes, tagsRes, aliasesRes] = await Promise.all([
           supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex, marker_category').order('name'),
           supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
           supabase.from('tags').select('name, scoring_tier'),
+          fetch(`${BACKEND_URL}/api/admin/lab-markers/aliases-all`, {
+            headers: { 'x-backend-api-key': BACKEND_KEY },
+          }).then(r => r.ok ? r.json() : []).catch(() => []),
         ])
+
+        // Build alias map: alias.toLowerCase() → marker_id
+        if (Array.isArray(aliasesRes)) {
+          const map = new Map<string, string>()
+          aliasesRes.forEach((a: { alias: string; marker_id: string }) => map.set(a.alias.toLowerCase(), a.marker_id))
+          aliasMapRef.current = map
+        }
 
         if (markersRes.error) throw markersRes.error
         if (markersRes.data) setLabMarkers(markersRes.data as LabMarker[])
@@ -611,7 +645,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                               onChange={e => {
                                 const val = e.target.value
                                 setExtractedRows(rows => rows!.map((r, j) =>
-                                  j === i ? { ...r, matchedMarkerId: val || undefined, include: true } : r
+                                  j === i ? { ...r, matchedMarkerId: val || undefined, include: true, saveAlias: false } : r
                                 ))
                               }}
                               style={{
@@ -633,6 +667,18 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                                 </option>
                               ))}
                             </select>
+                            {row.matchedMarkerId && row.matchedMarkerId !== row.autoMatchedMarkerId && (
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4, fontSize: 11, color: theme.textMuted, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={!!row.saveAlias}
+                                  onChange={e => setExtractedRows(rows => rows!.map((r, j) =>
+                                    j === i ? { ...r, saveAlias: e.target.checked } : r
+                                  ))}
+                                />
+                                Remember — save as alias
+                              </label>
+                            )}
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>

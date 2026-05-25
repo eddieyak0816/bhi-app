@@ -18,6 +18,29 @@ Three separate rows exist in `lab_markers` for the same marker:
 - `db/migrations/` — new migration to merge duplicates
 - `src/utils/bhasV2.ts` — harden `latest()` lookup
 
+## 2026-05-24 — feat: Lab marker aliases (F87, session 24)
+
+### `db/migrations/20260524_create_lab_marker_aliases.sql` (new — run in Supabase)
+- New `lab_marker_aliases` table: `(id, alias TEXT UNIQUE, marker_id UUID → lab_markers, created_at)`.
+- ON DELETE CASCADE — deleting a marker also deletes its aliases.
+- Index on `marker_id` for fast per-marker lookups.
+
+### `server/index.js` — 4 new endpoints
+- `GET  /api/admin/lab-markers/aliases-all` — returns all aliases; used by LabsPage to build client-side alias map on load.
+- `GET  /api/admin/lab-markers/:id/aliases` — returns aliases for one marker; used by Admin edit modal.
+- `POST /api/admin/lab-markers/:id/aliases` — adds an alias (idempotent via `ON CONFLICT DO NOTHING`).
+- `DELETE /api/admin/lab-markers/aliases/:aliasId` — removes one alias by UUID.
+
+### `src/pages/LabsPage.tsx`
+- Fetches all aliases in `fetchMarkers()` alongside markers; builds `aliasMapRef` (alias.toLowerCase() → marker_id).
+- PDF auto-match (`findBestMatch`) now falls back to alias map if fuzzy match misses — result lands under canonical name.
+- `ExtractedRow` gains `autoMatchedMarkerId` and `saveAlias` fields.
+- "Remember — save as alias" checkbox appears below the Matched Marker dropdown when user manually overrides the auto-match. On save, writes the alias to DB and updates `aliasMapRef` in memory.
+
+### `src/pages/Admin.tsx`
+- Marker edit modal loads aliases async when opened (non-blocking).
+- New "Aliases" section (between Category and Scoring Rules): shows alias pills with × delete buttons; inline input + Add button (also supports Enter key). Writes/deletes immediately via API — no need to click the main Save button.
+
 ## 2026-05-24 — feat: Deduplicate lab_markers table (session 24)
 
 ### `db/migrations/20260524_merge_duplicate_markers.sql` (new — run in Supabase)
