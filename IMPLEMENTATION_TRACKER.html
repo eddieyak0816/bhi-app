@@ -185,7 +185,7 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-05-24 — Session 24: Merged 19 duplicate marker groups (migrations run ✅); F87 Lab Marker Aliases built + migration run ✅. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-05-25 — Session 25: F87 alias add-input replaced with Merge feature; merge saves old name as alias automatically; marker search fixed to substring match. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-05-14 -->
@@ -1243,15 +1243,19 @@
           <code>POST /api/admin/lab-markers/:id/aliases</code>,
           <code>DELETE /api/admin/lab-markers/aliases/:aliasId</code>.<br><br>
           <strong>LabsPage:</strong> Alias map fetched on load. PDF auto-match falls back to alias map. "Remember — save as alias" checkbox appears when user manually overrides the Matched Marker dropdown — saves alias to DB on Save.<br><br>
-          <strong>Admin → Markers → Edit modal:</strong> New "Aliases" section — pill chips with × delete, inline Add input (Enter or button). Writes immediately, no need to click main Save.<br><br>
+          <strong>Admin → Markers → Edit modal:</strong> "Aliases" section replaced with two features:<br>
+          1. <strong>Merge</strong> — dropdown of all other markers; pick one and click Merge to absorb it (moves all lab results + rules, saves old name as alias, deletes source marker).<br>
+          2. <strong>PDF aliases</strong> — read-only pill chips (auto-created from PDF review "Remember" checkbox or merge). Click × to remove.<br><br>
+          <strong>Marker search fix (Session 25):</strong> Search now uses substring match — typing "B12" returns both "B12" and "Vitamin B12".<br><br>
           <strong>Test checklist:</strong>
           <ol style="margin:6px 0 0 16px;padding:0;font-size:12px;">
-            <li>Restart dev server after deploying server changes.</li>
-            <li>Admin → Markers → Edit "Triglycerides" → Aliases section shows "No aliases yet." → type <code>TRIGLYCERIDES</code> → Add → pill appears.</li>
-            <li>Upload a PDF containing "TRIGLYCERIDES" → confirm it auto-matches to Triglycerides in review table (dropdown pre-selected, no amber color).</li>
-            <li>Upload a PDF with a novel unknown name → manually pick correct marker from dropdown → "Remember — save as alias" checkbox appears → check it → Save → re-upload same PDF → confirm it auto-matches this time.</li>
-            <li>Admin → Edit same marker → Aliases section shows the new alias → click × → alias disappears.</li>
-            <li>Confirm deleting a marker also deletes its aliases (CASCADE) — check Supabase Table Editor on lab_marker_aliases after deleting a test marker.</li>
+            <li data-id="s24-2-a">PDF alias auto-match: Upload a PDF with a novel unknown name → manually pick correct marker from dropdown → "Remember — save as alias" checkbox appears → check it → Save → re-upload same PDF → confirm it auto-matches (no amber color).</li>
+            <li data-id="s24-2-b">PDF alias delete: Admin → Edit the marker from step 1 → PDF aliases section shows the alias pill → click × → pill disappears.</li>
+            <li data-id="s25-merge-a">Merge UI: Admin → Markers → Edit any marker → "Merge Another Marker Into This One" section shows a dropdown of all other markers sorted A–Z.</li>
+            <li data-id="s25-merge-b">Merge action: Create two test markers ("Test A", "Test B") → Edit "Test A" → select "Test B" from dropdown → click Merge → confirm dialog → after merge: "Test B" is gone from marker list, "Test B" appears as an alias pill on "Test A".</li>
+            <li data-id="s25-merge-c">Merge audit trail: After merge, re-edit "Test A" → alias pill "Test B" is visible — confirms merge history and future PDFs containing "Test B" will auto-route to "Test A".</li>
+            <li data-id="s25-merge-d">Merge result: Any lab results previously stored under "Test B" are now stored under "Test A" — verify in Admin → Lab Data tab.</li>
+            <li data-id="s25-search">Marker search substring: Admin → Markers → type "B12" in the search box → both "B12" and "Vitamin B12" appear in results.</li>
           </ol>
         </div>
       </div>
