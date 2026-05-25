@@ -226,7 +226,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                 {bhasV2Result.totalScore.toFixed(1)}
               </div>
               <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                / 7.0
+                / 8.0
               </div>
             </div>
 
@@ -253,7 +253,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                 </span>
               </div>
               <div style={{ fontSize: 12, color: theme.textMuted }}>
-                {bhasV2Result.metricScores.length} of 7 metrics scored · uses derived ratios ({' '}
+                {bhasV2Result.metricScores.length} of 8 metrics scored · uses derived ratios ({' '}
                 <a
                   href="https://en.wikipedia.org/wiki/Homeostatic_model_assessment"
                   target="_blank"

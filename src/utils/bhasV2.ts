@@ -31,7 +31,7 @@ export interface BhasV2MetricScore {
 export interface BhasV2Result {
   metricScores: BhasV2MetricScore[]
   totalScore: number          // sum of included scores
-  maxPossible: number         // always 7.0
+  maxPossible: number         // always 8.0
   label: 'Optimal' | 'Healthy' | 'Needs Improvement' | 'High Risk'
   // Derived values (stored for leaderboard/analytics use)
   derived: {
@@ -81,8 +81,8 @@ function toLabel(score: 0 | 0.5 | 1): 'Optimal' | 'Improvement' | 'Out of Range'
 }
 
 function interpretTotal(total: number): 'Optimal' | 'Healthy' | 'Needs Improvement' | 'High Risk' {
-  if (total >= 6.0) return 'Optimal'
-  if (total >= 5.0) return 'Healthy'
+  if (total >= 7.0) return 'Optimal'
+  if (total >= 5.5) return 'Healthy'
   if (total >= 4.0) return 'Needs Improvement'
   return 'High Risk'
 }
@@ -134,6 +134,7 @@ export function calculateBhasV2Score(
   const hdl               = latest(results, 'HDL')
   const vitaminD          = latest(results, 'Vitamin D')
   const vitaminB12        = latest(results, 'Vitamin B12')
+  const hbA1c             = latest(results, 'HbA1c')
   const vo2MaxPercentile  = latest(results, 'VO2 Max Percentile')
 
   const { sex, heightCm, waistCm, weightKg, gripStrengthKg,
@@ -248,7 +249,20 @@ export function calculateBhasV2Score(
     missingInputs.push('Vitamin B12')
   }
 
-  // 6. Waist-to-Height Ratio
+  // 6. HbA1c — Optimal < 5.7%, Improvement 5.7–6.4%, Out of Range ≥ 6.5%
+  if (hbA1c != null) {
+    metricScores.push({
+      metric: 'HbA1c',
+      derived: `${hbA1c}%`,
+      score: score3(hbA1c, 5.7, 6.5, true),
+      label: toLabel(score3(hbA1c, 5.7, 6.5, true)),
+      included: true,
+    })
+  } else {
+    missingInputs.push('HbA1c')
+  }
+
+  // 7. Waist-to-Height Ratio
   if (wthr != null) {
     metricScores.push({
       metric: 'Waist-to-Height Ratio',
@@ -262,7 +276,7 @@ export function calculateBhasV2Score(
     if (heightCm == null) missingInputs.push('Height (needed for WtHR)')
   }
 
-  // 7. Advanced Care Planning (binary)
+  // 8. Advanced Care Planning (binary)
   metricScores.push({
     metric: 'Advanced Care Plan',
     derived: hasAdvancedCarePlan ? 'Documented' : 'Not documented',
@@ -275,13 +289,13 @@ export function calculateBhasV2Score(
   const scoredMetrics = metricScores.filter(m => m.included)
   const totalScore = scoredMetrics.reduce((sum, m) => sum + m.score, 0)
 
-  // Require at least 4 of 7 scored metrics to show the panel
+  // Require at least 4 of 8 scored metrics to show the panel
   const hasEnoughData = scoredMetrics.length >= 4
 
   return {
     metricScores,
     totalScore,
-    maxPossible: 7,
+    maxPossible: 8,
     label: interpretTotal(totalScore),
     derived: { homaIr, tgHdlRatio, gripRatio, wthr, insulinUnitsPerKg },
     biometrics: {
