@@ -1182,6 +1182,12 @@ app.post('/api/admin/lab-markers/:id/merge-from/:sourceId', async (req, res) => 
     // Re-point lab_marker_aliases: update marker_id to target (ignore duplicate alias conflicts)
     await sb.from('lab_marker_aliases').update({ marker_id: targetId }).eq('marker_id', sourceId);
 
+    // Save the source marker's own name as an alias on the target — acts as merge history
+    // and ensures future PDFs containing the old name auto-route correctly.
+    await sb.from('lab_marker_aliases')
+      .insert({ alias: sourceMarker.name, marker_id: targetId })
+      .onConflict('alias').ignore();
+
     // Delete source marker
     const { error: deleteErr } = await sb.from('lab_markers').delete().eq('id', sourceId);
     if (deleteErr) return res.status(500).json({ error: 'delete_failed', detail: deleteErr });

@@ -2868,7 +2868,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       <option value="">(All Units)</option>
                       {Array.from(new Set(labMarkers
                         .filter(m =>
-                          (!filterLabMarkerName || m.name === filterLabMarkerName)
+                          (!filterLabMarkerName || m.name.toLowerCase().includes(filterLabMarkerName.toLowerCase()))
                         )
                         .map(m => m.unit).filter(u => u)))
                         .sort((a, b) => (a || '').localeCompare(b || ''))
@@ -2918,7 +2918,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                   <div style={{fontSize:12,marginTop:8,color:theme.text}}>
                     Showing {labMarkers
                       .filter(m =>
-                        (!filterLabMarkerName || m.name === filterLabMarkerName)
+                        (!filterLabMarkerName || m.name.toLowerCase().includes(filterLabMarkerName.toLowerCase()))
                         && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                         && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
                           && (!filterLabMarkerSex || (m.applicable_sex || 'both') === filterLabMarkerSex)
@@ -2954,13 +2954,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     {(
                       sortColumn ? sortData(labMarkers
                         .filter(m =>
-                          (!filterLabMarkerName || m.name === filterLabMarkerName)
+                          (!filterLabMarkerName || m.name.toLowerCase().includes(filterLabMarkerName.toLowerCase()))
                           && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                           && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
                           && (!filterLabMarkerSex || (m.applicable_sex || 'both') === filterLabMarkerSex)
                         ), sortColumn) : (labMarkers || [])
                         .filter(m =>
-                          (!filterLabMarkerName || m.name === filterLabMarkerName)
+                          (!filterLabMarkerName || m.name.toLowerCase().includes(filterLabMarkerName.toLowerCase()))
                           && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                           && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
                           && (!filterLabMarkerSex || (m.applicable_sex || 'both') === filterLabMarkerSex)
@@ -3077,7 +3077,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
                 {(labMarkers || [])
                   .filter(m =>
-                    (!filterLabMarkerName || m.name === filterLabMarkerName)
+                    (!filterLabMarkerName || m.name.toLowerCase().includes(filterLabMarkerName.toLowerCase()))
                     && (!filterLabMarkerUnit || m.unit === filterLabMarkerUnit)
                     && (!filterLabMarkerActive || (filterLabMarkerActive === 'active' ? m.is_active !== false : m.is_active === false))
                           && (!filterLabMarkerSex || (m.applicable_sex || 'both') === filterLabMarkerSex)
