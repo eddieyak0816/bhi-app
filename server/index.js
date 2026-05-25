@@ -793,7 +793,7 @@ app.patch('/api/admin/lab-markers/:id', async (req, res) => {
   const id = req.params.id;
   if (!id) return res.status(400).json({ error: 'missing-id' });
   
-  const { name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex } = req.body || {};
+  const { name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex, marker_category } = req.body || {};
   const updateData = {};
   if (name !== undefined) updateData.name = name;
   if (unit !== undefined) updateData.unit = unit;
@@ -802,6 +802,7 @@ app.patch('/api/admin/lab-markers/:id', async (req, res) => {
   if (is_active !== undefined) updateData.is_active = is_active;
   if (cpt_code !== undefined) updateData.cpt_code = cpt_code;
   if (applicable_sex !== undefined && ['male', 'female', 'both'].includes(applicable_sex)) updateData.applicable_sex = applicable_sex;
+  if (marker_category !== undefined && ['nhls_score', 'hormone', 'additional'].includes(marker_category)) updateData.marker_category = marker_category;
   
   if (Object.keys(updateData).length === 0) return res.status(400).json({ error: 'no-fields-to-update' });
   
@@ -1009,11 +1010,11 @@ app.post('/api/admin/lab-markers', async (req, res) => {
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
   const incomingKey = req.header('x-backend-api-key') || '';
   if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
-  const { id, name, unit, min_normal, max_normal, is_active, applicable_sex: asx } = req.body || {};
+  const { id, name, unit, min_normal, max_normal, is_active, applicable_sex: asx, marker_category: mcat } = req.body || {};
   if (!name) return res.status(400).json({ error: 'missing-name' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const payload = { id: id || uuidv4(), name, unit: unit || null, min_normal: min_normal || null, max_normal: max_normal || null, is_active: is_active !== false, applicable_sex: ['male','female','both'].includes(asx) ? asx : 'both' };
+    const payload = { id: id || uuidv4(), name, unit: unit || null, min_normal: min_normal || null, max_normal: max_normal || null, is_active: is_active !== false, applicable_sex: ['male','female','both'].includes(asx) ? asx : 'both', marker_category: ['nhls_score','hormone','additional'].includes(mcat) ? mcat : 'additional' };
     const { data, error } = await sb.from('lab_markers').insert([payload]).select('*');
     if (error) {
       console.error('admin-insert-lab-marker-error', error);

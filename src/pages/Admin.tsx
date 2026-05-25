@@ -108,7 +108,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   // Marker edit modal state
   const [markerModalOpen, setMarkerModalOpen] = useState(false)
   const [markerModalOriginalId, setMarkerModalOriginalId] = useState<string | null>(null)
-  const [markerEditForm, setMarkerEditForm] = useState<{name?: string; unit?: string; cpt_code?: string; applicable_sex?: string}>({})
+  const [markerEditForm, setMarkerEditForm] = useState<{name?: string; unit?: string; cpt_code?: string; applicable_sex?: string; marker_category?: string}>({})
   const [markerEditRules, setMarkerEditRules] = useState<Array<{ label: string; min_value: string; max_value: string; tag_name: string }>>([
     { label: 'Optimal', min_value: '', max_value: '', tag_name: '' },
     { label: 'Improvement', min_value: '', max_value: '', tag_name: '' },
@@ -3021,7 +3021,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
                                 <button onClick={() => {
                                   setMarkerModalOriginalId(m.id)
-                                  setMarkerEditForm({ name: m.name, unit: m.unit, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both' })
+                                  setMarkerEditForm({ name: m.name, unit: m.unit, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both', marker_category: m.marker_category || 'additional' })
                                   const existing = logicRules.filter((r: any) => r.marker_id === m.id)
                                   const TIERS = ['Optimal', 'Improvement', 'Out of Range']
                                   const rows = TIERS.flatMap(lbl => {
@@ -3852,10 +3852,17 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
             <input value={markerEditForm.cpt_code || ''} onChange={e => setMarkerEditForm(prev => ({...prev, cpt_code: e.target.value}))} placeholder="e.g. 82652" style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,width:'100%',boxSizing:'border-box'}} />
 
             <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Applicable Sex</label>
-            <select value={markerEditForm.applicable_sex || 'both'} onChange={e => setMarkerEditForm(prev => ({...prev, applicable_sex: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:16,background:theme.bgSecondary,color:theme.text,width:'100%'}}>
+            <select value={markerEditForm.applicable_sex || 'both'} onChange={e => setMarkerEditForm(prev => ({...prev, applicable_sex: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,width:'100%'}}>
               <option value="both">Both (universal)</option>
               <option value="male">Male only</option>
               <option value="female">Female only</option>
+            </select>
+
+            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Category</label>
+            <select value={markerEditForm.marker_category || 'additional'} onChange={e => setMarkerEditForm(prev => ({...prev, marker_category: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:16,background:theme.bgSecondary,color:theme.text,width:'100%'}}>
+              <option value="nhls_score">NHLS Score (scored in v2.3)</option>
+              <option value="hormone">Hormone Panel (tracking only)</option>
+              <option value="additional">Additional Markers</option>
             </select>
 
             <div style={{borderTop:`1px solid ${theme.borderColor}`,paddingTop:16,marginBottom:16}}>
@@ -3898,7 +3905,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                   try {
                     const id = markerModalOriginalId
                     if (!id) throw new Error('Missing marker id')
-                    const patchRes = await fetch(apiUrl(`/api/admin/lab-markers/${id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...authHeaders() }, body: JSON.stringify({ name: markerEditForm.name, unit: markerEditForm.unit, cpt_code: markerEditForm.cpt_code || null, applicable_sex: markerEditForm.applicable_sex || 'both' }) })
+                    const patchRes = await fetch(apiUrl(`/api/admin/lab-markers/${id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...authHeaders() }, body: JSON.stringify({ name: markerEditForm.name, unit: markerEditForm.unit, cpt_code: markerEditForm.cpt_code || null, applicable_sex: markerEditForm.applicable_sex || 'both', marker_category: markerEditForm.marker_category || 'additional' }) })
                     if (!patchRes.ok) throw new Error(await patchRes.text().catch(() => String(patchRes.status)))
                     const rulesRes = await fetch(apiUrl(`/api/admin/lab-markers/${id}/rules`), { method: 'PUT', headers: { 'content-type': 'application/json', ...authHeaders() }, body: JSON.stringify({ rules: markerEditRules }) })
                     if (!rulesRes.ok) throw new Error(await rulesRes.text().catch(() => String(rulesRes.status)))
