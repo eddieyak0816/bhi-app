@@ -18,6 +18,25 @@ Three separate rows exist in `lab_markers` for the same marker:
 - `db/migrations/` — new migration to merge duplicates
 - `src/utils/bhasV2.ts` — harden `latest()` lookup
 
+## 2026-05-24 — feat: Deduplicate lab_markers table (session 24)
+
+### `db/migrations/20260524_merge_duplicate_markers.sql` (new — run in Supabase)
+- Merges 9 duplicate marker groups: Triglycerides, Vitamin B12, Vitamin D, Fasting Glucose,
+  Fasting Insulin, HDL, Hemoglobin A1c, LDL, Total Cholesterol.
+- For each group: re-points `user_lab_results.marker_name` to the canonical name, deletes
+  `logic_rules` and `lab_markers` rows for duplicates.
+- Idempotent — safe to re-run.
+
+### `db/migrations/20260524_add_marker_category_to_lab_markers.sql` (F86 — bug fix)
+- Fixed backfill: was `'HbA1c'` (wrong), now `'Hemoglobin A1c'` (canonical). The F86 migration
+  ran before F84 renamed the DB row to `Hemoglobin A1c`, so the `nhls_score` category was
+  never applied to the surviving canonical row. Fixed in both the migration source and in
+  Step D of the new dedup migration.
+
+### `src/utils/bhasV2.ts` — verified correct (no code change needed)
+- `latest()` already uses `normalizeName()` (strips hyphens/spaces, lowercases) since session 23.
+- All 8 canonical scoring marker names resolve correctly via normalization after DB cleanup.
+
 ## 2026-05-24 — feat: NHLS v2.3 panel is now sole score on Dashboard (session 23)
 
 ### `src/pages/Dashboard.tsx`

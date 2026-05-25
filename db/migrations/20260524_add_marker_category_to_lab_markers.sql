@@ -8,6 +8,7 @@ ALTER TABLE lab_markers
     DEFAULT 'additional';
 
 -- Backfill the 8 NHLS v2.3 scored markers
+-- NOTE: canonical DB name is 'Hemoglobin A1c' (not 'HbA1c') — see F84 + bhasV2.ts line 137
 UPDATE lab_markers SET marker_category = 'nhls_score'
 WHERE name IN (
   'Fasting Glucose',
@@ -17,7 +18,7 @@ WHERE name IN (
   'HDL',
   'Vitamin D',
   'Vitamin B12',
-  'HbA1c'
+  'Hemoglobin A1c'
 );
 
 -- Backfill hormone markers (applicable_sex = male or female)

@@ -185,7 +185,7 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-05-14 — Session 19: NHLS score panel restructure — National Benchmarks embedded as collapsible section inside NHLS v2.3 panel; standalone benchmarks section removed. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-05-24 — Session 24: Duplicate lab_markers cleanup — merged 9 duplicate marker groups; fixed F86 marker_category backfill for Hemoglobin A1c. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-05-14 -->
@@ -1202,6 +1202,37 @@
     });
   }
 </script>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SESSION 24 – DB CLEANUP (2026-05-24)
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="phase" data-phase="24">
+    <div class="phase-header">
+      <span class="phase-badge">Session 24</span>
+      <div>
+        <div class="phase-title">Duplicate Lab Marker Cleanup</div>
+        <div class="phase-desc">DB maintenance — merges duplicate marker rows, fixes NHLS scoring accuracy — 2026-05-24</div>
+      </div>
+      <div class="phase-progress">1 / 1 done</div>
+    </div>
+
+    <div class="item done" data-status="done">
+      <div class="item-num">S24-1</div>
+      <div class="item-body">
+        <div class="item-title">Deduplicate lab_markers table</div>
+        <div class="item-note">
+          Migration <code>20260524_merge_duplicate_markers.sql</code> merges 9 duplicate marker groups
+          (Triglycerides, Vitamin B12, Vitamin D, Fasting Glucose, Fasting Insulin, HDL, Hemoglobin A1c, LDL, Total Cholesterol).
+          Pattern: re-point <code>user_lab_results.marker_name</code> to canonical name → delete dupe <code>logic_rules</code> → delete dupe <code>lab_markers</code>.
+          Also fixes F86 bug: <code>Hemoglobin A1c</code> now correctly gets <code>marker_category = 'nhls_score'</code>
+          (F86 migration had used <code>'HbA1c'</code> which normalises differently from <code>'Hemoglobin A1c'</code>).
+          <code>bhasV2.ts</code> <code>latest()</code> normalization verified correct — no code change needed.
+          <strong>Action required: run migration in Supabase SQL Editor.</strong>
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Built</span>
+    </div>
+  </section>
 
 </body>
 </html>
