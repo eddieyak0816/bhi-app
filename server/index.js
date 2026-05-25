@@ -1142,6 +1142,61 @@ app.delete('/api/admin/lab-markers/aliases/:aliasId', async (req, res) => {
   }
 });
 
+// POST /api/admin/lab-markers/:id/merge-from/:sourceId
+// Merges sourceId INTO :id — re-points all user_lab_results and logic_rules, then deletes source marker.
+// Returns { moved_results, moved_rules, deleted_marker }.
+app.post('/api/admin/lab-markers/:id/merge-from/:sourceId', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const { id: targetId, sourceId } = req.params;
+  if (targetId === sourceId) return res.status(400).json({ error: 'cannot-merge-into-self' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+    // Fetch source marker name so we can update marker_name in user_lab_results
+    const { data: sourceMarker, error: srcErr } = await sb
+      .from('lab_markers').select('id, name').eq('id', sourceId).single();
+    if (srcErr || !sourceMarker) return res.status(404).json({ error: 'source_not_found' });
+
+    const { data: targetMarker, error: tgtErr } = await sb
+      .from('lab_markers').select('id, name').eq('id', targetId).single();
+    if (tgtErr || !targetMarker) return res.status(404).json({ error: 'target_not_found' });
+
+    // Re-point user_lab_results: update marker_name to target's name
+    const { data: movedResults, error: resultsErr } = await sb
+      .from('user_lab_results')
+      .update({ marker_name: targetMarker.name })
+      .eq('marker_name', sourceMarker.name)
+      .select('id');
+    if (resultsErr) return res.status(500).json({ error: 'results_update_failed', detail: resultsErr });
+
+    // Re-point logic_rules: update marker_id to target
+    const { data: movedRules, error: rulesErr } = await sb
+      .from('logic_rules')
+      .update({ marker_id: targetId })
+      .eq('marker_id', sourceId)
+      .select('id');
+    if (rulesErr) return res.status(500).json({ error: 'rules_update_failed', detail: rulesErr });
+
+    // Re-point lab_marker_aliases: update marker_id to target (ignore duplicate alias conflicts)
+    await sb.from('lab_marker_aliases').update({ marker_id: targetId }).eq('marker_id', sourceId);
+
+    // Delete source marker
+    const { error: deleteErr } = await sb.from('lab_markers').delete().eq('id', sourceId);
+    if (deleteErr) return res.status(500).json({ error: 'delete_failed', detail: deleteErr });
+
+    return res.json({
+      moved_results: (movedResults || []).length,
+      moved_rules: (movedRules || []).length,
+      deleted_marker: sourceMarker.name,
+      target_marker: targetMarker.name,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // ADMIN: delete logic_rules by attribute (fallback when there is no id column or UI lacks id)
 app.post('/api/admin/logic-rules/delete-by-attrs', async (req, res) => {
   if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });

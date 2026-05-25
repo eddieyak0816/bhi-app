@@ -118,8 +118,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [markerEditError, setMarkerEditError] = useState<string | null>(null)
   // Marker aliases state (F87)
   const [markerEditAliases, setMarkerEditAliases] = useState<Array<{ id: string; alias: string }>>([])
-  const [newAliasInput, setNewAliasInput] = useState('')
-  const [aliasSaving, setAliasSaving] = useState(false)
+  const [mergeSourceId, setMergeSourceId] = useState('')
+  const [mergeSaving, setMergeSaving] = useState(false)
+  const [mergeError, setMergeError] = useState<string | null>(null)
   // health goal modal state
   const [healthGoalModalOpen, setHealthGoalModalOpen] = useState(false)
   const [healthGoalModalData, setHealthGoalModalData] = useState<any>(null)
@@ -3037,7 +3038,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                   setMarkerEditRules(rows)
                                   setMarkerEditError(null)
                                   setMarkerEditAliases([])
-                                  setNewAliasInput('')
+                                  setMergeSourceId('')
+                                  setMergeError(null)
                                   setMarkerModalOpen(true)
                                   // Load aliases async — non-blocking
                                   fetch(apiUrl(`/api/admin/lab-markers/${m.id}/aliases`), { headers: authHeaders() })
@@ -3150,7 +3152,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             setMarkerEditRules(rows)
                             setMarkerEditError(null)
                             setMarkerEditAliases([])
-                            setNewAliasInput('')
+                            setMergeSourceId('')
+                            setMergeError(null)
                             setMarkerModalOpen(true)
                             // Load aliases async — non-blocking
                             fetch(apiUrl(`/api/admin/lab-markers/${m.id}/aliases`), { headers: authHeaders() })
@@ -3884,73 +3887,73 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
             </select>
 
             <div style={{borderTop:`1px solid ${theme.borderColor}`,paddingTop:16,marginBottom:16}}>
-              <div style={{fontSize:13,fontWeight:700,color:theme.text,marginBottom:2}}>Aliases</div>
-              <p style={{margin:'0 0 10px 0',fontSize:12,color:theme.textMuted}}>Alternative names (e.g. from PDFs) that auto-route to this marker.</p>
-              <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
-                {markerEditAliases.map(a => (
-                  <span key={a.id} style={{display:'inline-flex',alignItems:'center',gap:4,background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:12,padding:'2px 10px',fontSize:12,color:theme.text}}>
-                    {a.alias}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const res = await fetch(apiUrl(`/api/admin/lab-markers/aliases/${a.id}`), { method: 'DELETE', headers: authHeaders() })
-                        if (res.ok) setMarkerEditAliases(prev => prev.filter(x => x.id !== a.id))
-                      }}
-                      style={{background:'transparent',border:'none',cursor:'pointer',color:theme.textMuted,fontSize:14,lineHeight:1,padding:0,marginLeft:2}}
-                      title="Remove alias"
-                    >×</button>
-                  </span>
-                ))}
-                {markerEditAliases.length === 0 && <span style={{fontSize:12,color:theme.textMuted}}>No aliases yet.</span>}
-              </div>
-              <div style={{display:'flex',gap:6}}>
-                <input
-                  value={newAliasInput}
-                  onChange={e => setNewAliasInput(e.target.value)}
-                  onKeyDown={async e => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      const alias = newAliasInput.trim()
-                      if (!alias || !markerModalOriginalId) return
-                      setAliasSaving(true)
-                      try {
-                        const res = await fetch(apiUrl(`/api/admin/lab-markers/${markerModalOriginalId}/aliases`), {
-                          method: 'POST', headers: { 'content-type': 'application/json', ...authHeaders() },
-                          body: JSON.stringify({ alias }),
-                        })
-                        if (res.ok) {
-                          const data = await res.json()
-                          setMarkerEditAliases(prev => [...prev, { id: data.id, alias: data.alias }])
-                          setNewAliasInput('')
-                        }
-                      } finally { setAliasSaving(false) }
-                    }
-                  }}
-                  placeholder="Type alias name…"
-                  style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text,fontSize:12}}
-                />
+              <div style={{fontSize:13,fontWeight:700,color:theme.text,marginBottom:2}}>Merge Another Marker Into This One</div>
+              <p style={{margin:'0 0 10px 0',fontSize:12,color:theme.textMuted}}>
+                Select a duplicate marker to absorb — all its lab results and scoring rules will be moved here, then it will be deleted.
+              </p>
+              <div style={{display:'flex',gap:6,marginBottom:8}}>
+                <select
+                  value={mergeSourceId}
+                  onChange={e => { setMergeSourceId(e.target.value); setMergeError(null) }}
+                  style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:mergeSourceId ? theme.text : theme.textMuted,fontSize:12}}
+                >
+                  <option value=''>— Select a marker to merge in…</option>
+                  {[...labMarkers]
+                    .filter(m => m.id !== markerModalOriginalId)
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map(m => (
+                      <option key={m.id} value={m.id}>{m.name}{m.is_active === false ? ' (inactive)' : ''}</option>
+                    ))}
+                </select>
                 <button
                   type="button"
-                  disabled={aliasSaving || !newAliasInput.trim()}
+                  disabled={mergeSaving || !mergeSourceId}
                   onClick={async () => {
-                    const alias = newAliasInput.trim()
-                    if (!alias || !markerModalOriginalId) return
-                    setAliasSaving(true)
+                    if (!mergeSourceId || !markerModalOriginalId) return
+                    const sourceName = labMarkers.find(m => m.id === mergeSourceId)?.name || mergeSourceId
+                    const targetName = markerEditForm.name || markerModalOriginalId
+                    if (!confirm(`Merge "${sourceName}" into "${targetName}"?\n\nAll lab results and scoring rules under "${sourceName}" will be moved to "${targetName}", then "${sourceName}" will be permanently deleted.\n\nThis cannot be undone.`)) return
+                    setMergeSaving(true)
+                    setMergeError(null)
                     try {
-                      const res = await fetch(apiUrl(`/api/admin/lab-markers/${markerModalOriginalId}/aliases`), {
-                        method: 'POST', headers: { 'content-type': 'application/json', ...authHeaders() },
-                        body: JSON.stringify({ alias }),
+                      const res = await fetch(apiUrl(`/api/admin/lab-markers/${markerModalOriginalId}/merge-from/${mergeSourceId}`), {
+                        method: 'POST', headers: authHeaders(),
                       })
-                      if (res.ok) {
-                        const data = await res.json()
-                        setMarkerEditAliases(prev => [...prev, { id: data.id, alias: data.alias }])
-                        setNewAliasInput('')
-                      }
-                    } finally { setAliasSaving(false) }
+                      const data = await res.json()
+                      if (!res.ok) { setMergeError(data.error || 'Merge failed'); return }
+                      setMergeSourceId('')
+                      // Remove the merged marker from the local labMarkers list and close modal
+                      setLabMarkers(prev => prev.filter(m => m.id !== mergeSourceId))
+                      setMarkerModalOpen(false)
+                      await load()
+                      alert(`Done — moved ${data.moved_results} result(s) and ${data.moved_rules} rule(s) from "${data.deleted_marker}" into "${data.target_marker}".`)
+                    } finally { setMergeSaving(false) }
                   }}
-                  style={{padding:'6px 12px',background:theme.blue,border:'none',borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',opacity:aliasSaving||!newAliasInput.trim()?0.5:1}}
-                >{aliasSaving ? '…' : 'Add'}</button>
+                  style={{padding:'6px 14px',background:'#EF4444',border:'none',borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',opacity:mergeSaving||!mergeSourceId?0.5:1,whiteSpace:'nowrap'}}
+                >{mergeSaving ? 'Merging…' : 'Merge'}</button>
               </div>
+              {mergeError && <p style={{margin:'4px 0 0',fontSize:12,color:'#EF4444'}}>{mergeError}</p>}
+              {markerEditAliases.length > 0 && (
+                <div style={{marginTop:12}}>
+                  <div style={{fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:6}}>PDF aliases (auto-created from uploads)</div>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                    {markerEditAliases.map(a => (
+                      <span key={a.id} style={{display:'inline-flex',alignItems:'center',gap:4,background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:12,padding:'2px 10px',fontSize:12,color:theme.text}}>
+                        {a.alias}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const res = await fetch(apiUrl(`/api/admin/lab-markers/aliases/${a.id}`), { method: 'DELETE', headers: authHeaders() })
+                            if (res.ok) setMarkerEditAliases(prev => prev.filter(x => x.id !== a.id))
+                          }}
+                          style={{background:'transparent',border:'none',cursor:'pointer',color:theme.textMuted,fontSize:14,lineHeight:1,padding:0,marginLeft:2}}
+                          title="Remove alias"
+                        >×</button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div style={{borderTop:`1px solid ${theme.borderColor}`,paddingTop:16,marginBottom:16}}>
