@@ -3138,7 +3138,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           <button onClick={() => {
                             setEditingId(null)
                             setMarkerModalOriginalId(m.id)
-                            setMarkerEditForm({ name: m.name, unit: m.unit, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both' })
+                            setMarkerEditForm({ name: m.name, unit: m.unit, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both', marker_category: m.marker_category || 'additional' })
                             const existing = logicRules.filter((r: any) => r.marker_id === m.id)
                             const TIERS = ['Optimal', 'Improvement', 'Out of Range']
                             const rows = TIERS.flatMap(lbl => {
@@ -3149,7 +3149,14 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             })
                             setMarkerEditRules(rows)
                             setMarkerEditError(null)
+                            setMarkerEditAliases([])
+                            setNewAliasInput('')
                             setMarkerModalOpen(true)
+                            // Load aliases async — non-blocking
+                            fetch(apiUrl(`/api/admin/lab-markers/${m.id}/aliases`), { headers: authHeaders() })
+                              .then(r => r.ok ? r.json() : { aliases: [] })
+                              .then(({ aliases }) => setMarkerEditAliases(aliases || []))
+                              .catch(() => {})
                           }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
                           <button onClick={async () => {
                             if (!confirm(`Delete marker "${m.name}"?`)) return

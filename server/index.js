@@ -1102,13 +1102,24 @@ app.post('/api/admin/lab-markers/:id/aliases', async (req, res) => {
   if (!alias) return res.status(400).json({ error: 'alias-required' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const { data, error } = await sb
+    // Insert; on duplicate alias return the existing row instead of erroring.
+    const { data: inserted, error: insertErr } = await sb
       .from('lab_marker_aliases')
-      .upsert({ alias, marker_id: id }, { onConflict: 'alias', ignoreDuplicates: true })
+      .insert({ alias, marker_id: id })
       .select('id, alias, marker_id')
       .single();
-    if (error) return res.status(500).json({ error: 'db_error', detail: error });
-    return res.status(201).json(data);
+    if (!insertErr) return res.status(201).json(inserted);
+    // 23505 = unique_violation — alias already exists; fetch and return existing row
+    if (insertErr.code === '23505') {
+      const { data: existing, error: fetchErr } = await sb
+        .from('lab_marker_aliases')
+        .select('id, alias, marker_id')
+        .eq('alias', alias)
+        .single();
+      if (fetchErr || !existing) return res.status(409).json({ error: 'alias_exists' });
+      return res.status(200).json(existing);
+    }
+    return res.status(500).json({ error: 'db_error', detail: insertErr });
   } catch (err) {
     return res.status(500).json({ error: 'server_error' });
   }
