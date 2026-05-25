@@ -269,34 +269,57 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
 
           {/* Per-metric breakdown */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: bhasV2Result.missingInputs.length > 0 ? 12 : 0 }}>
-            {bhasV2Result.metricScores.map(m => (
-              <span
-                key={m.metric}
-                title={m.derived}
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  padding: '3px 8px',
-                  borderRadius: 20,
-                  background: m.score === 1   ? 'rgba(16,185,129,0.12)'
-                             : m.score === 0.5 ? 'rgba(245,158,11,0.12)'
-                             :                   'rgba(239,68,68,0.12)',
-                  color: m.score === 1   ? '#10B981'
-                       : m.score === 0.5 ? '#D97706'
-                       :                  '#EF4444',
-                  cursor: 'default',
-                }}
-              >
-                {m.metric} · {m.score === 1 ? '✓' : m.score === 0.5 ? '~' : '✗'}
-              </span>
-            ))}
+            {bhasV2Result.metricScores.map(m => {
+              const chipStyle = {
+                fontSize: 11,
+                fontWeight: 600,
+                padding: '3px 8px',
+                borderRadius: 20,
+                background: m.score === 1   ? 'rgba(16,185,129,0.12)'
+                           : m.score === 0.5 ? 'rgba(245,158,11,0.12)'
+                           :                   'rgba(239,68,68,0.12)',
+                color: m.score === 1   ? '#10B981'
+                     : m.score === 0.5 ? '#D97706'
+                     :                  '#EF4444',
+                cursor: 'default' as const,
+              }
+              const label = `${m.metric} · ${m.score === 1 ? '✓' : m.score === 0.5 ? '~' : '✗'}`
+              if (m.metric === 'Advanced Care Plan') {
+                return (
+                  <a
+                    key={m.metric}
+                    href="https://www.mydirectives.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    title={m.derived}
+                    style={{ ...chipStyle, cursor: 'pointer', textDecoration: 'none' }}
+                  >
+                    {label}
+                  </a>
+                )
+              }
+              return (
+                <span key={m.metric} title={m.derived} style={chipStyle}>
+                  {label}
+                </span>
+              )
+            })}
           </div>
 
           {/* Missing inputs hint */}
           {bhasV2Result.missingInputs.length > 0 && (
             <div style={{ fontSize: 12, color: theme.textMuted, borderTop: `1px solid ${theme.borderColor}`, paddingTop: 10 }}>
               <strong>To complete your v2.3 score, add:</strong>{' '}
-              {bhasV2Result.missingInputs.join(' · ')}
+              {bhasV2Result.missingInputs.map((input, i) => (
+                <span key={input}>
+                  {i > 0 && ' · '}
+                  {input === 'Advanced Care Plan' ? (
+                    <a href="https://www.mydirectives.com" target="_blank" rel="noreferrer" style={{ color: theme.textMuted, textDecoration: 'underline dotted' }}>
+                      Advanced Care Plan
+                    </a>
+                  ) : input}
+                </span>
+              ))}
               {' '}—{' '}
               <button
                 onClick={() => onNavigate?.('profile')}
