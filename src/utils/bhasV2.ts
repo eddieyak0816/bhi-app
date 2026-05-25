@@ -134,7 +134,7 @@ export function calculateBhasV2Score(
   const hdl               = latest(results, 'HDL')
   const vitaminD          = latest(results, 'Vitamin D')
   const vitaminB12        = latest(results, 'Vitamin B12')
-  const hbA1c             = latest(results, 'HbA1c')
+  const hbA1c             = latest(results, 'Hemoglobin A1c')
   const vo2MaxPercentile  = latest(results, 'VO2 Max Percentile')
 
   const { sex, heightCm, waistCm, weightKg, gripStrengthKg,
@@ -259,7 +259,7 @@ export function calculateBhasV2Score(
       included: true,
     })
   } else {
-    missingInputs.push('HbA1c')
+    missingInputs.push('Hemoglobin A1c')
   }
 
   // 7. Waist-to-Height Ratio
