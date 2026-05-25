@@ -1,5 +1,28 @@
 [
   {
+    "date": "2026-05-24",
+    "session": "24",
+    "session_summary": "Session 24 — DB duplicate marker cleanup + F87 Lab Marker Aliases. Ran two dedup migrations (20260524_merge_duplicate_markers.sql + _v2.sql) that merged 19 duplicate marker groups into canonical names, re-pointing user_lab_results rows and deleting dupe logic_rules/lab_markers. Fixed F86 bug: Hemoglobin A1c marker_category was not set to nhls_score (migration used wrong name 'HbA1c'). Built F87 Lab Marker Aliases: new lab_marker_aliases table (migration run, alias_count confirmed 0), 4 server endpoints, alias map fetched in LabsPage on load + resolved at PDF save time, 'Remember — save as alias' checkbox in PDF review table for manual overrides, Aliases section in Admin Markers edit modal (pill chips + inline Add/Delete). All 3 migrations run and confirmed in Supabase.",
+    "features_completed": [
+      { "id": "DB-dedup", "name": "Deduplicate lab_markers table", "migrations": ["20260524_merge_duplicate_markers.sql", "20260524_merge_duplicate_markers_v2.sql", "20260524_add_marker_category_to_lab_markers.sql (F86 bug fix)"] },
+      { "id": "F87", "name": "Lab Marker Aliases", "migration": "20260524_create_lab_marker_aliases.sql", "files": ["server/index.js", "src/pages/LabsPage.tsx", "src/pages/Admin.tsx"] }
+    ],
+    "bugs_fixed": [
+      "F86 migration backfill used 'HbA1c' instead of 'Hemoglobin A1c' — fixed in both migration source and dedup migration Step D"
+    ],
+    "pending_features": [
+      { "id": "F87-test", "name": "End-to-end test of alias feature — see test checklist in IMPLEMENTATION_TRACKER.html S24-2" },
+      { "id": "wordpress-login", "name": "WordPress / website login integration — waiting on Damon's decision on embed approach" },
+      { "id": "Phase11", "name": "HIPAA Hardening (F76-F81) — deferred until Damon upgrades to HIPAA-tier hosting" }
+    ],
+    "migrations_run": [
+      "20260524_add_marker_category_to_lab_markers.sql ✅",
+      "20260524_merge_duplicate_markers.sql ✅",
+      "20260524_merge_duplicate_markers_v2.sql ✅",
+      "20260524_create_lab_marker_aliases.sql ✅ (alias_count: 0)"
+    ]
+  },
+  {
     "date": "2026-05-20",
     "session": "23-planning",
     "session_summary": "Session 23 planning — No code written. Analysed Damon email requesting: (1) NHLS v2.3 score panel shown first on Dashboard (before Hormone Health v1 banner), (2) NHL score to use exactly 8 specific metrics (Vitamin D, B12, hs-CRP, HOMA-IR, HbA1c new, Height-to-Waist Ratio, TG/HDL, ACP with mydirectives.com link), (3) Marker category system so Damon can classify markers into NHLS Score / Hormone Panel / Additional Markers. All docs updated: CHANGELOG, DEVELOPER_REQUIREMENTS (Phase 13 added, BHAS v2.3 spec updated), MEMORY.md, project-progress.json.",
