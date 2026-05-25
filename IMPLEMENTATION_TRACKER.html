@@ -185,7 +185,7 @@
 <header>
   <h1>BHI App — Implementation Tracker</h1>
   <p>Balanced Health Institute · Developer Requirements &amp; Build Status</p>
-  <p class="last-updated">Last updated: 2026-05-24 — Session 24: Duplicate lab_markers cleanup — merged 9 duplicate marker groups; fixed F86 marker_category backfill for Hemoglobin A1c. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
+  <p class="last-updated">Last updated: 2026-05-24 — Session 24: Merged 19 duplicate marker groups (migrations run ✅); F87 Lab Marker Aliases built + migration run ✅. · Source of truth: DEVELOPER_REQUIREMENTS.md</p>
 </header>
 
 <!-- Stats bar — counts as of 2026-05-14 -->
@@ -1213,7 +1213,7 @@
         <div class="phase-title">Duplicate Lab Marker Cleanup</div>
         <div class="phase-desc">DB maintenance — merges duplicate marker rows, fixes NHLS scoring accuracy — 2026-05-24</div>
       </div>
-      <div class="phase-progress">1 / 1 done</div>
+      <div class="phase-progress">2 / 2 done</div>
     </div>
 
     <div class="item done" data-status="done">
@@ -1221,13 +1221,38 @@
       <div class="item-body">
         <div class="item-title">Deduplicate lab_markers table</div>
         <div class="item-note">
-          Migration <code>20260524_merge_duplicate_markers.sql</code> merges 9 duplicate marker groups
-          (Triglycerides, Vitamin B12, Vitamin D, Fasting Glucose, Fasting Insulin, HDL, Hemoglobin A1c, LDL, Total Cholesterol).
-          Pattern: re-point <code>user_lab_results.marker_name</code> to canonical name → delete dupe <code>logic_rules</code> → delete dupe <code>lab_markers</code>.
-          Also fixes F86 bug: <code>Hemoglobin A1c</code> now correctly gets <code>marker_category = 'nhls_score'</code>
-          (F86 migration had used <code>'HbA1c'</code> which normalises differently from <code>'Hemoglobin A1c'</code>).
-          <code>bhasV2.ts</code> <code>latest()</code> normalization verified correct — no code change needed.
-          <strong>Action required: run migration in Supabase SQL Editor.</strong>
+          Migrations <code>20260524_merge_duplicate_markers.sql</code> + <code>_v2.sql</code> — merged 19 duplicate marker groups
+          (Triglycerides, Vitamin B12, Vitamin D, Fasting Glucose, Fasting Insulin, HDL, Hemoglobin A1c, LDL, Total Cholesterol, Albumin, Alkaline Phosphatase, Bilirubin, Calcium, Chloride, Creatinine, eGFR, Glucose, Hemoglobin, Homocysteine, Insulin, Potassium, Protein, Sodium, Hematocrit, Vitamin D variants).
+          Both migrations ✅ run. Zero duplicate groups confirmed via verification query.
+          Also fixes F86 bug: <code>Hemoglobin A1c</code> now correctly tagged <code>nhls_score</code>.
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Done</span>
+    </div>
+
+    <div class="item done" data-status="done">
+      <div class="item-num">S24-2</div>
+      <div class="item-body">
+        <div class="item-title">F87: Lab Marker Aliases</div>
+        <div class="item-note">
+          Prevents future duplicate accumulation by mapping alternative PDF-extracted names to canonical marker names.<br><br>
+          <strong>Migration:</strong> <code>20260524_create_lab_marker_aliases.sql</code> — <code>lab_marker_aliases (alias TEXT UNIQUE, marker_id UUID → lab_markers)</code>. ✅ Run (alias_count: 0).<br><br>
+          <strong>Server:</strong> 4 new endpoints in <code>server/index.js</code>:
+          <code>GET /api/admin/lab-markers/aliases-all</code>,
+          <code>GET /api/admin/lab-markers/:id/aliases</code>,
+          <code>POST /api/admin/lab-markers/:id/aliases</code>,
+          <code>DELETE /api/admin/lab-markers/aliases/:aliasId</code>.<br><br>
+          <strong>LabsPage:</strong> Alias map fetched on load. PDF auto-match falls back to alias map. "Remember — save as alias" checkbox appears when user manually overrides the Matched Marker dropdown — saves alias to DB on Save.<br><br>
+          <strong>Admin → Markers → Edit modal:</strong> New "Aliases" section — pill chips with × delete, inline Add input (Enter or button). Writes immediately, no need to click main Save.<br><br>
+          <strong>Test checklist:</strong>
+          <ol style="margin:6px 0 0 16px;padding:0;font-size:12px;">
+            <li>Restart dev server after deploying server changes.</li>
+            <li>Admin → Markers → Edit "Triglycerides" → Aliases section shows "No aliases yet." → type <code>TRIGLYCERIDES</code> → Add → pill appears.</li>
+            <li>Upload a PDF containing "TRIGLYCERIDES" → confirm it auto-matches to Triglycerides in review table (dropdown pre-selected, no amber color).</li>
+            <li>Upload a PDF with a novel unknown name → manually pick correct marker from dropdown → "Remember — save as alias" checkbox appears → check it → Save → re-upload same PDF → confirm it auto-matches this time.</li>
+            <li>Admin → Edit same marker → Aliases section shows the new alias → click × → alias disappears.</li>
+            <li>Confirm deleting a marker also deletes its aliases (CASCADE) — check Supabase Table Editor on lab_marker_aliases after deleting a test marker.</li>
+          </ol>
         </div>
       </div>
       <span class="item-status status-done">✅ Built</span>
