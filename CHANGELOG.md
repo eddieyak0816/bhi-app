@@ -18,6 +18,14 @@ Three separate rows exist in `lab_markers` for the same marker:
 - `db/migrations/` — new migration to merge duplicates
 - `src/utils/bhasV2.ts` — harden `latest()` lookup
 
+## 2026-05-24 — feat: NHLS v2.3 panel is now sole score on Dashboard (session 23)
+
+### `src/pages/Dashboard.tsx`
+- Removed Hormone Health v1 banner (tag-based % score) from Dashboard entirely.
+- NHLS v2.3 derived-ratio panel is now the only score shown on the home page.
+- Hormone health prompt ("If you want to track your hormone health...") retained with link to Labs page.
+- Decided via Damon email 2026-05-20 — Option A: clean single score, hormone metrics accessible via Labs.
+
 ## 2026-05-20 — planned: Dashboard & scoring redesign per Damon feedback (session 23 — pending)
 
 ### Pending implementation — items confirmed by Damon via email 2026-05-20
