@@ -1393,13 +1393,16 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                   const markerScore = bhasResult?.markerScores.find(
                     m => m.markerName.toLowerCase() === result.markerName.toLowerCase()
                   )
+                  const isNotScored = markerScore?.label === 'Not Scored'
                   const scoreBg =
                     markerScore?.score === 1   ? 'rgba(16, 185, 129, 0.12)' :
                     markerScore?.score === 0.5 ? 'rgba(245, 158, 11, 0.12)' :
+                    isNotScored                ? 'transparent' :
                                                  'rgba(239, 68, 68, 0.12)'
                   const scoreColor =
                     markerScore?.score === 1   ? '#10B981' :
                     markerScore?.score === 0.5 ? '#D97706' :
+                    isNotScored                ? theme.textMuted :
                                                  '#EF4444'
                   return (
                     <tr key={result.id} style={{ borderTop: i > 0 ? `1.5px solid ${theme.borderColor}` : 'none' }}>
@@ -1436,9 +1439,9 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                               fontSize: 12,
                               fontWeight: 700,
                             }}
-                            title={markerScore.tag || 'No matching rule'}
+                            title={isNotScored ? 'No scoring rules configured for this marker' : (markerScore.tag || 'No matching rule')}
                           >
-                            {markerScore.score} — {markerScore.label}
+                            {isNotScored ? '— Not scored' : `${markerScore.score} — ${markerScore.label}`}
                           </span>
                         ) : (
                           <span style={{ color: theme.textMuted, fontSize: 12 }}>—</span>

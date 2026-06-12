@@ -32,7 +32,7 @@ export interface MarkerScore {
   markerName: string
   score: BhasScore
   tag: string        // the tag that fired for this marker
-  label: 'Optimal' | 'Improvement' | 'Out of Range'
+  label: 'Optimal' | 'Improvement' | 'Out of Range' | 'Not Scored'
 }
 
 /**
@@ -112,7 +112,7 @@ function tagToScore(tag: string, tagTierMap?: TagTierMap): BhasScore {
   return 0
 }
 
-function scoreToLabel(score: BhasScore): 'Optimal' | 'Improvement' | 'Out of Range' {
+function scoreToLabel(score: BhasScore): 'Optimal' | 'Improvement' | 'Out of Range' | 'Not Scored' {
   if (score === 1) return 'Optimal'
   if (score === 0.5) return 'Improvement'
   return 'Out of Range'
@@ -256,6 +256,17 @@ export function calculateBhasScore(
 
     // Find the rule that fires for this user's value
     const firedRule = markerRules.find(r => evaluateRule(result.value, r))
+
+    // No rules configured for this marker at all — don't penalise the score
+    if (markerRules.length === 0) {
+      markerScores.push({
+        markerName: result.markerName,
+        score: 0,
+        tag: '',
+        label: 'Not Scored',
+      })
+      continue
+    }
 
     const tag = firedRule?.tag_to_apply ?? ''
     const score = tagToScore(tag, tagTierMap)
