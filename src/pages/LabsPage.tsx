@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
 import Vo2CalcModal from '../components/Vo2CalcModal'
 import LabTriggerMessagesModal from '../components/LabTriggerMessagesModal'
-import { getTriggerMessages, TriggerMessage } from '../utils/labTriggerMessages'
+import { getTriggerMessagesFromDB, TriggerMessage } from '../utils/labTriggerMessages'
 import { getStoredJwt } from '../lib/supabase'
 import type { ProviderVerification } from '../context/ResultsContext'
 import {
@@ -264,7 +264,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
     setExtractedRows(null)
     setSavingExtracted(false)
 
-    const msgs = getTriggerMessages(savedItems, userSex)
+    const msgs = await getTriggerMessagesFromDB(savedItems, userSex)
     if (msgs.length > 0) setTriggerMessages(msgs)
   }
 
@@ -353,7 +353,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
     return { min: fallbackMin, max: fallbackMax }
   }
 
-  const handleAddResult = () => {
+  const handleAddResult = async () => {
     if (!formData.markerName || !formData.value) {
       alert('Please fill in marker name and value')
       return
@@ -386,7 +386,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
       verification: showVerification ? { ...verificationForm } : null,
     })
 
-    const msgs = getTriggerMessages(
+    const msgs = await getTriggerMessagesFromDB(
       [{ markerName: formData.markerName, value: parseFloat(formData.value) }],
       userSex
     )

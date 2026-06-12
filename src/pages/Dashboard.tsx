@@ -148,15 +148,20 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
         background: theme.card,
         border: `1.5px solid ${theme.borderColor}`,
         borderRadius: 8,
-        padding: 16,
+        padding: '10px 14px',
         flex: 1,
-        minWidth: 200,
+        minWidth: 140,
         cursor: onClick ? 'pointer' : 'default',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
       }}
     >
-      <div style={{ fontSize: 28, marginBottom: 8 }}>{icon}</div>
-      <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: theme.text }}>{value}</div>
+      <div style={{ fontSize: 20 }}>{icon}</div>
+      <div>
+        <div style={{ fontSize: 11, color: theme.textMuted }}>{label}</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: theme.text }}>{value}</div>
+      </div>
     </div>
   )
 
@@ -168,36 +173,6 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
       </div>
 
       <StaleLabBanner latestLabDate={latestLabDate} onNavigate={onNavigate} />
-
-      {/* Stats Section */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 16,
-          marginBottom: 24,
-        }}
-      >
-        {statCard('Bookmarked Resources', bookmarkedCount, '🔖', () => {
-          if (resourcesRef.current) resourcesRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          else onNavigate?.('resources')
-        })}
-        {statCard('Lab Results', results.length, '⚗️', () => onNavigate?.('labs'))}
-        {statCard('Health Insights', applicableTags.length, '💡', () => nhlsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))}
-        {statCard('Recommendations', recommendedResources.length, '📚', () => recommendationsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))}
-      </div>
-
-      {/* Hormone health prompt */}
-      <div style={{ fontSize: 13, color: theme.textMuted, marginBottom: 32 }}>
-        If you want to track your hormone health, you can add your metrics{' '}
-        <button
-          onClick={() => onNavigate?.('labs')}
-          style={{ background: 'none', border: 'none', color: theme.blue, cursor: 'pointer', fontSize: 13, padding: 0, textDecoration: 'underline' }}
-        >
-          here
-        </button>
-        .
-      </div>
 
       {/* NHLS Score Panel — shown only when enough data exists */}
       {bhasV2Result && bhasV2Result.hasEnoughData && (
@@ -437,6 +412,24 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
           })()}
         </div>
       )}
+
+      {/* Stats Section */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+          gap: 10,
+          marginBottom: 24,
+        }}
+      >
+        {statCard('Bookmarked Resources', bookmarkedCount, '🔖', () => {
+          if (resourcesRef.current) resourcesRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          else onNavigate?.('resources')
+        })}
+        {statCard('Lab Results', results.length, '⚗️', () => onNavigate?.('labs'))}
+        {statCard('Health Insights', applicableTags.length, '💡', () => nhlsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))}
+        {statCard('Recommendations', recommendedResources.length, '📚', () => recommendationsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))}
+      </div>
 
       {/* Personalized Recommendations - NEW */}
       {results.length > 0 && (

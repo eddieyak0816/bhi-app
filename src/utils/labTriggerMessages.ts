@@ -294,3 +294,102 @@ export function getTriggerMessages(
 
   return messages
 }
+
+// ── DB-aware version (F88) ────────────────────────────────────────────────────
+// Fetches thresholds from the server, evaluates them, falls back to hardcoded.
+interface DBThreshold {
+  marker_name: string
+  sex: 'male' | 'female' | 'both'
+  level: 'warning' | 'danger'
+  condition: string
+  min_value: number | null
+  max_value: number | null
+  headline: string
+  body: string
+  actions: string[]
+  escalate: string | null
+}
+
+let _cachedThresholds: DBThreshold[] | null = null
+let _cacheTime = 0
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 min
+
+async function loadDBThresholds(): Promise<DBThreshold[]> {
+  if (_cachedThresholds && Date.now() - _cacheTime < CACHE_TTL_MS) return _cachedThresholds
+  try {
+    const backendUrl = (import.meta as any).env.VITE_BACKEND_URL || ''
+    const url = backendUrl ? `${backendUrl.replace(/\/$/, '')}/api/trigger-thresholds` : '/api/trigger-thresholds'
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('fetch failed')
+    _cachedThresholds = await res.json()
+    _cacheTime = Date.now()
+    return _cachedThresholds!
+  } catch {
+    return []
+  }
+}
+
+function matchesCondition(value: number, condition: string, min: number | null, max: number | null): boolean {
+  switch (condition) {
+    case 'between': return min != null && max != null && value >= min && value <= max
+    case '>=':      return min != null && value >= min
+    case '>':       return min != null && value > min
+    case '<=':      return max != null && value <= max
+    case '<':       return max != null && value < max
+    case '=':       return min != null && value === min
+    default:        return false
+  }
+}
+
+function evalDBThreshold(t: DBThreshold, value: number): TriggerMessage | null {
+  if (!matchesCondition(value, t.condition, t.min_value, t.max_value)) return null
+  return {
+    level: t.level,
+    headline: t.headline,
+    body: t.body,
+    actions: t.actions,
+    escalate: t.escalate ?? undefined,
+  }
+}
+
+export async function getTriggerMessagesFromDB(
+  results: SavedResult[],
+  sex?: 'male' | 'female' | ''
+): Promise<TriggerMessage[]> {
+  const thresholds = await loadDBThresholds()
+
+  // Fall back to hardcoded if DB returned nothing
+  if (thresholds.length === 0) return getTriggerMessages(results, sex)
+
+  const messages: TriggerMessage[] = []
+
+  for (const r of results) {
+    const name = r.markerName.toLowerCase()
+    const matching = thresholds.filter(t => {
+      const nameMatch = t.marker_name.toLowerCase() === name ||
+        name.includes(t.marker_name.toLowerCase()) ||
+        t.marker_name.toLowerCase().includes(name)
+      const sexOk = t.sex === 'both' || t.sex === sex
+      return nameMatch && sexOk
+    })
+    for (const t of matching) {
+      const msg = evalDBThreshold(t, r.value)
+      if (msg) { messages.push(msg); break }
+    }
+  }
+
+  // Combined metabolic alert stays hardcoded — complex multi-marker derived logic
+  const combined = getCombinedMetabolicAlert(results)
+  if (combined) messages.push(combined)
+
+  if (messages.length === 0 && results.length > 0) {
+    messages.push({
+      level: 'success',
+      headline: 'Great job — your results are in an optimal range',
+      body: 'Maintaining these levels supports long-term health, energy, and performance.',
+      actions: ["Keep doing what you're doing", "You're building long-term health resilience"],
+    })
+  }
+
+  return messages
+}

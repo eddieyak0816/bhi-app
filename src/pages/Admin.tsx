@@ -9,6 +9,7 @@ import AdminLeaguesTab from '../components/AdminLeaguesTab'
 import AdminUsersTab from '../components/AdminUsersTab'
 import AdminLabResultsTab from '../components/AdminLabResultsTab'
 import AdminChallengesTab from '../components/AdminChallengesTab'
+import AdminTriggerMessagesTab from '../components/AdminTriggerMessagesTab'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null; duration_type?: 'short' | 'long' | 'both' }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
@@ -35,7 +36,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
 
-  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','leagues','users','challenges','lab-results'] as const
+  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','leagues','users','challenges','lab-results','alerts'] as const
   type AdminTab = typeof VALID_TABS[number]
   const [activeTab, setActiveTab] = useState<AdminTab>(VALID_TABS.includes(initialTab as AdminTab) ? (initialTab as AdminTab) : 'resources')
   // Use global theme context
@@ -1315,6 +1316,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           { id: 'users',         icon: '👤', label: 'Users' },
           { id: 'challenges',    icon: '⚡', label: 'Challenges' },
           ...(isSuperAdmin ? [{ id: 'lab-results' as AdminTab, icon: '🔬', label: 'Lab Data' }] : []),
+          { id: 'alerts' as AdminTab, icon: '⚠️', label: 'Alerts' },
         ]
         return (
           <div style={{
@@ -4827,6 +4829,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       {/* ── Lab Results Tab (F72 — super_admin only) ─────────────────────── */}
       {activeTab === 'lab-results' && isSuperAdmin && (
         <AdminLabResultsTab theme={theme} />
+      )}
+
+      {/* ── Alert Thresholds Tab (F88) ───────────────────────────────────── */}
+      {activeTab === 'alerts' && (
+        <AdminTriggerMessagesTab />
       )}
     </div>
   )

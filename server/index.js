@@ -3597,4 +3597,74 @@ app.get('/api/challenges', async (req, res) => {
   }
 });
 
+// ── Lab Trigger Thresholds (F88) ─────────────────────────────────────────────
+
+// GET /api/admin/trigger-thresholds — all rows, ordered by marker + sort_order
+app.get('/api/admin/trigger-thresholds', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('lab_trigger_thresholds')
+      .select('*')
+      .order('marker_name')
+      .order('sort_order');
+    if (error) throw error;
+    return res.json(data || []);
+  } catch (err) {
+    console.error('GET /api/admin/trigger-thresholds error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// PATCH /api/admin/trigger-thresholds/:id — update a single threshold row
+// Body: any subset of { min_value, max_value, headline, body, actions, escalate }
+app.patch('/api/admin/trigger-thresholds/:id', async (req, res) => {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
+  const { id } = req.params;
+  const { min_value, max_value, headline, body, actions, escalate, condition } = req.body;
+  const updates = {};
+  if (min_value   !== undefined) updates.min_value   = min_value   === '' ? null : Number(min_value);
+  if (max_value   !== undefined) updates.max_value   = max_value   === '' ? null : Number(max_value);
+  if (headline    !== undefined) updates.headline    = headline;
+  if (body        !== undefined) updates.body        = body;
+  if (actions     !== undefined) updates.actions     = actions;
+  if (escalate    !== undefined) updates.escalate    = escalate || null;
+  if (condition   !== undefined) updates.condition   = condition;
+  updates.updated_at = new Date().toISOString();
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('lab_trigger_thresholds')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return res.json(data);
+  } catch (err) {
+    console.error('PATCH /api/admin/trigger-thresholds error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// GET /api/trigger-thresholds — public read for frontend (no API key needed)
+app.get('/api/trigger-thresholds', async (req, res) => {
+  if (!SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('lab_trigger_thresholds')
+      .select('*')
+      .order('marker_name')
+      .order('sort_order');
+    if (error) throw error;
+    return res.json(data || []);
+  } catch (err) {
+    console.error('GET /api/trigger-thresholds error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));

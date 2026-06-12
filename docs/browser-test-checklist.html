@@ -48,7 +48,7 @@
 <body>
 
 <h1>NHL App — Browser Test Checklist</h1>
-<p class="meta">Living document — results persist across sessions via localStorage · Last updated 2026-05-13</p>
+<p class="meta">Living document — results persist across sessions via localStorage · Last updated 2026-05-25</p>
 <p class="meta" style="margin-top:4px">Session 1 (2026-04-28): F63 Leagues · F64 Brokers · F65 Virtual Providers · Hormone Markers · Admin UX — <strong style="color:#4ade80">21/21 ✅</strong></p>
 <p class="meta" style="margin-top:4px">Session 2 (2026-04-28): Admin Option D nav · Slug auto-fill · User create/role/delete · Employer View back button</p>
 
@@ -964,6 +964,475 @@
       </div>
     </div>
     <div class="notes-area" id="notes-s17-catpref-dashboard"><textarea placeholder="Notes…" oninput="saveNote('s17-catpref-dashboard',this.value)"></textarea></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SESSION 18 — Edit Marker Ranges Wizard (2026-05-13)               -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Session 18 — Edit Marker Ranges Wizard (2026-05-13)</div>
+
+  <div class="item" data-id="s18-editranges-open">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s18-editranges-open"></div>
+      <div class="item-num">53</div>
+      <div class="item-desc">
+        Admin → Markers → click ✎ Edit on any marker with existing rules (e.g. Fasting Glucose) → scoring rules section shows 3-tier multi-range UI (Optimal / Improvement / Out of Range) pre-populated from existing rules
+        <div class="hint">Each tier row should show the correct min/max values from the DB.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s18-editranges-open','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s18-editranges-open','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s18-editranges-open','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s18-editranges-open"><textarea placeholder="Notes…" oninput="saveNote('s18-editranges-open',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s18-editranges-add">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s18-editranges-add"></div>
+      <div class="item-num">54</div>
+      <div class="item-desc">
+        Add a new range row within a tier → fill in min/max/tag → click Save → re-open the marker → new rule row is present
+        <div class="hint">Confirm the new rule appears in the DB via Admin → Markers re-open.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s18-editranges-add','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s18-editranges-add','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s18-editranges-add','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s18-editranges-add"><textarea placeholder="Notes…" oninput="saveNote('s18-editranges-add',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s18-editranges-remove">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s18-editranges-remove"></div>
+      <div class="item-num">55</div>
+      <div class="item-desc">
+        Remove a range row → click Save → re-open the marker → removed row is gone (rule deleted from DB)
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s18-editranges-remove','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s18-editranges-remove','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s18-editranges-remove','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s18-editranges-remove"><textarea placeholder="Notes…" oninput="saveNote('s18-editranges-remove',this.value)"></textarea></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SESSION 19 — NHLS Score Panel Restructure + Bug Fixes (2026-05-14) -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Session 19 — NHLS Score Panel &amp; Bug Fixes (2026-05-14)</div>
+
+  <div class="item" data-id="s19-nhls-panel">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s19-nhls-panel"></div>
+      <div class="item-num">56</div>
+      <div class="item-desc">
+        Dashboard → scroll down → NHLS v2.3 score panel appears showing score, label (Optimal/Healthy/etc.), and metric breakdown
+        <div class="hint">Requires at least 4 of 8 metrics to be scored. Log some lab results if panel is missing.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s19-nhls-panel','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s19-nhls-panel','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s19-nhls-panel','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s19-nhls-panel"><textarea placeholder="Notes…" oninput="saveNote('s19-nhls-panel',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s19-benchmarks-toggle">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s19-benchmarks-toggle"></div>
+      <div class="item-num">57</div>
+      <div class="item-desc">
+        National Benchmarks collapsed inside NHLS score panel by default → click the ▶ toggle → benchmark table expands inline within the panel
+        <div class="hint">Benchmarks should no longer appear as a standalone section below the score panel.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s19-benchmarks-toggle','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s19-benchmarks-toggle','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s19-benchmarks-toggle','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s19-benchmarks-toggle"><textarea placeholder="Notes…" oninput="saveNote('s19-benchmarks-toggle',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s19-oor-badge">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s19-oor-badge"></div>
+      <div class="item-num">58</div>
+      <div class="item-desc">
+        Labs → markers with an optimal logic rule show correct Normal or Out of Range badge (not always OOR)
+        <div class="hint">E.g. Fasting Glucose in range 70–99 should show Normal, not Out of Range.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s19-oor-badge','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s19-oor-badge','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s19-oor-badge','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s19-oor-badge"><textarea placeholder="Notes…" oninput="saveNote('s19-oor-badge',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s19-pdf-fuzzy">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s19-pdf-fuzzy"></div>
+      <div class="item-num">59</div>
+      <div class="item-desc">
+        Upload a PDF containing "HDL Cholesterol" → review table shows it matched to "HDL", not "Cholesterol"
+        <div class="hint">Phrase/word-boundary match should prefer the most-specific marker.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s19-pdf-fuzzy','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s19-pdf-fuzzy','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s19-pdf-fuzzy','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s19-pdf-fuzzy"><textarea placeholder="Notes…" oninput="saveNote('s19-pdf-fuzzy',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s19-pdf-marker-dropdown">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s19-pdf-marker-dropdown"></div>
+      <div class="item-num">60</div>
+      <div class="item-desc">
+        PDF review table → "Matched Marker" column is a dropdown → change the auto-matched marker → Save checkbox auto-checks
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s19-pdf-marker-dropdown','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s19-pdf-marker-dropdown','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s19-pdf-marker-dropdown','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s19-pdf-marker-dropdown"><textarea placeholder="Notes…" oninput="saveNote('s19-pdf-marker-dropdown',this.value)"></textarea></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SESSION 20 — Admin Nav + Stale Score Fix + F82 Video Duration      -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Session 20 — Admin Nav, Stale Score Fix, F82 Video Duration (2026-05-17)</div>
+
+  <div class="item" data-id="s20-admin-tabbar">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s20-admin-tabbar"></div>
+      <div class="item-num">61</div>
+      <div class="item-desc">
+        Admin page shows a horizontal scrolling tab bar (not a tile grid) — icon + label inline, active tab has solid blue styling
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s20-admin-tabbar','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s20-admin-tabbar','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s20-admin-tabbar','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s20-admin-tabbar"><textarea placeholder="Notes…" oninput="saveNote('s20-admin-tabbar',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s20-stale-score">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s20-stale-score"></div>
+      <div class="item-num">62</div>
+      <div class="item-desc">
+        Add a lab result manually → navigate back to Dashboard → NHLS score updates immediately without requiring a page refresh
+        <div class="hint">Previously the score would show a stale cached value until the page was hard-reloaded.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s20-stale-score','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s20-stale-score','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s20-stale-score','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s20-stale-score"><textarea placeholder="Notes…" oninput="saveNote('s20-stale-score',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s20-duration-toggle">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s20-duration-toggle"></div>
+      <div class="item-num">63</div>
+      <div class="item-desc">
+        Dashboard → Personalized for You section → All / Short / Long pill toggle appears → clicking Short or Long filters recommendations to matching duration type
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s20-duration-toggle','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s20-duration-toggle','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s20-duration-toggle','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s20-duration-toggle"><textarea placeholder="Notes…" oninput="saveNote('s20-duration-toggle',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s20-admin-duration-type">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s20-admin-duration-type"></div>
+      <div class="item-num">64</div>
+      <div class="item-desc">
+        Admin → Resources → edit any resource → "Duration Type" dropdown shows options: Short / Long / Both
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s20-admin-duration-type','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s20-admin-duration-type','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s20-admin-duration-type','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s20-admin-duration-type"><textarea placeholder="Notes…" oninput="saveNote('s20-admin-duration-type',this.value)"></textarea></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SESSION 21 — Hormone Panel UI + HOMA-IR Link (2026-05-17)         -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Session 21 — Hormone Panel UI &amp; HOMA-IR Link (2026-05-17)</div>
+
+  <div class="item" data-id="s21-hormone-panel-visible">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s21-hormone-panel-visible"></div>
+      <div class="item-num">65</div>
+      <div class="item-desc">
+        Labs page → user with at least one hormone marker result logged → "Hormone Panel" section appears below "Blood Work"
+        <div class="hint">Section subtitle should read "Personal tracking only — not included in NHLS score".</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s21-hormone-panel-visible','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s21-hormone-panel-visible','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s21-hormone-panel-visible','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s21-hormone-panel-visible"><textarea placeholder="Notes…" oninput="saveNote('s21-hormone-panel-visible',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s21-hormone-panel-hidden">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s21-hormone-panel-hidden"></div>
+      <div class="item-num">66</div>
+      <div class="item-desc">
+        Labs page → user with no hormone marker results → "Hormone Panel" section does NOT appear at all
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s21-hormone-panel-hidden','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s21-hormone-panel-hidden','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s21-hormone-panel-hidden','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s21-hormone-panel-hidden"><textarea placeholder="Notes…" oninput="saveNote('s21-hormone-panel-hidden',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s21-homaír-link">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s21-homaír-link"></div>
+      <div class="item-num">67</div>
+      <div class="item-desc">
+        Dashboard → NHLS score panel subtitle contains "HOMA-IR" as a dotted-underline link → click → opens Wikipedia page in a new tab
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s21-homaír-link','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s21-homaír-link','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s21-homaír-link','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s21-homaír-link"><textarea placeholder="Notes…" oninput="saveNote('s21-homaír-link',this.value)"></textarea></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SESSION 22 — Virtual Providers Org Filter (2026-05-18)            -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Session 22 — Virtual Providers Org Filter (2026-05-18)</div>
+
+  <div class="item" data-id="s22-providers-org-filter">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s22-providers-org-filter"></div>
+      <div class="item-num">68</div>
+      <div class="item-desc">
+        Admin → Providers → "Filter by org" dropdown appears above the provider list → select a specific org → list filters to only that org's providers
+        <div class="hint">Empty state distinguishes no providers vs. no match for the selected org.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s22-providers-org-filter','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s22-providers-org-filter','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s22-providers-org-filter','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s22-providers-org-filter"><textarea placeholder="Notes…" oninput="saveNote('s22-providers-org-filter',this.value)"></textarea></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SESSION 24 — DB Dedup + F87 Lab Marker Aliases (2026-05-24)       -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Session 24 — DB Dedup &amp; F87 Lab Marker Aliases (2026-05-24)</div>
+
+  <div class="item" data-id="s24-dedup-verified">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s24-dedup-verified"></div>
+      <div class="item-num">69</div>
+      <div class="item-desc">
+        Admin → Markers → search "Hemoglobin A1c" → only one result appears (no duplicates)
+        <div class="hint">The DB dedup migration merged 19 duplicate marker groups. Any remaining duplicates indicate a missed merge.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s24-dedup-verified','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s24-dedup-verified','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s24-dedup-verified','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s24-dedup-verified"><textarea placeholder="Notes…" oninput="saveNote('s24-dedup-verified',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s24-marker-category">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s24-marker-category"></div>
+      <div class="item-num">70</div>
+      <div class="item-desc">
+        Admin → Markers → Edit any marker → Category dropdown shows options: NHLS Score / Hormone Panel / Additional Markers
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s24-marker-category','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s24-marker-category','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s24-marker-category','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s24-marker-category"><textarea placeholder="Notes…" oninput="saveNote('s24-marker-category',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s24-alias-automatch">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s24-alias-automatch"></div>
+      <div class="item-num">71</div>
+      <div class="item-desc">
+        Upload a PDF where a marker name doesn't exactly match any DB marker name but an alias exists for it → review table shows it auto-matched (no amber "New" label, correct marker pre-selected in dropdown)
+        <div class="hint">Requires at least one alias to exist in the lab_marker_aliases table.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s24-alias-automatch','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s24-alias-automatch','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s24-alias-automatch','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s24-alias-automatch"><textarea placeholder="Notes…" oninput="saveNote('s24-alias-automatch',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s24-alias-remember">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s24-alias-remember"></div>
+      <div class="item-num">72</div>
+      <div class="item-desc">
+        Upload PDF → manually change Matched Marker dropdown for a row → "Remember — save as alias" checkbox appears → check it → Save → re-upload same PDF → that name now auto-matches without manual override
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s24-alias-remember','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s24-alias-remember','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s24-alias-remember','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s24-alias-remember"><textarea placeholder="Notes…" oninput="saveNote('s24-alias-remember',this.value)"></textarea></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- SESSION 25 — Merge Markers + Substring Search + NHLS Score        -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">Session 25 — Merge Markers, Substring Search, NHLS Score (2026-05-25)</div>
+
+  <div class="item" data-id="s25-merge-ui">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s25-merge-ui"></div>
+      <div class="item-num">73</div>
+      <div class="item-desc">
+        Admin → Markers → Edit any marker → "Merge Another Marker Into This One" section appears with a dropdown listing all other markers sorted A–Z
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s25-merge-ui','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s25-merge-ui','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s25-merge-ui','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s25-merge-ui"><textarea placeholder="Notes…" oninput="saveNote('s25-merge-ui',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s25-merge-action">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s25-merge-action"></div>
+      <div class="item-num">74</div>
+      <div class="item-desc">
+        Select a marker from the Merge dropdown → click Merge → confirm dialog → after merge: source marker is gone from the markers list; source marker's name appears as an alias pill on the target marker
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s25-merge-action','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s25-merge-action','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s25-merge-action','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s25-merge-action"><textarea placeholder="Notes…" oninput="saveNote('s25-merge-action',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s25-merge-alias-trail">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s25-merge-alias-trail"></div>
+      <div class="item-num">75</div>
+      <div class="item-desc">
+        After a merge → re-edit the target marker → alias pill showing the merged marker's original name is visible in the Aliases section
+        <div class="hint">This confirms the merge left an audit trail via the alias system.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s25-merge-alias-trail','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s25-merge-alias-trail','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s25-merge-alias-trail','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s25-merge-alias-trail"><textarea placeholder="Notes…" oninput="saveNote('s25-merge-alias-trail',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s25-search-substring">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s25-search-substring"></div>
+      <div class="item-num">76</div>
+      <div class="item-desc">
+        Admin → Markers → type "B12" in the search box → both markers containing "B12" (e.g. "Vitamin B12") appear in results (not just exact name match)
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s25-search-substring','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s25-search-substring','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s25-search-substring','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s25-search-substring"><textarea placeholder="Notes…" oninput="saveNote('s25-search-substring',this.value)"></textarea></div>
+  </div>
+
+  <div class="item" data-id="s25-nhls-score-dashboard">
+    <div class="item-top">
+      <div class="status-badge" id="badge-s25-nhls-score-dashboard"></div>
+      <div class="item-num">77</div>
+      <div class="item-desc">
+        Dashboard → NHLS score panel is visible showing the score value, label (Optimal / Healthy / Needs Attention / etc.), and the metric breakdown list
+        <div class="hint">Log lab results if the panel does not appear — requires at least 4 of 8 scored metrics.</div>
+      </div>
+      <div class="item-controls">
+        <button class="btn btn-pass" onclick="mark('s25-nhls-score-dashboard','pass',this)">Pass</button>
+        <button class="btn btn-fail" onclick="mark('s25-nhls-score-dashboard','fail',this)">Fail</button>
+        <button class="btn btn-skip" onclick="mark('s25-nhls-score-dashboard','skip',this)">Skip</button>
+      </div>
+    </div>
+    <div class="notes-area" id="notes-s25-nhls-score-dashboard"><textarea placeholder="Notes…" oninput="saveNote('s25-nhls-score-dashboard',this.value)"></textarea></div>
   </div>
 
 </div>
