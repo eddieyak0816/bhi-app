@@ -85,6 +85,22 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
               </button>
             ))}
 
+            {/* MyDirectives link */}
+            <a
+              href="https://www.mydirectives.com"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                color: theme.text,
+                fontSize: 14,
+                fontWeight: 500,
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              My Directives
+            </a>
+
             {/* Supplements dropdown */}
             <div ref={suppRef} style={{ position: 'relative' }}>
               <button

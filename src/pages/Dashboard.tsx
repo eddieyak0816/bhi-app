@@ -259,20 +259,6 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                 cursor: 'default' as const,
               }
               const label = `${m.metric} · ${m.score === 1 ? '✓' : m.score === 0.5 ? '~' : '✗'}`
-              if (m.metric === 'Advanced Care Plan') {
-                return (
-                  <a
-                    key={m.metric}
-                    href="https://www.mydirectives.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    title={m.derived}
-                    style={{ ...chipStyle, cursor: 'pointer', textDecoration: 'none' }}
-                  >
-                    {label}
-                  </a>
-                )
-              }
               return (
                 <span key={m.metric} title={m.derived} style={chipStyle}>
                   {label}
@@ -286,14 +272,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
             <div style={{ fontSize: 12, color: theme.textMuted, borderTop: `1px solid ${theme.borderColor}`, paddingTop: 10 }}>
               <strong>To complete your v2.3 score, add:</strong>{' '}
               {bhasV2Result.missingInputs.map((input, i) => (
-                <span key={input}>
-                  {i > 0 && ' · '}
-                  {input === 'Advanced Care Plan' ? (
-                    <a href="https://www.mydirectives.com" target="_blank" rel="noreferrer" style={{ color: theme.textMuted, textDecoration: 'underline dotted' }}>
-                      Advanced Care Plan
-                    </a>
-                  ) : input}
-                </span>
+                <span key={input}>{i > 0 && ' · '}{input}</span>
               ))}
               {' '}—{' '}
               <button
