@@ -838,7 +838,7 @@ app.put('/api/admin/lab-markers/:id/rules', async (req, res) => {
   const markerId = req.params.id;
   if (!markerId) return res.status(400).json({ error: 'missing-id' });
 
-  const { rules } = req.body || {};
+  const { rules, tierMessages } = req.body || {};
   if (!Array.isArray(rules)) return res.status(400).json({ error: 'missing-rules' });
 
   const validRules = rules.filter(r =>
@@ -848,6 +848,8 @@ app.put('/api/admin/lab-markers/:id/rules', async (req, res) => {
   );
 
   const labelToTier = { 'Optimal': 'optimal', 'Improvement': 'improvement', 'Out of Range': 'out_of_range' };
+  // tierMessages: { 'Improvement': 'message text', 'Out of Range': 'message text' }
+  const labelToLevel = { 'Improvement': 'warning', 'Out of Range': 'danger' };
 
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
@@ -875,13 +877,18 @@ app.put('/api/admin/lab-markers/:id/rules', async (req, res) => {
     }
 
     // Insert new rules
-    const rulePayloads = validRules.map(r => ({
-      marker_id: markerId,
-      min_value: Number(r.min_value),
-      max_value: Number(r.max_value),
-      tag_to_apply: r.tag_name.trim(),
-      operator: 'between'
-    }));
+    const rulePayloads = validRules.map(r => {
+      const msg = tierMessages?.[r.label] || null;
+      return {
+        marker_id: markerId,
+        min_value: Number(r.min_value),
+        max_value: Number(r.max_value),
+        tag_to_apply: r.tag_name.trim(),
+        operator: 'between',
+        alert_message: msg && msg.trim() ? msg.trim() : null,
+        alert_level: msg && msg.trim() ? (labelToLevel[r.label] || null) : null,
+      };
+    });
     const { data: inserted, error: insErr } = await sb.from('logic_rules').insert(rulePayloads).select('id,marker_id,min_value,max_value,tag_to_apply');
     if (insErr) {
       console.error('rules-insert-error', insErr);
@@ -1238,7 +1245,7 @@ app.post('/api/admin/new-marker-wizard', async (req, res) => {
   const incomingKey = req.header('x-backend-api-key') || '';
   if (!incomingKey || incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
 
-  const { name, unit, rules } = req.body || {};
+  const { name, unit, rules, tierMessages } = req.body || {};
   if (!name || typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: 'missing-name' });
   if (!Array.isArray(rules) || rules.length === 0) return res.status(400).json({ error: 'missing-rules' });
 
@@ -1285,13 +1292,19 @@ app.post('/api/admin/new-marker-wizard', async (req, res) => {
     }
 
     // 3. Create logic rules
-    const rulePayloads = validRules.map(r => ({
-      marker_id: markerId,
-      min_value: Number(r.min_value),
-      max_value: Number(r.max_value),
-      tag_to_apply: r.tag_name.trim(),
-      operator: 'between'
-    }));
+    const labelToLevel = { 'Improvement': 'warning', 'Out of Range': 'danger' };
+    const rulePayloads = validRules.map(r => {
+      const msg = tierMessages?.[r.label] || null;
+      return {
+        marker_id: markerId,
+        min_value: Number(r.min_value),
+        max_value: Number(r.max_value),
+        tag_to_apply: r.tag_name.trim(),
+        operator: 'between',
+        alert_message: msg && msg.trim() ? msg.trim() : null,
+        alert_level: msg && msg.trim() ? (labelToLevel[r.label] || null) : null,
+      };
+    });
     const { data: rulesData, error: rulesErr } = await sb.from('logic_rules')
       .insert(rulePayloads)
       .select('id,marker_id,min_value,max_value,tag_to_apply');
@@ -3652,18 +3665,27 @@ app.patch('/api/admin/trigger-thresholds/:id', async (req, res) => {
   }
 });
 
-// GET /api/trigger-thresholds — public read for frontend (no API key needed)
+// GET /api/trigger-thresholds — returns logic_rules rows that have alert_message set,
+// joined with lab_marker name. Used by frontend popup evaluation after lab entry.
 app.get('/api/trigger-thresholds', async (req, res) => {
   if (!SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { data, error } = await sb
-      .from('lab_trigger_thresholds')
-      .select('*')
-      .order('marker_name')
-      .order('sort_order');
+      .from('logic_rules')
+      .select('id, min_value, max_value, operator, alert_message, alert_level, lab_markers(name)')
+      .not('alert_message', 'is', null);
     if (error) throw error;
-    return res.json(data || []);
+    const rows = (data || []).map(r => ({
+      id: r.id,
+      marker_name: r.lab_markers?.name || '',
+      min_value: r.min_value,
+      max_value: r.max_value,
+      operator: r.operator,
+      alert_message: r.alert_message,
+      alert_level: r.alert_level,
+    }));
+    return res.json(rows);
   } catch (err) {
     console.error('GET /api/trigger-thresholds error:', err.message);
     return res.status(500).json({ error: 'server_error' });

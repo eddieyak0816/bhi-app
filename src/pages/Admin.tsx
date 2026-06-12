@@ -9,7 +9,6 @@ import AdminLeaguesTab from '../components/AdminLeaguesTab'
 import AdminUsersTab from '../components/AdminUsersTab'
 import AdminLabResultsTab from '../components/AdminLabResultsTab'
 import AdminChallengesTab from '../components/AdminChallengesTab'
-import AdminTriggerMessagesTab from '../components/AdminTriggerMessagesTab'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null; duration_type?: 'short' | 'long' | 'both' }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
@@ -36,7 +35,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
 
-  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','leagues','users','challenges','lab-results','alerts'] as const
+  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','leagues','users','challenges','lab-results'] as const
   type AdminTab = typeof VALID_TABS[number]
   const [activeTab, setActiveTab] = useState<AdminTab>(VALID_TABS.includes(initialTab as AdminTab) ? (initialTab as AdminTab) : 'resources')
   // Use global theme context
@@ -115,6 +114,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
     { label: 'Improvement', min_value: '', max_value: '', tag_name: '' },
     { label: 'Out of Range', min_value: '', max_value: '', tag_name: '' },
   ])
+  const [markerEditTierMessages, setMarkerEditTierMessages] = useState<Record<string, string>>({
+    'Optimal': '', 'Improvement': '', 'Out of Range': '',
+  })
   const [markerEditSaving, setMarkerEditSaving] = useState(false)
   const [markerEditError, setMarkerEditError] = useState<string | null>(null)
   // Marker aliases state (F87)
@@ -156,6 +158,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
     { label: 'Improvement', min_value: '', max_value: '', tag_name: '' },
     { label: 'Out of Range', min_value: '', max_value: '', tag_name: '' }
   ])
+  const [wizardTierMessages, setWizardTierMessages] = useState<Record<string, string>>({
+    'Optimal': '', 'Improvement': '', 'Out of Range': '',
+  })
   const [wizardSaving, setWizardSaving] = useState(false)
   const [wizardError, setWizardError] = useState<string | null>(null)
 
@@ -294,7 +299,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       const res = await fetch(apiUrl('/api/admin/new-marker-wizard'), {
         method: 'POST',
         headers: { 'content-type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ name: wizardMarkerName.trim(), unit: wizardMarkerUnit.trim(), rules: wizardRules })
+        body: JSON.stringify({ name: wizardMarkerName.trim(), unit: wizardMarkerUnit.trim(), rules: wizardRules, tierMessages: wizardTierMessages })
       })
       const body = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -1316,7 +1321,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           { id: 'users',         icon: '👤', label: 'Users' },
           { id: 'challenges',    icon: '⚡', label: 'Challenges' },
           ...(isSuperAdmin ? [{ id: 'lab-results' as AdminTab, icon: '🔬', label: 'Lab Data' }] : []),
-          { id: 'alerts' as AdminTab, icon: '⚠️', label: 'Alerts' },
+
         ]
         return (
           <div style={{
@@ -3038,6 +3043,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                     return [{ label: lbl, min_value: '', max_value: '', tag_name: '' }]
                                   })
                                   setMarkerEditRules(rows)
+                                  const msgs: Record<string, string> = { 'Optimal': '', 'Improvement': '', 'Out of Range': '' }
+                                  TIERS.forEach(lbl => {
+                                    const tier = lbl === 'Optimal' ? 'optimal' : lbl === 'Improvement' ? 'improvement' : 'out_of_range'
+                                    const first = existing.find((r: any) => (tagsMeta[r.tag_to_apply]?.scoring_tier || 'out_of_range') === tier && r.alert_message)
+                                    if (first) msgs[lbl] = first.alert_message || ''
+                                  })
+                                  setMarkerEditTierMessages(msgs)
                                   setMarkerEditError(null)
                                   setMarkerEditAliases([])
                                   setMergeSourceId('')
@@ -3152,6 +3164,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               return [{ label: lbl, min_value: '', max_value: '', tag_name: '' }]
                             })
                             setMarkerEditRules(rows)
+                            const msgs2: Record<string, string> = { 'Optimal': '', 'Improvement': '', 'Out of Range': '' }
+                            TIERS.forEach(lbl => {
+                              const tier = lbl === 'Optimal' ? 'optimal' : lbl === 'Improvement' ? 'improvement' : 'out_of_range'
+                              const first = existing.find((r: any) => (tagsMeta[r.tag_to_apply]?.scoring_tier || 'out_of_range') === tier && r.alert_message)
+                              if (first) msgs2[lbl] = first.alert_message || ''
+                            })
+                            setMarkerEditTierMessages(msgs2)
                             setMarkerEditError(null)
                             setMarkerEditAliases([])
                             setMergeSourceId('')
@@ -3964,7 +3983,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               {EDIT_TIERS.map(({ label, color }) => {
                 const tierRows = markerEditRules.map((r, i) => ({ r, i })).filter(({ r }) => r.label === label)
                 return (
-                  <div key={label} style={{marginBottom:16}}>
+                  <div key={label} style={{marginBottom:20}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
                       <div style={{fontSize:12,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</div>
                       <button type="button" onClick={() => addMarkerEditRow(label)} style={{background:'transparent',border:`1px solid ${color}`,borderRadius:4,padding:'2px 10px',fontSize:12,color,cursor:'pointer',fontWeight:600}}>+ Add Range</button>
@@ -3983,6 +4002,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         <button type="button" onClick={() => removeMarkerEditRow(i)} disabled={tierRows.length <= 1} title="Remove this range" style={{background:'transparent',border:'none',color:tierRows.length <= 1 ? theme.borderColor : '#dc2626',cursor:tierRows.length <= 1 ? 'default' : 'pointer',fontSize:16,padding:0,lineHeight:1}}>×</button>
                       </div>
                     ))}
+                    {label !== 'Optimal' && (
+                      <div style={{marginTop:6}}>
+                        <div style={{fontSize:11,color:theme.textMuted,marginBottom:3}}>Alert message shown to user <span style={{fontWeight:400}}>(leave blank for no popup)</span></div>
+                        <textarea
+                          rows={2}
+                          placeholder={label === 'Improvement' ? 'e.g. Your value is approaching the out-of-range threshold.' : 'e.g. Your value is outside the healthy range — consider reviewing with a provider.'}
+                          value={markerEditTierMessages[label] || ''}
+                          onChange={e => setMarkerEditTierMessages(prev => ({ ...prev, [label]: e.target.value }))}
+                          style={{width:'100%',padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12,background:theme.bgSecondary,color:theme.text,resize:'vertical',boxSizing:'border-box'}}
+                        />
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -4000,7 +4031,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     if (!id) throw new Error('Missing marker id')
                     const patchRes = await fetch(apiUrl(`/api/admin/lab-markers/${id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...authHeaders() }, body: JSON.stringify({ name: markerEditForm.name, unit: markerEditForm.unit, cpt_code: markerEditForm.cpt_code || null, applicable_sex: markerEditForm.applicable_sex || 'both', marker_category: markerEditForm.marker_category || 'additional' }) })
                     if (!patchRes.ok) throw new Error(await patchRes.text().catch(() => String(patchRes.status)))
-                    const rulesRes = await fetch(apiUrl(`/api/admin/lab-markers/${id}/rules`), { method: 'PUT', headers: { 'content-type': 'application/json', ...authHeaders() }, body: JSON.stringify({ rules: markerEditRules }) })
+                    const rulesRes = await fetch(apiUrl(`/api/admin/lab-markers/${id}/rules`), { method: 'PUT', headers: { 'content-type': 'application/json', ...authHeaders() }, body: JSON.stringify({ rules: markerEditRules, tierMessages: markerEditTierMessages }) })
                     if (!rulesRes.ok) throw new Error(await rulesRes.text().catch(() => String(rulesRes.status)))
                     await load()
                     setMarkerModalOpen(false)
@@ -4134,6 +4165,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             >×</button>
                           </div>
                         ))}
+                        {label !== 'Optimal' && (
+                          <div style={{marginTop:6}}>
+                            <div style={{fontSize:11,color:theme.textMuted,marginBottom:3}}>Alert message shown to user <span style={{fontWeight:400}}>(leave blank for no popup)</span></div>
+                            <textarea
+                              rows={2}
+                              placeholder={label === 'Improvement' ? 'e.g. Your value is approaching the out-of-range threshold.' : 'e.g. Your value is outside the healthy range.'}
+                              value={wizardTierMessages[label] || ''}
+                              onChange={e => setWizardTierMessages(prev => ({ ...prev, [label]: e.target.value }))}
+                              style={{width:'100%',padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12,background:theme.bgSecondary,color:theme.text,resize:'vertical',boxSizing:'border-box'}}
+                            />
+                          </div>
+                        )}
                       </div>
                     )
                   })}
@@ -4831,10 +4874,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
         <AdminLabResultsTab theme={theme} />
       )}
 
-      {/* ── Alert Thresholds Tab (F88) ───────────────────────────────────── */}
-      {activeTab === 'alerts' && (
-        <AdminTriggerMessagesTab />
-      )}
+
     </div>
   )
 }
