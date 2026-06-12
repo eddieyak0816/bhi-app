@@ -3605,7 +3605,8 @@ app.get('/api/admin/trigger-thresholds', async (req, res) => {
   const incomingKey = req.header('x-backend-api-key') || '';
   if (incomingKey !== BACKEND_API_KEY) return res.status(403).json({ error: 'forbidden' });
   try {
-    const { data, error } = await supabaseAdmin
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
       .from('lab_trigger_thresholds')
       .select('*')
       .order('marker_name')
@@ -3636,7 +3637,8 @@ app.patch('/api/admin/trigger-thresholds/:id', async (req, res) => {
   if (condition   !== undefined) updates.condition   = condition;
   updates.updated_at = new Date().toISOString();
   try {
-    const { data, error } = await supabaseAdmin
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
       .from('lab_trigger_thresholds')
       .update(updates)
       .eq('id', id)
@@ -3654,7 +3656,8 @@ app.patch('/api/admin/trigger-thresholds/:id', async (req, res) => {
 app.get('/api/trigger-thresholds', async (req, res) => {
   if (!SERVICE_ROLE || !SUPABASE_URL) return res.status(501).json({ error: 'backend-disabled' });
   try {
-    const { data, error } = await supabaseAdmin
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb
       .from('lab_trigger_thresholds')
       .select('*')
       .order('marker_name')
