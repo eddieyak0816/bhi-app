@@ -3697,6 +3697,7 @@ app.get('/api/trigger-thresholds', async (req, res) => {
 // GET /api/lab-sets — public read, used by frontend dropdowns
 app.get('/api/lab-sets', async (req, res) => {
   try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { data, error } = await sb.from('lab_sets').select('*').order('sort_order');
     if (error) throw error;
     return res.json(data || []);
@@ -3709,6 +3710,7 @@ app.get('/api/lab-sets', async (req, res) => {
 // GET /api/admin/lab-sets — admin read
 app.get('/api/admin/lab-sets', requireAdmin, async (req, res) => {
   try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { data, error } = await sb.from('lab_sets').select('*').order('sort_order');
     if (error) throw error;
     return res.json(data || []);
@@ -3721,6 +3723,7 @@ app.get('/api/admin/lab-sets', requireAdmin, async (req, res) => {
 // POST /api/admin/lab-sets — create
 app.post('/api/admin/lab-sets', requireAdmin, async (req, res) => {
   try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { label, sort_order = 0, is_initial = false } = req.body;
     if (!label) return res.status(400).json({ error: 'label required' });
     const { data, error } = await sb.from('lab_sets').insert({ label, sort_order, is_initial }).select().single();
@@ -3735,6 +3738,7 @@ app.post('/api/admin/lab-sets', requireAdmin, async (req, res) => {
 // PATCH /api/admin/lab-sets/:id — update
 app.patch('/api/admin/lab-sets/:id', requireAdmin, async (req, res) => {
   try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { id } = req.params;
     const { label, sort_order, is_initial } = req.body;
     const patch = {};
@@ -3753,8 +3757,8 @@ app.patch('/api/admin/lab-sets/:id', requireAdmin, async (req, res) => {
 // DELETE /api/admin/lab-sets/:id — delete (block if only initial)
 app.delete('/api/admin/lab-sets/:id', requireAdmin, async (req, res) => {
   try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { id } = req.params;
-    // Check if this is the sole is_initial row
     const { data: row } = await sb.from('lab_sets').select('is_initial').eq('id', id).single();
     if (row?.is_initial) {
       const { count } = await sb.from('lab_sets').select('*', { count: 'exact', head: true }).eq('is_initial', true);
