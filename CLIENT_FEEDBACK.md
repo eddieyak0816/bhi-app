@@ -433,6 +433,82 @@ Brokers **cannot** edit reference material or any supplement/affiliate marketing
 
 ---
 
+## Email Exchange 8 — Home Page Lab Input + Follow-Up Labs + Video Coverage Audit (2026-06-25)
+
+**Damon's request (verbatim):**
+> "Please allow for input of the core metrics used to calculate the NHL score on the home page. And have an initial labs and a second set for 3-6 month follow up lab. Also please check how many videos are able to be pulled in based on the laboratory input values."
+
+### Feature 1 — Core Metric Quick-Entry on Dashboard (F89)
+
+**What Damon wants:** Users should be able to enter the 8 NHL score metrics directly on the home page (Dashboard), not just on the Labs page. Reduces friction — users don't need to navigate away to log their most important values.
+
+**Core NHL score metrics (the 8 that count):**
+- Vitamin D
+- Vitamin B12
+- hs-CRP
+- HOMA-IR (Fasting Glucose + Fasting Insulin)
+- Hemoglobin A1c
+- Height-to-Waist Ratio (waist circumference + height)
+- TG/HDL Ratio (Triglycerides + HDL)
+- Advanced Care Plan (checkbox)
+
+**What to build:**
+- Inline quick-entry panel on Dashboard (collapsible, below the NHLS score panel)
+- Inputs for the 8 metrics only — not a full lab form
+- On save, writes to `user_lab_results` exactly as manual entry on Labs page does
+- Triggers NHLS score recalculation immediately (same as current Labs save flow)
+- Triggers lab trigger message popup if thresholds are hit
+
+**Questions for Damon:**
+- **[Q]** Should this replace the existing Labs page entry or be additive (users can still use Labs page for non-scored markers)?
+
+**Answered (2026-06-25):**
+- Panel starts **collapsed** by default.
+
+**Status:** ❌ Not built.
+
+---
+
+### Feature 2 — Initial Labs + 3–6 Month Follow-Up Lab Set (F90)
+
+**What Damon wants:** The system should distinguish between an initial lab draw and a follow-up lab draw at 3–6 months. Users should be able to see both sets side by side to track improvement.
+
+**What to build:**
+- Add a `lab_set_type` field on lab entries: `'initial'` or `'followup'` (or a `lab_set_label` text field like "Initial — Jan 2026", "Follow-Up — Jun 2026")
+- Dashboard or Labs page: show side-by-side comparison of initial vs. most recent follow-up values for the 8 NHS scored metrics
+- The NHLS score should always use the most recent values (current behavior) — but the comparison view shows delta vs. initial baseline
+
+**Answered (2026-06-25):**
+- Users **can reset** their initial baseline at any time.
+- **Multiple follow-up sets** are supported — Damon needs an Admin UI to add, edit, and delete follow-up timeframe labels (e.g. "3 Month Follow-Up", "6 Month Follow-Up", "12 Month Follow-Up").
+- Comparison view appears on **both** Dashboard and Labs page — Damon will decide later if one should be removed.
+
+**Open questions:**
+- **[Q]** Should this replace the existing Labs page entry or be additive (users can still use Labs page for non-scored markers)?
+
+**Status:** ❌ Not built. Requires DB migration (`lab_sets` table for timeframe labels + `lab_set_id` on `user_lab_results`).
+
+---
+
+### Feature 3 — Video Coverage Audit (F91 — Investigation Task)
+
+**Damon's question:** How many videos/resources can be pulled in based on laboratory input values?
+
+**What this means:** When a user logs lab results that fire non-optimal tags, how many resources in the DB are actually matched and shown vs. how many could exist? Damon wants to know if the video library coverage is thin — i.e., are users getting 0–1 videos when they should be getting 5+?
+
+**How resource matching works currently:**
+- `evaluateRules.ts` → `getRecommendedResources(tags, resources)` — returns all resources whose tags overlap with the user's fired tags
+- Coverage depends on: (a) how many resources are in the DB, and (b) how well their tags are set
+
+**What to investigate:**
+- Query `resources` table: total count, breakdown by tag
+- For each of the 8 NHLS markers, check how many resources are tagged to fire when that marker is non-optimal
+- Report: "For a user with low Vitamin D + elevated hs-CRP, how many videos appear?"
+
+**Status:** ❌ Investigation not done. This is an admin/data task, not a code task — but may result in Damon needing to add more tagged content.
+
+---
+
 ## Email Exchange 7 — YouTube Shorts / Full Video Toggle (2026-04-29)
 
 **Damon's request:** When users log in, they should be able to pick between YouTube Shorts (quick ~1 min teasers) vs full in-depth videos/podcasts. Not everyone wants a 15–60 min video — some just want a quick teaser. He wants this as a **toggle/filter on the Dashboard** (not a profile default setting).
@@ -588,3 +664,9 @@ Damon now says this may be important for lab reimbursement with his first compan
 | Monthly email wording | **[Q] Still open** | Damon to provide copy for 10+ topics. |
 | HSA form template | **[Q] Still open** | Damon to re-send the pre-made form. |
 | Employer invoice PDF confirmation | **[Q] Still open** | Do you need this now for your first company? |
+| **F89 — Core metric quick-entry on Dashboard** | ❌ Not built | 8 NHS score metrics inline on home page. |
+| **F90 — Initial + follow-up lab sets** | ❌ Not built | Side-by-side comparison; DB migration needed. Questions open. |
+| **F91 — Video coverage audit** | ❌ Not investigated | Count resources per tag; report to Damon. |
+| F89 — Default panel state (expanded/collapsed?) | **[Q] Still open** | Damon to confirm. |
+| F90 — Follow-up cadence (one set or multiple?) | **[Q] Still open** | Damon to confirm. |
+| F90 — Baseline reset policy | **[Q] Still open** | Can user reset their initial baseline? |

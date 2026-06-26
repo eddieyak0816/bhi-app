@@ -13,7 +13,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "mcp__nhl-app__get_bhas_scoring_rules",
+      "PowerShell(Stop-Process -Id \\(Get-NetTCPConnection -LocalPort 4242 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess\\) -Force -ErrorAction SilentlyContinue; Write-Host \"Done\")"
     ]
   }
 }

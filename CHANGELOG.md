@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-06-25 — feat: F89 Quick Metrics Panel, F90 Lab Sets, F91 Coverage Audit (session 26)
+
+### F89 — Core metric quick-entry panel on Dashboard
+- New `src/components/QuickMetricsPanel.tsx` — collapsible panel (starts collapsed) on Dashboard below NHLS score panel. Inputs for all 8 NHLS scored metrics + waist/height with unit toggles + ACP checkbox. Lab Set dropdown. Saves via `addResult()` → clears score cache → fires trigger messages popup. Profile fields (waist, height, ACP) saved to Supabase REST on save.
+- `src/pages/Dashboard.tsx` — imports and renders `QuickMetricsPanel`.
+
+### F90 — Lab Sets (initial + follow-up timeframes)
+- **Migration:** `db/migrations/20260625_create_lab_sets.sql` — new `lab_sets` table (label, sort_order, is_initial), RLS, seeds Initial/3Mo/6Mo defaults. Adds `lab_set_id UUID` FK to `user_lab_results`. **Run in Supabase.**
+- **Server:** 5 new endpoints — `GET /api/lab-sets`, `GET/POST/PATCH/DELETE /api/admin/lab-sets/:id`.
+- **Admin UI:** "Lab Sets" tab in Admin (📋). Inline edit, sort arrows, "Set initial" radio, delete with guard.
+- **User-facing:** Lab Set dropdown in QuickMetricsPanel and LabsPage manual entry form. `addResult()` now accepts and persists `lab_set_id`.
+- **Comparison view:** `src/components/LabSetsComparison.tsx` — collapsible side-by-side table on Dashboard and Labs page. Hidden until user has data in ≥2 sets. Delta column vs. Initial set.
+- `src/context/ResultsContext.tsx` — `UserLabResult` interface extended with `lab_set_id?: string | null`.
+
+### F91 — Video coverage audit (investigation only, no UI)
+- Queried all 8 NHLS markers against logic_rules + tags + resources.
+- **Gaps found:** Fasting Glucose = 0 resources (tags: Prediabetic_Glucose, Low_Glucose). Hemoglobin A1c = 0 resources (no non-optimal tags in DB at all — rules missing). HDL = 1 resource only.
+- Full findings reported to Eddie for Damon review.
+
 ## 2026-05-20 — known bug: hs-CRP duplicate marker rows break NHLS v2.3 scoring (fix queued)
 
 ### Problem

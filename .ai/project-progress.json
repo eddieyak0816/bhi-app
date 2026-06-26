@@ -1,5 +1,56 @@
 [
   {
+    "date": "2026-06-25",
+    "session": "26",
+    "session_summary": "Session 26 — F89 Quick Metrics Panel + F90 Lab Sets + F91 Video Coverage Audit. F89: new QuickMetricsPanel component on Dashboard (collapsed by default), 8 NHLS metrics + waist/height/ACP + lab set dropdown, saves via addResult + profile PATCH + trigger messages. F90: full lab sets feature — migration written (run needed), 5 server endpoints, Admin Lab Sets tab, LabSetsComparison component on Dashboard + Labs page, lab_set_id threaded through UserLabResult + addResult. F91 audit complete: Fasting Glucose = 0 resources (gap), Hemoglobin A1c = 0 resources AND no non-optimal tags in DB (critical gap — no logic rules for HbA1c non-optimal tiers), HDL = 1 resource only. F88 still blocked on migration run.",
+    "features_completed": [
+      { "id": "F89", "name": "Core metric quick-entry panel on Dashboard", "files": ["src/components/QuickMetricsPanel.tsx", "src/pages/Dashboard.tsx"] },
+      { "id": "F90", "name": "Lab Sets — initial + follow-up timeframes with comparison view", "files": ["db/migrations/20260625_create_lab_sets.sql", "server/index.js", "src/pages/Admin.tsx", "src/components/LabSetsComparison.tsx", "src/components/QuickMetricsPanel.tsx", "src/pages/LabsPage.tsx", "src/context/ResultsContext.tsx"] },
+      { "id": "F91", "name": "Video coverage audit — findings reported" }
+    ],
+    "bugs_fixed": [],
+    "pending_features": [
+      { "id": "F88", "name": "Alert messages on logic_rules — BLOCKED: run migration 20260611_add_alert_message_to_logic_rules.sql in Supabase" },
+      { "id": "F90-migration", "name": "Run migration 20260625_create_lab_sets.sql in Supabase before F90 features go live" },
+      { "id": "F91-gaps", "name": "Damon needs to add content for: Fasting Glucose (0 resources), Hemoglobin A1c (0 resources + missing non-optimal logic rules in DB), HDL (only 1 resource)" },
+      { "id": "F87-test", "name": "End-to-end test of alias feature — see IMPLEMENTATION_TRACKER.html S24-2" },
+      { "id": "wordpress-login", "name": "WordPress login integration — waiting on Damon's embed decision" }
+    ],
+    "migrations_run": [],
+    "migrations_pending": [
+      "20260611_add_alert_message_to_logic_rules.sql (F88 — blocked)",
+      "20260625_create_lab_sets.sql (F90 — new this session)"
+    ],
+    "open_questions": [
+      "F91: Hemoglobin A1c has NO non-optimal logic rules in DB — this means it never fires any resources even when out of range. Does Damon want to add improvement/out-of-range rules for HbA1c?"
+    ]
+  },
+  {
+    "date": "2026-06-25",
+    "session": "25-planning",
+    "session_summary": "Session 25 planning — F88 audit complete + Damon's new requests logged. F88 code is fully written (server, Admin wizard UI, labTriggerMessages.ts, LabsPage.tsx) but blocked on running migration 20260611_add_alert_message_to_logic_rules.sql in Supabase. The competing 20260611_create_lab_trigger_thresholds.sql is a discarded approach — its Admin UI was never built. Damon requested 3 new features (Email Exchange 8, 2026-06-25): F89 core metric quick-entry on Dashboard, F90 initial + follow-up lab sets comparison, F91 video coverage audit. All three logged in CLIENT_FEEDBACK.md, DEVELOPER_REQUIREMENTS.md (Phase 14), MEMORY.md, and project-progress.json. Open questions for Damon: F89 expanded/collapsed? F90 baseline reset policy, how many follow-up sets, where to show comparison.",
+    "features_completed": [],
+    "bugs_fixed": [],
+    "pending_features": [
+      { "id": "F88", "name": "Alert messages on logic_rules — run migration 20260611_add_alert_message_to_logic_rules.sql then test" },
+      { "id": "F89", "name": "Core metric quick-entry on Dashboard (8 NHLS metrics inline)" },
+      { "id": "F90", "name": "Initial + 3-6 month follow-up lab sets with side-by-side comparison" },
+      { "id": "F91", "name": "Video coverage audit — count resources per tag for the 8 NHLS markers" },
+      { "id": "F87-test", "name": "End-to-end test of alias feature — IMPLEMENTATION_TRACKER.html S24-2" },
+      { "id": "wordpress-login", "name": "WordPress login integration — waiting on Damon's embed decision" }
+    ],
+    "migrations_run": [],
+    "open_questions": [
+      "F89: Should quick-entry replace Labs page entry or be additive? (panel collapsed by default — confirmed 2026-06-25)"
+    ],
+    "resolved_questions": [
+      "F89: Panel starts collapsed — confirmed 2026-06-25",
+      "F90: Users can reset initial baseline — confirmed 2026-06-25",
+      "F90: Multiple follow-up sets supported; Admin UI to add/edit/delete timeframe labels — confirmed 2026-06-25",
+      "F90: Comparison appears on both Dashboard and Labs page — confirmed 2026-06-25"
+    ]
+  },
+  {
     "date": "2026-05-24",
     "session": "24",
     "session_summary": "Session 24 — DB duplicate marker cleanup + F87 Lab Marker Aliases. Ran two dedup migrations (20260524_merge_duplicate_markers.sql + _v2.sql) that merged 19 duplicate marker groups into canonical names, re-pointing user_lab_results rows and deleting dupe logic_rules/lab_markers. Fixed F86 bug: Hemoglobin A1c marker_category was not set to nhls_score (migration used wrong name 'HbA1c'). Built F87 Lab Marker Aliases: new lab_marker_aliases table (migration run, alias_count confirmed 0), 4 server endpoints, alias map fetched in LabsPage on load + resolved at PDF save time, 'Remember — save as alias' checkbox in PDF review table for manual overrides, Aliases section in Admin Markers edit modal (pill chips + inline Add/Delete). All 3 migrations run and confirmed in Supabase.",

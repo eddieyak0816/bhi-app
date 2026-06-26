@@ -39,6 +39,7 @@ export interface UserLabResult {
   maxNormal: number
   verificationType?: 'self' | 'provider' | 'pdf'
   verification?: ProviderVerification | null
+  lab_set_id?: string | null
 }
 
 interface ResultsContextType {
@@ -134,6 +135,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       min_normal: result.minNormal,
       max_normal: result.maxNormal,
       verification_type: result.verificationType ?? 'self',
+      lab_set_id: result.lab_set_id ?? null,
     }
     if (result.verificationType === 'provider' && result.verification) {
       row.verifier_name = result.verification.verifierName

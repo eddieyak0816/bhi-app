@@ -10,6 +10,8 @@ import AffiliateProductCards from '../components/AffiliateProductCards'
 import VirtualProviderCards from '../components/VirtualProviderCards'
 import MyTeamCard from '../components/MyTeamCard'
 import ChallengesSection from '../components/ChallengesSection'
+import QuickMetricsPanel from '../components/QuickMetricsPanel'
+import LabSetsComparison from '../components/LabSetsComparison'
 import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
 import { supabase } from '../lib/supabase'
 import { getBenchmark } from '../utils/nationalBenchmarks'
@@ -391,6 +393,12 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
           })()}
         </div>
       )}
+
+      {/* F89 — Quick Metrics Entry Panel */}
+      <QuickMetricsPanel onScoreRecalc={() => setBhasV2Result(null)} />
+
+      {/* F90 — Lab Progress Comparison */}
+      <LabSetsComparison theme={theme} />
 
       {/* Stats Section */}
       <div

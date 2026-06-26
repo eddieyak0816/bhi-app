@@ -5,6 +5,7 @@ import { useResults } from '../context/ResultsContext'
 import { useEvaluation } from '../context/EvaluationContext'
 import { useAuth } from '../context/AuthContext'
 import StaleLabBanner from '../components/StaleLabBanner'
+import LabSetsComparison from '../components/LabSetsComparison'
 import Vo2CalcModal from '../components/Vo2CalcModal'
 import LabTriggerMessagesModal from '../components/LabTriggerMessagesModal'
 import { getTriggerMessagesFromDB, TriggerMessage } from '../utils/labTriggerMessages'
@@ -95,6 +96,10 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
   const [userSex, setUserSex] = useState<'male' | 'female' | ''>('')
   const [sexLoaded, setSexLoaded] = useState(false)
 
+  // Lab sets (F90)
+  const [labSets, setLabSets] = useState<{ id: string; label: string; is_initial: boolean }[]>([])
+  const [selectedLabSetId, setSelectedLabSetId] = useState<string>('')
+
   // Fetch user sex for sex-specific thresholds (e.g. HDL)
   useEffect(() => {
     if (!user?.id) return
@@ -110,6 +115,19 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
       .catch(() => {})
       .finally(() => setSexLoaded(true))
   }, [user?.id])
+
+  // Fetch lab sets once
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/api/lab-sets`)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: { id: string; label: string; sort_order: number; is_initial: boolean }[]) => {
+        const sorted = data.sort((a, b) => a.sort_order - b.sort_order)
+        setLabSets(sorted)
+        const initial = sorted.find(s => s.is_initial)
+        if (initial) setSelectedLabSetId(initial.id)
+      })
+      .catch(() => {})
+  }, [])
 
   // Provider verification state (for manual entry form)
   const [showVerification, setShowVerification] = useState(false)
@@ -384,6 +402,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
       maxNormal,
       verificationType: showVerification ? 'provider' : 'self',
       verification: showVerification ? { ...verificationForm } : null,
+      lab_set_id: selectedLabSetId || null,
     })
 
     const msgs = await getTriggerMessagesFromDB(
@@ -984,6 +1003,22 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                 )}
               </div>
 
+              {/* Lab Set picker */}
+              {labSets.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4, color: theme.textMuted }}>Lab Set</label>
+                  <select
+                    value={selectedLabSetId}
+                    onChange={e => setSelectedLabSetId(e.target.value)}
+                    style={{ padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, minWidth: 220 }}
+                  >
+                    {labSets.map(s => (
+                      <option key={s.id} value={s.id}>{s.label}{s.is_initial ? ' (Initial)' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* Save button */}
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
@@ -1497,6 +1532,9 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
           <p style={{ margin: 0 }}>No lab results logged yet. Click "Log New Result" to get started.</p>
         </div>
       )}
+
+      {/* F90 — Lab Progress Comparison */}
+      <LabSetsComparison theme={theme} />
 
       {triggerMessages && (
         <LabTriggerMessagesModal

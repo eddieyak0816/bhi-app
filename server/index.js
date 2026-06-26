@@ -3692,4 +3692,81 @@ app.get('/api/trigger-thresholds', async (req, res) => {
   }
 });
 
+// ── F90: Lab Sets ─────────────────────────────────────────────────────────────
+
+// GET /api/lab-sets — public read, used by frontend dropdowns
+app.get('/api/lab-sets', async (req, res) => {
+  try {
+    const { data, error } = await sb.from('lab_sets').select('*').order('sort_order');
+    if (error) throw error;
+    return res.json(data || []);
+  } catch (err) {
+    console.error('GET /api/lab-sets error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// GET /api/admin/lab-sets — admin read
+app.get('/api/admin/lab-sets', requireAdmin, async (req, res) => {
+  try {
+    const { data, error } = await sb.from('lab_sets').select('*').order('sort_order');
+    if (error) throw error;
+    return res.json(data || []);
+  } catch (err) {
+    console.error('GET /api/admin/lab-sets error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/lab-sets — create
+app.post('/api/admin/lab-sets', requireAdmin, async (req, res) => {
+  try {
+    const { label, sort_order = 0, is_initial = false } = req.body;
+    if (!label) return res.status(400).json({ error: 'label required' });
+    const { data, error } = await sb.from('lab_sets').insert({ label, sort_order, is_initial }).select().single();
+    if (error) throw error;
+    return res.json(data);
+  } catch (err) {
+    console.error('POST /api/admin/lab-sets error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// PATCH /api/admin/lab-sets/:id — update
+app.patch('/api/admin/lab-sets/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { label, sort_order, is_initial } = req.body;
+    const patch = {};
+    if (label !== undefined) patch.label = label;
+    if (sort_order !== undefined) patch.sort_order = sort_order;
+    if (is_initial !== undefined) patch.is_initial = is_initial;
+    const { data, error } = await sb.from('lab_sets').update(patch).eq('id', id).select().single();
+    if (error) throw error;
+    return res.json(data);
+  } catch (err) {
+    console.error('PATCH /api/admin/lab-sets/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/lab-sets/:id — delete (block if only initial)
+app.delete('/api/admin/lab-sets/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Check if this is the sole is_initial row
+    const { data: row } = await sb.from('lab_sets').select('is_initial').eq('id', id).single();
+    if (row?.is_initial) {
+      const { count } = await sb.from('lab_sets').select('*', { count: 'exact', head: true }).eq('is_initial', true);
+      if (count <= 1) return res.status(400).json({ error: 'Cannot delete the only initial lab set' });
+    }
+    const { error } = await sb.from('lab_sets').delete().eq('id', id);
+    if (error) throw error;
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/lab-sets/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));
