@@ -298,9 +298,12 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
           supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex, marker_category').order('name'),
           supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
           supabase.from('tags').select('name, scoring_tier'),
-          fetch(`${BACKEND_URL}/api/admin/lab-markers/aliases-all`, {
-            headers: { 'x-backend-api-key': BACKEND_KEY },
-          }).then(r => r.ok ? r.json() : []).catch(() => []),
+          Promise.race([
+            fetch(`${BACKEND_URL}/api/admin/lab-markers/aliases-all`, {
+              headers: { 'x-backend-api-key': BACKEND_KEY },
+            }).then(r => r.ok ? r.json() : []).catch(() => []),
+            new Promise<[]>(resolve => setTimeout(() => resolve([]), 5000)),
+          ]),
         ])
 
         // Build alias map: alias.toLowerCase() → marker_id
