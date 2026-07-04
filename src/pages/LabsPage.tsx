@@ -294,17 +294,26 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
     async function fetchMarkers() {
       setLoadingMarkers(true)
       try {
-        const [markersRes, rulesRes, tagsRes] = await Promise.all([
-          supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex, marker_category').order('name'),
+        // Load markers first — unblocks the form immediately
+        const markersRes = await supabase
+          .from('lab_markers')
+          .select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex, marker_category')
+          .order('name')
+        if (markersRes.error) throw markersRes.error
+        if (markersRes.data) setLabMarkers(markersRes.data as LabMarker[])
+      } catch (err) {
+        console.error('Error fetching lab markers:', err)
+        setLabMarkers([])
+      } finally {
+        setLoadingMarkers(false)
+      }
+
+      // Load rules/tags in background — only needed for status display, not for the form
+      try {
+        const [rulesRes, tagsRes] = await Promise.all([
           supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
           supabase.from('tags').select('name, scoring_tier'),
         ])
-
-        if (markersRes.error) throw markersRes.error
-        if (markersRes.data) setLabMarkers(markersRes.data as LabMarker[])
-
-        // Build optimal range map from logic rules, using DB scoring_tier as source of truth
-        // Falls back to hardcoded OPTIMAL_TAGS if tags table unavailable
         if (rulesRes.data) {
           const dbOptimalTags = tagsRes.data
             ? new Set(tagsRes.data.filter((t: { name: string; scoring_tier: string }) => t.scoring_tier === 'optimal').map((t: { name: string }) => t.name))
@@ -318,10 +327,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
           setOptimalRanges(ranges)
         }
       } catch (err) {
-        console.error('Error fetching lab markers:', err)
-        setLabMarkers([])
-      } finally {
-        setLoadingMarkers(false)
+        console.error('Error fetching rules/tags:', err)
       }
     }
 
