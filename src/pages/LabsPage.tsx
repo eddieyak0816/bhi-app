@@ -69,7 +69,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
   const [showForm, setShowForm] = useState(false)
   const [showVo2Calc, setShowVo2Calc] = useState(false)
   const [labMarkers, setLabMarkers] = useState<LabMarker[]>([])
-  const [loadingMarkers, setLoadingMarkers] = useState(true)
+  const [loadingMarkers, setLoadingMarkers] = useState(false)
   // Map of marker_id -> { min, max } derived from optimal logic rules
   const [optimalRanges, setOptimalRanges] = useState<Record<string, { min: number; max: number }>>({})
   const [formData, setFormData] = useState({
@@ -292,6 +292,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
     if (!user?.id) return
 
     async function fetchMarkers() {
+      setLoadingMarkers(true)
       try {
         const [markersRes, rulesRes, tagsRes, aliasesRes] = await Promise.all([
           supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex, marker_category').order('name'),
