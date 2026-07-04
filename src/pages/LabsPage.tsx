@@ -293,17 +293,6 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
 
     async function fetchMarkers() {
       setLoadingMarkers(true)
-      // Aliases fetch runs independently — never blocks marker loading
-      fetch(`${BACKEND_URL}/api/admin/lab-markers/aliases-all`, {
-        headers: { 'x-backend-api-key': BACKEND_KEY },
-      }).then(r => r.ok ? r.json() : []).then((aliasesRes: { alias: string; marker_id: string }[]) => {
-        if (Array.isArray(aliasesRes)) {
-          const map = new Map<string, string>()
-          aliasesRes.forEach(a => map.set(a.alias.toLowerCase(), a.marker_id))
-          aliasMapRef.current = map
-        }
-      }).catch(() => {})
-
       try {
         const [markersRes, rulesRes, tagsRes] = await Promise.all([
           supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex, marker_category').order('name'),

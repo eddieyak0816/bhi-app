@@ -52,7 +52,7 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
   const [triggerMessages, setTriggerMessages] = useState<TriggerMessage[] | null>(null)
   const [labSets, setLabSets] = useState<LabSet[]>([])
   const [selectedSetId, setSelectedSetId] = useState<string>('')
-  const [markerRanges, setMarkerRanges] = useState<Record<string, { min: number; max: number }>>({})
+  const markerRangesRef = React.useRef<Record<string, { min: number; max: number }>>({})
 
   // Fetch lab sets and marker ranges once
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
         data.forEach((m: { name: string; min_normal: number | null; max_normal: number | null }) => {
           ranges[m.name] = { min: m.min_normal ?? 0, max: m.max_normal ?? 9999 }
         })
-        setMarkerRanges(ranges)
+        markerRangesRef.current = ranges
       }
     })
     fetch(`${BACKEND_URL}/api/lab-sets`)
@@ -110,7 +110,7 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
         const val = parseFloat(values[f.markerName])
         if (isNaN(val)) return Promise.resolve()
         savedItems.push({ markerName: f.markerName, value: val })
-        const range = markerRanges[f.markerName]
+        const range = markerRangesRef.current[f.markerName]
         return addResult({
           markerName: f.markerName,
           value: val,
