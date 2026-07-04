@@ -487,7 +487,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                 gap: 12,
               }}
             >
-              {display.slice(0, 3).map((resource) => (
+              {display.map((resource) => (
                 <div
                   key={resource.id}
                   style={{
