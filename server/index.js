@@ -841,14 +841,14 @@ app.put('/api/admin/lab-markers/:id/rules', async (req, res) => {
   const { rules, tierMessages } = req.body || {};
   if (!Array.isArray(rules)) return res.status(400).json({ error: 'missing-rules' });
 
-  const validRules = rules.filter(r =>
+  const validRules = rules.map((r, i) => ({ ...r, _originalIndex: i })).filter(r =>
     r && r.tag_name && r.tag_name.trim() &&
     typeof r.min_value !== 'undefined' && r.min_value !== '' &&
     typeof r.max_value !== 'undefined' && r.max_value !== ''
   );
 
   const labelToTier = { 'Optimal': 'optimal', 'Improvement': 'improvement', 'Out of Range': 'out_of_range' };
-  // tierMessages: { 'Improvement': 'message text', 'Out of Range': 'message text' }
+  // tierMessages: { [rowIndex]: 'message text' } — one per range row, not per tier
   const labelToLevel = { 'Improvement': 'warning', 'Out of Range': 'danger' };
 
   try {
@@ -876,9 +876,9 @@ app.put('/api/admin/lab-markers/:id/rules', async (req, res) => {
       }
     }
 
-    // Insert new rules
+    // Insert new rules — tierMessages keyed by original row index
     const rulePayloads = validRules.map(r => {
-      const msg = tierMessages?.[r.label] || null;
+      const msg = tierMessages?.[r._originalIndex] || null;
       return {
         marker_id: markerId,
         min_value: Number(r.min_value),
@@ -1249,7 +1249,7 @@ app.post('/api/admin/new-marker-wizard', async (req, res) => {
   if (!name || typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: 'missing-name' });
   if (!Array.isArray(rules) || rules.length === 0) return res.status(400).json({ error: 'missing-rules' });
 
-  const validRules = rules.filter(r =>
+  const validRules = rules.map((r, i) => ({ ...r, _originalIndex: i })).filter(r =>
     r && r.tag_name && r.tag_name.trim() &&
     typeof r.min_value !== 'undefined' && r.min_value !== '' &&
     typeof r.max_value !== 'undefined' && r.max_value !== ''
@@ -1294,7 +1294,7 @@ app.post('/api/admin/new-marker-wizard', async (req, res) => {
     // 3. Create logic rules
     const labelToLevel = { 'Improvement': 'warning', 'Out of Range': 'danger' };
     const rulePayloads = validRules.map(r => {
-      const msg = tierMessages?.[r.label] || null;
+      const msg = tierMessages?.[r._originalIndex] || null;
       return {
         marker_id: markerId,
         min_value: Number(r.min_value),

@@ -115,9 +115,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
     { label: 'Improvement', min_value: '', max_value: '', tag_name: '' },
     { label: 'Out of Range', min_value: '', max_value: '', tag_name: '' },
   ])
-  const [markerEditTierMessages, setMarkerEditTierMessages] = useState<Record<string, string>>({
-    'Optimal': '', 'Improvement': '', 'Out of Range': '',
-  })
+  const [markerEditTierMessages, setMarkerEditTierMessages] = useState<Record<number, string>>({})
   const [markerEditSaving, setMarkerEditSaving] = useState(false)
   const [markerEditError, setMarkerEditError] = useState<string | null>(null)
   // Marker aliases state (F87)
@@ -3040,16 +3038,12 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                   const rows = TIERS.flatMap(lbl => {
                                     const tier = lbl === 'Optimal' ? 'optimal' : lbl === 'Improvement' ? 'improvement' : 'out_of_range'
                                     const matches = existing.filter((r: any) => (tagsMeta[r.tag_to_apply]?.scoring_tier || 'out_of_range') === tier)
-                                    if (matches.length > 0) return matches.map((r: any) => ({ label: lbl, min_value: String(r.min_value ?? ''), max_value: String(r.max_value ?? ''), tag_name: r.tag_to_apply || '' }))
-                                    return [{ label: lbl, min_value: '', max_value: '', tag_name: '' }]
+                                    if (matches.length > 0) return matches.map((r: any) => ({ label: lbl, min_value: String(r.min_value ?? ''), max_value: String(r.max_value ?? ''), tag_name: r.tag_to_apply || '', alert_message: r.alert_message || '' }))
+                                    return [{ label: lbl, min_value: '', max_value: '', tag_name: '', alert_message: '' }]
                                   })
                                   setMarkerEditRules(rows)
-                                  const msgs: Record<string, string> = { 'Optimal': '', 'Improvement': '', 'Out of Range': '' }
-                                  TIERS.forEach(lbl => {
-                                    const tier = lbl === 'Optimal' ? 'optimal' : lbl === 'Improvement' ? 'improvement' : 'out_of_range'
-                                    const first = existing.find((r: any) => (tagsMeta[r.tag_to_apply]?.scoring_tier || 'out_of_range') === tier && r.alert_message)
-                                    if (first) msgs[lbl] = first.alert_message || ''
-                                  })
+                                  const msgs: Record<number, string> = {}
+                                  rows.forEach((r, i) => { if (r.alert_message) msgs[i] = r.alert_message })
                                   setMarkerEditTierMessages(msgs)
                                   setMarkerEditError(null)
                                   setMarkerEditAliases([])
@@ -3142,8 +3136,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           </div>
                         </div>
                         {m.unit && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Unit: {m.unit}</p>}
-                        {m.min_normal !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Min: {m.min_normal}</p>}
-                        {m.max_normal !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Max: {m.max_normal}</p>}
+                        {(() => {
+                          const mRules = logicRules.filter((r: any) => r.marker_id === m.id)
+                          if (mRules.length === 0) return null
+                          const mins = mRules.map((r: any) => r.min_value).filter((v: any) => v !== null && v !== undefined)
+                          const maxs = mRules.map((r: any) => r.max_value).filter((v: any) => v !== null && v !== undefined)
+                          const overallMin = mins.length > 0 ? Math.min(...mins) : null
+                          const overallMax = maxs.length > 0 ? Math.max(...maxs) : null
+                          return (<>
+                            {overallMin !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Min: {overallMin}</p>}
+                            {overallMax !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Max: {overallMax}</p>}
+                          </>)
+                        })()}
                         {m.cpt_code && <p style={{margin:'0 0 4px 0',fontSize:11,color:theme.textMuted}}>CPT: {m.cpt_code}</p>}
                         {!m.cpt_code && <p style={{margin:'0 0 4px 0',fontSize:11,color:theme.textMuted,opacity:0.5}}>No CPT code</p>}
                         {m.applicable_sex && m.applicable_sex !== 'both' && (
@@ -3161,16 +3165,12 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             const rows = TIERS.flatMap(lbl => {
                               const tier = lbl === 'Optimal' ? 'optimal' : lbl === 'Improvement' ? 'improvement' : 'out_of_range'
                               const matches = existing.filter((r: any) => (tagsMeta[r.tag_to_apply]?.scoring_tier || 'out_of_range') === tier)
-                              if (matches.length > 0) return matches.map((r: any) => ({ label: lbl, min_value: String(r.min_value ?? ''), max_value: String(r.max_value ?? ''), tag_name: r.tag_to_apply || '' }))
-                              return [{ label: lbl, min_value: '', max_value: '', tag_name: '' }]
+                              if (matches.length > 0) return matches.map((r: any) => ({ label: lbl, min_value: String(r.min_value ?? ''), max_value: String(r.max_value ?? ''), tag_name: r.tag_to_apply || '', alert_message: r.alert_message || '' }))
+                              return [{ label: lbl, min_value: '', max_value: '', tag_name: '', alert_message: '' }]
                             })
                             setMarkerEditRules(rows)
-                            const msgs2: Record<string, string> = { 'Optimal': '', 'Improvement': '', 'Out of Range': '' }
-                            TIERS.forEach(lbl => {
-                              const tier = lbl === 'Optimal' ? 'optimal' : lbl === 'Improvement' ? 'improvement' : 'out_of_range'
-                              const first = existing.find((r: any) => (tagsMeta[r.tag_to_apply]?.scoring_tier || 'out_of_range') === tier && r.alert_message)
-                              if (first) msgs2[lbl] = first.alert_message || ''
-                            })
+                            const msgs2: Record<number, string> = {}
+                            rows.forEach((r, i) => { if (r.alert_message) msgs2[i] = r.alert_message })
                             setMarkerEditTierMessages(msgs2)
                             setMarkerEditError(null)
                             setMarkerEditAliases([])
@@ -3996,25 +3996,24 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       <div />
                     </div>
                     {tierRows.map(({ r, i }) => (
-                      <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 28px',gap:6,marginBottom:6,alignItems:'center'}}>
-                        <input type="number" placeholder="Min" value={r.min_value} onChange={e => updateMarkerEditRule(i, 'min_value', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
-                        <input type="number" placeholder="Max" value={r.max_value} onChange={e => updateMarkerEditRule(i, 'max_value', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
-                        <input placeholder="Tag name" value={r.tag_name} onChange={e => updateMarkerEditRule(i, 'tag_name', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
-                        <button type="button" onClick={() => removeMarkerEditRow(i)} disabled={tierRows.length <= 1} title="Remove this range" style={{background:'transparent',border:'none',color:tierRows.length <= 1 ? theme.borderColor : '#dc2626',cursor:tierRows.length <= 1 ? 'default' : 'pointer',fontSize:16,padding:0,lineHeight:1}}>×</button>
+                      <div key={i} style={{marginBottom:10}}>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 28px',gap:6,marginBottom: label !== 'Optimal' ? 4 : 0,alignItems:'center'}}>
+                          <input type="number" placeholder="Min" value={r.min_value} onChange={e => updateMarkerEditRule(i, 'min_value', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
+                          <input type="number" placeholder="Max" value={r.max_value} onChange={e => updateMarkerEditRule(i, 'max_value', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
+                          <input placeholder="Tag name" value={r.tag_name} onChange={e => updateMarkerEditRule(i, 'tag_name', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
+                          <button type="button" onClick={() => removeMarkerEditRow(i)} disabled={tierRows.length <= 1} title="Remove this range" style={{background:'transparent',border:'none',color:tierRows.length <= 1 ? theme.borderColor : '#dc2626',cursor:tierRows.length <= 1 ? 'default' : 'pointer',fontSize:16,padding:0,lineHeight:1}}>×</button>
+                        </div>
+                        {label !== 'Optimal' && (
+                          <textarea
+                            rows={2}
+                            placeholder="Alert message shown to user (leave blank for no popup)"
+                            value={markerEditTierMessages[i] || ''}
+                            onChange={e => setMarkerEditTierMessages(prev => ({ ...prev, [i]: e.target.value }))}
+                            style={{width:'100%',padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12,background:theme.bgSecondary,color:theme.text,resize:'vertical',boxSizing:'border-box'}}
+                          />
+                        )}
                       </div>
                     ))}
-                    {label !== 'Optimal' && (
-                      <div style={{marginTop:6}}>
-                        <div style={{fontSize:11,color:theme.textMuted,marginBottom:3}}>Alert message shown to user <span style={{fontWeight:400}}>(leave blank for no popup)</span></div>
-                        <textarea
-                          rows={2}
-                          placeholder={label === 'Improvement' ? 'e.g. Your value is approaching the out-of-range threshold.' : 'e.g. Your value is outside the healthy range — consider reviewing with a provider.'}
-                          value={markerEditTierMessages[label] || ''}
-                          onChange={e => setMarkerEditTierMessages(prev => ({ ...prev, [label]: e.target.value }))}
-                          style={{width:'100%',padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12,background:theme.bgSecondary,color:theme.text,resize:'vertical',boxSizing:'border-box'}}
-                        />
-                      </div>
-                    )}
                   </div>
                 )
               })}

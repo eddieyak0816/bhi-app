@@ -350,6 +350,7 @@ export async function getTriggerMessagesFromDB(
   if (rules.length === 0) return getTriggerMessages(results, sex)
 
   const messages: TriggerMessage[] = []
+  let allOptimal = true
 
   for (const r of results) {
     const name = r.markerName.toLowerCase()
@@ -357,24 +358,32 @@ export async function getTriggerMessagesFromDB(
       const rn = rule.marker_name.toLowerCase()
       return rn === name || name.includes(rn) || rn.includes(name)
     })
+    let firedAlert = false
     for (const rule of matching) {
       if (matchesOperator(r.value, rule.operator, rule.min_value, rule.max_value)) {
-        messages.push({
-          level: rule.alert_level,
-          headline: rule.alert_message,
-          body: '',
-          actions: [],
-        })
+        // A matching rule exists — if it has an alert message, show it
+        if (rule.alert_message) {
+          messages.push({
+            level: rule.alert_level,
+            headline: rule.alert_message,
+            body: '',
+            actions: [],
+          })
+          allOptimal = false
+        }
+        firedAlert = true
         break
       }
     }
+    // If this marker has DB rules but none matched, it's outside all defined ranges — not optimal
+    if (!firedAlert && matching.length > 0) allOptimal = false
   }
 
   // Combined metabolic alert stays hardcoded — complex multi-marker derived logic
   const combined = getCombinedMetabolicAlert(results)
-  if (combined) messages.push(combined)
+  if (combined) { messages.push(combined); allOptimal = false }
 
-  if (messages.length === 0 && results.length > 0) {
+  if (allOptimal && results.length > 0) {
     messages.push({
       level: 'success',
       headline: 'Great job — your results are in an optimal range',
