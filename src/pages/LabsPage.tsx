@@ -1013,7 +1013,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                     style={{ padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, minWidth: 220 }}
                   >
                     {labSets.map(s => (
-                      <option key={s.id} value={s.id}>{s.label}{s.is_initial ? ' (Initial)' : ''}</option>
+                      <option key={s.id} value={s.id}>{s.label}{s.is_initial && s.label.toLowerCase() !== 'initial' ? ' (Initial)' : ''}</option>
                     ))}
                   </select>
                 </div>

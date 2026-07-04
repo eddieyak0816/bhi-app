@@ -395,7 +395,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
       )}
 
       {/* F89 — Quick Metrics Entry Panel */}
-      <QuickMetricsPanel onScoreRecalc={() => setBhasV2Result(null)} />
+      <QuickMetricsPanel />
 
       {/* F90 — Lab Progress Comparison */}
       <LabSetsComparison theme={theme} />

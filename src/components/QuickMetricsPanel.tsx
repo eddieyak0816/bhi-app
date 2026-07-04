@@ -286,7 +286,7 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
                   style={{ ...inputStyle, width: 'auto', minWidth: 220 }}
                 >
                   {labSets.map(s => (
-                    <option key={s.id} value={s.id}>{s.label}{s.is_initial ? ' (Initial)' : ''}</option>
+                    <option key={s.id} value={s.id}>{s.label}{s.is_initial && s.label.toLowerCase() !== 'initial' ? ' (Initial)' : ''}</option>
                   ))}
                 </select>
               </div>
