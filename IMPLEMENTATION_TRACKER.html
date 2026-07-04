@@ -1258,6 +1258,87 @@
       </div>
       <span class="item-status status-done">✅ Built</span>
     </div>
+
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <section class="phase" id="session-26-27">
+    <div class="phase-header">Session 26–27 — F89 Quick Metrics, F90 Lab Sets, F91 Coverage Audit</div>
+
+    <div class="item done" data-status="done">
+      <div class="item-num">S26-1</div>
+      <div class="item-body">
+        <div class="item-title">F89: Quick Metrics Panel</div>
+        <div class="item-note">
+          Collapsible "Log Your NHLS Metrics" panel on Dashboard, collapsed by default. Inputs for all 8 NHLS scored markers + waist/height (with in/cm toggles) + ACP checkbox + Lab Set dropdown.<br><br>
+          Saves via <code>addResult()</code> (clears sessionStorage score cache) + profile PATCH (waist, height, ACP) via Supabase REST merge-duplicates. Fires trigger messages popup after save.<br><br>
+          <strong>File:</strong> <code>src/components/QuickMetricsPanel.tsx</code> (new). Wired in <code>src/pages/Dashboard.tsx</code> between NHLS score panel and Stats section.<br><br>
+          <strong>Bug fixed (Session 27):</strong> Marker ranges were hardcoded 0/9999. Fixed: fetches real <code>min_normal/max_normal</code> from <code>lab_markers</code> on mount, stored in <code>useRef</code> for synchronous access at save time.
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Done — 2026-06-25</span>
+    </div>
+
+    <div class="item done" data-status="done">
+      <div class="item-num">S26-2</div>
+      <div class="item-body">
+        <div class="item-title">F90: Lab Sets</div>
+        <div class="item-note">
+          Allows users to tag their lab entries to named timeframes (Initial, 3 Months, 6 Months) for side-by-side comparison.<br><br>
+          <strong>Migration:</strong> <code>db/migrations/20260625_create_lab_sets.sql</code> — <code>lab_sets</code> table (label, sort_order, is_initial); adds <code>lab_set_id UUID FK</code> to <code>user_lab_results</code>. ✅ Run 2026-07-04.<br><br>
+          <strong>Server:</strong> 5 endpoints — <code>GET /api/lab-sets</code>, <code>GET/POST/PATCH/DELETE /api/admin/lab-sets/:id</code>. All fixed in Session 27 to use local <code>const sb = createClient()</code> pattern (were broken by module-level <code>sb</code> reference).<br><br>
+          <strong>Admin UI:</strong> "Lab Sets" tab (📋) in Admin. Inline label edit, sort arrows, "Set initial" radio, delete with guard (can't delete set that has results).<br><br>
+          <strong>User-facing:</strong> Lab Set dropdown in QuickMetricsPanel and LabsPage manual entry. <code>addResult()</code> persists <code>lab_set_id</code>.<br><br>
+          <strong>Comparison view:</strong> <code>src/components/LabSetsComparison.tsx</code> — collapsible table on Dashboard and Labs page. Hidden until user has data in ≥2 sets. Delta column vs. Initial set.
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Done — 2026-07-04</span>
+    </div>
+
+    <div class="item done" data-status="done">
+      <div class="item-num">S26-3</div>
+      <div class="item-body">
+        <div class="item-title">F91: Video Coverage Audit</div>
+        <div class="item-note">
+          Queried all 8 NHLS markers against logic_rules → tags → resources to identify content gaps.<br><br>
+          <strong>Results:</strong>
+          <ul style="margin:4px 0 0 16px;padding:0;font-size:12px;">
+            <li>Vitamin D: 2 resources</li>
+            <li>Vitamin B12: 2 resources</li>
+            <li>hs-CRP: 3 resources</li>
+            <li>Fasting Insulin: 10 resources</li>
+            <li>Triglycerides: 12 resources</li>
+            <li><strong>Fasting Glucose: 0 resources</strong> (tags: Prediabetic_Glucose, Low_Glucose — no resources tagged)</li>
+            <li><strong>Hemoglobin A1c: 0 resources</strong> (no non-optimal logic rules in DB at all — content AND DB rules both missing)</li>
+            <li><strong>HDL: 1 resource only</strong> (tags: Low_HDL, Fair_HDL — very thin)</li>
+          </ul>
+          <strong>Action for Damon:</strong> Add video resources tagged to Prediabetic_Glucose, Low_Glucose, Low_HDL, Fair_HDL. For HbA1c: add logic rules for non-optimal ranges first (Admin → Criteria → Edit), then add resources.
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Reported — 2026-06-25</span>
+    </div>
+
+    <div class="item done" data-status="done">
+      <div class="item-num">S27-1</div>
+      <div class="item-body">
+        <div class="item-title">Session 27 Bug Fixes</div>
+        <div class="item-note">
+          Bug-fix pass on F89/F90 after live site testing.<br><br>
+          <strong>Fixed:</strong>
+          <ul style="margin:4px 0 0 16px;padding:0;font-size:12px;">
+            <li><strong>Lab Sets endpoints (server)</strong> — all 5 were broken (used non-existent module-level <code>sb</code>, wrong middleware pattern). Fixed with local <code>createClient()</code> inside each handler.</li>
+            <li><strong>Challenges endpoints (server)</strong> — <code>GET /api/challenges</code> and <code>DELETE /api/admin/challenges/:id</code> had same bare <code>supabase</code> variable bug. Fixed.</li>
+            <li><strong>Admin.tsx compile error</strong> — dead inline <code>AdminLabSetsPanel</code> function caused Vite "Identifier already declared" crash. Deleted.</li>
+            <li><strong>LabsPage "Loading markers…" hang</strong> — root cause: Supabase JS client accumulates auth state across navigations; after visiting Admin tab, client's fetch queue stalled. Fixed by replacing client calls with direct REST fetch. Also split markers load (fast) from rules/tags load (background).</li>
+            <li><strong>QuickMetricsPanel range bug</strong> — was saving 0/9999 as min/max on all results. Fixed with <code>useRef</code> + <code>lab_markers</code> fetch on mount.</li>
+            <li><strong>"Initial (Initial)" label</strong> — redundant suffix in Lab Set dropdowns. Fixed in QuickMetricsPanel.tsx and LabsPage.tsx.</li>
+            <li><strong>NHLS score disappearing after Quick Metrics save</strong> — removed <code>onScoreRecalc</code> prop; score now recalculates naturally via <code>results</code> context.</li>
+          </ul>
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Done — 2026-07-04</span>
+    </div>
+
   </section>
 
 </body>

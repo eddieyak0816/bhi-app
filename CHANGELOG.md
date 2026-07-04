@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## 2026-07-04 — fix: F90 Lab Sets stability, loading hang, score/range bugs (session 27)
+
+### Server — Lab Sets endpoints
+- All 5 `lab-sets` endpoints were using a non-existent module-level `sb` variable and the wrong `requireAdmin` middleware pattern. Fixed to use `if (!requireAdmin(req, res)) return;` + local `const sb = createClient(...)` inside each handler. Endpoints now work correctly on both localhost and Render.
+
+### Server — Challenges endpoints
+- `GET /api/challenges` and `DELETE /api/admin/challenges/:id` used bare `supabase` variable (undefined). Fixed with same local `sb` pattern.
+
+### Admin.tsx — compile error
+- Dead inline `function AdminLabSetsPanel` block (leftover from session 26 refactor) caused Vite "Identifier already declared" error blocking the build. Deleted entire dead block.
+
+### LabsPage.tsx — "Loading markers…" hang
+- Changed `loadingMarkers` initial state from `true` to `false` so the form renders immediately if the user isn't logged in or the effect exits early.
+- Replaced all Supabase JS client calls in `fetchMarkers` with direct REST fetch calls (`fetch(${SUPABASE_URL}/rest/v1/lab_markers?...)`) to bypass Supabase auth state accumulation that caused fetches to stall after multiple page navigations in one session.
+- Split into two fetches: markers (fast, unblocks form immediately) + rules/tags (background, non-blocking).
+
+### QuickMetricsPanel.tsx — range save bug
+- Was hardcoding `minNormal: 0, maxNormal: 9999` on every saved result. Now fetches real `min_normal/max_normal` from `lab_markers` on mount, stores in `useRef` (not `useState` — avoids closure stale-value race), reads synchronously at save time.
+
+### QuickMetricsPanel.tsx + LabsPage.tsx — "Initial (Initial)" label
+- Lab Set dropdown showed redundant "(Initial)" suffix when the set label was already "Initial". Fixed: only appends `(Initial)` when `s.label.toLowerCase() !== 'initial'`.
+
+### Dashboard.tsx — NHLS score disappearing after Quick Metrics save
+- Removed `onScoreRecalc` prop from `<QuickMetricsPanel />`. The `setBhasV2Result(null)` call was clearing the score before `results` context had updated, leaving the panel empty. Natural recalc via `results` dependency is sufficient.
+
 ## 2026-06-25 — feat: F89 Quick Metrics Panel, F90 Lab Sets, F91 Coverage Audit (session 26)
 
 ### F89 — Core metric quick-entry panel on Dashboard

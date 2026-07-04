@@ -1,5 +1,39 @@
 [
   {
+    "date": "2026-07-04",
+    "session": "27",
+    "session_summary": "Session 27 — F90 bug fixing + stability improvements. Fixed requireAdmin middleware pattern (all lab-sets endpoints used Express middleware syntax instead of inline pattern — caused silent 500s on Render). Fixed supabase/sb undefined errors in challenges and lab-sets endpoints. Fixed Loading markers hang in LabsPage by: (1) decoupling aliases-all fetch from page load, (2) replacing Supabase client calls with direct REST fetch calls to bypass client auth state hangs. Fixed redundant 'Initial (Initial)' label in lab set dropdowns. Fixed Quick Metrics Panel saving 0-9999 as min/max normal by fetching real marker ranges via markerRangesRef. F90 migrations confirmed run. F88 migration still pending — all code written, just needs migration run in Supabase SQL editor. Damon action required: align Vitamin D lab marker min/max (50-80) with logic rules optimal range (30-100) — Admin → Criteria → Vitamin D edit.",
+    "features_completed": [
+      { "id": "F90", "name": "Lab Sets — fully working end-to-end on live site after bug fixes", "files": ["server/index.js", "src/components/AdminLabSetsPanel.tsx", "src/components/QuickMetricsPanel.tsx", "src/pages/LabsPage.tsx"] }
+    ],
+    "bugs_fixed": [
+      "requireAdmin middleware pattern fixed for all lab-sets endpoints",
+      "supabase undefined error in GET /api/challenges and DELETE /api/admin/challenges/:id",
+      "Loading markers hang — replaced Supabase client calls with direct REST fetch in LabsPage",
+      "aliases-all fetch no longer blocks marker loading",
+      "QuickMetricsPanel saving 0-9999 min/max — now uses real marker ranges from DB",
+      "Redundant 'Initial (Initial)' label in lab set dropdowns fixed"
+    ],
+    "pending_features": [
+      { "id": "F88", "name": "Alert messages on logic_rules — run migration 20260611_add_alert_message_to_logic_rules.sql in Supabase then test end-to-end" },
+      { "id": "F91-gaps", "name": "Damon needs to add content: Fasting Glucose (0 resources), Hemoglobin A1c (0 resources + missing non-optimal logic rules), HDL (only 1 resource)" },
+      { "id": "F87-test", "name": "End-to-end PDF test of alias feature — see IMPLEMENTATION_TRACKER.html S24-2" },
+      { "id": "wordpress-login", "name": "WordPress login integration — waiting on Damon's embed decision (popup vs redirect)" },
+      { "id": "Phase-11", "name": "HIPAA Hardening (F76-F81) — deferred until Damon upgrades to HIPAA-tier hosting" },
+      { "id": "data-alignment", "name": "Damon to align Vitamin D (and other markers) lab marker min/max with logic rules optimal range — Admin → Criteria → Edit each marker" }
+    ],
+    "migrations_run": [
+      "20260625_create_lab_sets.sql (F90 — confirmed run)"
+    ],
+    "migrations_pending": [
+      "20260611_add_alert_message_to_logic_rules.sql (F88 — all code written, just run this in Supabase SQL editor)"
+    ],
+    "open_questions": [
+      "Hemoglobin A1c has NO non-optimal logic rules in DB — never fires resources when out of range. Damon needs to add improvement/out-of-range rules.",
+      "Vitamin D: lab marker min/max (50-80) conflicts with logic rules optimal range (30-100). Damon to decide correct threshold and align both."
+    ]
+  },
+  {
     "date": "2026-06-25",
     "session": "26",
     "session_summary": "Session 26 — F89 Quick Metrics Panel + F90 Lab Sets + F91 Video Coverage Audit. F89: new QuickMetricsPanel component on Dashboard (collapsed by default), 8 NHLS metrics + waist/height/ACP + lab set dropdown, saves via addResult + profile PATCH + trigger messages. F90: full lab sets feature — migration written (run needed), 5 server endpoints, Admin Lab Sets tab, LabSetsComparison component on Dashboard + Labs page, lab_set_id threaded through UserLabResult + addResult. F91 audit complete: Fasting Glucose = 0 resources (gap), Hemoglobin A1c = 0 resources AND no non-optimal tags in DB (critical gap — no logic rules for HbA1c non-optimal tiers), HDL = 1 resource only. F88 still blocked on migration run.",
