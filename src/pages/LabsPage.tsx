@@ -293,8 +293,8 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
 
     async function fetchMarkers() {
       setLoadingMarkers(true)
+      const timer = setTimeout(() => setLoadingMarkers(false), 8000)
       try {
-        // Load markers first — unblocks the form immediately
         const markersRes = await supabase
           .from('lab_markers')
           .select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex, marker_category')
@@ -305,6 +305,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
         console.error('Error fetching lab markers:', err)
         setLabMarkers([])
       } finally {
+        clearTimeout(timer)
         setLoadingMarkers(false)
       }
 
