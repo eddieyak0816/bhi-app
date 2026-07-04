@@ -25,6 +25,8 @@ import {
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4242'
 const BACKEND_KEY = import.meta.env.VITE_BACKEND_API_KEY || ''
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
 interface ExtractedRow {
   name: string
@@ -293,34 +295,33 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
 
     async function fetchMarkers() {
       setLoadingMarkers(true)
-      const timer = setTimeout(() => setLoadingMarkers(false), 8000)
       try {
-        const markersRes = await supabase
-          .from('lab_markers')
-          .select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex, marker_category')
-          .order('name')
-        if (markersRes.error) throw markersRes.error
-        if (markersRes.data) setLabMarkers(markersRes.data as LabMarker[])
+        const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        const markersData = await fetch(
+          `${SUPABASE_URL}/rest/v1/lab_markers?select=id,name,unit,min_normal,max_normal,is_active,cpt_code,applicable_sex,marker_category&order=name`,
+          { headers }
+        ).then(r => r.ok ? r.json() : [])
+        setLabMarkers(markersData as LabMarker[])
       } catch (err) {
         console.error('Error fetching lab markers:', err)
         setLabMarkers([])
       } finally {
-        clearTimeout(timer)
         setLoadingMarkers(false)
       }
 
       // Load rules/tags in background — only needed for status display, not for the form
       try {
-        const [rulesRes, tagsRes] = await Promise.all([
-          supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
-          supabase.from('tags').select('name, scoring_tier'),
+        const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        const [rulesData, tagsData] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/logic_rules?select=marker_id,min_value,max_value,tag_to_apply`, { headers }).then(r => r.ok ? r.json() : []),
+          fetch(`${SUPABASE_URL}/rest/v1/tags?select=name,scoring_tier`, { headers }).then(r => r.ok ? r.json() : []),
         ])
-        if (rulesRes.data) {
-          const dbOptimalTags = tagsRes.data
-            ? new Set(tagsRes.data.filter((t: { name: string; scoring_tier: string }) => t.scoring_tier === 'optimal').map((t: { name: string }) => t.name))
+        if (rulesData.length > 0) {
+          const dbOptimalTags = tagsData.length > 0
+            ? new Set(tagsData.filter((t: { name: string; scoring_tier: string }) => t.scoring_tier === 'optimal').map((t: { name: string }) => t.name))
             : OPTIMAL_TAGS
           const ranges: Record<string, { min: number; max: number }> = {}
-          for (const rule of rulesRes.data) {
+          for (const rule of rulesData) {
             if (dbOptimalTags.has(rule.tag_to_apply)) {
               ranges[rule.marker_id] = { min: rule.min_value, max: rule.max_value }
             }
