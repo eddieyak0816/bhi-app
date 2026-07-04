@@ -293,25 +293,23 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
 
     async function fetchMarkers() {
       setLoadingMarkers(true)
+      // Aliases fetch runs independently — never blocks marker loading
+      fetch(`${BACKEND_URL}/api/admin/lab-markers/aliases-all`, {
+        headers: { 'x-backend-api-key': BACKEND_KEY },
+      }).then(r => r.ok ? r.json() : []).then((aliasesRes: { alias: string; marker_id: string }[]) => {
+        if (Array.isArray(aliasesRes)) {
+          const map = new Map<string, string>()
+          aliasesRes.forEach(a => map.set(a.alias.toLowerCase(), a.marker_id))
+          aliasMapRef.current = map
+        }
+      }).catch(() => {})
+
       try {
-        const [markersRes, rulesRes, tagsRes, aliasesRes] = await Promise.all([
+        const [markersRes, rulesRes, tagsRes] = await Promise.all([
           supabase.from('lab_markers').select('id, name, unit, min_normal, max_normal, is_active, cpt_code, applicable_sex, marker_category').order('name'),
           supabase.from('logic_rules').select('marker_id, min_value, max_value, tag_to_apply'),
           supabase.from('tags').select('name, scoring_tier'),
-          Promise.race([
-            fetch(`${BACKEND_URL}/api/admin/lab-markers/aliases-all`, {
-              headers: { 'x-backend-api-key': BACKEND_KEY },
-            }).then(r => r.ok ? r.json() : []).catch(() => []),
-            new Promise<[]>(resolve => setTimeout(() => resolve([]), 5000)),
-          ]),
         ])
-
-        // Build alias map: alias.toLowerCase() → marker_id
-        if (Array.isArray(aliasesRes)) {
-          const map = new Map<string, string>()
-          aliasesRes.forEach((a: { alias: string; marker_id: string }) => map.set(a.alias.toLowerCase(), a.marker_id))
-          aliasMapRef.current = map
-        }
 
         if (markersRes.error) throw markersRes.error
         if (markersRes.data) setLabMarkers(markersRes.data as LabMarker[])
