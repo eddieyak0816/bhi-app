@@ -3708,7 +3708,8 @@ app.get('/api/lab-sets', async (req, res) => {
 });
 
 // GET /api/admin/lab-sets — admin read
-app.get('/api/admin/lab-sets', requireAdmin, async (req, res) => {
+app.get('/api/admin/lab-sets', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { data, error } = await sb.from('lab_sets').select('*').order('sort_order');
@@ -3721,7 +3722,8 @@ app.get('/api/admin/lab-sets', requireAdmin, async (req, res) => {
 });
 
 // POST /api/admin/lab-sets — create
-app.post('/api/admin/lab-sets', requireAdmin, async (req, res) => {
+app.post('/api/admin/lab-sets', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { label, sort_order = 0, is_initial = false } = req.body;
@@ -3736,7 +3738,8 @@ app.post('/api/admin/lab-sets', requireAdmin, async (req, res) => {
 });
 
 // PATCH /api/admin/lab-sets/:id — update
-app.patch('/api/admin/lab-sets/:id', requireAdmin, async (req, res) => {
+app.patch('/api/admin/lab-sets/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { id } = req.params;
@@ -3755,7 +3758,8 @@ app.patch('/api/admin/lab-sets/:id', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/admin/lab-sets/:id — delete (block if only initial)
-app.delete('/api/admin/lab-sets/:id', requireAdmin, async (req, res) => {
+app.delete('/api/admin/lab-sets/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { id } = req.params;
