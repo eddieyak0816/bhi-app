@@ -3519,7 +3519,8 @@ app.delete('/api/admin/challenges/:id', async (req, res) => {
   if (!requireAdmin(req, res)) return;
   const { id } = req.params;
   try {
-    const { error } = await supabase.from('challenges').delete().eq('id', id);
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('challenges').delete().eq('id', id);
     if (error) throw error;
     return res.json({ ok: true });
   } catch (err) {
@@ -3571,8 +3572,9 @@ app.get('/api/challenges', async (req, res) => {
   const userId = req.headers['x-user-id'];
   if (!userId) return res.status(401).json({ error: 'unauthorized' });
   try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     // Find user's org
-    const { data: membership } = await supabase
+    const { data: membership } = await sb
       .from('org_memberships')
       .select('org_id')
       .eq('user_id', userId)
@@ -3581,14 +3583,14 @@ app.get('/api/challenges', async (req, res) => {
 
     let challengeIds = null;
     if (membership?.org_id) {
-      const { data: coRows } = await supabase
+      const { data: coRows } = await sb
         .from('challenge_orgs')
         .select('challenge_id')
         .eq('org_id', membership.org_id);
       challengeIds = (coRows || []).map(r => r.challenge_id);
     }
 
-    let query = supabase
+    let query = sb
       .from('challenges')
       .select('id, name, slug, starts_at, ends_at, baseline_at, midpoint_at, is_active')
       .eq('is_active', true)
