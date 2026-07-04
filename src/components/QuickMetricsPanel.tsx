@@ -52,9 +52,19 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
   const [triggerMessages, setTriggerMessages] = useState<TriggerMessage[] | null>(null)
   const [labSets, setLabSets] = useState<LabSet[]>([])
   const [selectedSetId, setSelectedSetId] = useState<string>('')
+  const [markerRanges, setMarkerRanges] = useState<Record<string, { min: number; max: number }>>({})
 
-  // Fetch lab sets once
+  // Fetch lab sets and marker ranges once
   useEffect(() => {
+    supabase.from('lab_markers').select('name, min_normal, max_normal').then(({ data }) => {
+      if (data) {
+        const ranges: Record<string, { min: number; max: number }> = {}
+        data.forEach((m: { name: string; min_normal: number | null; max_normal: number | null }) => {
+          ranges[m.name] = { min: m.min_normal ?? 0, max: m.max_normal ?? 9999 }
+        })
+        setMarkerRanges(ranges)
+      }
+    })
     fetch(`${BACKEND_URL}/api/lab-sets`)
       .then(r => r.ok ? r.json() : [])
       .then((data: LabSet[]) => {
@@ -100,13 +110,14 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
         const val = parseFloat(values[f.markerName])
         if (isNaN(val)) return Promise.resolve()
         savedItems.push({ markerName: f.markerName, value: val })
+        const range = markerRanges[f.markerName]
         return addResult({
           markerName: f.markerName,
           value: val,
           unit: f.unit,
           date: today,
-          minNormal: 0,
-          maxNormal: 9999,
+          minNormal: range?.min ?? 0,
+          maxNormal: range?.max ?? 9999,
           lab_set_id: selectedSetId || null,
         })
       })
