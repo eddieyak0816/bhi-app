@@ -1,6 +1,6 @@
 Balanced Health Institute — MVP (plain language)
 
-Quick: this repo contains a small web app that shows trusted health learning resources based on a lab test name + number. It does NOT give medical advice and it does NOT save your lab numbers.
+Quick: this repo contains a small web app that shows trusted health learning resources based on a lab test name + number. It does NOT give medical advice and it does NOT save your lab numbers..
 
 ## Live Deployment ✅
 
