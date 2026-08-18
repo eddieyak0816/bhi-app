@@ -63,7 +63,7 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: theme.text }}>NHL</h1>
+          <h1 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: theme.text, lineHeight: 1.2 }}>National<br />Health League</h1>
           <nav style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
             {navItems.map(item => (
               <button

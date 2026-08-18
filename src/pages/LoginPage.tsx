@@ -50,8 +50,8 @@ export default function LoginPage() {
         }}
       >
         <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: 700, color: theme.text, margin: 0 }}>
-            NHL
+          <h1 style={{ fontSize: '32px', fontWeight: 700, color: theme.text, margin: 0, lineHeight: 1.2 }}>
+            National<br />Health League
           </h1>
           <p style={{ color: theme.textMuted, margin: '8px 0 0 0', fontSize: '14px' }}>
             National Health League
