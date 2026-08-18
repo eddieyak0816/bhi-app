@@ -389,7 +389,7 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
                     : <span style={{ fontSize: 11, color: theme.textMuted }}>No tags — shows to all users</span>
                   }
                 </div>
-                <a href={p.affiliate_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: theme.blue ?? '#3B82F6' }}>{p.affiliate_url}</a>
+                <a href={p.affiliate_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: theme.blue ?? '#3B82F6', display: 'block', wordBreak: 'break-all', overflowWrap: 'anywhere', maxWidth: '100%' }}>{p.affiliate_url}</a>
               </div>
               <div className="admin-item-card-buttons" style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
                 <button style={btn('#3B82F6')} onClick={() => openEdit(p)}>Edit</button>
