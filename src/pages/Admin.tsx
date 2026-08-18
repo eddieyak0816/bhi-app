@@ -1304,6 +1304,10 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       <style>{`
         @media (max-width: 700px) {
           table { display: block; overflow-x: auto; white-space: nowrap; max-width: 100%; }
+          /* minmax(0,1fr) not 1fr — a bare 1fr track still reserves room for its content's natural
+             (un-shrunk) width, which silently pushes the whole page wider than the screen. minmax(0,1fr)
+             tells the track it's allowed to shrink to 0, so long/unbreakable content wraps or scrolls
+             inside the card instead of stretching the page. */
           div[style*="1.5fr 1fr 1fr 1fr 1fr auto"],
           div[style*="1.5fr 1fr 1fr 1fr auto"],
           div[style*="1fr 1fr 1fr auto"],
@@ -1313,12 +1317,12 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           div[style*="repeat(4, 1fr)"],
           div[style*="grid-template-columns:1fr auto"],
           div[style*="grid-template-columns: 1fr auto"] {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: minmax(0, 1fr) !important;
           }
           /* Reusable: any row of fields meant to sit side-by-side (dropdown + input + button, etc.) */
           .admin-create-row { flex-wrap: wrap !important; }
           .admin-create-row > * { min-width: 0 !important; width: 100% !important; }
-          .admin-two-col-grid, .admin-filter-grid { grid-template-columns: 1fr !important; }
+          .admin-two-col-grid, .admin-filter-grid { grid-template-columns: minmax(0, 1fr) !important; }
           /* Reusable: "item card" rows (Products, Providers, Brokers…) — image + text + action buttons.
              On mobile: stack image+text above the buttons, and lay buttons out horizontally instead of a tall column. */
           .admin-item-card-row { flex-wrap: wrap !important; }
