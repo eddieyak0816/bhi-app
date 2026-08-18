@@ -294,7 +294,7 @@ export default function AdminChallengesTab({ theme }: Props) {
         const unassigned = orgs.filter(o => !(c.org_ids || []).includes(o.id))
         return (
           <div key={c.id} style={{ background: t.cardBackground, border: `1px solid ${t.borderColor}`, borderRadius: 10, padding: 18, marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+            <div className="admin-item-card-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 16, fontWeight: 700, color: t.text }}>{c.name}</span>
@@ -309,7 +309,7 @@ export default function AdminChallengesTab({ theme }: Props) {
                   {c.starts_at} → {c.ends_at} &nbsp;|&nbsp; Baseline: {c.baseline_at} &nbsp;|&nbsp; Midpoint: {c.midpoint_at}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <div className="admin-item-card-buttons" style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                 <button style={btnStyle()} onClick={() => handleToggle(c)} disabled={toggling === c.id}>
                   {toggling === c.id ? '…' : c.is_active ? 'Deactivate' : 'Activate'}
                 </button>

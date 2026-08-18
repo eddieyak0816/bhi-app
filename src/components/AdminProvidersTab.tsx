@@ -217,7 +217,7 @@ export default function AdminProvidersTab({ theme }: Props) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {filtered.map(p => (
-            <div key={p.id} style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'flex-start', opacity: p.is_active ? 1 : 0.55 }}>
+            <div key={p.id} className="admin-item-card-row" style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'flex-start', opacity: p.is_active ? 1 : 0.55 }}>
               {p.image_url ? (
                 <img src={p.image_url} alt={p.name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
               ) : (
@@ -232,7 +232,7 @@ export default function AdminProvidersTab({ theme }: Props) {
                   {!p.is_active && <span style={{ marginLeft: 8, color: '#b91c1c', fontWeight: 600 }}>Inactive</span>}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <div className="admin-item-card-buttons" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button onClick={() => openEdit(p)} style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '5px 10px', fontSize: 12, cursor: 'pointer', color: theme.text }}>Edit</button>
                 <button onClick={() => toggleActive(p)} style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '5px 10px', fontSize: 12, cursor: 'pointer', color: theme.textMuted }}>{p.is_active ? 'Deactivate' : 'Activate'}</button>
                 <button onClick={() => handleDelete(p.id)} style={{ background: 'transparent', border: '1px solid #fca5a5', borderRadius: 6, padding: '5px 10px', fontSize: 12, cursor: 'pointer', color: '#b91c1c' }}>Delete</button>

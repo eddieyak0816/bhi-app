@@ -365,7 +365,7 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {products.map(p => (
-            <div key={p.id} style={{ background: theme.card, border: `1.5px solid ${theme.borderColor}`, borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+            <div key={p.id} className="admin-item-card-row" style={{ background: theme.card, border: `1.5px solid ${theme.borderColor}`, borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
               {p.image_url && (
                 <img src={p.image_url} alt={p.name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
               )}
@@ -391,7 +391,7 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
                 </div>
                 <a href={p.affiliate_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: theme.blue ?? '#3B82F6' }}>{p.affiliate_url}</a>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+              <div className="admin-item-card-buttons" style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
                 <button style={btn('#3B82F6')} onClick={() => openEdit(p)}>Edit</button>
                 <button style={btn(p.is_active ? '#6b7280' : '#10B981')} onClick={() => toggleActive(p)}>
                   {p.is_active ? 'Deactivate' : 'Activate'}

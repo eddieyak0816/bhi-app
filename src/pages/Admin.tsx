@@ -1315,6 +1315,15 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           div[style*="grid-template-columns: 1fr auto"] {
             grid-template-columns: 1fr !important;
           }
+          /* Reusable: any row of fields meant to sit side-by-side (dropdown + input + button, etc.) */
+          .admin-create-row { flex-wrap: wrap !important; }
+          .admin-create-row > * { min-width: 0 !important; width: 100% !important; }
+          .admin-two-col-grid, .admin-filter-grid { grid-template-columns: 1fr !important; }
+          /* Reusable: "item card" rows (Products, Providers, Brokers…) — image + text + action buttons.
+             On mobile: stack image+text above the buttons, and lay buttons out horizontally instead of a tall column. */
+          .admin-item-card-row { flex-wrap: wrap !important; }
+          .admin-item-card-buttons { flex-direction: row !important; width: 100% !important; flex-wrap: wrap !important; }
+          .admin-item-card-buttons > * { flex: 1 1 auto !important; }
         }
       `}</style>
       <h3 style={{color:theme.text}}>Admin — Content manager (dev)</h3>
@@ -1456,11 +1465,6 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           <style>{`
             input[list] { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: none !important; }
             input[list]::-webkit-calendar-picker-indicator { display: none !important; }
-            @media (max-width: 700px) {
-              .admin-create-row { flex-wrap: wrap !important; }
-              .admin-create-row > * { min-width: 0 !important; width: 100% !important; }
-              .admin-two-col-grid, .admin-filter-grid { grid-template-columns: 1fr !important; }
-            }
           `}</style>
           {loading ? <div>Loading…</div> : (
             <div>
@@ -3520,7 +3524,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               {/* Tag creation form */}
               <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
                 <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Tag</h3>
-                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                <div className="admin-create-row" style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
                   <input
                     placeholder="Tag name"
                     value={tagInput}
@@ -3534,7 +3538,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         }
                       }
                     }}
-                    style={{flex:3,minWidth:360,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                    style={{flex:3,minWidth:160,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
                   />
                   <select value={tagCreateCategory} onChange={e => setTagCreateCategory(e.target.value)} style={{width:180,flexShrink:0,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text,fontSize:14}}>
                     <option value="">(no category)</option>
