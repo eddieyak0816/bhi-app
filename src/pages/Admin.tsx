@@ -1432,18 +1432,26 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       {/* Resources Tab */}
       {activeTab === 'resources' && (
         <div>
-          <style>{`input[list] { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: none !important; } input[list]::-webkit-calendar-picker-indicator { display: none !important; }`}</style>
+          <style>{`
+            input[list] { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: none !important; }
+            input[list]::-webkit-calendar-picker-indicator { display: none !important; }
+            @media (max-width: 700px) {
+              .admin-create-row { flex-wrap: wrap !important; }
+              .admin-create-row > * { min-width: 0 !important; width: 100% !important; }
+              .admin-two-col-grid, .admin-filter-grid { grid-template-columns: 1fr !important; }
+            }
+          `}</style>
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Create New Resource - Always Visible */}
               <div style={{marginBottom:40,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
                   <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Create New Resource</h3>
-                  <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                  <div className="admin-create-row" style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
                     <select value={type} onChange={e => { console.info('type select changed:', e.target.value); setType(e.target.value) }} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
                       {(resourceTypes || []).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(rt => <option key={rt} value={rt}>{rt}</option>)}
                     </select>
-                    <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{flex:1,minWidth:200,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
-                    <div style={{display:'flex',gap:6,minWidth:300}}>
+                    <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{flex:1,minWidth:160,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
+                    <div style={{display:'flex',gap:6,flex:1,minWidth:220}}>
                       <select value={linkProtocol} onChange={e => setLinkProtocol(e.target.value)} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
                         <option value="https://">https://</option>
                         <option value="http://">http://</option>
@@ -1452,7 +1460,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     </div>
                     <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
                   </div>
-                  <div style={{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                  <div className="admin-two-col-grid" style={{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
                     <div>
                       <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Categories:</label>
                       <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
@@ -1499,7 +1507,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
                   <h3 style={{margin:0,fontSize:16,fontWeight:600,color:theme.text}}>Filter Resources</h3>
                 </div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,alignItems:'start'}}>
+                <div className="admin-filter-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,alignItems:'start'}}>
                   <div>
                     <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Keyword Search</label>
                     <div style={{position:'relative',display:'flex',alignItems:'center'}}>
