@@ -24,6 +24,7 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= MOBILE_BREAKPOINT)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const mobileMenuToggleRef = useRef<HTMLButtonElement>(null)
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -31,7 +32,10 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
       if (suppRef.current && !suppRef.current.contains(e.target as Node)) {
         setSuppOpen(false)
       }
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+      if (
+        mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node) &&
+        mobileMenuToggleRef.current && !mobileMenuToggleRef.current.contains(e.target as Node)
+      ) {
         setMobileMenuOpen(false)
       }
     }
@@ -84,6 +88,7 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 32 }}>
           {isMobile ? (
             <button
+              ref={mobileMenuToggleRef}
               onClick={() => setMobileMenuOpen(o => !o)}
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileMenuOpen}
