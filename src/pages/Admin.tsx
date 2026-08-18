@@ -1296,6 +1296,27 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
 
   return (
     <div className="card" style={{background:theme.bg,color:theme.text}}>
+      {/* Global mobile-responsive safety net for the whole Admin page.
+          Admin.tsx has many fixed multi-column grids and un-scrollable tables written
+          as inline styles across every tab. Rather than editing each one individually,
+          this catches them all at once via attribute selectors matching their rendered
+          inline CSS, and forces single-column / scrollable behavior below 700px. */}
+      <style>{`
+        @media (max-width: 700px) {
+          table { display: block; overflow-x: auto; white-space: nowrap; max-width: 100%; }
+          div[style*="1.5fr 1fr 1fr 1fr 1fr auto"],
+          div[style*="1.5fr 1fr 1fr 1fr auto"],
+          div[style*="1fr 1fr 1fr auto"],
+          div[style*="1fr 1fr auto"],
+          div[style*="1fr 1fr 1fr 28px"],
+          div[style*="2fr 1fr 1fr auto"],
+          div[style*="repeat(4, 1fr)"],
+          div[style*="grid-template-columns:1fr auto"],
+          div[style*="grid-template-columns: 1fr auto"] {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
       <h3 style={{color:theme.text}}>Admin — Content manager (dev)</h3>
 
 
