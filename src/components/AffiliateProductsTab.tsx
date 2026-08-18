@@ -141,6 +141,15 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
     setForm(f => ({ ...f, tags: f.tags.filter(t => t !== tag) }))
   }
 
+  // If a URL is missing "http://" or "https://", the browser treats it as a path inside
+  // this app instead of an outside link (e.g. clicking it 404s on our own domain).
+  // Auto-add https:// so admins don't have to remember to type it themselves.
+  function ensureProtocol(url: string): string {
+    const trimmed = url.trim()
+    if (!trimmed) return trimmed
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  }
+
   async function save() {
     if (!form.name.trim()) { setError('Name is required.'); return }
     if (!form.affiliate_url.trim()) { setError('Affiliate URL is required.'); return }
@@ -150,8 +159,8 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
-        image_url: form.image_url.trim() || null,
-        affiliate_url: form.affiliate_url.trim(),
+        image_url: form.image_url.trim() ? ensureProtocol(form.image_url) : null,
+        affiliate_url: ensureProtocol(form.affiliate_url),
         is_active: form.is_active,
         tags: form.tags,
       }

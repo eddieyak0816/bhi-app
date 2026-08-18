@@ -72,11 +72,25 @@ export default function AdminProvidersTab({ theme }: Props) {
     setShowForm(true)
   }
 
+  // If a URL is missing "http://" or "https://", the browser treats it as a path inside
+  // this app instead of an outside link (e.g. clicking it 404s on our own domain).
+  // Auto-add https:// so admins don't have to remember to type it themselves.
+  function ensureProtocol(url: string): string {
+    const trimmed = url.trim()
+    if (!trimmed) return trimmed
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  }
+
   async function handleSave() {
     if (!form.name.trim() || !form.brief_bio.trim()) { setError('Name and brief bio are required.'); return }
     setSaving(true); setError(null)
     const h = authHeaders()
-    const body = { ...form, org_id: form.org_id || null }
+    const body = {
+      ...form,
+      org_id: form.org_id || null,
+      link_url: form.link_url ? ensureProtocol(form.link_url) : form.link_url,
+      image_url: form.image_url ? ensureProtocol(form.image_url) : form.image_url,
+    }
     try {
       if (editing) {
         const res = await fetch(apiUrl(`/api/admin/providers/${editing.id}`), { method: 'PATCH', headers: h, body: JSON.stringify(body) })
