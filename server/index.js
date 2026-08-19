@@ -3191,14 +3191,14 @@ app.get('/api/admin/nav-links', async (req, res) => {
 // POST /api/admin/nav-links — create
 app.post('/api/admin/nav-links', async (req, res) => {
   if (!requireAdmin(req, res)) return;
-  const { label, url, sort_order } = req.body || {};
+  const { label, url, sort_order, group_label } = req.body || {};
   if (!label || !url) return res.status(400).json({ error: 'label and url required' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const adminId = req.header('x-user-id') || null;
     const { data, error } = await sb
       .from('nav_links')
-      .insert({ label, url, sort_order: sort_order ?? 0, created_by: adminId })
+      .insert({ label, url, sort_order: sort_order ?? 0, group_label: group_label || '25% Off Supplements', created_by: adminId })
       .select().single();
     if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
     return res.status(201).json({ link: data });
@@ -3212,7 +3212,7 @@ app.post('/api/admin/nav-links', async (req, res) => {
 app.patch('/api/admin/nav-links/:id', async (req, res) => {
   if (!requireAdmin(req, res)) return;
   const { id } = req.params;
-  const fields = ['label', 'url', 'sort_order', 'is_active'];
+  const fields = ['label', 'url', 'sort_order', 'is_active', 'group_label'];
   const updates = {};
   for (const f of fields) { if (req.body[f] !== undefined) updates[f] = req.body[f]; }
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'no fields to update' });

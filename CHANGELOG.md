@@ -2,12 +2,13 @@
 
 ## 2026-08-19 — feat: F92 Nav Links self-service (session 28)
 
-### New feature — Admin-managed nav dropdown links
-- Requested by Damon: a way to add affiliate/partner links to the top nav dropdown ("25% Off Supplements") without needing a developer each time.
-- New `nav_links` table (`db/migrations/20260819_create_nav_links.sql`), kept deliberately independent from `affiliate_products` — deleting a product no longer removes it from the nav, and vice versa.
-- New Admin tab "Nav Links" (`src/components/AdminNavLinksTab.tsx`) — add/edit/delete, activate/deactivate, up/down reorder.
-- New server endpoints: `GET/POST/PATCH/DELETE /api/admin/nav-links`.
-- `Layout.tsx`'s dropdown now reads live from `nav_links` via direct REST fetch (not the Supabase client, to avoid the `getSession()` deadlock class of bug fixed elsewhere this session) instead of a hardcoded array.
+### New feature — Admin-managed nav dropdown links (multi-menu)
+- Requested by Damon: a way to add affiliate/partner links to the top nav dropdown ("25% Off Supplements") without needing a developer each time. Extended further same-session so multiple independent dropdown menus can be created too (not just more links in one fixed dropdown) — true WordPress-style self-service.
+- New `nav_links` table (`db/migrations/20260819_create_nav_links.sql`), kept deliberately independent from `affiliate_products` — deleting a product no longer removes it from the nav, and vice versa. Follow-up migration `20260819b_add_nav_links_group.sql` adds `group_label` so one table drives multiple separate dropdowns.
+- A dropdown only appears in the header once it has ≥1 active link — typing a brand-new group name on a link creates a whole new dropdown automatically, no separate setup step.
+- New Admin tab "Nav Links" (`src/components/AdminNavLinksTab.tsx`) — grouped list view, add/edit/delete, activate/deactivate, up/down reorder within each group.
+- New server endpoints: `GET/POST/PATCH/DELETE /api/admin/nav-links` (now accepting `group_label`).
+- `Layout.tsx` now groups fetched links client-side and renders one dropdown per group, on both desktop and mobile — reads live from `nav_links` via direct REST fetch (not the Supabase client, to avoid the `getSession()` deadlock class of bug fixed elsewhere this session) instead of a hardcoded array.
 
 ### Bugs fixed this session
 - **Admin panel completely broken** — `SUPABASE_SERVICE_ROLE` env var on Render was set to Supabase's new-format `sb_secret_...` key; backend code needs the legacy JWT `service_role` key format. Swapped to fix.

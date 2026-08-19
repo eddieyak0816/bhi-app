@@ -59,7 +59,13 @@ Last updated: 2026-08-18
 - [ ] **Hormone lab ranges to add** (displayed only — explicitly must NOT affect the overall health/NHLS score):
   - **Male:** Free Testosterone >150 pg/mL, Total Testosterone >500 ng/dL, Estradiol 25–35 pg/mL. Additional labs to track: Hemoglobin, Hematocrit, PSA, TSH, Free T3, Free T4, TPO Antibodies.
   - **Female:** Free Testosterone 10–15 pg/mL, Total Testosterone 90–150 ng/dL, FSH 3.5–22 mIU/mL. Additional labs to track: TSH, Ferritin, TPO Antibodies, Free T3, Free T4.
-- [x] **More affiliate links in top nav — DONE (built properly, not hardcoded)** 2026-08-19. Built full self-service instead of just hardcoding more links: new `nav_links` DB table + new Admin tab "Nav Links" (add/edit/delete/reorder/activate) + `Layout.tsx` dropdown now reads live from it. Deliberately kept independent from Affiliate Products (deleting a product no longer removes it from the nav, and vice versa — that coupling was the whole reason we built this properly instead of just pointing the nav at the Products table). See `DEVELOPER_REQUIREMENTS.md` Phase 15 / `IMPLEMENTATION_TRACKER.html` F92 for full detail.
+- [x] **More affiliate links in top nav — DONE (proper multi-menu self-service, not hardcoded)** 2026-08-19. Went further than "add more links" — built true WordPress-style menu management:
+  - New `nav_links` DB table (2 migrations: base table + a `group_label` column added same-session) — deliberately independent from Affiliate Products (deleting a product no longer removes it from the nav, and vice versa).
+  - Each link belongs to a named "menu" (`group_label`) — the header shows **one dropdown per distinct menu name**, and typing a brand-new menu name on a link creates a whole new dropdown automatically. A menu with zero active links just doesn't show — no empty/broken-looking buttons.
+  - New Admin tab "Nav Links" (🔗) — grouped list, add/edit/delete/reorder-within-menu/activate.
+  - **To use:** re-add Fullscript + Biote under menu name "25% Off Supplements" (not auto-migrated from the old hardcoded list), or create a brand-new menu by typing a different menu name.
+  - See `DEVELOPER_REQUIREMENTS.md` Phase 15 / `IMPLEMENTATION_TRACKER.html` F92 for full detail.
+  - **Reminder:** run `db/migrations/20260819b_add_nav_links_group.sql` in Supabase SQL Editor too (in addition to the first nav_links migration) before testing.
 - [ ] **Newsletter editing feature** — ability to create/edit newsletters inside the app. Damon sent 2 mockup designs (see Design reference below) — "Week 1: Vitamin D" style, one-topic-per-week format with sections: Why It Matters, Discussion Range table, 3 Action Steps, Supplement Spotlight, Lab Info (CPT code), QR codes to video/store.
 - [ ] **Verify Health Check-in** — Damon says it used to stall on loading, "appears to be functioning now" — needs a confirm-and-close pass, not necessarily a fix.
 
