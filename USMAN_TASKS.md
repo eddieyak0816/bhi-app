@@ -1,116 +1,70 @@
 # Usman — Developer Tasks
 
-Tracking doc for Usman's work on the BHI / National Health League app. Client is **Damon DiLorenzo** (Balanced Health Institute / National Health League). Eddie was the previous developer.
+Client: **Damon DiLorenzo** (Balanced Health Institute / National Health League). Eddie was the previous developer.
 
-Source material for this doc: emails from Damon (Aug 2026), files from the `DAMON NEW FILES FOR USMAN` folder (now summarized below — folder can be deleted), and existing project docs (`CLIENT_FEEDBACK.md`, `DEVELOPER_STATUS.md`, `PROJECT_SCOPE.md`).
+Detailed technical notes for everything below (root causes, exact code changes) are kept in `DEVELOPER_REQUIREMENTS.md`, `CHANGELOG.md`, and `IMPLEMENTATION_TRACKER.html` — this doc is the simple day-to-day tracker.
 
-Last updated: 2026-08-18
+Last updated: 2026-08-19
 
 ---
 
-## ✅ Done
+## ✅ DONE
 
-- **Trademark fix — "NHL" branding replaced with "National Health League"** in:
-  - `src/pages/LoginPage.tsx` — heading (stacked "National / Health League", removed duplicate subtitle line)
-  - `src/components/Layout.tsx` — header logo
-  - `src/pages/SignupPage.tsx` — "Join National Health League to get started"
-  - `src/components/AffiliateProductCards.tsx` — commission disclosure text
-  - `src/components/HealthReportModal.tsx` — PDF report title
-  - `src/components/InsuranceReportModal.tsx` — report title, CSV header, footer text (4 spots)
-  - **Not yet changed (needs Damon's scope confirmation first):**
-    - `src/utils/publicId.ts` — the `NHL-XXXX-XXXX` public ID format (data format, not just text — needs a decision on whether existing user IDs get migrated)
-    - "NHLS" — the score name itself, used in 40+ places across the app (Dashboard, LabsPage, EmployerPage, LeaguePage, LeaderboardPage, ProfilePage, Admin, ConsentPage, etc.) — need to ask Damon if trademark concern extends to this too
-- **Mobile header fix** — added responsive hamburger menu in `src/components/Layout.tsx` (breakpoint 860px). Desktop nav unchanged; mobile shows hamburger icon that opens a vertical dropdown with all nav items, My Directives, and Supplements sub-dropdown. Fixed a bug where tapping the close (✕) icon reopened the menu (outside-click handler was fighting the toggle button).
-- **Fixed broken CI workflow** — `.github/workflows/assistant-preferences-check.yml` had zero YAML indentation (invalid file, failing on every PR). Corrected indentation. *(Committed — confirm before removing from this list if not yet pushed.)*
+1. Fixed "NHL" text → "National Health League" (login, header, signup, reports)
+2. Fixed mobile header — was broken/squeezed, now has a working hamburger menu
+3. Fixed broken CI check file (bad YAML)
+4. Fixed Admin panel completely broken (wrong database key)
+5. Fixed Admin panel unusable on mobile (fields cut off / overflowing)
+6. Fixed provider "Book/Connect" link going to a broken page (also fixed the general "provider URL not saving" complaint — same bug)
+7. Fixed image upload stuck loading forever in Resources
+8. Fixed uploaded image disappearing when re-editing a resource
+9. Built self-service nav menu links — Damon can now add/edit/remove nav dropdown links and even whole new menus himself, no developer needed
+10. Fixed Health Check-In stuck on "Loading..." forever
+11. Fixed Health Check-In feeling slow to save
+12. Renamed "Advanced Care Planning" → "Advance Care Plan" (3 spots)
+13. Fixed resources loading slowly after entering lab values
+14. Confirmed: Categories page image upload was never built (not a bug — flag to Damon, don't build without his OK)
+15. Confirmed: Virtual Providers not showing was correct behavior (org-scoped), not a bug
 
-## ✅ Fixed (moved from High priority bugs)
+## ❌ NOT DONE — needs building
 
-- [x] **Admin tab completely unusable (Damon's top priority)** — FIXED 2026-08-18.
-  - **Symptom:** Every Admin tab (Resources, Categories, Tags, etc.) failed to load/save. Browser console showed: `Failed to load categories: 500 {"error":"db_error","detail":{"message":"Unregistered API key","hint":"Double check the provided API key as it is not registered for this project."}}`
-  - **Root cause:** The backend server (Render, `bhi-app-backend`) had the correct env var *names* set (`BACKEND_API_KEY`, `SUPABASE_SERVICE_ROLE`, `VITE_SUPABASE_URL`) — so it wasn't a missing-secret problem. The actual *value* in `SUPABASE_SERVICE_ROLE` was wrong: it was set to Supabase's **new-format** secret key (`sb_secret_...`), but the backend code makes direct/raw REST calls to Supabase that require the **old legacy JWT-format** `service_role` key (starts with `eyJhbGci...`). Supabase rejected every request because of this format mismatch — not a permissions issue, not a per-tab issue, one shared broken key affecting everything at once.
-  - **Fix applied:** In Supabase dashboard → Project Settings → API Keys → **"Legacy anon, service_role API keys"** tab → revealed and copied the legacy `service_role` key → pasted it into Render dashboard → `bhi-app-backend` → Environment → `SUPABASE_SERVICE_ROLE` value (replacing the `sb_secret_...` one) → clicked **"Save, rebuild, and deploy."**
-  - **Verified:** Console now shows `[Admin] Successfully loaded categories`; confirmed can add/edit/delete categories, tags, resources.
-  - **Note for future:** If this breaks again (e.g. after rotating Supabase keys), always use the **legacy JWT `service_role` key**, not the newer `sb_secret_...` format, until the backend code (`server/index.js`) is updated to support the new key format.
-  - **Not yet checked:** whether the same new-vs-legacy key mismatch also affects `VITE_SUPABASE_URL`/anon key usage on the frontend side (Netlify env vars) — frontend reads/writes appear to work fine so likely not an issue, but worth a quick sanity check if any other Supabase-related errors show up.
+16. **Hormone Labs category** — display hormone lab markers (Testosterone, Estradiol, FSH, etc.) split by Male/Female. *(Data for this may already exist — check before starting.)*
+17. **Sex-based content** — auto-show the right hormone content based on Profile's Male/Female selection
+18. **Newsletter editor** — build ability to create/edit newsletters in-app (2 mockups provided)
+19. **Visual redesign** — modern/colorful look, references given (fuzati.com, gold/maroon or red-white-blue)
+20. **Profile save error (`42501` database permission error)** — reported by Damon, could not reproduce yet, needs more specific steps from him
+21. **Multi-org providers** — let one provider be linked to several organizations, not just one (currently one-or-global only)
+22. **"Customize lab draw for organizations"** — unclear what this means exactly, needs a question to Damon
 
-- [x] **Admin page mobile responsiveness — FIXED** 2026-08-18. `Admin.tsx` (and several tab sub-components) had zero mobile handling — multi-column grids, non-wrapping flex rows, and un-scrollable tables all overflowed the screen on phones.
-  - Added one global mobile stylesheet in `Admin.tsx` (in the always-mounted top-level render, not per-tab) using reusable classes (`admin-create-row`, `admin-two-col-grid`, `admin-filter-grid`, `admin-item-card-row`, `admin-item-card-buttons`) plus CSS attribute selectors to catch repeated inline-style grid patterns across all 14 tabs at once, rather than hand-editing every instance.
-  - Key gotcha hit and fixed: forcing `grid-template-columns: 1fr` alone isn't enough — the track still reserves room for its content's natural width and can silently push the whole page wider than the screen. Fixed by using `minmax(0, 1fr)` instead, which lets the track actually shrink.
-  - Also fixed: unwrapped long URLs overflowing card edges (`AffiliateProductsTab.tsx` affiliate link — added `wordBreak`/`overflowWrap`), and applied the card-row fix to Products, Providers, and Challenges tabs.
-  - Covered: Resources, Tags, Categories, Products, Providers, Challenges, Criteria, Markers tabs. **Not yet visually verified:** Orgs, Leagues, Users, Brokers, Lab Data, Lab Sets — worth a pass if anyone reports issues there.
+## ⚠️ NOT DONE — needs Damon to take action (not us)
 
-## 🔴 High priority — bugs (confirmed, still open)
+23. **Signup/login broken for new users** — found the cause: Supabase's "Site URL" setting still points to `localhost:3000` instead of the real live app address. Confirmed by reproducing it. **Cannot fix ourselves — Usman's Supabase role is "Developer," which can't edit this setting.** Needs Damon (or an Admin/Owner) to either make the change himself, or upgrade Usman's role.
 
-- [x] **Provider link 404 — FIXED** 2026-08-18.
-  - **Symptom:** Damon added his own website as a provider link ("Balanced Health Institute" entry), tapped "Book/Connect →", got a Netlify "Page not found" 404 (URL resolved to `gleaming-praline-ba5b42.netlify.app/www.balancedhealthinstitute.com`). Also: his headshot image showed broken on the card.
-  - **Root cause (not the Supabase key issue — a separate real bug):** Damon typed `www.balancedhealthinstitute.com` into the Booking URL field with no `https://` prefix. Browsers treat a protocol-less string as a path *inside the current app*, not an external link, hence the 404 on our own domain. Same root issue on the Headshot URL field — but that field also had the wrong kind of value entered (his website homepage, not an actual image file), which `https://` alone can't fix — see "Needs clarification" below.
-  - **Fix applied:** Added an `ensureProtocol()` helper in both `src/components/AdminProvidersTab.tsx` and `src/components/AffiliateProductsTab.tsx` — auto-prepends `https://` to any URL field on save if the admin forgot to type it (Providers: `link_url`, `image_url`; Products: `affiliate_url`, `image_url`). Applies to all future saves automatically.
-  - **Confirmed:** this also covers Damon's separate-sounding complaint *"Fix provider-linking functionality; URLs are not uploading/saving correctly"* from his August doc — verified 2026-08-19, same root cause, already fixed by this same change.
-  - **Note:** Existing bad data (Damon's current provider entry) is NOT auto-repaired retroactively — needs a manual re-save (open Edit → Save Changes, even with no changes) to pick up the fix.
-  - **Also found & fixed while testing this:** Virtual Providers not appearing on the Home dashboard at all was initially assumed to be a bug too — turned out to be correct behavior. Providers can be scoped to a specific org (`org_id`) or "Global (all members)"; Damon's entry was org-scoped, so it correctly didn't show for accounts not in that org. Not a bug — confirmed via Admin → Providers → the "Org-specific · [name]" vs "Global (all members)" label.
-- [x] **Image upload broken — FIXED** 2026-08-18. Two separate real bugs found and fixed (not related to the Supabase key issue):
-  - **Bug A — upload hung forever:** The Resources thumbnail upload used the Supabase JS client's `storage.upload()`, which internally calls `getSession()` — this can deadlock when Admin.tsx has many concurrent Supabase calls in flight on mount (documented issue, see `lib/supabase.ts` comment on `getStoredJwt()`). Fixed by rewriting the upload in `Admin.tsx` to bypass the client entirely: reads the JWT directly from localStorage and uploads via a direct `fetch()` to Supabase's Storage REST API instead.
-  - **Bug B — thumbnail vanished / silent data-loss risk:** There are 3 separate places in `Admin.tsx` that open the resource "Edit" form (table view pencil icon, card view "✎ Edit" button, and the View-Details-modal's Edit button). Only one of the three correctly carried `thumbnail_url` (and `duration_type`) into the edit form — the other two silently dropped it, so reopening Edit always showed "No thumbnail," and clicking Save from those two paths would have **erased** an already-saved thumbnail (sent `null` since the form never knew one existed). Fixed both missing spots to match the working one.
-  - **Categories image upload — confirmed NOT a bug, doesn't exist.** Searched the whole codebase: there is no image upload feature built for Categories at all (only Resources and Products have one). Damon's report was likely a mix-up between the two, or he expected a feature that was never built. **Not building this** — see "To tell Damon" below; only build if he explicitly confirms he wants it as a new feature (also has no display location yet — the Categories page shows plain text cards, no image slot, so it would need a small UI addition too, not just an upload button).
+## ❓ QUESTIONS — waiting on Damon's answer, not started
 
-## 🟡 Medium priority — new features (spec provided)
+24. Does the "NHL" trademark issue also apply to "NHLS" (the score name)? Big job if yes (40+ locations)
+25. Should existing users' ID codes (`NHL-XXXX-XXXX`) be changed too, or just new signups going forward?
+26. Are the NHLS score's 8 metrics allowed to become admin-editable (add/remove things like Ferritin, Insulin)? Currently hardcoded — real feature if he wants it
+27. All older open questions already logged in `CLIENT_FEEDBACK.md` (leaderboard ranking, org hierarchy depth, Broker role permissions, Challenge rules)
 
-- [ ] **Hormone Labs category** — add as a main dashboard category, separate content for men and women.
-- [ ] **Sex-based profile content** — Profile page: user selects Male/Female, app auto-assigns relevant hormone metrics/categories/content based on that.
-- [ ] **Hormone lab ranges to add** (displayed only — explicitly must NOT affect the overall health/NHLS score):
-  - **Male:** Free Testosterone >150 pg/mL, Total Testosterone >500 ng/dL, Estradiol 25–35 pg/mL. Additional labs to track: Hemoglobin, Hematocrit, PSA, TSH, Free T3, Free T4, TPO Antibodies.
-  - **Female:** Free Testosterone 10–15 pg/mL, Total Testosterone 90–150 ng/dL, FSH 3.5–22 mIU/mL. Additional labs to track: TSH, Ferritin, TPO Antibodies, Free T3, Free T4.
-- [x] **More affiliate links in top nav — DONE (proper multi-menu self-service, not hardcoded)** 2026-08-19. Went further than "add more links" — built true WordPress-style menu management:
-  - New `nav_links` DB table (2 migrations: base table + a `group_label` column added same-session) — deliberately independent from Affiliate Products (deleting a product no longer removes it from the nav, and vice versa).
-  - Each link belongs to a named "menu" (`group_label`) — the header shows **one dropdown per distinct menu name**, and typing a brand-new menu name on a link creates a whole new dropdown automatically. A menu with zero active links just doesn't show — no empty/broken-looking buttons.
-  - New Admin tab "Nav Links" (🔗) — grouped list, add/edit/delete/reorder-within-menu/activate.
-  - **To use:** re-add Fullscript + Biote under menu name "25% Off Supplements" (not auto-migrated from the old hardcoded list), or create a brand-new menu by typing a different menu name.
-  - See `DEVELOPER_REQUIREMENTS.md` Phase 15 / `IMPLEMENTATION_TRACKER.html` F92 for full detail.
-  - **Reminder:** run `db/migrations/20260819b_add_nav_links_group.sql` in Supabase SQL Editor too (in addition to the first nav_links migration) before testing.
-- [ ] **Newsletter editing feature** — ability to create/edit newsletters inside the app. Damon sent 2 mockup designs (see Design reference below) — "Week 1: Vitamin D" style, one-topic-per-week format with sections: Why It Matters, Discussion Range table, 3 Action Steps, Supplement Spotlight, Lab Info (CPT code), QR codes to video/store.
-- [x] **Health Check-in — REAL BUG FOUND & FIXED** 2026-08-19 (Damon said it "appears fixed," but it wasn't — reproduced it).
-  - **Symptom:** Modal stuck on "Loading…" forever, intermittently.
-  - **Root cause:** `HealthAssessmentModal.tsx` used `.single()` to load a user's most recent check-in. `.single()` throws an error (406 Not Acceptable) if zero rows exist — which is the normal case for any user who's never submitted one before. That error was never caught, so `setLoading(false)` never ran and the modal hung forever. 100% reproducible for first-time users, not actually random.
-  - **Fix:** Swapped to `.maybeSingle()` (correct method for "0 or 1 row is fine") + added proper error handling and a `.catch()` safety net so the modal can never get stuck again even on a genuinely unexpected failure.
+## 📣 MESSAGES TO SEND DAMON — not code, just tell him
 
-## 🟢 Larger scope — needs discussion before starting
+28. His provider's "Headshot" field has his website link pasted in, not an actual photo — needs a real image link
+29. Remind him to re-save that same provider entry once fixed, so all the URL fixes apply to it
+30. Send him the Site URL fix instructions (item #23 above) so he can act on it
 
-- [ ] **Visual redesign** — Damon wants a more "modern and colorful" look, referenced [fuzati.com](https://fuzati.com) as inspiration. Suggested either gold/maroon or red-white-blue color scheme (matches his newsletter mockups). This is a meaningful design project, not a quick tweak — needs scoping/estimate before starting.
+---
 
-## 📣 To tell Damon (not a dev task — just needs a message to him)
+## Infra / access — status
 
-- [ ] His "Headshot URL" on the Balanced Health Institute provider entry has his **website homepage** pasted in, not an actual photo file link — that's why the image is broken on the card. Ask him for a real image URL (or he can use the image upload button in Admin → Providers instead of pasting a link).
-- [ ] Remind him to re-save that same provider entry once (Edit → Save Changes) after he fixes the image, so the URL auto-fix picks up the Booking URL too.
+- [x] GitHub, Supabase, Netlify, Render dashboard access — all working
+- [x] Admin role inside the app — confirmed working
+- [ ] Supabase **organization** role is "Developer" — can't change critical settings like Auth URLs (see #23). Ask Damon to upgrade if this comes up again.
+- [ ] `DATABASE_URL` GitHub secret needs switching to Supabase's Connection Pooler format (CI check still fails)
+- [ ] Netlify doesn't always auto-deploy on push — sometimes needs a manual "Publish" click
 
-## ❓ Needs clarification from Damon
+## Design reference (Damon's newsletter mockups — files were deleted, described here so it's not lost)
 
-- [ ] **Does the NHL→trademark fix also apply to "NHLS" (the score name)?** — separate from the plain "NHL" branding already fixed. Big scope difference (40+ locations) if yes.
-- [ ] **Public ID format `NHL-XXXX-XXXX`** — change prefix going forward only, or migrate existing users' IDs too?
-- [ ] All previously logged open questions in `CLIENT_FEEDBACK.md` (leaderboard ranking method, org hierarchy depth, Broker role permissions/CSV access, who manages provider links per org, Challenge duration/opt-in) — still unanswered as of last check.
-
-## 📋 Older pending items (Eddie's, pre-existing)
-
-Not repeated here in full — see `DEVELOPER_STATUS.md` → "Pending / Blockers" section for the complete list. Highlights worth knowing about since they likely connect to items above:
-- Missing `categories` + `health_goals` DB migrations never run in production — **possibly the real root cause of the Admin tab bug (top priority item above)**, worth checking before assuming it's a new bug.
-- RLS not enabled in production, no rate limiting, no input validation middleware, default session timeout — general security hardening backlog.
-- Signed-URL media upload flow never built — **likely the same root cause as the image upload bug above.**
-- Playwright CI E2E instability, code splitting/performance items — lower priority, not blocking.
-
-## 🔧 Infra / access items (mostly resolved)
-
-- [x] GitHub repo access (collaborator)
-- [x] Supabase dashboard access
-- [x] Netlify dashboard access
-- [x] Render dashboard access
-- [x] App login (self-signup on live app)
-- [x] Admin role for Usman's app account — confirmed working (actively used Admin CMS throughout this session)
-- [ ] `DATABASE_URL` GitHub secret — confirmed it *is* set, but the CI schema-check still fails because GitHub Actions runners can't reach Supabase's IPv6-only **direct connection** string. Fix: swap the secret to Supabase's **Connection Pooling** (session/transaction pooler) string instead, which supports IPv4. (Supabase dashboard → Project Settings → Database → Connection Pooling)
-- [x] Vercel — confirmed not a concern; Netlify is the real/only deployment target in use. The `deploy-vercel.yml` workflow can be left alone or disabled later, low priority.
-- [ ] **Netlify auto-deploy investigation** — pushing to `main` didn't auto-trigger a fresh build (stale `dist/index.html` was being re-served; had to manually click "Publish" in Netlify). `dist/index.html` is force-committed to git despite `dist/` being in `.gitignore` — worth cleaning up and confirming Netlify's Build command/Publish directory settings are correct (`npm run build` / `dist`) so future pushes auto-deploy properly.
-
-## Design reference (from Damon's newsletter mockups)
-
-Two color directions supplied as PNGs (now deleted along with the source folder — describing here so the reference isn't lost):
-- **Gold/maroon version:** cream background, maroon header bar, gold accents, shield+anchor+cross logo, tagline "Own Your Health™...Before It Owns You."
-- **Red/white/blue version:** same layout, patriotic navy/red/white palette, "NATIONAL" in a red ribbon banner above the shield.
-- Both: weekly single-topic format (started with Vitamin D), sections for discussion range table, 3 action steps, supplement spotlight with QR code to Fullscript store, lab CPT code info, QR to a short YouTube video.
+- **Gold/maroon version:** cream background, maroon header, gold accents, shield+anchor+cross logo
+- **Red/white/blue version:** same layout, patriotic colors
+- Both: weekly single-topic format (started with Vitamin D), sections for range table, action steps, supplement spotlight, lab info, QR codes
