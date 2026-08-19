@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useResults } from './ResultsContext'
 import { evaluateUserTags, getRecommendedResources, calculateBhasScore, type LogicRule, type Resource, type BhasResult, type TagTierMap } from '../utils/evaluateRules'
-import { supabase } from '../lib/supabase'
+import { getStoredJwt } from '../lib/supabase'
+
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string || ''
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string || ''
 
 interface EvaluationContextType {
   applicableTags: string[]
@@ -31,27 +34,25 @@ async function loadSharedData(): Promise<{ rules: LogicRule[]; resources: Resour
     return sharedDataCache
   }
 
-  // Fetch logic rules with marker names (joined), resources, and tag tiers in parallel
-  const [rulesResponse, resourcesResponse, tagsResponse] = await Promise.all([
-    supabase.from('logic_rules').select(`
-      id,
-      marker_id,
-      min_value,
-      max_value,
-      operator,
-      tag_to_apply,
-      lab_markers (name)
-    `),
-    supabase.from('resources').select('*'),
-    supabase.from('tags').select('name, scoring_tier'),
+  // Direct REST fetch, not the Supabase JS client — the client's own getSession() check can
+  // stall after navigating through several pages in one session (same class of bug fixed
+  // elsewhere this session: Admin thumbnail upload, Health Check-In). A plain fetch with the
+  // JWT read straight from localStorage can't get stuck that way.
+  const jwt = getStoredJwt()
+  const authHeaders = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${jwt || SUPABASE_ANON_KEY}` }
+
+  const [rulesRes, resourcesRes, tagsRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/logic_rules?select=id,marker_id,min_value,max_value,operator,tag_to_apply,lab_markers(name)`, { headers: authHeaders }),
+    fetch(`${SUPABASE_URL}/rest/v1/resources?select=*`, { headers: authHeaders }),
+    fetch(`${SUPABASE_URL}/rest/v1/tags?select=name,scoring_tier`, { headers: authHeaders }),
   ])
 
-  if (rulesResponse.error) throw rulesResponse.error
-  if (resourcesResponse.error) throw resourcesResponse.error
+  if (!rulesRes.ok) throw new Error(`Failed to load logic rules (${rulesRes.status})`)
+  if (!resourcesRes.ok) throw new Error(`Failed to load resources (${resourcesRes.status})`)
   // tag tier fetch is best-effort — non-fatal if it fails
 
   // Transform rules to include marker_name from joined data
-  const rulesData = rulesResponse.data as any[]
+  const rulesData = await rulesRes.json() as any[]
   const rules: LogicRule[] = rulesData.map(r => ({
     id: r.id,
     marker_id: r.marker_id,
@@ -63,13 +64,14 @@ async function loadSharedData(): Promise<{ rules: LogicRule[]; resources: Resour
   }))
 
   // Build tag tier map from DB (F47)
+  const tagsData = tagsRes.ok ? await tagsRes.json().catch(() => []) : []
   const tagTierMap: TagTierMap = new Map(
-    ((tagsResponse.data as any[]) ?? [])
+    ((tagsData as any[]) ?? [])
       .filter(t => t.scoring_tier)
       .map(t => [t.name, t.scoring_tier])
   )
 
-  const resources = resourcesResponse.data as Resource[]
+  const resources = await resourcesRes.json() as Resource[]
 
   sharedDataCache = { rules, resources, tagTierMap, fetchedAt: Date.now() }
   return sharedDataCache
