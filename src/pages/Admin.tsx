@@ -1719,7 +1719,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                 if (r.id) {
                                   const capitalizedType = resourceTypes.find(t => t.toLowerCase() === r.type.toLowerCase()) || r.type
                                   setResourceModalData(r)
-                                  setResourceEditForm({title: r.title, type: capitalizedType, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                  setResourceEditForm({title: r.title, type: capitalizedType, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || ''), thumbnail_url: r.thumbnail_url || '', duration_type: r.duration_type || 'both'})
                                   setIsEditingResource(true)
                                   setResourceModalOpen(true)
                                 }
@@ -1923,7 +1923,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               if (r.id) {
                                 setResourceModalData(r)
                                 const capitalizedType = r.type ? resourceTypes.find(t => t.toLowerCase() === r.type.toLowerCase()) || r.type : ''
-                                setResourceEditForm({title: r.title, type: capitalizedType, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                setResourceEditForm({title: r.title, type: capitalizedType, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || ''), thumbnail_url: r.thumbnail_url || '', duration_type: r.duration_type || 'both'})
                                 setIsEditingResource(true)
                                 setResourceModalOpen(true)
                               }
