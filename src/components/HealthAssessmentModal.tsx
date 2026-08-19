@@ -79,7 +79,11 @@ export default function HealthAssessmentModal({ onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [existingId, setExistingId] = useState<string | null>(null)
 
-  // Load most recent assessment on mount
+  // Load most recent assessment on mount.
+  // Uses .maybeSingle() instead of .single() — a user who has never submitted a Health
+  // Check-In before has zero rows here, which is a normal, expected case, not an error.
+  // .single() treats zero rows as a hard error (406 Not Acceptable) with no `.catch()` to
+  // handle it, which left the modal stuck on "Loading…" forever for any first-time user.
   useEffect(() => {
     if (!user?.id) return
     supabase
@@ -88,9 +92,12 @@ export default function HealthAssessmentModal({ onClose }: Props) {
       .eq('user_id', user.id)
       .order('completed_at', { ascending: false })
       .limit(1)
-      .single()
-      .then(({ data }) => {
-        if (data) {
+      .maybeSingle()
+      .then(({ data, error: loadErr }) => {
+        if (loadErr) {
+          console.error('[HealthAssessment] Load error:', loadErr)
+          setError('Could not load your previous check-in — starting fresh.')
+        } else if (data) {
           setExistingId(data.id)
           setAssessment({
             sleep_ok: data.sleep_ok, stress_ok: data.stress_ok,
@@ -104,6 +111,13 @@ export default function HealthAssessmentModal({ onClose }: Props) {
             sym_anxious: data.sym_anxious ?? false, sym_heartburn: data.sym_heartburn ?? false,
           })
         }
+        setLoading(false)
+      })
+      .catch(err => {
+        // Belt-and-suspenders: even if something throws instead of resolving, never leave
+        // the modal stuck on "Loading…" forever.
+        console.error('[HealthAssessment] Unexpected load error:', err)
+        setError('Could not load your previous check-in — starting fresh.')
         setLoading(false)
       })
   }, [user?.id])
