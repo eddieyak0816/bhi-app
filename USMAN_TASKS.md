@@ -45,6 +45,7 @@ Last updated: 2026-08-18
   - **Symptom:** Damon added his own website as a provider link ("Balanced Health Institute" entry), tapped "Book/Connect →", got a Netlify "Page not found" 404 (URL resolved to `gleaming-praline-ba5b42.netlify.app/www.balancedhealthinstitute.com`). Also: his headshot image showed broken on the card.
   - **Root cause (not the Supabase key issue — a separate real bug):** Damon typed `www.balancedhealthinstitute.com` into the Booking URL field with no `https://` prefix. Browsers treat a protocol-less string as a path *inside the current app*, not an external link, hence the 404 on our own domain. Same root issue on the Headshot URL field — but that field also had the wrong kind of value entered (his website homepage, not an actual image file), which `https://` alone can't fix — see "Needs clarification" below.
   - **Fix applied:** Added an `ensureProtocol()` helper in both `src/components/AdminProvidersTab.tsx` and `src/components/AffiliateProductsTab.tsx` — auto-prepends `https://` to any URL field on save if the admin forgot to type it (Providers: `link_url`, `image_url`; Products: `affiliate_url`, `image_url`). Applies to all future saves automatically.
+  - **Confirmed:** this also covers Damon's separate-sounding complaint *"Fix provider-linking functionality; URLs are not uploading/saving correctly"* from his August doc — verified 2026-08-19, same root cause, already fixed by this same change.
   - **Note:** Existing bad data (Damon's current provider entry) is NOT auto-repaired retroactively — needs a manual re-save (open Edit → Save Changes, even with no changes) to pick up the fix.
   - **Also found & fixed while testing this:** Virtual Providers not appearing on the Home dashboard at all was initially assumed to be a bug too — turned out to be correct behavior. Providers can be scoped to a specific org (`org_id`) or "Global (all members)"; Damon's entry was org-scoped, so it correctly didn't show for accounts not in that org. Not a bug — confirmed via Admin → Providers → the "Org-specific · [name]" vs "Global (all members)" label.
 - [x] **Image upload broken — FIXED** 2026-08-18. Two separate real bugs found and fixed (not related to the Supabase key issue):
@@ -67,7 +68,10 @@ Last updated: 2026-08-18
   - See `DEVELOPER_REQUIREMENTS.md` Phase 15 / `IMPLEMENTATION_TRACKER.html` F92 for full detail.
   - **Reminder:** run `db/migrations/20260819b_add_nav_links_group.sql` in Supabase SQL Editor too (in addition to the first nav_links migration) before testing.
 - [ ] **Newsletter editing feature** — ability to create/edit newsletters inside the app. Damon sent 2 mockup designs (see Design reference below) — "Week 1: Vitamin D" style, one-topic-per-week format with sections: Why It Matters, Discussion Range table, 3 Action Steps, Supplement Spotlight, Lab Info (CPT code), QR codes to video/store.
-- [ ] **Verify Health Check-in** — Damon says it used to stall on loading, "appears to be functioning now" — needs a confirm-and-close pass, not necessarily a fix.
+- [x] **Health Check-in — REAL BUG FOUND & FIXED** 2026-08-19 (Damon said it "appears fixed," but it wasn't — reproduced it).
+  - **Symptom:** Modal stuck on "Loading…" forever, intermittently.
+  - **Root cause:** `HealthAssessmentModal.tsx` used `.single()` to load a user's most recent check-in. `.single()` throws an error (406 Not Acceptable) if zero rows exist — which is the normal case for any user who's never submitted one before. That error was never caught, so `setLoading(false)` never ran and the modal hung forever. 100% reproducible for first-time users, not actually random.
+  - **Fix:** Swapped to `.maybeSingle()` (correct method for "0 or 1 row is fine") + added proper error handling and a `.catch()` safety net so the modal can never get stuck again even on a genuinely unexpected failure.
 
 ## 🟢 Larger scope — needs discussion before starting
 

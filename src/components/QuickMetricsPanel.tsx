@@ -313,7 +313,7 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
                 style={{ width: 16, height: 16, cursor: 'pointer' }}
               />
               <label htmlFor="qm-acp" style={{ fontSize: 13, color: theme.text, cursor: 'pointer' }}>
-                I have an Advanced Care Plan
+                I have an Advance Care Plan
               </label>
             </div>
 
