@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+import { getStoredJwt } from '../lib/supabase'
 
-const SUPPLEMENT_LINKS = [
-  { label: 'Fullscript', url: 'https://us.fullscript.com/welcome/ddilorenzo1773884970' },
-  { label: 'Biote', url: 'https://patients.shopbiote.com/customer/account/create/?cid=7886&utm_campaign=0001PL&utm_source=Practitioner%20Link&utm_medium=referral' },
-]
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string || ''
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string || ''
+
+interface SupplementLink {
+  label: string
+  url: string
+}
 
 interface LayoutProps {
   children: React.ReactNode
@@ -21,6 +25,25 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
   const { user, logout, isAdmin } = useAuth()
   const [suppOpen, setSuppOpen] = useState(false)
   const suppRef = useRef<HTMLDivElement>(null)
+  const [supplementLinks, setSupplementLinks] = useState<SupplementLink[]>([])
+
+  // Pull nav dropdown links from the same affiliate_products data Admin → Products manages,
+  // instead of a hardcoded list — so adding/removing a link no longer needs a code change.
+  // Direct REST fetch (not the Supabase client) since Layout renders on every page and we
+  // don't want to risk the getSession() deadlock we already hit elsewhere in Admin.
+  useEffect(() => {
+    if (!SUPABASE_URL) return
+    const jwt = getStoredJwt()
+    fetch(`${SUPABASE_URL}/rest/v1/nav_links?select=label,url&is_active=eq.true&order=sort_order.asc`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${jwt || SUPABASE_ANON_KEY}`,
+      },
+    })
+      .then(res => res.ok ? res.json() : [])
+      .then(rows => setSupplementLinks((rows || []).map((r: any) => ({ label: r.label, url: r.url }))))
+      .catch(() => setSupplementLinks([]))
+  }, [])
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= MOBILE_BREAKPOINT)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
@@ -195,7 +218,7 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
                     overflow: 'hidden',
                   }}
                 >
-                  {SUPPLEMENT_LINKS.map(link => (
+                  {supplementLinks.map(link => (
                     <a
                       key={link.label}
                       href={link.url}
@@ -339,7 +362,7 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
             </button>
             {suppOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: 12 }}>
-                {SUPPLEMENT_LINKS.map(link => (
+                {supplementLinks.map(link => (
                   <a
                     key={link.label}
                     href={link.url}

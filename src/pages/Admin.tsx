@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 import AffiliateProductsTab from '../components/AffiliateProductsTab'
 import AdminBrokersTab from '../components/AdminBrokersTab'
 import AdminProvidersTab from '../components/AdminProvidersTab'
+import AdminNavLinksTab from '../components/AdminNavLinksTab'
 import AdminLeaguesTab from '../components/AdminLeaguesTab'
 import AdminUsersTab from '../components/AdminUsersTab'
 import AdminLabResultsTab from '../components/AdminLabResultsTab'
@@ -39,7 +40,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
 
-  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','leagues','users','challenges','lab-results','lab-sets'] as const
+  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','nav-links','leagues','users','challenges','lab-results','lab-sets'] as const
   type AdminTab = typeof VALID_TABS[number]
   const [activeTab, setActiveTab] = useState<AdminTab>(VALID_TABS.includes(initialTab as AdminTab) ? (initialTab as AdminTab) : 'resources')
   // Use global theme context
@@ -1353,6 +1354,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           { id: 'products',      icon: '🛍️', label: 'Products' },
           { id: 'brokers',       icon: '🤝', label: 'Brokers' },
           { id: 'providers',     icon: '👨‍⚕️', label: 'Providers' },
+          { id: 'nav-links',     icon: '🔗', label: 'Nav Links' },
           { id: 'leagues',       icon: '🏆', label: 'Leagues' },
           { id: 'users',         icon: '👤', label: 'Users' },
           { id: 'challenges',    icon: '⚡', label: 'Challenges' },
@@ -4910,6 +4912,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       {/* ── Providers Tab ────────────────────────────────────────────────── */}
       {activeTab === 'providers' && (
         <AdminProvidersTab theme={theme} />
+      )}
+
+      {/* ── Nav Links Tab ────────────────────────────────────────────────── */}
+      {activeTab === 'nav-links' && (
+        <AdminNavLinksTab theme={theme} />
       )}
 
       {/* ── Leagues Tab ──────────────────────────────────────────────────── */}

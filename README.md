@@ -58,6 +58,7 @@ Testing & DB
   - `db/migrations/20260302_add_biometrics_to_profiles.sql` — adds sex, waist, grip fields to profiles
   - `db/migrations/20260302_add_biometric_markers.sql` — adds Waist Circumference + Grip Strength markers
   - `db/insert_medical_criteria.sql` — inserts all logic rules for the 8 core blood markers (idempotent, run after migrations above)
+  - `db/migrations/20260819_create_nav_links.sql` — creates `nav_links` table (admin-managed top nav dropdown links, independent from `affiliate_products`)
 
 CI & deployment notes
 - Add `DATABASE_URL` to GitHub Secrets so the schema validator can run in CI.
