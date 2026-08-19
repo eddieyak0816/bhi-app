@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { supabase, directFetch } from '../lib/supabase'
+import { supabase, directFetch, getStoredJwt } from '../lib/supabase'
+
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string || ''
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string || ''
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import AffiliateProductsTab from '../components/AffiliateProductsTab'
@@ -2062,16 +2065,34 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               const ext = file.name.split('.').pop() || 'jpg'
                               const path = `${resourceModalData.id}.${ext}`
                               console.log('[Thumbnail] Uploading to path:', path, 'size:', file.size, 'type:', file.type)
-                              const { data: upData, error: upErr } = await supabase.storage
-                                .from('resource-thumbnails')
-                                .upload(path, file, { upsert: true, contentType: file.type })
-                              console.log('[Thumbnail] Upload result:', { upData, upErr })
-                              if (upErr) throw upErr
-                              const { data: urlData } = supabase.storage
-                                .from('resource-thumbnails')
-                                .getPublicUrl(path)
-                              console.log('[Thumbnail] Public URL:', urlData.publicUrl)
-                              setResourceEditForm(prev => ({...prev, thumbnail_url: urlData.publicUrl}))
+                              // Bypass the Supabase JS client's storage.upload() — it internally calls
+                              // getSession(), which can deadlock when Admin.tsx has several concurrent
+                              // Supabase calls in flight on mount (same class of bug already worked
+                              // around elsewhere in this app via getStoredJwt()). Upload via a direct
+                              // REST call instead, using the JWT straight from localStorage.
+                              const jwt = getStoredJwt()
+                              if (!jwt) throw new Error('Not authenticated — please log in again')
+                              const uploadRes = await fetch(
+                                `${SUPABASE_URL}/storage/v1/object/resource-thumbnails/${path}`,
+                                {
+                                  method: 'POST',
+                                  headers: {
+                                    'Authorization': `Bearer ${jwt}`,
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Content-Type': file.type,
+                                    'x-upsert': 'true',
+                                  },
+                                  body: file,
+                                }
+                              )
+                              console.log('[Thumbnail] Upload status:', uploadRes.status)
+                              if (!uploadRes.ok) {
+                                const body = await uploadRes.json().catch(() => ({}))
+                                throw new Error(body.message || body.error || `Upload failed (${uploadRes.status})`)
+                              }
+                              const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/resource-thumbnails/${path}`
+                              console.log('[Thumbnail] Public URL:', publicUrl)
+                              setResourceEditForm(prev => ({...prev, thumbnail_url: publicUrl}))
                             } catch (err: any) {
                               console.error('[Thumbnail] Upload error:', err)
                               setThumbnailError(err.message || err.error_description || JSON.stringify(err) || 'Upload failed')

@@ -33,10 +33,21 @@ Last updated: 2026-08-18
   - **Note for future:** If this breaks again (e.g. after rotating Supabase keys), always use the **legacy JWT `service_role` key**, not the newer `sb_secret_...` format, until the backend code (`server/index.js`) is updated to support the new key format.
   - **Not yet checked:** whether the same new-vs-legacy key mismatch also affects `VITE_SUPABASE_URL`/anon key usage on the frontend side (Netlify env vars) — frontend reads/writes appear to work fine so likely not an issue, but worth a quick sanity check if any other Supabase-related errors show up.
 
+- [x] **Admin page mobile responsiveness — FIXED** 2026-08-18. `Admin.tsx` (and several tab sub-components) had zero mobile handling — multi-column grids, non-wrapping flex rows, and un-scrollable tables all overflowed the screen on phones.
+  - Added one global mobile stylesheet in `Admin.tsx` (in the always-mounted top-level render, not per-tab) using reusable classes (`admin-create-row`, `admin-two-col-grid`, `admin-filter-grid`, `admin-item-card-row`, `admin-item-card-buttons`) plus CSS attribute selectors to catch repeated inline-style grid patterns across all 14 tabs at once, rather than hand-editing every instance.
+  - Key gotcha hit and fixed: forcing `grid-template-columns: 1fr` alone isn't enough — the track still reserves room for its content's natural width and can silently push the whole page wider than the screen. Fixed by using `minmax(0, 1fr)` instead, which lets the track actually shrink.
+  - Also fixed: unwrapped long URLs overflowing card edges (`AffiliateProductsTab.tsx` affiliate link — added `wordBreak`/`overflowWrap`), and applied the card-row fix to Products, Providers, and Challenges tabs.
+  - Covered: Resources, Tags, Categories, Products, Providers, Challenges, Criteria, Markers tabs. **Not yet visually verified:** Orgs, Leagues, Users, Brokers, Lab Data, Lab Sets — worth a pass if anyone reports issues there.
+
 ## 🔴 High priority — bugs (confirmed, still open)
 
-- [ ] **Provider link 404** — Damon added his own website as a provider link ("Balanced Health Institute" entry), tapped "Book/Connect →", got a Netlify "Page not found" 404. Have his screenshot as proof. Needs investigation into how provider URLs are saved/rendered (likely in Admin.tsx provider management + wherever the link is rendered, e.g. Dashboard "Virtual Providers" section). **Possibly related to the same key issue just fixed — retest first before assuming it's a separate bug.**
-- [ ] **Image upload broken** — Damon reports image uploads fail in Admin → Resources and Admin → Categories. **Also possibly related to the same key issue just fixed — retest first before assuming it's a separate bug.**
+- [x] **Provider link 404 — FIXED** 2026-08-18.
+  - **Symptom:** Damon added his own website as a provider link ("Balanced Health Institute" entry), tapped "Book/Connect →", got a Netlify "Page not found" 404 (URL resolved to `gleaming-praline-ba5b42.netlify.app/www.balancedhealthinstitute.com`). Also: his headshot image showed broken on the card.
+  - **Root cause (not the Supabase key issue — a separate real bug):** Damon typed `www.balancedhealthinstitute.com` into the Booking URL field with no `https://` prefix. Browsers treat a protocol-less string as a path *inside the current app*, not an external link, hence the 404 on our own domain. Same root issue on the Headshot URL field — but that field also had the wrong kind of value entered (his website homepage, not an actual image file), which `https://` alone can't fix — see "Needs clarification" below.
+  - **Fix applied:** Added an `ensureProtocol()` helper in both `src/components/AdminProvidersTab.tsx` and `src/components/AffiliateProductsTab.tsx` — auto-prepends `https://` to any URL field on save if the admin forgot to type it (Providers: `link_url`, `image_url`; Products: `affiliate_url`, `image_url`). Applies to all future saves automatically.
+  - **Note:** Existing bad data (Damon's current provider entry) is NOT auto-repaired retroactively — needs a manual re-save (open Edit → Save Changes, even with no changes) to pick up the fix.
+  - **Also found & fixed while testing this:** Virtual Providers not appearing on the Home dashboard at all was initially assumed to be a bug too — turned out to be correct behavior. Providers can be scoped to a specific org (`org_id`) or "Global (all members)"; Damon's entry was org-scoped, so it correctly didn't show for accounts not in that org. Not a bug — confirmed via Admin → Providers → the "Org-specific · [name]" vs "Global (all members)" label.
+- [ ] **Image upload broken** — Damon reports image uploads fail in Admin → Resources and Admin → Categories. **Not yet retested since the Supabase key fix — likely already resolved as a side effect, same as the provider bug's root data-loading issue was. Retest before investigating further.**
 
 ## 🟡 Medium priority — new features (spec provided)
 
@@ -52,6 +63,11 @@ Last updated: 2026-08-18
 ## 🟢 Larger scope — needs discussion before starting
 
 - [ ] **Visual redesign** — Damon wants a more "modern and colorful" look, referenced [fuzati.com](https://fuzati.com) as inspiration. Suggested either gold/maroon or red-white-blue color scheme (matches his newsletter mockups). This is a meaningful design project, not a quick tweak — needs scoping/estimate before starting.
+
+## 📣 To tell Damon (not a dev task — just needs a message to him)
+
+- [ ] His "Headshot URL" on the Balanced Health Institute provider entry has his **website homepage** pasted in, not an actual photo file link — that's why the image is broken on the card. Ask him for a real image URL (or he can use the image upload button in Admin → Providers instead of pasting a link).
+- [ ] Remind him to re-save that same provider entry once (Edit → Save Changes) after he fixes the image, so the URL auto-fix picks up the Booking URL too.
 
 ## ❓ Needs clarification from Damon
 
