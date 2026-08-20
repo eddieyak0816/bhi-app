@@ -116,7 +116,7 @@ function buildPrintHtml(props: Omit<Props, 'onClose' | 'theme'>): string {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>NHL Personal Health Report — ${today}</title>
+  <title>National Health League Personal Health Report — ${today}</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; color: #111; font-size: 13px; line-height: 1.5; }

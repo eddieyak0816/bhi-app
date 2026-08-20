@@ -3169,6 +3169,79 @@ app.delete('/api/admin/providers/:id', async (req, res) => {
   }
 });
 
+// ── Nav Links (top nav dropdown, e.g. "25% Off Supplements") ──────────────────
+// Independent from affiliate_products — deleting a product should not remove it
+// from the nav, and vice versa. Public reads (active only) go straight through
+// Supabase RLS from the frontend; these endpoints are for Admin CRUD only.
+
+// GET /api/admin/nav-links — list all (including inactive) for the Admin tab
+app.get('/api/admin/nav-links', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { data, error } = await sb.from('nav_links').select('*').order('sort_order', { ascending: true });
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ links: data || [] });
+  } catch (err) {
+    console.error('GET /api/admin/nav-links error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/admin/nav-links — create
+app.post('/api/admin/nav-links', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { label, url, sort_order, group_label } = req.body || {};
+  if (!label || !url) return res.status(400).json({ error: 'label and url required' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const adminId = req.header('x-user-id') || null;
+    const { data, error } = await sb
+      .from('nav_links')
+      .insert({ label, url, sort_order: sort_order ?? 0, group_label: group_label || '25% Off Supplements', created_by: adminId })
+      .select().single();
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(201).json({ link: data });
+  } catch (err) {
+    console.error('POST /api/admin/nav-links error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// PATCH /api/admin/nav-links/:id — update (label, url, sort_order, is_active)
+app.patch('/api/admin/nav-links/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  const fields = ['label', 'url', 'sort_order', 'is_active', 'group_label'];
+  const updates = {};
+  for (const f of fields) { if (req.body[f] !== undefined) updates[f] = req.body[f]; }
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'no fields to update' });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('nav_links').update(updates).eq('id', id);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('PATCH /api/admin/nav-links/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// DELETE /api/admin/nav-links/:id
+app.delete('/api/admin/nav-links/:id', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { id } = req.params;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+    const { error } = await sb.from('nav_links').delete().eq('id', id);
+    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/admin/nav-links/:id error:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 const PORT = process.env.PORT || 4242;
 // ── F71: My Team ──────────────────────────────────────────────────────────────
 

@@ -141,6 +141,15 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
     setForm(f => ({ ...f, tags: f.tags.filter(t => t !== tag) }))
   }
 
+  // If a URL is missing "http://" or "https://", the browser treats it as a path inside
+  // this app instead of an outside link (e.g. clicking it 404s on our own domain).
+  // Auto-add https:// so admins don't have to remember to type it themselves.
+  function ensureProtocol(url: string): string {
+    const trimmed = url.trim()
+    if (!trimmed) return trimmed
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  }
+
   async function save() {
     if (!form.name.trim()) { setError('Name is required.'); return }
     if (!form.affiliate_url.trim()) { setError('Affiliate URL is required.'); return }
@@ -150,8 +159,8 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
-        image_url: form.image_url.trim() || null,
-        affiliate_url: form.affiliate_url.trim(),
+        image_url: form.image_url.trim() ? ensureProtocol(form.image_url) : null,
+        affiliate_url: ensureProtocol(form.affiliate_url),
         is_active: form.is_active,
         tags: form.tags,
       }
@@ -365,7 +374,7 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {products.map(p => (
-            <div key={p.id} style={{ background: theme.card, border: `1.5px solid ${theme.borderColor}`, borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+            <div key={p.id} className="admin-item-card-row" style={{ background: theme.card, border: `1.5px solid ${theme.borderColor}`, borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
               {p.image_url && (
                 <img src={p.image_url} alt={p.name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
               )}
@@ -389,9 +398,9 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
                     : <span style={{ fontSize: 11, color: theme.textMuted }}>No tags — shows to all users</span>
                   }
                 </div>
-                <a href={p.affiliate_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: theme.blue ?? '#3B82F6' }}>{p.affiliate_url}</a>
+                <a href={p.affiliate_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: theme.blue ?? '#3B82F6', display: 'block', wordBreak: 'break-all', overflowWrap: 'anywhere', maxWidth: '100%' }}>{p.affiliate_url}</a>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+              <div className="admin-item-card-buttons" style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
                 <button style={btn('#3B82F6')} onClick={() => openEdit(p)}>Edit</button>
                 <button style={btn(p.is_active ? '#6b7280' : '#10B981')} onClick={() => toggleActive(p)}>
                   {p.is_active ? 'Deactivate' : 'Activate'}

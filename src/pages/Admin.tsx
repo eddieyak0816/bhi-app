@@ -1,10 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { supabase, directFetch } from '../lib/supabase'
+import { supabase, directFetch, getStoredJwt } from '../lib/supabase'
+
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string || ''
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string || ''
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import AffiliateProductsTab from '../components/AffiliateProductsTab'
 import AdminBrokersTab from '../components/AdminBrokersTab'
 import AdminProvidersTab from '../components/AdminProvidersTab'
+import AdminNavLinksTab from '../components/AdminNavLinksTab'
 import AdminLeaguesTab from '../components/AdminLeaguesTab'
 import AdminUsersTab from '../components/AdminUsersTab'
 import AdminLabResultsTab from '../components/AdminLabResultsTab'
@@ -36,7 +40,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
 
-  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','leagues','users','challenges','lab-results','lab-sets'] as const
+  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','nav-links','leagues','users','challenges','lab-results','lab-sets'] as const
   type AdminTab = typeof VALID_TABS[number]
   const [activeTab, setActiveTab] = useState<AdminTab>(VALID_TABS.includes(initialTab as AdminTab) ? (initialTab as AdminTab) : 'resources')
   // Use global theme context
@@ -1296,6 +1300,40 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
 
   return (
     <div className="card" style={{background:theme.bg,color:theme.text}}>
+      {/* Global mobile-responsive safety net for the whole Admin page.
+          Admin.tsx has many fixed multi-column grids and un-scrollable tables written
+          as inline styles across every tab. Rather than editing each one individually,
+          this catches them all at once via attribute selectors matching their rendered
+          inline CSS, and forces single-column / scrollable behavior below 700px. */}
+      <style>{`
+        @media (max-width: 700px) {
+          table { display: block; overflow-x: auto; white-space: nowrap; max-width: 100%; }
+          /* minmax(0,1fr) not 1fr — a bare 1fr track still reserves room for its content's natural
+             (un-shrunk) width, which silently pushes the whole page wider than the screen. minmax(0,1fr)
+             tells the track it's allowed to shrink to 0, so long/unbreakable content wraps or scrolls
+             inside the card instead of stretching the page. */
+          div[style*="1.5fr 1fr 1fr 1fr 1fr auto"],
+          div[style*="1.5fr 1fr 1fr 1fr auto"],
+          div[style*="1fr 1fr 1fr auto"],
+          div[style*="1fr 1fr auto"],
+          div[style*="1fr 1fr 1fr 28px"],
+          div[style*="2fr 1fr 1fr auto"],
+          div[style*="repeat(4, 1fr)"],
+          div[style*="grid-template-columns:1fr auto"],
+          div[style*="grid-template-columns: 1fr auto"] {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+          /* Reusable: any row of fields meant to sit side-by-side (dropdown + input + button, etc.) */
+          .admin-create-row { flex-wrap: wrap !important; }
+          .admin-create-row > * { min-width: 0 !important; width: 100% !important; }
+          .admin-two-col-grid, .admin-filter-grid { grid-template-columns: minmax(0, 1fr) !important; }
+          /* Reusable: "item card" rows (Products, Providers, Brokers…) — image + text + action buttons.
+             On mobile: stack image+text above the buttons, and lay buttons out horizontally instead of a tall column. */
+          .admin-item-card-row { flex-wrap: wrap !important; }
+          .admin-item-card-buttons { flex-direction: row !important; width: 100% !important; flex-wrap: wrap !important; }
+          .admin-item-card-buttons > * { flex: 1 1 auto !important; }
+        }
+      `}</style>
       <h3 style={{color:theme.text}}>Admin — Content manager (dev)</h3>
 
 
@@ -1316,6 +1354,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           { id: 'products',      icon: '🛍️', label: 'Products' },
           { id: 'brokers',       icon: '🤝', label: 'Brokers' },
           { id: 'providers',     icon: '👨‍⚕️', label: 'Providers' },
+          { id: 'nav-links',     icon: '🔗', label: 'Nav Links' },
           { id: 'leagues',       icon: '🏆', label: 'Leagues' },
           { id: 'users',         icon: '👤', label: 'Users' },
           { id: 'challenges',    icon: '⚡', label: 'Challenges' },
@@ -1432,18 +1471,21 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       {/* Resources Tab */}
       {activeTab === 'resources' && (
         <div>
-          <style>{`input[list] { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: none !important; } input[list]::-webkit-calendar-picker-indicator { display: none !important; }`}</style>
+          <style>{`
+            input[list] { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: none !important; }
+            input[list]::-webkit-calendar-picker-indicator { display: none !important; }
+          `}</style>
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Create New Resource - Always Visible */}
               <div style={{marginBottom:40,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
                   <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Create New Resource</h3>
-                  <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                  <div className="admin-create-row" style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
                     <select value={type} onChange={e => { console.info('type select changed:', e.target.value); setType(e.target.value) }} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
                       {(resourceTypes || []).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(rt => <option key={rt} value={rt}>{rt}</option>)}
                     </select>
-                    <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{flex:1,minWidth:200,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
-                    <div style={{display:'flex',gap:6,minWidth:300}}>
+                    <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{flex:1,minWidth:160,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
+                    <div style={{display:'flex',gap:6,flex:1,minWidth:220}}>
                       <select value={linkProtocol} onChange={e => setLinkProtocol(e.target.value)} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
                         <option value="https://">https://</option>
                         <option value="http://">http://</option>
@@ -1452,7 +1494,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     </div>
                     <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
                   </div>
-                  <div style={{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                  <div className="admin-two-col-grid" style={{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
                     <div>
                       <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Categories:</label>
                       <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
@@ -1499,7 +1541,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
                   <h3 style={{margin:0,fontSize:16,fontWeight:600,color:theme.text}}>Filter Resources</h3>
                 </div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,alignItems:'start'}}>
+                <div className="admin-filter-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,alignItems:'start'}}>
                   <div>
                     <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Keyword Search</label>
                     <div style={{position:'relative',display:'flex',alignItems:'center'}}>
@@ -1679,7 +1721,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                 if (r.id) {
                                   const capitalizedType = resourceTypes.find(t => t.toLowerCase() === r.type.toLowerCase()) || r.type
                                   setResourceModalData(r)
-                                  setResourceEditForm({title: r.title, type: capitalizedType, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                  setResourceEditForm({title: r.title, type: capitalizedType, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || ''), thumbnail_url: r.thumbnail_url || '', duration_type: r.duration_type || 'both'})
                                   setIsEditingResource(true)
                                   setResourceModalOpen(true)
                                 }
@@ -1883,7 +1925,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               if (r.id) {
                                 setResourceModalData(r)
                                 const capitalizedType = r.type ? resourceTypes.find(t => t.toLowerCase() === r.type.toLowerCase()) || r.type : ''
-                                setResourceEditForm({title: r.title, type: capitalizedType, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')})
+                                setResourceEditForm({title: r.title, type: capitalizedType, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || ''), thumbnail_url: r.thumbnail_url || '', duration_type: r.duration_type || 'both'})
                                 setIsEditingResource(true)
                                 setResourceModalOpen(true)
                               }
@@ -2025,16 +2067,34 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               const ext = file.name.split('.').pop() || 'jpg'
                               const path = `${resourceModalData.id}.${ext}`
                               console.log('[Thumbnail] Uploading to path:', path, 'size:', file.size, 'type:', file.type)
-                              const { data: upData, error: upErr } = await supabase.storage
-                                .from('resource-thumbnails')
-                                .upload(path, file, { upsert: true, contentType: file.type })
-                              console.log('[Thumbnail] Upload result:', { upData, upErr })
-                              if (upErr) throw upErr
-                              const { data: urlData } = supabase.storage
-                                .from('resource-thumbnails')
-                                .getPublicUrl(path)
-                              console.log('[Thumbnail] Public URL:', urlData.publicUrl)
-                              setResourceEditForm(prev => ({...prev, thumbnail_url: urlData.publicUrl}))
+                              // Bypass the Supabase JS client's storage.upload() — it internally calls
+                              // getSession(), which can deadlock when Admin.tsx has several concurrent
+                              // Supabase calls in flight on mount (same class of bug already worked
+                              // around elsewhere in this app via getStoredJwt()). Upload via a direct
+                              // REST call instead, using the JWT straight from localStorage.
+                              const jwt = getStoredJwt()
+                              if (!jwt) throw new Error('Not authenticated — please log in again')
+                              const uploadRes = await fetch(
+                                `${SUPABASE_URL}/storage/v1/object/resource-thumbnails/${path}`,
+                                {
+                                  method: 'POST',
+                                  headers: {
+                                    'Authorization': `Bearer ${jwt}`,
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Content-Type': file.type,
+                                    'x-upsert': 'true',
+                                  },
+                                  body: file,
+                                }
+                              )
+                              console.log('[Thumbnail] Upload status:', uploadRes.status)
+                              if (!uploadRes.ok) {
+                                const body = await uploadRes.json().catch(() => ({}))
+                                throw new Error(body.message || body.error || `Upload failed (${uploadRes.status})`)
+                              }
+                              const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/resource-thumbnails/${path}`
+                              console.log('[Thumbnail] Public URL:', publicUrl)
+                              setResourceEditForm(prev => ({...prev, thumbnail_url: publicUrl}))
                             } catch (err: any) {
                               console.error('[Thumbnail] Upload error:', err)
                               setThumbnailError(err.message || err.error_description || JSON.stringify(err) || 'Upload failed')
@@ -3491,7 +3551,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               {/* Tag creation form */}
               <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
                 <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Tag</h3>
-                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+                <div className="admin-create-row" style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
                   <input
                     placeholder="Tag name"
                     value={tagInput}
@@ -3505,7 +3565,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         }
                       }
                     }}
-                    style={{flex:3,minWidth:360,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                    style={{flex:3,minWidth:160,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
                   />
                   <select value={tagCreateCategory} onChange={e => setTagCreateCategory(e.target.value)} style={{width:180,flexShrink:0,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text,fontSize:14}}>
                     <option value="">(no category)</option>
@@ -4852,6 +4912,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       {/* ── Providers Tab ────────────────────────────────────────────────── */}
       {activeTab === 'providers' && (
         <AdminProvidersTab theme={theme} />
+      )}
+
+      {/* ── Nav Links Tab ────────────────────────────────────────────────── */}
+      {activeTab === 'nav-links' && (
+        <AdminNavLinksTab theme={theme} />
       )}
 
       {/* ── Leagues Tab ──────────────────────────────────────────────────── */}

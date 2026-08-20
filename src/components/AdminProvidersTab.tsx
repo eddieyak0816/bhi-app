@@ -72,11 +72,25 @@ export default function AdminProvidersTab({ theme }: Props) {
     setShowForm(true)
   }
 
+  // If a URL is missing "http://" or "https://", the browser treats it as a path inside
+  // this app instead of an outside link (e.g. clicking it 404s on our own domain).
+  // Auto-add https:// so admins don't have to remember to type it themselves.
+  function ensureProtocol(url: string): string {
+    const trimmed = url.trim()
+    if (!trimmed) return trimmed
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  }
+
   async function handleSave() {
     if (!form.name.trim() || !form.brief_bio.trim()) { setError('Name and brief bio are required.'); return }
     setSaving(true); setError(null)
     const h = authHeaders()
-    const body = { ...form, org_id: form.org_id || null }
+    const body = {
+      ...form,
+      org_id: form.org_id || null,
+      link_url: form.link_url ? ensureProtocol(form.link_url) : form.link_url,
+      image_url: form.image_url ? ensureProtocol(form.image_url) : form.image_url,
+    }
     try {
       if (editing) {
         const res = await fetch(apiUrl(`/api/admin/providers/${editing.id}`), { method: 'PATCH', headers: h, body: JSON.stringify(body) })
@@ -217,7 +231,7 @@ export default function AdminProvidersTab({ theme }: Props) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {filtered.map(p => (
-            <div key={p.id} style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'flex-start', opacity: p.is_active ? 1 : 0.55 }}>
+            <div key={p.id} className="admin-item-card-row" style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'flex-start', opacity: p.is_active ? 1 : 0.55 }}>
               {p.image_url ? (
                 <img src={p.image_url} alt={p.name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
               ) : (
@@ -232,7 +246,7 @@ export default function AdminProvidersTab({ theme }: Props) {
                   {!p.is_active && <span style={{ marginLeft: 8, color: '#b91c1c', fontWeight: 600 }}>Inactive</span>}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <div className="admin-item-card-buttons" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button onClick={() => openEdit(p)} style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '5px 10px', fontSize: 12, cursor: 'pointer', color: theme.text }}>Edit</button>
                 <button onClick={() => toggleActive(p)} style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '5px 10px', fontSize: 12, cursor: 'pointer', color: theme.textMuted }}>{p.is_active ? 'Deactivate' : 'Activate'}</button>
                 <button onClick={() => handleDelete(p.id)} style={{ background: 'transparent', border: '1px solid #fca5a5', borderRadius: 6, padding: '5px 10px', fontSize: 12, cursor: 'pointer', color: '#b91c1c' }}>Delete</button>

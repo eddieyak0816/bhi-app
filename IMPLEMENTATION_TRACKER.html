@@ -1339,6 +1339,22 @@
       <span class="item-status status-done">✅ Done — 2026-07-04</span>
     </div>
 
+    <div class="item done" data-status="done">
+      <div class="item-num">S28-1</div>
+      <div class="item-body">
+        <div class="item-title">F92: Nav Links Self-Service (multi-menu)</div>
+        <div class="item-note">
+          Requested by Damon (Aug 2026): "provide instructions for adding additional affiliate links to the top navigation/home page." Built as a proper self-service feature instead of a one-off code edit — then extended same-session after Usman asked for true WordPress-style menu management (multiple independent dropdowns, not just more links in one fixed dropdown).<br><br>
+          <strong>Migrations:</strong> <code>db/migrations/20260819_create_nav_links.sql</code> — new <code>nav_links</code> table (label, url, sort_order, is_active). Deliberately independent from <code>affiliate_products</code> so deleting a product doesn't remove it from the nav, and vice versa. Then <code>20260819b_add_nav_links_group.sql</code> — adds <code>group_label</code> so one table can drive multiple separate dropdown menus.<br><br>
+          <strong>Multi-menu behavior:</strong> each link belongs to a named group (the dropdown's button text). The header renders one dropdown per distinct group that has ≥1 active link — typing a brand-new group name on a link creates a whole new dropdown automatically, no separate "create menu" step. A group with zero active links simply doesn't render (no empty/broken-looking dropdown buttons).<br><br>
+          <strong>Server:</strong> 4 endpoints — <code>GET/POST/PATCH/DELETE /api/admin/nav-links</code>, same admin-key-protected pattern as Providers. POST/PATCH accept <code>group_label</code>.<br><br>
+          <strong>Admin UI:</strong> "Nav Links" tab (🔗) — <code>src/components/AdminNavLinksTab.tsx</code>. Links list is grouped by menu name with a "Menu Name" field (datalist-suggested from existing groups) on the add/edit form. Add/edit/delete, activate/deactivate, up/down reorder (scoped within each group).<br><br>
+          <strong>Frontend:</strong> <code>Layout.tsx</code> now fetches all active links + their group, groups them client-side, and renders one dropdown button per group (both desktop nav and mobile menu) — direct REST fetch, not the Supabase client, to avoid the same <code>getSession()</code> deadlock class of bug fixed elsewhere this session. Damon can now add/remove/reorder links, and create entirely new nav dropdown menus, with zero code changes or deploys.
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Done — 2026-08-19</span>
+    </div>
+
   </section>
 
 </body>

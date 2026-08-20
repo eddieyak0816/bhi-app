@@ -80,7 +80,7 @@ export default function AffiliateProductCards({ applicableTags, theme }: Props) 
     <div style={{ marginBottom: 32 }}>
       <h3 style={{ marginBottom: 4, fontSize: 20, fontWeight: 600, color: theme.text }}>Recommended Products</h3>
       <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
-        Products matched to your health profile. These are affiliate links — NHL may earn a commission.
+        Products matched to your health profile. These are affiliate links — National Health League may earn a commission.
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
         {products.map(p => (

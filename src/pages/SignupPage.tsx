@@ -176,7 +176,7 @@ export default function SignupPage() {
             Create Account
           </h1>
           <p style={{ color: theme.textMuted, margin: '8px 0 0 0', fontSize: '14px' }}>
-            Join NHL to get started
+            Join National Health League to get started
           </p>
         </div>
 

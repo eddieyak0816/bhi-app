@@ -1,11 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+import { getStoredJwt } from '../lib/supabase'
 
-const SUPPLEMENT_LINKS = [
-  { label: 'Fullscript', url: 'https://us.fullscript.com/welcome/ddilorenzo1773884970' },
-  { label: 'Biote', url: 'https://patients.shopbiote.com/customer/account/create/?cid=7886&utm_campaign=0001PL&utm_source=Practitioner%20Link&utm_medium=referral' },
-]
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string || ''
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string || ''
+
+interface NavLinkItem {
+  label: string
+  url: string
+}
+
+interface NavLinkGroup {
+  name: string
+  links: NavLinkItem[]
+}
 
 interface LayoutProps {
   children: React.ReactNode
@@ -14,21 +23,74 @@ interface LayoutProps {
   onLogout?: () => void
 }
 
+const MOBILE_BREAKPOINT = 860
+
 export function Layout({ children, currentPage = 'home', onNavigate, onLogout }: LayoutProps) {
   const { darkMode, setDarkMode, theme } = useTheme()
   const { user, logout, isAdmin } = useAuth()
-  const [suppOpen, setSuppOpen] = useState(false)
-  const suppRef = useRef<HTMLDivElement>(null)
+  // Which nav dropdown (by group name) is currently open — only one at a time, desktop and mobile share this.
+  const [openGroupName, setOpenGroupName] = useState<string | null>(null)
+  const groupsRef = useRef<HTMLDivElement>(null)
+  const [navGroups, setNavGroups] = useState<NavLinkGroup[]>([])
+
+  // Pull nav dropdown menus + links from the admin-managed nav_links table (Admin → Nav Links),
+  // instead of a hardcoded list — so adding/removing a link, or even a whole new dropdown menu,
+  // no longer needs a code change. Grouped client-side by group_label: each distinct group_label
+  // becomes its own dropdown button, and a group only shows once it has ≥1 active link.
+  // Direct REST fetch (not the Supabase client) since Layout renders on every page and we
+  // don't want to risk the getSession() deadlock we already hit elsewhere in Admin.
+  useEffect(() => {
+    if (!SUPABASE_URL) return
+    const jwt = getStoredJwt()
+    fetch(`${SUPABASE_URL}/rest/v1/nav_links?select=label,url,group_label&is_active=eq.true&order=sort_order.asc`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${jwt || SUPABASE_ANON_KEY}`,
+      },
+    })
+      .then(res => res.ok ? res.json() : [])
+      .then(rows => {
+        const groups: NavLinkGroup[] = []
+        for (const r of (rows || [])) {
+          let g = groups.find(g => g.name === r.group_label)
+          if (!g) { g = { name: r.group_label, links: [] }; groups.push(g) }
+          g.links.push({ label: r.label, url: r.url })
+        }
+        setNavGroups(groups)
+      })
+      .catch(() => setNavGroups([]))
+  }, [])
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= MOBILE_BREAKPOINT)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
+  const mobileMenuToggleRef = useRef<HTMLButtonElement>(null)
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (suppRef.current && !suppRef.current.contains(e.target as Node)) {
-        setSuppOpen(false)
+      if (groupsRef.current && !groupsRef.current.contains(e.target as Node)) {
+        setOpenGroupName(null)
+      }
+      if (
+        mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node) &&
+        mobileMenuToggleRef.current && !mobileMenuToggleRef.current.contains(e.target as Node)
+      ) {
+        setMobileMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Track viewport width to switch between desktop nav and mobile hamburger menu
+  useEffect(() => {
+    function handleResize() {
+      const nowMobile = window.innerWidth <= MOBILE_BREAKPOINT
+      setIsMobile(nowMobile)
+      if (!nowMobile) setMobileMenuOpen(false)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   const navItems = [
@@ -53,7 +115,7 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
         style={{
           background: theme.bgSecondary,
           borderBottom: `1.5px solid ${theme.borderColor}`,
-          padding: '16px 24px',
+          padding: isMobile ? '12px 16px' : '16px 24px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -62,8 +124,44 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
           zIndex: 100,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: theme.text }}>NHL</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 32 }}>
+          {isMobile ? (
+            <button
+              ref={mobileMenuToggleRef}
+              onClick={() => setMobileMenuOpen(o => !o)}
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
+              style={{
+                background: 'none',
+                border: `1.5px solid ${theme.borderColor}`,
+                borderRadius: 6,
+                width: 36,
+                height: 36,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: 18,
+                color: theme.text,
+                flexShrink: 0,
+              }}
+            >
+              {mobileMenuOpen ? '✕' : '☰'}
+            </button>
+          ) : null}
+          <h1
+            style={{
+              margin: 0,
+              fontSize: isMobile ? 14 : 15,
+              fontWeight: 700,
+              color: theme.text,
+              lineHeight: 1.2,
+              whiteSpace: isMobile ? 'nowrap' : 'normal',
+            }}
+          >
+            {isMobile ? 'National Health League' : (<>National<br />Health League</>)}
+          </h1>
+          {!isMobile && (
           <nav style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
             {navItems.map(item => (
               <button
@@ -101,71 +199,78 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
               My Directives
             </a>
 
-            {/* Supplements dropdown */}
-            <div ref={suppRef} style={{ position: 'relative' }}>
-              <button
-                onClick={() => setSuppOpen(o => !o)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: theme.text,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                25% Off Supplements {suppOpen ? '▲' : '▼'}
-              </button>
-              {suppOpen && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    marginTop: 8,
-                    background: theme.bgSecondary,
-                    border: `1.5px solid ${theme.borderColor}`,
-                    borderRadius: 8,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    zIndex: 200,
-                    minWidth: 160,
-                    overflow: 'hidden',
-                  }}
-                >
-                  {SUPPLEMENT_LINKS.map(link => (
-                    <a
-                      key={link.label}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setSuppOpen(false)}
+            {/* Admin-managed nav dropdowns — one button per group from Admin → Nav Links */}
+            <div ref={groupsRef} style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+              {navGroups.map(group => (
+                <div key={group.name} style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setOpenGroupName(n => n === group.name ? null : group.name)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: theme.text,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {group.name} {openGroupName === group.name ? '▲' : '▼'}
+                  </button>
+                  {openGroupName === group.name && (
+                    <div
                       style={{
-                        display: 'block',
-                        padding: '10px 16px',
-                        fontSize: 14,
-                        color: theme.text,
-                        textDecoration: 'none',
-                        fontWeight: 500,
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        marginTop: 8,
+                        background: theme.bgSecondary,
+                        border: `1.5px solid ${theme.borderColor}`,
+                        borderRadius: 8,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        zIndex: 200,
+                        minWidth: 160,
+                        overflow: 'hidden',
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.background = theme.bg)}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
-                      {link.label}
-                    </a>
-                  ))}
+                      {group.links.map(link => (
+                        <a
+                          key={link.label}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setOpenGroupName(null)}
+                          style={{
+                            display: 'block',
+                            padding: '10px 16px',
+                            fontSize: 14,
+                            color: theme.text,
+                            textDecoration: 'none',
+                            fontWeight: 500,
+                            whiteSpace: 'nowrap',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = theme.bg)}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          {link.label}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
           </nav>
+          )}
         </div>
 
         {/* Right side controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {user && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12 }}>
+          {user && !isMobile && (
             <div style={{ fontSize: 12, color: theme.textMuted, marginRight: 8 }}>
               {user.name}
             </div>
@@ -203,6 +308,113 @@ export function Layout({ children, currentPage = 'home', onNavigate, onLogout }:
           </button>
         </div>
       </header>
+
+      {/* Mobile menu panel */}
+      {isMobile && mobileMenuOpen && (
+        <div
+          ref={mobileMenuRef}
+          style={{
+            background: theme.bgSecondary,
+            borderBottom: `1.5px solid ${theme.borderColor}`,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            position: 'sticky',
+            top: 61,
+            zIndex: 99,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '8px 16px 16px',
+          }}
+        >
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              onClick={() => { onNavigate?.(item.id); setMobileMenuOpen(false) }}
+              style={{
+                background: 'none',
+                border: 'none',
+                borderBottom: `1px solid ${theme.borderColor}`,
+                textAlign: 'left',
+                color: (currentPage === item.id || (item.id === 'leagues' && currentPage.startsWith('league'))) ? theme.blue : theme.text,
+                fontSize: 15,
+                fontWeight: (currentPage === item.id || (item.id === 'leagues' && currentPage.startsWith('league'))) ? 600 : 500,
+                cursor: 'pointer',
+                padding: '12px 4px',
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+
+          <a
+            href="https://www.mydirectives.com"
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              color: theme.text,
+              fontSize: 15,
+              fontWeight: 500,
+              textDecoration: 'none',
+              borderBottom: `1px solid ${theme.borderColor}`,
+              padding: '12px 4px',
+            }}
+          >
+            My Directives
+          </a>
+
+          {navGroups.map(group => (
+            <div key={group.name}>
+              <button
+                onClick={() => setOpenGroupName(n => n === group.name ? null : group.name)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  textAlign: 'left',
+                  color: theme.text,
+                  fontSize: 15,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  padding: '12px 4px',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                {group.name} {openGroupName === group.name ? '▲' : '▼'}
+              </button>
+              {openGroupName === group.name && (
+                <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: 12 }}>
+                  {group.links.map(link => (
+                    <a
+                      key={link.label}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => { setOpenGroupName(null); setMobileMenuOpen(false) }}
+                      style={{
+                        padding: '10px 4px',
+                        fontSize: 14,
+                        color: theme.text,
+                        textDecoration: 'none',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {user && (
+            <div style={{ fontSize: 13, color: theme.textMuted, padding: '12px 4px 0' }}>
+              {user.name}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Main content */}
       <main style={{ padding: 24 }}>{children}</main>

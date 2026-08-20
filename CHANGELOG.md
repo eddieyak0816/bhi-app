@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-08-19 — feat: F92 Nav Links self-service (session 28)
+
+### New feature — Admin-managed nav dropdown links (multi-menu)
+- Requested by Damon: a way to add affiliate/partner links to the top nav dropdown ("25% Off Supplements") without needing a developer each time. Extended further same-session so multiple independent dropdown menus can be created too (not just more links in one fixed dropdown) — true WordPress-style self-service.
+- New `nav_links` table (`db/migrations/20260819_create_nav_links.sql`), kept deliberately independent from `affiliate_products` — deleting a product no longer removes it from the nav, and vice versa. Follow-up migration `20260819b_add_nav_links_group.sql` adds `group_label` so one table drives multiple separate dropdowns.
+- A dropdown only appears in the header once it has ≥1 active link — typing a brand-new group name on a link creates a whole new dropdown automatically, no separate setup step.
+- New Admin tab "Nav Links" (`src/components/AdminNavLinksTab.tsx`) — grouped list view, add/edit/delete, activate/deactivate, up/down reorder within each group.
+- New server endpoints: `GET/POST/PATCH/DELETE /api/admin/nav-links` (now accepting `group_label`).
+- `Layout.tsx` now groups fetched links client-side and renders one dropdown per group, on both desktop and mobile — reads live from `nav_links` via direct REST fetch (not the Supabase client, to avoid the `getSession()` deadlock class of bug fixed elsewhere this session) instead of a hardcoded array.
+
+### Bugs fixed this session
+- **Admin panel completely broken** — `SUPABASE_SERVICE_ROLE` env var on Render was set to Supabase's new-format `sb_secret_...` key; backend code needs the legacy JWT `service_role` key format. Swapped to fix.
+- **Admin panel mobile layout** — added a global responsive stylesheet in `Admin.tsx` covering grids, tables, and card rows across all tabs. Key fix: `grid-template-columns: minmax(0, 1fr)` not bare `1fr`, since a bare `1fr` track still reserves room for unshrunk content and can push the whole page wider than the screen.
+- **Provider "Book/Connect" 404** — booking URLs saved without `https://` were resolving as relative paths inside the app. Added `ensureProtocol()` auto-fix on save in `AdminProvidersTab.tsx` and `AffiliateProductsTab.tsx`.
+- **Resource thumbnail upload hung forever** — used the Supabase JS client's `storage.upload()`, which can deadlock via internal `getSession()` calls when Admin.tsx has many concurrent Supabase calls in flight. Rewritten to upload via direct `fetch()` to the Storage REST API using a JWT read straight from localStorage.
+- **Resource thumbnail silently lost / data-loss risk** — 2 of the 3 places that open the resource Edit form forgot to carry `thumbnail_url` (and `duration_type`) into the edit state, so reopening Edit always showed no thumbnail, and clicking Save from those two paths would have overwritten a saved thumbnail with `null`. Fixed both to match the one working path.
+- **NHL branding / trademark** — replaced standalone "NHL" with "National Health League" across login, signup, header, and reports (Damon flagged a trademark conflict with the National Hockey League). "NHLS" (the score name) and the `NHL-XXXX-XXXX` public ID format intentionally left unchanged pending scope confirmation from Damon.
+- **Mobile header overflow** — added a responsive hamburger menu to `Layout.tsx` (breakpoint 860px).
+
 ## 2026-07-04 — fix: F90 Lab Sets stability, loading hang, score/range bugs (session 27)
 
 ### Server — Lab Sets endpoints

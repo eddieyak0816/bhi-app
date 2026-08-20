@@ -278,7 +278,7 @@ export function calculateBhasV2Score(
 
   // 8. Advanced Care Planning (binary)
   metricScores.push({
-    metric: 'Advanced Care Plan',
+    metric: 'Advance Care Plan',
     derived: hasAdvancedCarePlan ? 'Documented' : 'Not documented',
     score: hasAdvancedCarePlan ? 1 : 0,
     label: hasAdvancedCarePlan ? 'Optimal' : 'Out of Range',

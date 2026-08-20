@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { getStoredJwt } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string || ''
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string || ''
 
 interface Assessment {
   sleep_ok: boolean | null
@@ -79,17 +82,25 @@ export default function HealthAssessmentModal({ onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [existingId, setExistingId] = useState<string | null>(null)
 
-  // Load most recent assessment on mount
+  // Load most recent assessment on mount.
+  // Uses a direct REST fetch instead of the Supabase JS client — the client's own session
+  // check (getSession()) can stall after navigating through several pages in one session
+  // (same class of bug already fixed elsewhere: Admin thumbnail upload, LabsPage marker
+  // loading), which is why this modal was still hanging on "Loading…" sometimes even after
+  // fixing the earlier zero-rows crash. A plain fetch with the JWT read straight from
+  // localStorage can't get stuck that way. A REST query like this also just returns an
+  // array (0 or more items) — no special "zero rows" handling needed at all.
   useEffect(() => {
     if (!user?.id) return
-    supabase
-      .from('health_assessments')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('completed_at', { ascending: false })
-      .limit(1)
-      .single()
-      .then(({ data }) => {
+    const jwt = getStoredJwt()
+    if (!jwt) { setLoading(false); return }
+    fetch(
+      `${SUPABASE_URL}/rest/v1/health_assessments?select=*&user_id=eq.${encodeURIComponent(user.id)}&order=completed_at.desc&limit=1`,
+      { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${jwt}` } }
+    )
+      .then(res => res.ok ? res.json() : Promise.reject(res.status))
+      .then((rows: any[]) => {
+        const data = rows?.[0]
         if (data) {
           setExistingId(data.id)
           setAssessment({
@@ -106,6 +117,13 @@ export default function HealthAssessmentModal({ onClose }: Props) {
         }
         setLoading(false)
       })
+      .catch(err => {
+        // Belt-and-suspenders: even if something throws instead of resolving, never leave
+        // the modal stuck on "Loading…" forever.
+        console.error('[HealthAssessment] Unexpected load error:', err)
+        setError('Could not load your previous check-in — starting fresh.')
+        setLoading(false)
+      })
   }, [user?.id])
 
   function setLifestyle(key: keyof Assessment, val: boolean) {
@@ -116,22 +134,40 @@ export default function HealthAssessmentModal({ onClose }: Props) {
     setAssessment(a => ({ ...a, [key]: !a[key] }))
   }
 
+  // Save via direct REST fetch — same reasoning as the load above: avoids the Supabase JS
+  // client's internal session check, which is what was making this feel slow (and could
+  // stall entirely) after navigating through a few pages first.
   async function handleSave() {
     if (!user?.id) return
     setSaving(true); setError(null)
+    const jwt = getStoredJwt()
+    if (!jwt) { setSaving(false); setError('Not authenticated — please log in again.'); return }
     const payload = { ...assessment, user_id: user.id, completed_at: new Date().toISOString() }
-    let err
-    if (existingId) {
-      ;({ error: err } = await supabase.from('health_assessments').update(payload).eq('id', existingId))
-    } else {
-      const { data, error: insertErr } = await supabase.from('health_assessments').insert(payload).select('id').single()
-      err = insertErr
-      if (data?.id) setExistingId(data.id)
+    try {
+      const res = existingId
+        ? await fetch(`${SUPABASE_URL}/rest/v1/health_assessments?id=eq.${existingId}`, {
+            method: 'PATCH',
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+        : await fetch(`${SUPABASE_URL}/rest/v1/health_assessments`, {
+            method: 'POST',
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+            body: JSON.stringify(payload),
+          })
+      if (!res.ok) throw new Error(`Save failed (${res.status})`)
+      if (!existingId) {
+        const rows = await res.json().catch(() => [])
+        if (rows?.[0]?.id) setExistingId(rows[0].id)
+      }
+      setSaving(false)
+      setSaved(true)
+      setTimeout(() => { setSaved(false); onClose() }, 1200)
+    } catch (err) {
+      console.error('[HealthAssessment] Save error:', err)
+      setSaving(false)
+      setError('Failed to save. Please try again.')
     }
-    setSaving(false)
-    if (err) { setError('Failed to save. Please try again.'); return }
-    setSaved(true)
-    setTimeout(() => { setSaved(false); onClose() }, 1200)
   }
 
   const overlay: React.CSSProperties = {

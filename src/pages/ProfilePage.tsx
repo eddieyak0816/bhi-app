@@ -629,7 +629,7 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
             style={{ width: 18, height: 18, cursor: 'pointer' }}
           />
           <div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Advanced Care Plan documented</div>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>Advance Care Plan documented</div>
             <div style={{ fontSize: 12, color: theme.textMuted }}>Living will, healthcare proxy, or similar document on file. Worth 1 point in your NHLS score.</div>
           </div>
         </label>

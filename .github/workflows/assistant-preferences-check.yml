@@ -1,13 +1,13 @@
 ﻿name: "Assistant preferences check"
 on: [pull_request]
 jobs:
-verify:
-runs-on: ubuntu-latest
-steps:
-- uses: actions/checkout@v4
-- name: Ensure ASSISTANT_PREFERENCES.md exists
-run: |
-if [ ! -f ASSISTANT_PREFERENCES.md ]; then echo "ASSISTANT_PREFERENCES.md not found" >&2; exit 1; fi
-- name: Require PR description marker
-run: |
-echo "${{ github.event.pull_request.body }}" | grep -q "Assistant preferences: checked" || (echo "PR description must include: Assistant preferences: checked" >&2; exit 1)
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure ASSISTANT_PREFERENCES.md exists
+        run: |
+          if [ ! -f ASSISTANT_PREFERENCES.md ]; then echo "ASSISTANT_PREFERENCES.md not found" >&2; exit 1; fi
+      - name: Require PR description marker
+        run: |
+          echo "${{ github.event.pull_request.body }}" | grep -q "Assistant preferences: checked" || (echo "PR description must include: Assistant preferences: checked" >&2; exit 1)
