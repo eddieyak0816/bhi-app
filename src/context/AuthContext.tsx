@@ -1,6 +1,35 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
-import { supabase, getStoredJwt, getStoredSession } from '../lib/supabase'
+import { supabase, getStoredJwt, getStoredSession, withTimeout } from '../lib/supabase'
 import { generatePublicId } from '../utils/publicId'
+
+// A user who typed an org invite code at signup normally can't be joined right away — email
+// confirmation is required first, so there's no valid session yet to authenticate the join
+// call with. Saving the code here lets it be applied automatically the moment the user's
+// first real session shows up (see the SIGNED_IN handler below), instead of the previous
+// behavior of silently skipping the join entirely if a session wasn't already present.
+const PENDING_INVITE_CODE_KEY = 'bhi_pending_invite_code'
+
+async function joinOrgByInviteCode(userId: string, accessToken: string, inviteCode: string): Promise<boolean> {
+  try {
+    const backendUrl = (import.meta as any).env.VITE_BACKEND_URL as string || ''
+    const joinUrl = backendUrl ? `${backendUrl.replace(/\/$/, '')}/api/org/join` : '/api/org/join'
+    // Backend cold starts (Render free tier) can take 50+ seconds to wake up — give it real
+    // room to finish a cold start, but still cap it so it can never hang the signup/sign-in
+    // flow indefinitely the way it did before.
+    const res = await withTimeout(
+      fetch(joinUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId, 'Authorization': `Bearer ${accessToken}` },
+        body: JSON.stringify({ invite_code: inviteCode }),
+      }),
+      55000
+    )
+    return res.ok
+  } catch (err) {
+    console.error('[Auth] Org join failed:', err)
+    return false
+  }
+}
 
 export type UserRole = 'user' | 'admin' | 'super_admin'
 
@@ -187,6 +216,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: (profile.role || 'user') as UserRole,
           })
         }
+
+        // Apply a pending org invite code saved at signup time (see signup() above) now that
+        // a real session finally exists. Runs on every SIGNED_IN — e.g. confirming email, or
+        // logging in later — until it succeeds, then clears itself so it doesn't retry forever.
+        let pendingCode: string | null = null
+        try { pendingCode = localStorage.getItem(PENDING_INVITE_CODE_KEY) } catch {}
+        if (pendingCode && session.access_token) {
+          const joined = await joinOrgByInviteCode(session.user.id, session.access_token, pendingCode)
+          if (joined) {
+            try { localStorage.removeItem(PENDING_INVITE_CODE_KEY) } catch {}
+          }
+        }
       }
     })
 
@@ -310,15 +351,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: 'user',
         })
 
-        // F70: join org by invite code if provided at signup
-        if (inviteCode?.trim() && data.session?.access_token) {
-          const backendUrl = (import.meta as any).env.VITE_BACKEND_URL as string || ''
-          const joinUrl = backendUrl ? `${backendUrl.replace(/\/$/, '')}/api/org/join` : '/api/org/join'
-          await fetch(joinUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-user-id': data.user.id, 'Authorization': `Bearer ${data.session.access_token}` },
-            body: JSON.stringify({ invite_code: inviteCode.trim() }),
-          }).catch(() => {}) // non-blocking — invalid code is surfaced as a warning, not a hard error
+        // F70: join org by invite code if provided at signup.
+        // Most signups require email confirmation, so there's usually no session yet to
+        // authenticate this call with — in that case, save the code and apply it automatically
+        // the moment the user actually gets a real session (SIGNED_IN handler below), instead
+        // of silently dropping it (the previous behavior — this is why new org members weren't
+        // showing up for the admin even though the account itself was created fine).
+        const trimmedCode = inviteCode?.trim()
+        if (trimmedCode) {
+          if (data.session?.access_token) {
+            const joined = await joinOrgByInviteCode(data.user.id, data.session.access_token, trimmedCode)
+            if (!joined) {
+              try { localStorage.setItem(PENDING_INVITE_CODE_KEY, trimmedCode) } catch {}
+            }
+          } else {
+            try { localStorage.setItem(PENDING_INVITE_CODE_KEY, trimmedCode) } catch {}
+          }
         }
 
         return { success: true }
