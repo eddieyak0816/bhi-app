@@ -1,19 +1,15 @@
 # copy to .env and fill with values for Supabase integration
-VITE_SUPABASE_URL=https://fgduvnmsvkhrhcxykkyc.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_XLB6d7Ghn47fEYa_Evt8QA_T_2UNgsj
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=public-anon-key
 # (optional) DATABASE_URL for running seed locally via psql
 DATABASE_URL=postgres://user:pass@host:5432/dbname
 
 # Backend (server) - optional and disabled unless you supply these secrets
 # BACKEND_API_KEY: short secret required by the frontend to call the server (do NOT put in public client code)
-BACKEND_API_KEY=sb_secret_0BaFhRcYEfojLAp9siIu9A_RHvzCSbG
+BACKEND_API_KEY=replace_me_in_dev
 # SUPABASE_SERVICE_ROLE: server-only service role (NEVER expose to browser)
-SUPABASE_SERVICE_ROLE=sb_secret_0BaFhRcYEfojLAp9siIu9A_RHvzCSbG
+SUPABASE_SERVICE_ROLE=service_role_key_here
 # When the above are present the server will allow saving opt-in lab values via POST /api/save-lab
-
-# Frontend API: Backend server URL and auth key
-VITE_BACKEND_URL=https://bhi-app-backend.onrender.com
-VITE_BACKEND_API_KEY=sb_secret_0BaFhRcYEfojLAp9siIu9A_RHvzCSbG
 
 # Vercel (optional): a personal/project token used for deployments and vercel CLI
 # - Do NOT commit real tokens. Prefer storing as a CI secret named VERCEL_TOKEN
@@ -22,3 +18,6 @@ VERCEL_TOKEN=replace_with_token
 # CI helper: skip Playwright browser downloads during CI builds
 # (useful for Vercel/GitHub Actions to avoid large browser downloads)
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
+# Google Gemini API (PDF lab extraction — server-side only, never expose to browser)
+GEMINI_API_KEY=your_gemini_api_key_here
