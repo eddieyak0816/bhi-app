@@ -45,7 +45,8 @@ interface AuthContextType {
   loading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  signup: (email: string, name: string, password: string, inviteCode?: string) => Promise<{ success: boolean; error?: string }>
+  signup: (email: string, name: string, password: string, inviteCode?: string) => Promise<{ success: boolean; error?: string; needsConfirmation?: boolean }>
+  resendConfirmation: (email: string) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<void>
   isAdmin: boolean
   isSuperAdmin: boolean
@@ -329,6 +330,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: error.message }
       }
 
+      if (data?.user && !data.session) {
+        // signUp() succeeded but returned no session — Supabase's "Confirm email"
+        // setting is on, so the account exists but isn't usable yet. Don't fake
+        // a logged-in state (no JWT exists to persist), or the user gets bounced
+        // to the main screen and then can't log back in after logging out.
+        return { success: false, needsConfirmation: true }
+      }
+
       if (data?.user) {
         // Profile is automatically created by the on_auth_user_created trigger.
         // Assign a system-generated public_id (HIPAA-safe de-identified token).
@@ -378,6 +387,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const resendConfirmation = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email })
+      if (error) {
+        return { success: false, error: error.message }
+      }
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+    }
+  }
+
   const logout = async () => {
     console.log('[Auth] Logging out...')
     try {
@@ -408,6 +429,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         login,
         signup,
+        resendConfirmation,
         logout,
         isAdmin: user?.role === 'admin' || user?.role === 'super_admin',
         isSuperAdmin: user?.role === 'super_admin',

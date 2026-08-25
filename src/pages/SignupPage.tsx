@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
 export default function SignupPage() {
-  const { signup } = useAuth()
+  const { signup, resendConfirmation } = useAuth()
   const { theme } = useTheme()
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
@@ -14,6 +14,9 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [inviteCode, setInviteCode] = useState('')
+  const [pendingConfirmation, setPendingConfirmation] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendMessage, setResendMessage] = useState<string | null>(null)
 
   const getPasswordErrors = () => {
     const errors: string[] = []
@@ -55,12 +58,95 @@ export default function SignupPage() {
     try {
       const result = await signup(email, name, password, inviteCode || undefined)
       if (!result.success) {
-        setError(result.error || 'Signup failed')
+        if (result.needsConfirmation) {
+          setPendingConfirmation(true)
+        } else {
+          setError(result.error || 'Signup failed')
+        }
       }
       // On success, AuthContext will update and router will redirect
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleResend = async () => {
+    setResendLoading(true)
+    setResendMessage(null)
+    try {
+      const result = await resendConfirmation(email)
+      setResendMessage(result.success ? 'Confirmation email sent.' : (result.error || 'Failed to resend email.'))
+    } finally {
+      setResendLoading(false)
+    }
+  }
+
+  if (pendingConfirmation) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: theme.bg,
+          padding: '16px',
+        }}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '400px',
+            background: theme.card,
+            border: `1.5px solid ${theme.borderColor}`,
+            borderRadius: '12px',
+            padding: '32px',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>📧</div>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: theme.text, margin: 0 }}>
+            Check your email
+          </h1>
+          <p style={{ color: theme.textMuted, margin: '12px 0 0 0', fontSize: '14px', lineHeight: 1.5 }}>
+            We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then come back and log in.
+          </p>
+
+          {resendMessage && (
+            <p style={{ fontSize: '13px', margin: '16px 0 0 0', color: theme.textMuted }}>
+              {resendMessage}
+            </p>
+          )}
+
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={resendLoading}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              background: resendLoading ? '#999' : '#3B82F6',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: resendLoading ? 'not-allowed' : 'pointer',
+              marginTop: '20px',
+            }}
+          >
+            {resendLoading ? 'Sending...' : 'Resend confirmation email'}
+          </button>
+
+          <p style={{ marginTop: '20px', marginBottom: 0 }}>
+            <a href="#/login" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>
+              Back to login
+            </a>
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
