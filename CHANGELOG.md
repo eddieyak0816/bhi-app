@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 2026-08-19 — feat: multi-org providers (session 28 continued)
+
+### New feature — one provider linked to several organizations
+- Requested by Damon: "need to be able to add a provider to multiple organizations as needed not just one." Previously `virtual_providers.org_id` was a single value (one specific org, or NULL for global) — no way to pick several specific orgs.
+- New `provider_orgs` join table (`db/migrations/20260819c_create_provider_orgs.sql`) — proper many-to-many between providers and organizations. Existing single-org assignments migrated forward automatically so nothing changed behavior for providers that already had one. Zero rows for a provider = global (same meaning `org_id IS NULL` used to have).
+- Updated all 4 provider server endpoints (`GET/POST/PATCH /api/admin/providers`, public `GET /api/providers`) to read/write `org_ids` (array) instead of `org_id`. The public endpoint's own visibility filter — not just RLS — was updated too, since it runs under the service role which bypasses RLS.
+- `AdminProvidersTab.tsx`: the single Organization dropdown is now a checklist (check as many orgs as needed, or none for global). List view shows all linked orgs, not just one.
+- `virtual_providers.org_id` column left in place (not dropped) for safety/rollback, but is no longer read anywhere — `provider_orgs` is now the source of truth.
+- Verified: checked 2+ orgs on a provider, saved, reopened Edit, both stayed checked.
+
 ## 2026-08-19 — feat: Male/Female resource tags, "Log Your Hormones" (session 28 continued)
 
 ### New feature — Male/Female tags for Resources

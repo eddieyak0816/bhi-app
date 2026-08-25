@@ -1404,6 +1404,21 @@
       <span class="item-status status-done">✅ Done — 2026-08-19</span>
     </div>
 
+    <div class="item done" data-status="done">
+      <div class="item-num">S28-5</div>
+      <div class="item-body">
+        <div class="item-title">Multi-Org Providers</div>
+        <div class="item-note">
+          Requested by Damon: "need to be able to add a provider to multiple organizations as needed not just one." Previously a provider could only belong to one specific org, or be global — no in-between.<br><br>
+          <strong>Migration:</strong> <code>db/migrations/20260819c_create_provider_orgs.sql</code> — new <code>provider_orgs</code> join table (proper many-to-many). Existing single-org assignments auto-migrated forward. Zero rows = global, same meaning <code>org_id IS NULL</code> used to have. <code>virtual_providers.org_id</code> column left in place for safety but no longer read anywhere.<br><br>
+          <strong>Server:</strong> all 4 provider endpoints updated to use <code>org_ids</code> (array). The public <code>GET /api/providers</code> endpoint's own JS filter was updated too (not just RLS), since it runs under the service role which bypasses RLS entirely.<br><br>
+          <strong>Admin UI:</strong> <code>AdminProvidersTab.tsx</code> — single dropdown replaced with a checklist; list view shows every linked org, not just one.<br><br>
+          <strong>Verified:</strong> checked 2+ orgs on a provider, saved, reopened Edit, both stayed checked.
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Done — 2026-08-19</span>
+    </div>
+
   </section>
 
 </body>
