@@ -25,7 +25,23 @@ import LeaguePage from './pages/LeaguePage'
 import { loadSampleData, SampleData } from './sample-data'
 import { supabase } from './lib/supabase'
 
+// Supabase sends auth failures back as a URL hash like:
+//   #error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired
+// Note there's no "/" after "#" here, unlike our own routes ("#/home", "#/login"). The rest of
+// this file's routing assumes every hash starts with "#/" and blindly strips the first 2
+// characters — which mangles "#error=..." into "rror=..." (chopping the "#e"), matches no known
+// page, and renders a blank screen. Detecting this shape explicitly, before any of that normal
+// parsing runs, is what lets us show a real message instead.
+function getAuthHashError(): string | null {
+  const hash = window.location.hash
+  if (!hash.includes('error=') && !hash.includes('error_code=')) return null
+  const params = new URLSearchParams(hash.replace(/^#\/?/, ''))
+  const description = params.get('error_description')
+  return description ? description.replace(/\+/g, ' ') : 'This link is invalid or has expired.'
+}
+
 function AppContent() {
+  const [authHashError, setAuthHashError] = useState<string | null>(() => getAuthHashError())
   const [data, setData] = useState<SampleData | null>(null)
   const [dataSource, setDataSource] = useState<'supabase' | 'sample' | 'none'>('none')
   const [currentPage, setCurrentPage] = useState<string>(() => {
@@ -153,12 +169,40 @@ function AppContent() {
     }
   }, [isAuthenticated, loading])
 
+  // Once we've captured an auth hash error, clear it from the URL so refreshing the page
+  // (or the normal hash-based routing above) doesn't keep re-reading the same stale error.
+  useEffect(() => {
+    if (authHashError) {
+      window.location.hash = '#/login'
+    }
+  }, [authHashError])
+
   // Keep URL in sync when user clicks nav tabs
   useEffect(() => {
     if (isAuthenticated && !loading) {
       window.location.hash = `#/${currentPage}`
     }
   }, [currentPage, isAuthenticated, loading])
+
+  // Show a real message for a failed/expired auth link instead of the blank screen this used
+  // to render (see getAuthHashError for why the blank screen happened). Checked before the
+  // loading/auth gates below since it doesn't depend on either.
+  if (authHashError) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: 24 }}>
+        <div style={{ maxWidth: 420, textAlign: 'center' }}>
+          <h2 style={{ marginBottom: 12 }}>Link expired</h2>
+          <p style={{ marginBottom: 24, color: '#666' }}>{authHashError}</p>
+          <button
+            onClick={() => { setAuthHashError(null); window.location.hash = '#/login' }}
+            style={{ padding: '10px 20px', borderRadius: 6, border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
