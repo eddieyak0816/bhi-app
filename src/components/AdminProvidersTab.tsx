@@ -9,7 +9,7 @@ interface Provider {
   full_bio: string | null
   link_url: string | null
   image_url: string | null
-  org_id: string | null
+  org_ids: string[] // empty = global (visible to everyone)
   is_active: boolean
 }
 
@@ -17,7 +17,7 @@ interface Org { id: string; name: string }
 interface Props { theme: any }
 
 const EMPTY: Omit<Provider, 'id' | 'is_active'> = {
-  name: '', title: '', specialty: '', brief_bio: '', full_bio: '', link_url: '', image_url: '', org_id: null,
+  name: '', title: '', specialty: '', brief_bio: '', full_bio: '', link_url: '', image_url: '', org_ids: [],
 }
 
 export default function AdminProvidersTab({ theme }: Props) {
@@ -54,7 +54,7 @@ export default function AdminProvidersTab({ theme }: Props) {
       const provData = provRes.ok ? await provRes.json() : { providers: [] }
       // /api/admin/organizations returns a plain array
       const orgsRaw = orgsRes.ok ? await orgsRes.json() : []
-      setProviders(provData.providers || [])
+      setProviders((provData.providers || []).map((p: any) => ({ ...p, org_ids: p.org_ids || [] })))
       setOrgs(Array.isArray(orgsRaw) ? orgsRaw : (orgsRaw.organizations || []))
     } catch {
       setError('Failed to load providers.')
@@ -68,8 +68,15 @@ export default function AdminProvidersTab({ theme }: Props) {
   function openCreate() { setEditing(null); setForm({ ...EMPTY }); setShowForm(true) }
   function openEdit(p: Provider) {
     setEditing(p)
-    setForm({ name: p.name, title: p.title ?? '', specialty: p.specialty ?? '', brief_bio: p.brief_bio, full_bio: p.full_bio ?? '', link_url: p.link_url ?? '', image_url: p.image_url ?? '', org_id: p.org_id })
+    setForm({ name: p.name, title: p.title ?? '', specialty: p.specialty ?? '', brief_bio: p.brief_bio, full_bio: p.full_bio ?? '', link_url: p.link_url ?? '', image_url: p.image_url ?? '', org_ids: p.org_ids || [] })
     setShowForm(true)
+  }
+
+  function toggleFormOrg(orgId: string) {
+    setForm(f => ({
+      ...f,
+      org_ids: f.org_ids.includes(orgId) ? f.org_ids.filter(id => id !== orgId) : [...f.org_ids, orgId],
+    }))
   }
 
   // If a URL is missing "http://" or "https://", the browser treats it as a path inside
@@ -87,7 +94,6 @@ export default function AdminProvidersTab({ theme }: Props) {
     const h = authHeaders()
     const body = {
       ...form,
-      org_id: form.org_id || null,
       link_url: form.link_url ? ensureProtocol(form.link_url) : form.link_url,
       image_url: form.image_url ? ensureProtocol(form.image_url) : form.image_url,
     }
@@ -169,7 +175,7 @@ export default function AdminProvidersTab({ theme }: Props) {
       {showForm && (
         <div style={{ background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '20px 24px', marginBottom: 24 }}>
           <h4 style={{ margin: '0 0 16px 0', fontSize: 15, fontWeight: 700, color: theme.text }}>{editing ? 'Edit Provider' : 'New Provider'}</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+          <div className="admin-two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
             <div>
               <label style={labelStyle}>Name *</label>
               <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Dr. Jane Smith" />
@@ -178,16 +184,27 @@ export default function AdminProvidersTab({ theme }: Props) {
               <label style={labelStyle}>Title / Credentials</label>
               <input style={inputStyle} value={form.title ?? ''} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="MD, NP, Health Coach…" />
             </div>
-            <div>
+            <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>Specialty</label>
               <input style={inputStyle} value={form.specialty ?? ''} onChange={e => setForm(f => ({ ...f, specialty: e.target.value }))} placeholder="Metabolic Health, Nutrition…" />
             </div>
-            <div>
-              <label style={labelStyle}>Organization (leave blank = global)</label>
-              <select style={inputStyle} value={form.org_id ?? ''} onChange={e => setForm(f => ({ ...f, org_id: e.target.value || null }))}>
-                <option value="">All members (global)</option>
-                {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-              </select>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>Organizations (check none = global, visible to everyone)</label>
+              {orgs.length === 0 ? (
+                <div style={{ fontSize: 12, color: theme.textMuted }}>No organizations exist yet.</div>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: 10 }}>
+                  {orgs.map(o => (
+                    <label key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: theme.text, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={form.org_ids.includes(o.id)} onChange={() => toggleFormOrg(o.id)} />
+                      {o.name}
+                    </label>
+                  ))}
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>
+                {form.org_ids.length === 0 ? 'Global — visible to all members.' : `Visible to ${form.org_ids.length} selected organization${form.org_ids.length === 1 ? '' : 's'} only.`}
+              </div>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>Brief Bio * (shown on card — 1-2 sentences)</label>
@@ -221,8 +238,8 @@ export default function AdminProvidersTab({ theme }: Props) {
       {(() => {
         const filtered = providers.filter(p => {
           if (filterOrgId === 'all') return true
-          if (filterOrgId === 'global') return p.org_id === null
-          return p.org_id === filterOrgId
+          if (filterOrgId === 'global') return p.org_ids.length === 0
+          return p.org_ids.includes(filterOrgId)
         })
         return filtered.length === 0 ? (
         <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 32, textAlign: 'center', color: theme.textMuted }}>
@@ -242,7 +259,9 @@ export default function AdminProvidersTab({ theme }: Props) {
                 {p.specialty && <div style={{ fontSize: 12, color: theme.textMuted }}>{p.specialty}</div>}
                 <div style={{ fontSize: 13, color: theme.textMuted, marginTop: 4 }}>{p.brief_bio}</div>
                 <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>
-                  {p.org_id ? `Org-specific · ${orgs.find(o => o.id === p.org_id)?.name ?? p.org_id}` : 'Global (all members)'}
+                  {p.org_ids.length > 0
+                    ? `Org-specific · ${p.org_ids.map(id => orgs.find(o => o.id === id)?.name ?? id).join(', ')}`
+                    : 'Global (all members)'}
                   {!p.is_active && <span style={{ marginLeft: 8, color: '#b91c1c', fontWeight: 600 }}>Inactive</span>}
                 </div>
               </div>

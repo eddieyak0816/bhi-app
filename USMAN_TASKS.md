@@ -32,13 +32,13 @@ Last updated: 2026-08-19
 20. Fixed blank white screen when a signup/login email link fails (expired/invalid) — now shows a real "Link expired" message instead
 21. Fixed "Recently Viewed" and "Bookmarked Resources" on Home — were both fake/hardcoded (same 3 resources and "2" for every single user, regardless of what they'd actually done). Now tracks real personal activity.
 22. Added a real "Your Bookmarked Resources" list on Home showing actual bookmarked titles (didn't exist before — the bookmark count had nothing to click through to)
+23. Added Male/Female as real tags — available in Admin → Tags, can be applied to any resource
+24. Built "Log Your Hormones" section under "Log Your NHLS Metrics" — auto-pulls whichever hormone markers exist in Admin, shows only the ones matching the user's sex, confirmed tested on both a Male and Female account showing genuinely different fields, confirmed does NOT affect the NHLS score
 
 ## ❌ NOT DONE — needs building
 
-23. **Hormone Labs category** — display hormone lab markers (Testosterone, Estradiol, FSH, etc.) split by Male/Female. *(Data for this may already exist — check before starting.)*
-24. **Sex-based content** — auto-show the right hormone content based on Profile's Male/Female selection
-25. **Male/Female tags for Resources** — Damon asked for this directly, so content (not just lab numbers) can be filtered by sex too
-26. **"Log your Hormones" tab under NHLS Metrics** — Damon wants this as its own sub-section, driven by sex, using the criteria already provided
+25. **Hormone Labs category on dashboard/home page** — Damon's original ask was for this to live as its own main category, not just inside the metrics panel — worth confirming with him whether #24 above satisfies this or if he still wants a separate dashboard category too
+26. **Sex-based content filtering** — the Male/Female tags now exist (#23), but nothing in the app actually uses them yet to filter what a user sees. Still an open question whether Damon wants this built now or was satisfied with just having the tags available.
 27. **Newsletter editor** — build ability to create/edit newsletters in-app (2 mockups provided)
 28. **Visual redesign** — modern/colorful look, references given (fuzati.com, gold/maroon or red-white-blue)
 29. **Profile save error (`42501` database permission error)** — reported by Damon, could not reproduce yet, needs more specific steps from him

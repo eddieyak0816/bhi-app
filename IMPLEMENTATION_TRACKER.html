@@ -1390,6 +1390,20 @@
       <span class="item-status status-done">✅ Done — 2026-08-19</span>
     </div>
 
+    <div class="item done" data-status="done">
+      <div class="item-num">S28-4</div>
+      <div class="item-body">
+        <div class="item-title">Male/Female Resource Tags + Log Your Hormones</div>
+        <div class="item-note">
+          Requested directly by Damon in a new remark, separate from the earlier hormone markers discussion.<br><br>
+          <strong>Male/Female tags:</strong> pure Admin data entry, no code — Tags were already free-text so "Male"/"Female" just needed creating (Admin → Tags). Not yet wired to filter any content by sex; that's a separate open item.<br><br>
+          <strong>"Log Your Hormones":</strong> new sub-section in <code>QuickMetricsPanel.tsx</code> under "Log Your NHLS Metrics". Pulls hormone markers dynamically from <code>lab_markers</code> (via <code>marker_category = 'hormone'</code> or <code>applicable_sex</code>, same rule as LabsPage) rather than a hardcoded list. Filtered to the user's own sex. Saves via the same <code>addResult()</code> path as the core 8 metrics — structurally cannot affect the NHLS score since <code>bhasV2.ts</code> only scores those 8 by name.<br><br>
+          <strong>Verified:</strong> tested on both a Male and a Female account — genuinely different fields shown per sex (e.g. Male: Free Testosterone, Estradiol, PSA · Female: Total Testosterone, Estradiol, Waist (Female)); confirmed NHLS score unchanged after saving hormone values.
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Done — 2026-08-19</span>
+    </div>
+
   </section>
 
 </body>

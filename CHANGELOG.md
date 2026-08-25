@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 2026-08-19 — feat: Male/Female resource tags, "Log Your Hormones" (session 28 continued)
+
+### New feature — Male/Female tags for Resources
+- Requested by Damon directly: simple, standalone `Male` / `Female` tags (distinct from existing compound tags like `High_Risk_Waist_Male`) that can be applied to any resource. No code needed — Tags are already free-text, so this was pure Admin data entry (Admin → Tags → + Add Tag). Not yet used anywhere to filter content by sex — that's a separate open question for Damon.
+
+### New feature — "Log Your Hormones" section
+- Requested by Damon: a sub-section under "Log Your NHLS Metrics" for hormone lab values, driven by the user's Male/Female profile selection, using the criteria he sent earlier (Free Testosterone, Total Testosterone, Estradiol/FSH, plus additional tracked labs).
+- `QuickMetricsPanel.tsx` now pulls hormone markers dynamically from `lab_markers` (matching `marker_category = 'hormone'` or `applicable_sex` male/female, same rule LabsPage already used) instead of a hardcoded list — automatically reflects whatever's configured in Admin.
+- Filtered to the logged-in user's sex (already fetched in this component for other fields) — shows nothing extra for markers that don't apply, "both"-marked markers show for everyone.
+- Saves through the exact same `addResult()` path as the 8 core metrics. Since the NHLS scoring engine (`bhasV2.ts`) only scores those 8 fixed metrics by name, hormone values are structurally incapable of affecting the score — confirmed by testing on both a Male and Female account (correctly different fields shown, score unchanged after saving).
+
 ## 2026-08-19 — fix: blank auth-error screen, real Recently Viewed/Bookmarks (session 28 continued)
 
 ### Bug fixed — blank white screen on expired/invalid auth links

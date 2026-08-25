@@ -2785,7 +2785,16 @@ app.get('/api/admin/providers', async (req, res) => {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const { data, error } = await sb.from('virtual_providers').select('*').order('created_at', { ascending: false });
     if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
-    return res.status(200).json({ providers: data || [] });
+    // Attach each provider's list of orgs (multi-org support) so the Admin UI can show which
+    // ones are checked. Zero orgs for a provider = global (visible to everyone).
+    const { data: links } = await sb.from('provider_orgs').select('provider_id, org_id');
+    const orgsByProvider = {};
+    for (const l of (links || [])) {
+      if (!orgsByProvider[l.provider_id]) orgsByProvider[l.provider_id] = [];
+      orgsByProvider[l.provider_id].push(l.org_id);
+    }
+    const providers = (data || []).map(p => ({ ...p, org_ids: orgsByProvider[p.id] || [] }));
+    return res.status(200).json({ providers });
   } catch (err) {
     console.error('GET /api/admin/providers error:', err.message);
     return res.status(500).json({ error: 'server_error' });
@@ -3095,19 +3104,29 @@ app.get('/api/providers', async (req, res) => {
     // Get user's org memberships
     const { data: memberships } = await sb
       .from('org_memberships').select('org_id').eq('user_id', requestingUserId);
-    const userOrgIds = (memberships || []).map(m => m.org_id);
+    const userOrgIds = new Set((memberships || []).map(m => m.org_id));
 
-    // Fetch global providers + org-specific ones the user belongs to
-    const { data: providers, error } = await sb
-      .from('virtual_providers')
-      .select('id, name, title, specialty, brief_bio, full_bio, link_url, image_url, org_id')
-      .eq('is_active', true)
-      .order('created_at', { ascending: true });
+    // Fetch active providers + their org links (multi-org support — a provider can now be
+    // linked to several specific orgs, not just one; zero links means global/everyone)
+    const [{ data: providers, error }, { data: links }] = await Promise.all([
+      sb.from('virtual_providers')
+        .select('id, name, title, specialty, brief_bio, full_bio, link_url, image_url')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true }),
+      sb.from('provider_orgs').select('provider_id, org_id'),
+    ]);
     if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
 
-    const visible = (providers || []).filter(p =>
-      p.org_id === null || userOrgIds.includes(p.org_id)
-    );
+    const orgsByProvider = {};
+    for (const l of (links || [])) {
+      if (!orgsByProvider[l.provider_id]) orgsByProvider[l.provider_id] = [];
+      orgsByProvider[l.provider_id].push(l.org_id);
+    }
+
+    const visible = (providers || []).filter(p => {
+      const providerOrgs = orgsByProvider[p.id] || [];
+      return providerOrgs.length === 0 || providerOrgs.some(orgId => userOrgIds.has(orgId));
+    });
     return res.status(200).json({ providers: visible });
   } catch (err) {
     console.error('GET /api/providers error:', err.message);
@@ -3118,17 +3137,23 @@ app.get('/api/providers', async (req, res) => {
 // POST /api/admin/providers — create provider (app admin only)
 app.post('/api/admin/providers', async (req, res) => {
   if (!requireAdmin(req, res)) return;
-  const { name, title, specialty, brief_bio, full_bio, link_url, image_url, org_id } = req.body;
+  const { name, title, specialty, brief_bio, full_bio, link_url, image_url, org_ids } = req.body;
   if (!name || !brief_bio) return res.status(400).json({ error: 'name and brief_bio required' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
     const adminId = req.header('x-user-id') || null;
     const { data, error } = await sb
       .from('virtual_providers')
-      .insert({ name, title, specialty, brief_bio, full_bio, link_url, image_url, org_id: org_id || null, created_by: adminId })
+      .insert({ name, title, specialty, brief_bio, full_bio, link_url, image_url, created_by: adminId })
       .select().single();
     if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
-    return res.status(201).json({ provider: data });
+    // Multi-org support: link this provider to each selected org. Empty/omitted org_ids = global.
+    const ids = Array.isArray(org_ids) ? org_ids.filter(Boolean) : [];
+    if (ids.length > 0) {
+      const { error: linkErr } = await sb.from('provider_orgs').insert(ids.map(org_id => ({ provider_id: data.id, org_id })));
+      if (linkErr) console.error('POST /api/admin/providers org link error:', linkErr.message);
+    }
+    return res.status(201).json({ provider: { ...data, org_ids: ids } });
   } catch (err) {
     console.error('POST /api/admin/providers error:', err.message);
     return res.status(500).json({ error: 'server_error' });
@@ -3139,14 +3164,29 @@ app.post('/api/admin/providers', async (req, res) => {
 app.patch('/api/admin/providers/:id', async (req, res) => {
   if (!requireAdmin(req, res)) return;
   const { id } = req.params;
-  const fields = ['name', 'title', 'specialty', 'brief_bio', 'full_bio', 'link_url', 'image_url', 'org_id', 'is_active'];
+  const fields = ['name', 'title', 'specialty', 'brief_bio', 'full_bio', 'link_url', 'image_url', 'is_active'];
   const updates = {};
   for (const f of fields) { if (req.body[f] !== undefined) updates[f] = req.body[f]; }
-  if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'no fields to update' });
+  const orgIdsProvided = Array.isArray(req.body.org_ids);
+  if (Object.keys(updates).length === 0 && !orgIdsProvided) return res.status(400).json({ error: 'no fields to update' });
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const { error } = await sb.from('virtual_providers').update(updates).eq('id', id);
-    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    if (Object.keys(updates).length > 0) {
+      const { error } = await sb.from('virtual_providers').update(updates).eq('id', id);
+      if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
+    }
+    // Multi-org support: org_ids fully replaces this provider's org links each save
+    // (not additive) — matches how the Admin checklist UI works: whatever's checked when
+    // you hit Save is the complete set. Empty array = global.
+    if (orgIdsProvided) {
+      const ids = req.body.org_ids.filter(Boolean);
+      const { error: delErr } = await sb.from('provider_orgs').delete().eq('provider_id', id);
+      if (delErr) return res.status(500).json({ error: 'db_error', detail: delErr.message });
+      if (ids.length > 0) {
+        const { error: insErr } = await sb.from('provider_orgs').insert(ids.map(org_id => ({ provider_id: id, org_id })));
+        if (insErr) return res.status(500).json({ error: 'db_error', detail: insErr.message });
+      }
+    }
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('PATCH /api/admin/providers/:id error:', err.message);

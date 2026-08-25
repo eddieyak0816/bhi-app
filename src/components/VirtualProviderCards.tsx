@@ -11,7 +11,6 @@ interface Provider {
   full_bio: string | null
   link_url: string | null
   image_url: string | null
-  org_id: string | null
 }
 
 export default function VirtualProviderCards() {
