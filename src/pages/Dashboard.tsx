@@ -15,20 +15,26 @@ import LabSetsComparison from '../components/LabSetsComparison'
 import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
 import { supabase } from '../lib/supabase'
 import { getBenchmark } from '../utils/nationalBenchmarks'
+import { getRecentlyViewed, getBookmarkedCount } from '../utils/recentlyViewed'
 
 interface DashboardProps {
   userEmail?: string
   userName?: string
-  recentResources?: Array<{ title: string; type: string }>
-  bookmarkedCount?: number
   onNavigate?: (page: string) => void
 }
 
-export default function Dashboard({ userEmail = '', userName = '', recentResources = [], bookmarkedCount = 0, onNavigate }: DashboardProps) {
+export default function Dashboard({ userEmail = '', userName = '', onNavigate }: DashboardProps) {
   const { theme } = useTheme()
   const { applicableTags, recommendedResources, bhasResult, loading, error } = useEvaluation()
   const { results, latestLabDate } = useResults()
   const { user } = useAuth()
+  // Real personal history instead of the previous hardcoded placeholder (always "first 3
+  // resources in the library" and a fixed "2"). Recomputed fresh each time this component
+  // mounts (i.e. each time the user navigates to Home), since it's read once here rather than
+  // subscribed to — matches how this data is only ever written from other pages, not while
+  // this component itself is on screen.
+  const [recentResources] = useState(() => getRecentlyViewed(3))
+  const [bookmarkedCount] = useState(() => getBookmarkedCount())
 
   // Get first name from full name
   const firstName = userName?.split(' ')[0] || ''
@@ -516,7 +522,7 @@ export default function Dashboard({ userEmail = '', userName = '', recentResourc
                     {resource.tags.join(', ')}
                   </div>
                   <button
-                    onClick={() => resource.link_url && window.open(resource.link_url, '_blank', 'noopener,noreferrer')}
+                    onClick={() => { if (resource.link_url) { window.open(resource.link_url, '_blank', 'noopener,noreferrer'); recordView(resource) } }}
                     style={{
                       background: theme.blue,
                       color: '#fff',

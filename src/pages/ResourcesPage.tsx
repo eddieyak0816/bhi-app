@@ -3,6 +3,7 @@ import { useTheme } from '../context/ThemeContext'
 import { useEvaluation } from '../context/EvaluationContext'
 import { directFetch } from '../lib/supabase'
 import { debug } from '../lib/debug'
+import { recordView } from '../utils/recentlyViewed'
 
 interface Resource {
   id: string
@@ -503,6 +504,7 @@ export default function Resources() {
                             href={resource.link_url}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={() => recordView(resource)}
                             style={{
                               background: '#10b981',
                               color: '#fff',
@@ -520,7 +522,7 @@ export default function Resources() {
                           </a>
                         )}
                         <button
-                          onClick={() => setSelectedResource(resource)}
+                          onClick={() => { setSelectedResource(resource); recordView(resource) }}
                           style={{
                             background: theme.blue,
                             color: '#fff',
