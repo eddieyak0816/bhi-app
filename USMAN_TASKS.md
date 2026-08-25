@@ -25,33 +25,32 @@ Last updated: 2026-08-19
 13. Fixed resources loading slowly after entering lab values
 14. Confirmed: Categories page image upload was never built (not a bug — flag to Damon, don't build without his OK)
 15. Confirmed: Virtual Providers not showing was correct behavior (org-scoped), not a bug
+16. Fixed signup getting stuck on "Creating account..." forever when signing up with an org invite code
+17. Fixed new org members not actually joining the organization when signing up with a code (was silently failing before)
+18. Signup email confirmation link fixed — Damon updated the Supabase Site URL setting himself (was pointing to localhost)
+19. Signup email rate limit fixed — Damon connected a real email provider in Supabase (was using the default testing-only sender)
 
 ## ❌ NOT DONE — needs building
 
-16. **Hormone Labs category** — display hormone lab markers (Testosterone, Estradiol, FSH, etc.) split by Male/Female. *(Data for this may already exist — check before starting.)*
-17. **Sex-based content** — auto-show the right hormone content based on Profile's Male/Female selection
-18. **Newsletter editor** — build ability to create/edit newsletters in-app (2 mockups provided)
-19. **Visual redesign** — modern/colorful look, references given (fuzati.com, gold/maroon or red-white-blue)
-20. **Profile save error (`42501` database permission error)** — reported by Damon, could not reproduce yet, needs more specific steps from him
-21. **Multi-org providers** — let one provider be linked to several organizations, not just one (currently one-or-global only)
-22. **"Customize lab draw for organizations"** — unclear what this means exactly, needs a question to Damon
-
-## ⚠️ NOT DONE — needs Damon to take action (not us)
-
-23. **Signup/login broken for new users** — found the cause: Supabase's "Site URL" setting still points to `localhost:3000` instead of the real live app address. Confirmed by reproducing it. **Cannot fix ourselves — Usman's Supabase role is "Developer," which can't edit this setting.** Needs Damon (or an Admin/Owner) to either make the change himself, or upgrade Usman's role.
+20. **Hormone Labs category** — display hormone lab markers (Testosterone, Estradiol, FSH, etc.) split by Male/Female. *(Data for this may already exist — check before starting.)*
+21. **Sex-based content** — auto-show the right hormone content based on Profile's Male/Female selection
+22. **Newsletter editor** — build ability to create/edit newsletters in-app (2 mockups provided)
+23. **Visual redesign** — modern/colorful look, references given (fuzati.com, gold/maroon or red-white-blue)
+24. **Profile save error (`42501` database permission error)** — reported by Damon, could not reproduce yet, needs more specific steps from him
+25. **Multi-org providers** — let one provider be linked to several organizations, not just one (currently one-or-global only)
+26. **"Customize lab draw for organizations"** — unclear what this means exactly, needs a question to Damon
 
 ## ❓ QUESTIONS — waiting on Damon's answer, not started
 
-24. Does the "NHL" trademark issue also apply to "NHLS" (the score name)? Big job if yes (40+ locations)
-25. Should existing users' ID codes (`NHL-XXXX-XXXX`) be changed too, or just new signups going forward?
-26. Are the NHLS score's 8 metrics allowed to become admin-editable (add/remove things like Ferritin, Insulin)? Currently hardcoded — real feature if he wants it
-27. All older open questions already logged in `CLIENT_FEEDBACK.md` (leaderboard ranking, org hierarchy depth, Broker role permissions, Challenge rules)
+27. Does the "NHL" trademark issue also apply to "NHLS" (the score name)? Big job if yes (40+ locations)
+28. Should existing users' ID codes (`NHL-XXXX-XXXX`) be changed too, or just new signups going forward?
+29. Are the NHLS score's 8 metrics allowed to become admin-editable (add/remove things like Ferritin, Insulin)? Currently hardcoded — real feature if he wants it
+30. All older open questions already logged in `CLIENT_FEEDBACK.md` (leaderboard ranking, org hierarchy depth, Broker role permissions, Challenge rules)
 
 ## 📣 MESSAGES TO SEND DAMON — not code, just tell him
 
-28. His provider's "Headshot" field has his website link pasted in, not an actual photo — needs a real image link
-29. Remind him to re-save that same provider entry once fixed, so all the URL fixes apply to it
-30. Send him the Site URL fix instructions (item #23 above) so he can act on it
+31. His provider's "Headshot" field has his website link pasted in, not an actual photo — needs a real image link
+32. Remind him to re-save that same provider entry once fixed, so all the URL fixes apply to it
 
 ---
 
@@ -59,7 +58,9 @@ Last updated: 2026-08-19
 
 - [x] GitHub, Supabase, Netlify, Render dashboard access — all working
 - [x] Admin role inside the app — confirmed working
-- [ ] Supabase **organization** role is "Developer" — can't change critical settings like Auth URLs (see #23). Ask Damon to upgrade if this comes up again.
+- [x] Supabase Site URL — fixed by Damon
+- [x] Supabase email provider / rate limit — fixed by Damon
+- [ ] Supabase **organization** role is still "Developer" — can't change critical settings if something like this comes up again. Worth asking Damon to upgrade at some point.
 - [ ] `DATABASE_URL` GitHub secret needs switching to Supabase's Connection Pooler format (CI check still fails)
 - [ ] Netlify doesn't always auto-deploy on push — sometimes needs a manual "Publish" click
 

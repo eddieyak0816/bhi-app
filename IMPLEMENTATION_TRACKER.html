@@ -1355,6 +1355,27 @@
       <span class="item-status status-done">✅ Done — 2026-08-19</span>
     </div>
 
+    <div class="item done" data-status="done">
+      <div class="item-num">S28-2</div>
+      <div class="item-body">
+        <div class="item-title">Session 28 Bug Fixes (continued)</div>
+        <div class="item-note">
+          Further fixes found and resolved after S28-1, mostly the same underlying root-cause class repeating in different places.<br><br>
+          <strong>Fixed:</strong>
+          <ul style="margin:4px 0 0 16px;padding:0;font-size:12px;">
+            <li><strong>"Advanced Care Planning" → "Advance Care Plan"</strong> — text-only rename, 3 spots (<code>bhasV2.ts</code>, <code>ProfilePage.tsx</code>, <code>QuickMetricsPanel.tsx</code>).</li>
+            <li><strong>Health Check-In stuck on "Loading…" forever</strong> — two layers. First: <code>.single()</code> throwing a 406 on zero rows (any first-time user) with no error handling — switched to a direct REST fetch, which sidesteps the whole zero-rows problem. Second, found on retest: still hung intermittently after navigating several pages first — same <code>getSession()</code> deadlock class as the S28-1 thumbnail upload bug. Converted load <em>and</em> save off the Supabase client entirely.</li>
+            <li><strong>Resources loading slowly after entering lab values</strong> — <code>EvaluationContext.tsx</code> was re-downloading the entire <code>logic_rules</code> + <code>resources</code> + <code>tags</code> tables from scratch on every single lab result change. Added a 5-minute cache for this shared (non-user-specific) content, plus converted off the Supabase client for the same deadlock-avoidance reason.</li>
+            <li><strong>Signup stuck on "Creating account…" forever with an org invite code</strong> — the invite-join call to Render had no timeout; a cold-start (50+s on the free tier) left it hanging with no recovery. Added a bounded 55s timeout via the existing <code>withTimeout()</code> helper.</li>
+            <li><strong>New org members not actually joining their org at signup</strong> — the join was gated on a session existing immediately at signup, which usually isn't true (email confirmation required first) — so it silently no-op'd every time. Now saves the pending invite code and auto-applies it on the user's first real <code>SIGNED_IN</code> event instead of dropping it.</li>
+            <li><strong>Signup email confirmation link → <code>localhost:3000</code></strong> — Supabase "Site URL" auth setting left on its dev default. Root-caused and reproduced this session; required Owner/Admin Supabase access to fix (this session's account was "Developer" role) — <strong>fixed by Damon directly.</strong></li>
+            <li><strong>Signup emails hitting Supabase's rate limit</strong> — same category as above, default testing-only email sender. <strong>Fixed by Damon</strong> connecting a real email provider.</li>
+          </ul>
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Done — 2026-08-19</span>
+    </div>
+
   </section>
 
 </body>
