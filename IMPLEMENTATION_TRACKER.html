@@ -1376,6 +1376,20 @@
       <span class="item-status status-done">✅ Done — 2026-08-19</span>
     </div>
 
+    <div class="item done" data-status="done">
+      <div class="item-num">S28-3</div>
+      <div class="item-body">
+        <div class="item-title">Blank auth-error screen + real Recently Viewed / Bookmarks</div>
+        <div class="item-note">
+          Found via Damon's new remarks + Usman reproducing signup himself.<br><br>
+          <strong>Blank white screen on expired/invalid auth links:</strong> Supabase's failure redirect (<code>#error=access_denied&error_code=otp_expired&...</code>) has no <code>/</code> after <code>#</code>, unlike this app's routes. <code>App.tsx</code>'s router blindly stripped the first 2 characters assuming <code>#/</code>, mangling "<code>#error=</code>" into "<code>rror=</code>" — matched no page, rendered nothing. Added <code>getAuthHashError()</code> to catch this shape first and show a real "Link expired" screen instead.<br><br>
+          <strong>"Recently Viewed" / "Bookmarked Resources" were both fake:</strong> hardcoded to <code>data.resources.slice(0,3)</code> and a literal <code>2</code> — identical for every user regardless of activity. New <code>src/utils/recentlyViewed.ts</code> tracks real views in localStorage (matching the existing bookmark pattern), wired into every "open a resource" button across Library and Dashboard.<br><br>
+          <strong>New "Your Bookmarked Resources" section</strong> on Home — didn't exist before (the count had nothing to click through to). Also fixed the stat card's click, which was scrolling to the wrong section entirely.
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Done — 2026-08-19</span>
+    </div>
+
   </section>
 
 </body>

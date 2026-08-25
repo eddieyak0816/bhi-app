@@ -29,28 +29,33 @@ Last updated: 2026-08-19
 17. Fixed new org members not actually joining the organization when signing up with a code (was silently failing before)
 18. Signup email confirmation link fixed — Damon updated the Supabase Site URL setting himself (was pointing to localhost)
 19. Signup email rate limit fixed — Damon connected a real email provider in Supabase (was using the default testing-only sender)
+20. Fixed blank white screen when a signup/login email link fails (expired/invalid) — now shows a real "Link expired" message instead
+21. Fixed "Recently Viewed" and "Bookmarked Resources" on Home — were both fake/hardcoded (same 3 resources and "2" for every single user, regardless of what they'd actually done). Now tracks real personal activity.
+22. Added a real "Your Bookmarked Resources" list on Home showing actual bookmarked titles (didn't exist before — the bookmark count had nothing to click through to)
 
 ## ❌ NOT DONE — needs building
 
-20. **Hormone Labs category** — display hormone lab markers (Testosterone, Estradiol, FSH, etc.) split by Male/Female. *(Data for this may already exist — check before starting.)*
-21. **Sex-based content** — auto-show the right hormone content based on Profile's Male/Female selection
-22. **Newsletter editor** — build ability to create/edit newsletters in-app (2 mockups provided)
-23. **Visual redesign** — modern/colorful look, references given (fuzati.com, gold/maroon or red-white-blue)
-24. **Profile save error (`42501` database permission error)** — reported by Damon, could not reproduce yet, needs more specific steps from him
-25. **Multi-org providers** — let one provider be linked to several organizations, not just one (currently one-or-global only)
-26. **"Customize lab draw for organizations"** — unclear what this means exactly, needs a question to Damon
+23. **Hormone Labs category** — display hormone lab markers (Testosterone, Estradiol, FSH, etc.) split by Male/Female. *(Data for this may already exist — check before starting.)*
+24. **Sex-based content** — auto-show the right hormone content based on Profile's Male/Female selection
+25. **Male/Female tags for Resources** — Damon asked for this directly, so content (not just lab numbers) can be filtered by sex too
+26. **"Log your Hormones" tab under NHLS Metrics** — Damon wants this as its own sub-section, driven by sex, using the criteria already provided
+27. **Newsletter editor** — build ability to create/edit newsletters in-app (2 mockups provided)
+28. **Visual redesign** — modern/colorful look, references given (fuzati.com, gold/maroon or red-white-blue)
+29. **Profile save error (`42501` database permission error)** — reported by Damon, could not reproduce yet, needs more specific steps from him
+30. **Multi-org providers** — let one provider be linked to several organizations, not just one (currently one-or-global only)
+31. **"Customize lab draw for organizations"** — unclear what this means exactly, needs a question to Damon
 
 ## ❓ QUESTIONS — waiting on Damon's answer, not started
 
-27. Does the "NHL" trademark issue also apply to "NHLS" (the score name)? Big job if yes (40+ locations)
-28. Should existing users' ID codes (`NHL-XXXX-XXXX`) be changed too, or just new signups going forward?
-29. Are the NHLS score's 8 metrics allowed to become admin-editable (add/remove things like Ferritin, Insulin)? Currently hardcoded — real feature if he wants it
-30. All older open questions already logged in `CLIENT_FEEDBACK.md` (leaderboard ranking, org hierarchy depth, Broker role permissions, Challenge rules)
+32. Does the "NHL" trademark issue also apply to "NHLS" (the score name)? Big job if yes (40+ locations)
+33. Should existing users' ID codes (`NHL-XXXX-XXXX`) be changed too, or just new signups going forward?
+34. Are the NHLS score's 8 metrics allowed to become admin-editable (add/remove things like Ferritin, Insulin)? Currently hardcoded — real feature if he wants it
+35. All older open questions already logged in `CLIENT_FEEDBACK.md` (leaderboard ranking, org hierarchy depth, Broker role permissions, Challenge rules)
 
 ## 📣 MESSAGES TO SEND DAMON — not code, just tell him
 
-31. His provider's "Headshot" field has his website link pasted in, not an actual photo — needs a real image link
-32. Remind him to re-save that same provider entry once fixed, so all the URL fixes apply to it
+36. His provider's "Headshot" field has his website link pasted in, not an actual photo — needs a real image link
+37. Remind him to re-save that same provider entry once fixed, so all the URL fixes apply to it
 
 ---
 

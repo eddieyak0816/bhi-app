@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 2026-08-19 — fix: blank auth-error screen, real Recently Viewed/Bookmarks (session 28 continued)
+
+### Bug fixed — blank white screen on expired/invalid auth links
+- Supabase sends failed email-confirmation links back as a URL hash shaped like `#error=access_denied&error_code=otp_expired&error_description=...` — note no `/` after `#`, unlike this app's own routes (`#/home`, `#/login`). `App.tsx`'s router assumed every hash starts with `#/` and blindly stripped the first 2 characters to read the page name, which mangled `#error=...` into `rror=...`, matched no known page, and rendered nothing.
+- Added `getAuthHashError()` to detect this shape explicitly before the normal routing logic runs, and a dedicated "Link expired" screen with the real reason and a way back to Login, instead of a dead blank page. The broken hash is also cleared from the URL once captured so refreshing doesn't re-trigger the same stale error.
+
+### New feature — real "Recently Viewed" and "Bookmarked Resources" on Home
+- Both were previously fake: `recentResources` was hardcoded to `data.resources.slice(0, 3)` (always the same first 3 resources in the whole library, for every single user) and `bookmarkedCount` was a literal hardcoded `2` — neither reflected anything a user had actually done.
+- New `src/utils/recentlyViewed.ts` — tracks views in `localStorage`, matching the existing (also localStorage-based) bookmark pattern in `ResourcesPage.tsx` rather than introducing a new architecture. `recordView()` called from every place a user actually opens a resource (Library's "Open →" / "View Details", Dashboard's recommendation cards' "View Resource").
+- Dashboard now reads real data on mount instead of receiving hardcoded props from `App.tsx` (which no longer passes them at all).
+- New **"Your Bookmarked Resources"** section on Home — didn't exist before; the bookmark count had nothing to click through to. Looks up real titles for bookmarked IDs via a direct Supabase fetch, shown independent of whether the user has lab data (unlike Recently Viewed, which is gated to users with zero results). Also fixed the "Bookmarked Resources" stat card, which was wired to scroll to the *wrong* section (the same ref as Recently Viewed) — now correctly scrolls to this new section.
+
 ## 2026-08-19 — feat: F92 Nav Links self-service (session 28)
 
 ### New feature — Admin-managed nav dropdown links (multi-menu)

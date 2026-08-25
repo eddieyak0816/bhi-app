@@ -18,6 +18,7 @@ interface MetricField {
   unit: string
   placeholder: string
   step?: string
+  applicableSex?: string // 'male' | 'female' | 'both' — only set for hormone fields
 }
 
 const METRIC_FIELDS: MetricField[] = [
@@ -53,16 +54,27 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
   const [labSets, setLabSets] = useState<LabSet[]>([])
   const [selectedSetId, setSelectedSetId] = useState<string>('')
   const markerRangesRef = React.useRef<Record<string, { min: number; max: number }>>({})
+  // Hormone markers pulled from whatever's actually configured in Admin (marker_category
+  // 'hormone', or applicable_sex male/female as a fallback for older rows — same rule
+  // LabsPage already uses) rather than a hardcoded list, so this automatically reflects
+  // whatever markers exist without needing a code change each time one's added.
+  const [hormoneFields, setHormoneFields] = useState<MetricField[]>([])
 
   // Fetch lab sets and marker ranges once
   useEffect(() => {
-    supabase.from('lab_markers').select('name, min_normal, max_normal').then(({ data }) => {
+    supabase.from('lab_markers').select('name, unit, min_normal, max_normal, applicable_sex, marker_category').then(({ data }) => {
       if (data) {
         const ranges: Record<string, { min: number; max: number }> = {}
-        data.forEach((m: { name: string; min_normal: number | null; max_normal: number | null }) => {
+        const hormones: MetricField[] = []
+        data.forEach((m: { name: string; unit: string | null; min_normal: number | null; max_normal: number | null; applicable_sex?: string | null; marker_category?: string | null }) => {
           ranges[m.name] = { min: m.min_normal ?? 0, max: m.max_normal ?? 9999 }
+          const isHormone = m.marker_category === 'hormone' || m.applicable_sex === 'male' || m.applicable_sex === 'female'
+          if (isHormone) {
+            hormones.push({ markerName: m.name, label: m.name, unit: m.unit || '', placeholder: '', applicableSex: m.applicable_sex || 'both' })
+          }
         })
         markerRangesRef.current = ranges
+        setHormoneFields(hormones)
       }
     })
     fetch(`${BACKEND_URL}/api/lab-sets`)
@@ -98,13 +110,23 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
       })
   }, [open, user?.id])
 
+  // Only show hormone fields that apply to this user's sex (or marked "both"). If the user
+  // hasn't set their sex yet, or a marker has no sex restriction, show it — same permissive
+  // rule LabsPage already uses, rather than hiding everything until sex is set.
+  const visibleHormoneFields = hormoneFields.filter(
+    f => !f.applicableSex || f.applicableSex === 'both' || !userSex || f.applicableSex === userSex
+  )
+
   const handleSave = async () => {
     setSaving(true)
     const savedItems: { markerName: string; value: number }[] = []
     const today = new Date().toISOString().split('T')[0]
 
-    // Save lab marker values
-    const saves = METRIC_FIELDS
+    // Save lab marker values — core NHLS metrics + whichever hormone fields are currently
+    // shown. Hormone markers are never part of the NHLS score itself (bhasV2.ts only scores
+    // the fixed 8 core metrics by name, so it can't even see these), so saving them here is
+    // safe and matches Damon's requirement that hormones display but don't affect scoring.
+    const saves = [...METRIC_FIELDS, ...visibleHormoneFields]
       .filter(f => values[f.markerName]?.trim())
       .map(f => {
         const val = parseFloat(values[f.markerName])
@@ -248,6 +270,35 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
                 </div>
               ))}
             </div>
+
+            {/* Hormone markers — only shown once at least one exists in Admin, and filtered
+                to the current user's sex (or "both"). Kept in a visually separate block since
+                these are a different kind of thing from the 8 core scored metrics above. */}
+            {visibleHormoneFields.length > 0 && (
+              <div style={{ marginBottom: 16, paddingTop: 16, borderTop: `1px solid ${theme.borderColor}` }}>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>Log Your Hormones</div>
+                <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 10 }}>
+                  Tracked separately from your NHLS score — for your personal health awareness only.
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px 16px' }}>
+                  {visibleHormoneFields.map(f => (
+                    <div key={f.markerName}>
+                      <label style={{ fontSize: 12, color: theme.textMuted, display: 'block', marginBottom: 4 }}>
+                        {f.label} {f.unit && <span style={{ fontSize: 11 }}>({f.unit})</span>}
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        placeholder={f.placeholder}
+                        value={values[f.markerName] || ''}
+                        onChange={e => setValues(v => ({ ...v, [f.markerName]: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Waist */}
             <div style={{ marginBottom: 10 }}>
