@@ -41,13 +41,17 @@ export function getRecentlyViewed(limit = 3): Array<{ title: string; type: strin
   }
 }
 
-export function getBookmarkedCount(): number {
+export function getBookmarkedIds(): string[] {
   try {
     const raw = localStorage.getItem('nhl-bookmarks') ?? localStorage.getItem('bhi-bookmarks')
-    if (!raw) return 0
+    if (!raw) return []
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed.length : 0
+    return Array.isArray(parsed) ? parsed : []
   } catch {
-    return 0
+    return []
   }
+}
+
+export function getBookmarkedCount(): number {
+  return getBookmarkedIds().length
 }

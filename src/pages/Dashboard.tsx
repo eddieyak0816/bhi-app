@@ -13,9 +13,12 @@ import ChallengesSection from '../components/ChallengesSection'
 import QuickMetricsPanel from '../components/QuickMetricsPanel'
 import LabSetsComparison from '../components/LabSetsComparison'
 import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
-import { supabase } from '../lib/supabase'
+import { supabase, getStoredJwt } from '../lib/supabase'
 import { getBenchmark } from '../utils/nationalBenchmarks'
-import { getRecentlyViewed, getBookmarkedCount } from '../utils/recentlyViewed'
+import { getRecentlyViewed, getBookmarkedIds } from '../utils/recentlyViewed'
+
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string || ''
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string || ''
 
 interface DashboardProps {
   userEmail?: string
@@ -34,7 +37,24 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
   // subscribed to — matches how this data is only ever written from other pages, not while
   // this component itself is on screen.
   const [recentResources] = useState(() => getRecentlyViewed(3))
-  const [bookmarkedCount] = useState(() => getBookmarkedCount())
+  const [bookmarkedResources, setBookmarkedResources] = useState<Array<{ id: string; title: string; type: string; link_url: string | null }>>([])
+  const bookmarkedCount = bookmarkedResources.length
+
+  // Look up the real titles for whatever's bookmarked (bookmarks themselves are just a list of
+  // resource IDs in localStorage — see ResourcesPage.tsx) so "Your Bookmarked Resources" below
+  // can show actual content instead of just a count.
+  useEffect(() => {
+    const ids = getBookmarkedIds()
+    if (ids.length === 0 || !SUPABASE_URL) return
+    const jwt = getStoredJwt()
+    const idList = ids.map(id => `"${id}"`).join(',')
+    fetch(`${SUPABASE_URL}/rest/v1/resources?select=id,title,type,link_url&id=in.(${idList})`, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${jwt || SUPABASE_ANON_KEY}` },
+    })
+      .then(res => res.ok ? res.json() : [])
+      .then(rows => setBookmarkedResources(rows || []))
+      .catch(() => setBookmarkedResources([]))
+  }, [])
 
   // Get first name from full name
   const firstName = userName?.split(' ')[0] || ''
@@ -46,6 +66,7 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
 
   const nhlsRef = useRef<HTMLDivElement>(null)
   const resourcesRef = useRef<HTMLDivElement>(null)
+  const bookmarksRef = useRef<HTMLDivElement>(null)
   const recommendationsRef = useRef<HTMLDivElement>(null)
 
   const [categoryPreferences, setCategoryPreferences] = useState<string[]>([])
@@ -416,7 +437,7 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
         }}
       >
         {statCard('Bookmarked Resources', bookmarkedCount, '🔖', () => {
-          if (resourcesRef.current) resourcesRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          if (bookmarksRef.current) bookmarksRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
           else onNavigate?.('resources')
         })}
         {statCard('Lab Results', results.length, '⚗️', () => onNavigate?.('labs'))}
@@ -623,6 +644,67 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
               <p style={{ margin: 0 }}>No resources viewed yet. Start exploring!</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Bookmarked Resources — shown whenever the user has any, regardless of lab data
+          (unlike Recently Viewed above, bookmarking isn't tied to having entered labs yet) */}
+      {bookmarkedResources.length > 0 && (
+        <div ref={bookmarksRef} style={{ marginBottom: 32 }}>
+          <h3 style={{ marginBottom: 16, fontSize: 20, fontWeight: 600 }}>Your Bookmarked Resources</h3>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+              gap: 12,
+            }}
+          >
+            {bookmarkedResources.map(resource => (
+              <div
+                key={resource.id}
+                style={{
+                  background: theme.card,
+                  border: `1.5px solid ${theme.borderColor}`,
+                  borderRadius: 8,
+                  padding: 16,
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => {
+                  ;(e.currentTarget as HTMLElement).style.borderColor = theme.blue
+                  ;(e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'
+                }}
+                onMouseLeave={e => {
+                  ;(e.currentTarget as HTMLElement).style.borderColor = theme.borderColor
+                  ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
+                }}
+              >
+                <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 8 }}>{resource.type}</div>
+                <div style={{ fontWeight: 600, marginBottom: 12 }}>{resource.title}</div>
+                {resource.link_url && (
+                  <a
+                    href={resource.link_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'block',
+                      textAlign: 'center',
+                      background: theme.blue,
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 6,
+                      padding: '8px 12px',
+                      fontSize: 13,
+                      textDecoration: 'none',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    Open →
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
