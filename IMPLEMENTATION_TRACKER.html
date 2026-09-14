@@ -1419,6 +1419,21 @@
       <span class="item-status status-done">✅ Done — 2026-08-19</span>
     </div>
 
+    <div class="item done" data-status="done">
+      <div class="item-num">S29-1</div>
+      <div class="item-body">
+        <div class="item-title">Admin-categorised NHLS markers now appear in the metrics panel</div>
+        <div class="item-note">
+          Damon: "if I change a metric to a NHLS metric it doesn't pull into the log your NHL metrics on home page." Correct — <code>QuickMetricsPanel.tsx</code> rendered a hardcoded <code>METRIC_FIELDS</code> array and never read <code>marker_category</code>, so the Admin dropdown was inert for that panel.<br><br>
+          <strong>Built:</strong> any active marker categorised <code>nhls_score</code> that isn't one of the core eight now renders under a new "Additional NHLS Markers" block, using the same permissive sex filter as the hormone block, saved via the same <code>addResult()</code> path.<br><br>
+          <strong>Deliberately excluded:</strong> the scoring engine. <code>bhasV2.ts</code> computes a fixed 8-point score from named derived ratios (HOMA-IR, TG/HDL, WtHR) and cannot score an arbitrary marker, so the block is labelled as logged-not-scored rather than implying otherwise. Making the score model itself configurable is left as an open question for Damon.<br><br>
+          <strong>Verified:</strong> Ferritin appeared, saved, and showed correctly in Lab Results.<br><br>
+          <strong>Also investigated (not a bug):</strong> provider headshot not displaying — stored URL was <code>https://=https://img1.wsimg.com/...</code>, a malformed paste. <code>ensureProtocol()</code> behaved correctly; guidance sent to Damon instead of a code change.
+        </div>
+      </div>
+      <span class="item-status status-done">✅ Done — 2026-09-14</span>
+    </div>
+
   </section>
 
 </body>

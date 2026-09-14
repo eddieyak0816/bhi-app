@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 2026-09-14 — feat: admin-categorised NHLS markers appear in the metrics panel
+
+### Marking a marker "NHLS Score" in Admin now has an effect on Home
+- Damon reported: *"if I change a metric to a NHLS metric it doesn't pull into the log your NHL metrics on home page."* Correct — `QuickMetricsPanel.tsx` rendered a hardcoded `METRIC_FIELDS` array of 8 markers and never consulted `marker_category` at all, so the Admin dropdown was inert for that panel.
+- The existing `lab_markers` fetch already pulled `marker_category`, so this reuses it: any active marker categorised `nhls_score` that isn't already one of the core eight now renders under a new **"Additional NHLS Markers"** block, with the same permissive sex filter used for hormones.
+- Those values save through the same `addResult()` path as everything else in the panel.
+- **Deliberately did not touch the scoring engine.** `bhasV2.ts` computes a fixed 8-point score from named derived ratios (HOMA-IR, TG/HDL, WtHR), so it cannot score an arbitrary marker. Rather than silently implying otherwise, the new block carries a note that these are logged to lab history while the v2.3 score comes from the core metrics. Whether the score model itself should become configurable is a separate, much larger question left open for Damon.
+- Verified end to end with Ferritin (already categorised `nhls_score` in Admin): field appeared, saved, and showed in Lab Results dated correctly.
+
+### Investigated, not a bug — provider photo not displaying
+- Damon reported a provider headshot URL not uploading. The stored value was `https://=https://img1.wsimg.com/...` — a stray `=` plus a manually typed `https://` on top of a URL that already had one. `ensureProtocol()` behaved correctly (it only prepends when no protocol is present); the input was malformed. No code change; guidance sent instead.
+
 ## 2026-08-19 — feat: multi-org providers (session 28 continued)
 
 ### New feature — one provider linked to several organizations
