@@ -38,6 +38,13 @@ Last updated: 2026-09-15
 26. Marking a marker "NHLS Score" in Admin now actually shows it in "Log Your NHLS Metrics" on Home — previously that dropdown had no effect there (the 8 fields were hardcoded). Extra markers appear under "Additional NHLS Markers" and save to lab history. The v2.3 score formula itself is unchanged, so a note makes clear those extras are tracked, not scored. Confirmed tested with Ferritin.
 27. Confirmed NOT a bug: provider photo not showing. The URL had been saved as `https://=https://img1.wsimg.com/...` — `https://` typed manually on top of a pasted URL that already had it, plus a stray `=`. Code behaved correctly; Damon just needs to paste the link on its own.
 
+## ✅ DONE — 2026-09-15 (after the revert below)
+
+27c. **NHLS score now reads Damon's own ranges** — Vitamin B12, Vitamin D, hs-CRP and HbA1c are scored from whatever he sets in Admin -> Markers -> Edit -> Scoring Rules. No new screen: it uses the one Eddie already built. HOMA-IR, TG/HDL and Waist-to-Height stay on the spec, as they're calculated and have no marker row.
+  - **Root cause of the original complaint was a missing database permission, not the scoring code.** The `tags` table had security enabled but no read rule, so the browser silently got nothing back and the score fell back to the spec's >750 cutoff. `logic_rules` and `lab_markers` both had the rule; `tags` had been missed. Added the identical one — see `db/migrations/20260915_tags_read_policy.sql`.
+  - Confirmed tested: B12 600 went from X to green tick, Vitamin D 45 to Improvement, score 5.0 -> 6.5.
+  - **Tell Damon:** B12 and Vitamin D now differ from his spec document (which says binary). He asked for this, but he should know it happened.
+
 ## ⚠️ BUILT THEN REVERTED — 2026-09-15
 
 27b. **Admin score thresholds** — built and deployed, then reverted the same day (620e2c7). The NHLS v2.3 cutoffs in `bhasV2.ts` are hardcoded, so a new table + Admin tab were added to make them editable. Wrong fix: Admin -> Markers -> Edit -> Scoring Rules already stores Optimal/Improvement/Out of Range per marker in `logic_rules` (Criteria tab is a second view onto the same table), and `tagToScore()` already reads it DB-first. Damon's tier data is already entered and complete.

@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-09-15 (later) — feat: NHLS v2.3 scores raw markers from Damon's Admin ranges
+
+### What changed
+- `bhasV2.ts` now scores the four raw markers — **Vitamin B12, Vitamin D, hs-CRP, Hemoglobin A1c** — against whatever Damon has set in Admin → Markers → Edit → Scoring Rules, falling back to the spec cutoffs for anything he hasn't set.
+- **Deliberately unchanged:** HOMA-IR, TG/HDL, Waist-to-Height and Insulin Units/kg stay hardcoded to the spec. They're derived ratios with no `lab_markers` row, so Scoring Rules has nowhere to store cutoffs for them. Usman's call, and it avoids inventing a second home for threshold data.
+- Reuses Eddie's existing machinery rather than adding to it: new `scoreMarkerFromRules()` in `evaluateRules.ts` wraps his `evaluateRule()` and `tagToScore()`, so v2.3 and v1 score the same data identically. No new table, no new admin screen.
+- `EvaluationContext` now exposes the rules it already loads (`adminRules`); `Dashboard` passes them into the score and re-runs when they arrive.
+- Vitamin D and B12 consequently gain an Improvement tier where Damon has defined one — which is what he asked for on 2026-09-14. Note this means those two metrics no longer match his spec document, which specifies binary scoring. Intentional, at his request.
+
+### The actual bug was a missing RLS policy, not the code
+- After shipping the above, B12 at 600 *still* rendered an X. A temporary console diagnostic showed `{rules: 62, tiers: 0}` — the rules arrived, the tier map was empty.
+- Cause: **`tags` had RLS enabled and zero policies**, so nothing could read it. `logic_rules` and `lab_markers` both had "Enable read access for all users"; `tags` had been missed. The tags fetch in `EvaluationContext` is explicitly best-effort, so it failed silently.
+- v1 never surfaced this because `tagToScore()` falls back to hardcoded tag sets. v2.3 had no such fallback and dropped to the spec cutoffs instead.
+- Fixed by adding the identical policy the other two tables already use. Recorded in `db/migrations/20260915_tags_read_policy.sql` (applied by hand first). No PHI — tag names and tiers only, already exposed via `logic_rules.tag_to_apply`.
+
+### Also
+- Saving a marker in Admin now clears the cached Home score (`nhl-bhas-v23-result`), matching what `QuickMetricsPanel` and `ResultsContext` already do — otherwise a threshold change shows the old score until the tab closes.
+- Verified live: B12 600 moved from X to ✓ and Vitamin D 45 to ~, score 5.0 → 6.5. Derived metrics unchanged.
+
 ## 2026-09-15 — revert: admin score thresholds (built, shipped, reverted same day)
 
 ### What happened
