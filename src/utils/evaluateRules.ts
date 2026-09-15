@@ -164,8 +164,11 @@ export function scoreMarkerFromRules(
   rules: LogicRule[],
   tagTierMap?: TagTierMap
 ): { score: BhasScore; label: 'Optimal' | 'Improvement' | 'Out of Range' } | null {
-  const name = markerName.toLowerCase()
-  const markerRules = rules.filter(r => (r.marker_name || '').toLowerCase() === name)
+  // Match names the same way bhasV2's latest() does — ignoring case, hyphens, spaces
+  // and dots — so "hs-CRP", "hs CRP" and "HSCRP" all resolve to the same marker.
+  const norm = (s: string) => (s || '').toLowerCase().replace(/[-\s.]/g, '')
+  const name = norm(markerName)
+  const markerRules = rules.filter(r => norm(r.marker_name) === name)
   if (markerRules.length === 0) return null
 
   const matched = markerRules.find(r => evaluateRule(value, r))

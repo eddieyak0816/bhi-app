@@ -135,6 +135,11 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
 
         // Raw markers score against Damon's Admin ranges where he has set them
         // (Admin → Markers → Edit → Scoring Rules); anything unset stays on the spec.
+        // TEMP diagnostic — remove once the v2.3/admin-rules wiring is confirmed live.
+        console.log('[NHLS] adminRules:', adminRules
+          ? { rules: adminRules.rules.length, tiers: adminRules.tagTierMap?.size,
+              b12: adminRules.rules.filter(r => /b12/i.test(r.marker_name || '')).length }
+          : 'NULL — falling back to spec')
         const v2 = calculateBhasV2Score(
           results.map(r => ({ markerName: r.markerName, value: r.value, date: r.date })),
           profile,
