@@ -14,7 +14,6 @@ import AdminUsersTab from '../components/AdminUsersTab'
 import AdminLabResultsTab from '../components/AdminLabResultsTab'
 import AdminChallengesTab from '../components/AdminChallengesTab'
 import AdminLabSetsPanel from '../components/AdminLabSetsPanel'
-import AdminScoreThresholdsTab from '../components/AdminScoreThresholdsTab'
 
 type Resource = { id?: string; type: string; title: string; description?: string | null; tags: string[]; categories?: string[]; link_url?: string | null; duration_type?: 'short' | 'long' | 'both' }
 type EditData = { tags?: string[]; categories?: string[]; [key: string]: any }
@@ -41,7 +40,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const [ruleForm, setRuleForm] = useState<{ markerName?: string; min_value?: string; max_value?: string; tag_to_apply?: string }>({})
 
 
-  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','nav-links','leagues','users','challenges','lab-results','lab-sets','score-thresholds'] as const
+  const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','nav-links','leagues','users','challenges','lab-results','lab-sets'] as const
   type AdminTab = typeof VALID_TABS[number]
   const [activeTab, setActiveTab] = useState<AdminTab>(VALID_TABS.includes(initialTab as AdminTab) ? (initialTab as AdminTab) : 'resources')
   // Use global theme context
@@ -1361,7 +1360,6 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           { id: 'challenges',    icon: '⚡', label: 'Challenges' },
           ...(isSuperAdmin ? [{ id: 'lab-results' as AdminTab, icon: '🔬', label: 'Lab Data' }] : []),
           { id: 'lab-sets' as AdminTab, icon: '📋', label: 'Lab Sets' },
-          { id: 'score-thresholds' as AdminTab, icon: '📊', label: 'Score Thresholds' },
         ]
         return (
           <div style={{
@@ -4944,11 +4942,6 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       {/* ── Lab Sets Tab (F90) ─────────────────────────────────────────── */}
       {activeTab === 'lab-sets' && (
         <AdminLabSetsPanel theme={theme} />
-      )}
-
-      {/* ── Score Thresholds Tab ───────────────────────────────────────── */}
-      {activeTab === 'score-thresholds' && (
-        <AdminScoreThresholdsTab theme={theme} />
       )}
 
     </div>

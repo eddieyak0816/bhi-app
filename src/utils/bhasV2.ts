@@ -80,41 +80,6 @@ function toLabel(score: 0 | 0.5 | 1): 'Optimal' | 'Improvement' | 'Out of Range'
   return 'Out of Range'
 }
 
-/**
- * Cutoffs for each scored metric. Editable by an admin in Admin → Score Thresholds
- * (table: score_thresholds); DEFAULT_THRESHOLDS below mirrors what those rows are seeded
- * with, and is used verbatim whenever the table can't be read, so scoring never breaks.
- *
- * `optimal` / `improvement` are read in the direction given by `lowerIsBetter`:
- *   lowerIsBetter  → Optimal when value < optimal, Improvement when value <= improvement
- *   !lowerIsBetter → Optimal when value >= optimal, Improvement when value >= improvement
- */
-export interface MetricThreshold {
-  optimal: number
-  improvement: number
-  lowerIsBetter: boolean
-}
-
-export type ThresholdKey =
-  | 'homa_ir' | 'hs_crp' | 'tg_hdl' | 'hba1c' | 'wthr' | 'vitamin_d' | 'vitamin_b12'
-
-export type ScoreThresholds = Record<ThresholdKey, MetricThreshold>
-
-export const DEFAULT_THRESHOLDS: ScoreThresholds = {
-  homa_ir:     { optimal: 2.0,  improvement: 3.0,  lowerIsBetter: true },
-  hs_crp:      { optimal: 1.0,  improvement: 3.0,  lowerIsBetter: true },
-  tg_hdl:      { optimal: 2.0,  improvement: 3.0,  lowerIsBetter: true },
-  hba1c:       { optimal: 5.7,  improvement: 6.5,  lowerIsBetter: true },
-  wthr:        { optimal: 0.50, improvement: 0.56, lowerIsBetter: true },
-  vitamin_d:   { optimal: 50,   improvement: 30,   lowerIsBetter: false },
-  vitamin_b12: { optimal: 750,  improvement: 500,  lowerIsBetter: false },
-}
-
-/** Score a value against one configured threshold. */
-function scoreBy(value: number, t: MetricThreshold): 0 | 0.5 | 1 {
-  return score3(value, t.optimal, t.improvement, t.lowerIsBetter)
-}
-
 function interpretTotal(total: number): 'Optimal' | 'Healthy' | 'Needs Improvement' | 'High Risk' {
   if (total >= 7.0) return 'Optimal'
   if (total >= 5.5) return 'Healthy'
@@ -157,11 +122,8 @@ export interface LabInput {
  */
 export function calculateBhasV2Score(
   results: LabInput[],
-  profile: BhasV2Profile,
-  thresholds: ScoreThresholds = DEFAULT_THRESHOLDS
+  profile: BhasV2Profile
 ): BhasV2Result {
-  // Guard against a partially-populated table: any missing metric falls back to its default.
-  const t: ScoreThresholds = { ...DEFAULT_THRESHOLDS, ...(thresholds || {}) }
   const missingInputs: string[] = []
 
   // ── Pull raw lab values ──────────────────────────────────────────────────
@@ -210,8 +172,8 @@ export function calculateBhasV2Score(
       metricScores.push({
         metric: 'HOMA-IR',
         derived: `HOMA-IR = ${homaIr.toFixed(2)}`,
-        score: scoreBy(homaIr, t.homa_ir),
-        label: toLabel(scoreBy(homaIr, t.homa_ir)),
+        score: score3(homaIr, 2.0, 3.0, true),
+        label: toLabel(score3(homaIr, 2.0, 3.0, true)),
         included: true,
       })
     } else {
@@ -237,8 +199,8 @@ export function calculateBhasV2Score(
     metricScores.push({
       metric: 'hs-CRP',
       derived: `${hsCrp} mg/L`,
-      score: scoreBy(hsCrp, t.hs_crp),
-      label: toLabel(scoreBy(hsCrp, t.hs_crp)),
+      score: score3(hsCrp, 1.0, 3.0, true),
+      label: toLabel(score3(hsCrp, 1.0, 3.0, true)),
       included: true,
     })
   } else {
@@ -250,8 +212,8 @@ export function calculateBhasV2Score(
     metricScores.push({
       metric: 'TG/HDL Ratio',
       derived: `${tgHdlRatio.toFixed(2)} (TG ${triglycerides} / HDL ${hdl})`,
-      score: scoreBy(tgHdlRatio, t.tg_hdl),
-      label: toLabel(scoreBy(tgHdlRatio, t.tg_hdl)),
+      score: score3(tgHdlRatio, 2.0, 3.0, true),
+      label: toLabel(score3(tgHdlRatio, 2.0, 3.0, true)),
       included: true,
     })
   } else {
@@ -259,28 +221,28 @@ export function calculateBhasV2Score(
     if (hdl == null) missingInputs.push('HDL (needed for TG/HDL)')
   }
 
-  // 4. Vitamin D — thresholds from Admin (higher is better)
+  // 4. Vitamin D (binary: >50 = 1, ≤50 = 0)
   if (vitaminD != null) {
+    const vdScore: 0 | 1 = vitaminD > 50 ? 1 : 0
     metricScores.push({
       metric: 'Vitamin D',
       derived: `${vitaminD} ng/mL`,
-      score: scoreBy(vitaminD, t.vitamin_d),
-      label: toLabel(scoreBy(vitaminD, t.vitamin_d)),
+      score: vdScore,
+      label: vdScore === 1 ? 'Optimal' : 'Out of Range',
       included: true,
     })
   } else {
     missingInputs.push('Vitamin D')
   }
 
-  // 5. Vitamin B12 — thresholds from Admin (higher is better).
-  // Was binary >750 pass/fail, which marked normal values like 600 "Out of Range";
-  // Damon asked for 500-750 to read as Improvement (2026-09-14).
+  // 5. Vitamin B12 (binary: >750 = 1, ≤750 = 0)
   if (vitaminB12 != null) {
+    const b12Score: 0 | 1 = vitaminB12 > 750 ? 1 : 0
     metricScores.push({
       metric: 'Vitamin B12',
       derived: `${vitaminB12} pg/mL`,
-      score: scoreBy(vitaminB12, t.vitamin_b12),
-      label: toLabel(scoreBy(vitaminB12, t.vitamin_b12)),
+      score: b12Score,
+      label: b12Score === 1 ? 'Optimal' : 'Out of Range',
       included: true,
     })
   } else {
@@ -292,8 +254,8 @@ export function calculateBhasV2Score(
     metricScores.push({
       metric: 'HbA1c',
       derived: `${hbA1c}%`,
-      score: scoreBy(hbA1c, t.hba1c),
-      label: toLabel(scoreBy(hbA1c, t.hba1c)),
+      score: score3(hbA1c, 5.7, 6.5, true),
+      label: toLabel(score3(hbA1c, 5.7, 6.5, true)),
       included: true,
     })
   } else {
@@ -305,8 +267,8 @@ export function calculateBhasV2Score(
     metricScores.push({
       metric: 'Waist-to-Height Ratio',
       derived: `${wthr.toFixed(3)} (${waistCm} cm / ${heightCm} cm)`,
-      score: scoreBy(wthr, t.wthr),
-      label: toLabel(scoreBy(wthr, t.wthr)),
+      score: score3(wthr, 0.50, 0.56, true),
+      label: toLabel(score3(wthr, 0.50, 0.56, true)),
       included: true,
     })
   } else {

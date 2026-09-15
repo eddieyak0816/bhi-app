@@ -3209,65 +3209,6 @@ app.delete('/api/admin/providers/:id', async (req, res) => {
   }
 });
 
-// ── Score Thresholds (NHLS v2.3 cutoffs, editable in Admin) ───────────────────
-// Damon asked for a way to adjust these himself rather than requesting a code change
-// each time. bhasV2.ts reads the same rows client-side and falls back to its built-in
-// defaults if they're unavailable, so a failure here degrades to today's behaviour.
-
-// GET /api/admin/score-thresholds
-app.get('/api/admin/score-thresholds', async (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  try {
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const { data, error } = await sb.from('score_thresholds').select('*').order('sort_order', { ascending: true });
-    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
-    return res.status(200).json({ thresholds: data || [] });
-  } catch (err) {
-    console.error('GET /api/admin/score-thresholds error:', err.message);
-    return res.status(500).json({ error: 'server_error' });
-  }
-});
-
-// PATCH /api/admin/score-thresholds/:metricKey — update one metric's cutoffs.
-// Only the two numbers are editable; metric_key, label and direction are fixed by the
-// scoring engine, so they're deliberately not writable from here.
-app.patch('/api/admin/score-thresholds/:metricKey', async (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  const { metricKey } = req.params;
-  const optimal = Number(req.body?.optimal_value);
-  const improvement = Number(req.body?.improvement_value);
-  if (!Number.isFinite(optimal) || !Number.isFinite(improvement)) {
-    return res.status(400).json({ error: 'optimal_value and improvement_value must be numbers' });
-  }
-  try {
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
-    const { data: existing, error: readErr } = await sb
-      .from('score_thresholds').select('lower_is_better').eq('metric_key', metricKey).single();
-    if (readErr || !existing) return res.status(404).json({ error: 'unknown metric' });
-
-    // Guard against inverted ranges, which would silently produce nonsense labels:
-    // lower-is-better needs optimal < improvement, higher-is-better the reverse.
-    const valid = existing.lower_is_better ? optimal < improvement : optimal > improvement;
-    if (!valid) {
-      return res.status(400).json({
-        error: existing.lower_is_better
-          ? 'For this metric the Optimal cutoff must be lower than the Improvement cutoff.'
-          : 'For this metric the Optimal cutoff must be higher than the Improvement cutoff.',
-      });
-    }
-
-    const { error } = await sb
-      .from('score_thresholds')
-      .update({ optimal_value: optimal, improvement_value: improvement, updated_at: new Date().toISOString() })
-      .eq('metric_key', metricKey);
-    if (error) return res.status(500).json({ error: 'db_error', detail: error.message });
-    return res.status(200).json({ ok: true });
-  } catch (err) {
-    console.error('PATCH /api/admin/score-thresholds/:metricKey error:', err.message);
-    return res.status(500).json({ error: 'server_error' });
-  }
-});
-
 // ── Nav Links (top nav dropdown, e.g. "25% Off Supplements") ──────────────────
 // Independent from affiliate_products — deleting a product should not remove it
 // from the nav, and vice versa. Public reads (active only) go straight through
