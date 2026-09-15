@@ -28,7 +28,7 @@ interface DashboardProps {
 
 export default function Dashboard({ userEmail = '', userName = '', onNavigate }: DashboardProps) {
   const { theme } = useTheme()
-  const { applicableTags, recommendedResources, bhasResult, loading, error } = useEvaluation()
+  const { applicableTags, recommendedResources, bhasResult, loading, error, adminRules } = useEvaluation()
   const { results, latestLabDate } = useResults()
   const { user } = useAuth()
   // Real personal history instead of the previous hardcoded placeholder (always "first 3
@@ -133,9 +133,12 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
           acuteVisits: data.acute_visits ?? null,
         }
 
+        // Raw markers score against Damon's Admin ranges where he has set them
+        // (Admin → Markers → Edit → Scoring Rules); anything unset stays on the spec.
         const v2 = calculateBhasV2Score(
           results.map(r => ({ markerName: r.markerName, value: r.value, date: r.date })),
-          profile
+          profile,
+          adminRules || undefined
         )
         setBhasV2Result(v2)
         // Cache so the panel reappears instantly on next remount
@@ -168,7 +171,7 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
         }
       })
     return () => { cancelled = true }
-  }, [user?.id, results])
+  }, [user?.id, results, adminRules])
 
   const statCard = (label: string, value: string | number, icon: string, onClick?: () => void) => (
     <div

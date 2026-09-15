@@ -151,6 +151,36 @@ function evaluateRule(userValue: number, rule: LogicRule): boolean {
 }
 
 /**
+ * Score a single marker value against the admin-managed rules for that marker
+ * (Admin → Markers → Edit → Scoring Rules, stored in logic_rules + tags.scoring_tier).
+ *
+ * Returns null when the marker has no rules, or has rules but none match the value —
+ * callers then fall back to their own defaults rather than silently scoring 0.
+ * Reuses evaluateRule/tagToScore so this stays identical to how v1 scores the same data.
+ */
+export function scoreMarkerFromRules(
+  markerName: string,
+  value: number,
+  rules: LogicRule[],
+  tagTierMap?: TagTierMap
+): { score: BhasScore; label: 'Optimal' | 'Improvement' | 'Out of Range' } | null {
+  const name = markerName.toLowerCase()
+  const markerRules = rules.filter(r => (r.marker_name || '').toLowerCase() === name)
+  if (markerRules.length === 0) return null
+
+  const matched = markerRules.find(r => evaluateRule(value, r))
+  if (!matched) return null
+
+  // Only trust a tag whose tier is actually known — an untiered tag would score 0
+  // through tagToScore's fallback, which would silently mark a healthy value as failing.
+  const tier = tagTierMap?.get(matched.tag_to_apply)
+  if (!tier) return null
+
+  const score = tagToScore(matched.tag_to_apply, tagTierMap)
+  return { score, label: scoreToLabel(score) as 'Optimal' | 'Improvement' | 'Out of Range' }
+}
+
+/**
  * Find all tags that apply to a user based on their lab results
  * @param userResults - Array of user lab values
  * @param rules - Array of logic rules from database

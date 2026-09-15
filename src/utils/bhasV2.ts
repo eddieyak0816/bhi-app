@@ -1,3 +1,17 @@
+import { scoreMarkerFromRules, type LogicRule, type TagTierMap } from './evaluateRules'
+
+/**
+ * Admin-managed scoring rules, passed in by the caller (Dashboard) when available.
+ *
+ * When Damon has set ranges for a marker in Admin → Markers → Edit → Scoring Rules,
+ * those win for that marker. Anything he hasn't set stays on the spec values below.
+ * Omit this argument entirely and the engine behaves exactly as the spec describes.
+ */
+export interface AdminRuleContext {
+  rules: LogicRule[]
+  tagTierMap?: TagTierMap
+}
+
 /**
  * BHAS v2.3 Scoring Engine
  *
@@ -122,9 +136,29 @@ export interface LabInput {
  */
 export function calculateBhasV2Score(
   results: LabInput[],
-  profile: BhasV2Profile
+  profile: BhasV2Profile,
+  adminRules?: AdminRuleContext
 ): BhasV2Result {
   const missingInputs: string[] = []
+
+  /**
+   * Score a raw marker against Damon's Admin ranges when he has set them
+   * (Admin → Markers → Edit → Scoring Rules), otherwise fall back to the spec
+   * default passed in. Only raw markers go through here — the derived ratios
+   * (HOMA-IR, TG/HDL, WtHR) stay on the spec, since they have no marker row
+   * for rules to attach to.
+   */
+  const scoreMarker = (
+    markerName: string,
+    value: number,
+    specDefault: () => { score: 0 | 0.5 | 1; label: 'Optimal' | 'Improvement' | 'Out of Range' }
+  ) => {
+    if (adminRules) {
+      const fromAdmin = scoreMarkerFromRules(markerName, value, adminRules.rules, adminRules.tagTierMap)
+      if (fromAdmin) return fromAdmin
+    }
+    return specDefault()
+  }
 
   // ── Pull raw lab values ──────────────────────────────────────────────────
   const fastingGlucose    = latest(results, 'Fasting Glucose')
@@ -199,8 +233,10 @@ export function calculateBhasV2Score(
     metricScores.push({
       metric: 'hs-CRP',
       derived: `${hsCrp} mg/L`,
-      score: score3(hsCrp, 1.0, 3.0, true),
-      label: toLabel(score3(hsCrp, 1.0, 3.0, true)),
+      ...scoreMarker('hs-CRP', hsCrp, () => {
+        const s = score3(hsCrp, 1.0, 3.0, true)
+        return { score: s, label: toLabel(s) }
+      }),
       included: true,
     })
   } else {
@@ -223,12 +259,15 @@ export function calculateBhasV2Score(
 
   // 4. Vitamin D (binary: >50 = 1, ≤50 = 0)
   if (vitaminD != null) {
-    const vdScore: 0 | 1 = vitaminD > 50 ? 1 : 0
+    const vd = scoreMarker('Vitamin D', vitaminD, () => {
+      const s: 0 | 1 = vitaminD > 50 ? 1 : 0
+      return { score: s, label: s === 1 ? 'Optimal' as const : 'Out of Range' as const }
+    })
     metricScores.push({
       metric: 'Vitamin D',
       derived: `${vitaminD} ng/mL`,
-      score: vdScore,
-      label: vdScore === 1 ? 'Optimal' : 'Out of Range',
+      score: vd.score,
+      label: vd.label,
       included: true,
     })
   } else {
@@ -237,12 +276,15 @@ export function calculateBhasV2Score(
 
   // 5. Vitamin B12 (binary: >750 = 1, ≤750 = 0)
   if (vitaminB12 != null) {
-    const b12Score: 0 | 1 = vitaminB12 > 750 ? 1 : 0
+    const b12 = scoreMarker('Vitamin B12', vitaminB12, () => {
+      const s: 0 | 1 = vitaminB12 > 750 ? 1 : 0
+      return { score: s, label: s === 1 ? 'Optimal' as const : 'Out of Range' as const }
+    })
     metricScores.push({
       metric: 'Vitamin B12',
       derived: `${vitaminB12} pg/mL`,
-      score: b12Score,
-      label: b12Score === 1 ? 'Optimal' : 'Out of Range',
+      score: b12.score,
+      label: b12.label,
       included: true,
     })
   } else {
@@ -254,8 +296,10 @@ export function calculateBhasV2Score(
     metricScores.push({
       metric: 'HbA1c',
       derived: `${hbA1c}%`,
-      score: score3(hbA1c, 5.7, 6.5, true),
-      label: toLabel(score3(hbA1c, 5.7, 6.5, true)),
+      ...scoreMarker('Hemoglobin A1c', hbA1c, () => {
+        const s = score3(hbA1c, 5.7, 6.5, true)
+        return { score: s, label: toLabel(s) }
+      }),
       included: true,
     })
   } else {

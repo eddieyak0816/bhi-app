@@ -13,6 +13,12 @@ interface EvaluationContextType {
   loading: boolean
   error: string | null
   reevaluate: () => Promise<void>
+  /**
+   * The admin-managed rules behind the results above, exposed so the v2.3 engine can
+   * score raw markers against Damon's Admin ranges instead of the spec defaults.
+   * Null until the first successful load.
+   */
+  adminRules: { rules: LogicRule[]; tagTierMap: TagTierMap } | null
 }
 
 const EvaluationContext = createContext<EvaluationContextType | undefined>(undefined)
@@ -82,6 +88,7 @@ export function EvaluationProvider({ children }: { children: React.ReactNode }) 
   const [applicableTags, setApplicableTags] = useState<string[]>([])
   const [recommendedResources, setRecommendedResources] = useState<Resource[]>([])
   const [bhasResult, setBhasResult] = useState<BhasResult | null>(null)
+  const [adminRules, setAdminRules] = useState<{ rules: LogicRule[]; tagTierMap: TagTierMap } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -98,6 +105,7 @@ export function EvaluationProvider({ children }: { children: React.ReactNode }) 
       setError(null)
 
       const { rules, resources, tagTierMap } = await loadSharedData()
+      setAdminRules({ rules, tagTierMap })
 
       // Evaluate which tags apply to this user
       const tags = evaluateUserTags(results, rules)
@@ -132,6 +140,7 @@ export function EvaluationProvider({ children }: { children: React.ReactNode }) 
         loading,
         error,
         reevaluate,
+        adminRules,
       }}
     >
       {children}

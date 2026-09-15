@@ -4093,6 +4093,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     if (!patchRes.ok) throw new Error(await patchRes.text().catch(() => String(patchRes.status)))
                     const rulesRes = await fetch(apiUrl(`/api/admin/lab-markers/${id}/rules`), { method: 'PUT', headers: { 'content-type': 'application/json', ...authHeaders() }, body: JSON.stringify({ rules: markerEditRules, tierMessages: markerEditTierMessages }) })
                     if (!rulesRes.ok) throw new Error(await rulesRes.text().catch(() => String(rulesRes.status)))
+                    // Scoring rules feed the v2.3 score, so drop the cached copy the Home
+                    // panel reuses on mount — otherwise the old score is painted after a change.
+                    try { sessionStorage.removeItem('nhl-bhas-v23-result') } catch {}
                     await load()
                     setMarkerModalOpen(false)
                     setMarkerModalOriginalId(null)
