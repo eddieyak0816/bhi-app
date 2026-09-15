@@ -70,8 +70,11 @@ export default function AdminScoreThresholdsTab({ theme }: Props) {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error || 'Save failed')
       }
-      // Drop the cached copy so the next score calculation picks up the new numbers.
+      // Drop both cached copies so the next score calculation picks up the new numbers:
+      // the thresholds themselves, and the previously-computed score the Home panel
+      // reuses on mount (same key QuickMetricsPanel/ResultsContext clear on change).
       clearScoreThresholdCache()
+      try { sessionStorage.removeItem('nhl-bhas-v23-result') } catch {}
       setSavedKey(row.metric_key)
       setTimeout(() => setSavedKey(null), 2000)
       await load()
