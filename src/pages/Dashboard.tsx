@@ -13,6 +13,7 @@ import ChallengesSection from '../components/ChallengesSection'
 import QuickMetricsPanel from '../components/QuickMetricsPanel'
 import LabSetsComparison from '../components/LabSetsComparison'
 import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
+import { loadScoreThresholds } from '../utils/scoreThresholds'
 import { supabase, getStoredJwt } from '../lib/supabase'
 import { getBenchmark } from '../utils/nationalBenchmarks'
 import { getRecentlyViewed, getBookmarkedIds } from '../utils/recentlyViewed'
@@ -110,7 +111,7 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
       .select('sex, height_cm, weight_kg, waist_circumference, waist_unit, grip_strength, is_type1_diabetes, total_daily_insulin_units, has_advanced_care_plan, acute_visits')
       .eq('id', user.id)
       .single()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (!data || cancelled) return
 
         // Convert waist to cm if stored in inches
@@ -133,9 +134,13 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
           acuteVisits: data.acute_visits ?? null,
         }
 
+        // Cutoffs are admin-editable (Admin → Score Thresholds); this falls back to the
+        // engine's built-in defaults if they can't be loaded, so the score always renders.
+        const thresholds = await loadScoreThresholds()
         const v2 = calculateBhasV2Score(
           results.map(r => ({ markerName: r.markerName, value: r.value, date: r.date })),
-          profile
+          profile,
+          thresholds
         )
         setBhasV2Result(v2)
         // Cache so the panel reappears instantly on next remount
