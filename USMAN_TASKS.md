@@ -4,7 +4,7 @@ Client: **Damon DiLorenzo** (Balanced Health Institute / National Health League)
 
 Detailed technical notes for everything below (root causes, exact code changes) are kept in `DEVELOPER_REQUIREMENTS.md`, `CHANGELOG.md`, and `IMPLEMENTATION_TRACKER.html` — this doc is the simple day-to-day tracker.
 
-Last updated: 2026-09-14
+Last updated: 2026-09-15
 
 ---
 
@@ -37,6 +37,13 @@ Last updated: 2026-09-14
 25. Built multi-org providers — one provider can now be linked to several organizations at once (checklist in Admin), not just one-or-global like before. Confirmed tested: checked 2+ orgs, saved, reopened, both stayed checked.
 26. Marking a marker "NHLS Score" in Admin now actually shows it in "Log Your NHLS Metrics" on Home — previously that dropdown had no effect there (the 8 fields were hardcoded). Extra markers appear under "Additional NHLS Markers" and save to lab history. The v2.3 score formula itself is unchanged, so a note makes clear those extras are tracked, not scored. Confirmed tested with Ferritin.
 27. Confirmed NOT a bug: provider photo not showing. The URL had been saved as `https://=https://img1.wsimg.com/...` — `https://` typed manually on top of a pasted URL that already had it, plus a stray `=`. Code behaved correctly; Damon just needs to paste the link on its own.
+
+## ⚠️ BUILT THEN REVERTED — 2026-09-15
+
+27b. **Admin score thresholds** — built and deployed, then reverted the same day (620e2c7). The NHLS v2.3 cutoffs in `bhasV2.ts` are hardcoded, so a new table + Admin tab were added to make them editable. Wrong fix: Admin -> Markers -> Edit -> Scoring Rules already stores Optimal/Improvement/Out of Range per marker in `logic_rules` (Criteria tab is a second view onto the same table), and `tagToScore()` already reads it DB-first. Damon's tier data is already entered and complete.
+  - **Real bug, still open:** `bhasV2.ts` reads none of it — it's a standalone engine with its own hardcoded numbers. That's why B12 600 shows an X while the rest of the app treats it as fine.
+  - **Blocked on Eddie:** HOMA-IR, TG/HDL and Waist-to-Height are derived ratios with no marker row, so `logic_rules` can't express them. Synthetic marker rows, or leave those three in code?
+  - The unused `score_thresholds` table is still in Supabase — drop it once the replacement is agreed.
 
 ## ❌ NOT DONE — needs building
 

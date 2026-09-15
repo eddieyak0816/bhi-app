@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 2026-09-15 — revert: admin score thresholds (built, shipped, reverted same day)
+
+### What happened
+- Damon asked two things: B12 showing an X at normal values (600), and *"Or is there a way where I can adjust those scores"*. The NHLS v2.3 cutoffs in `bhasV2.ts` were hardcoded, so a `score_thresholds` table plus an Admin tab were built and deployed (8f4c158, 33f5b3a), then reverted (620e2c7).
+- **Why reverted:** the ranges already had a home. Admin → Markers → Edit → Scoring Rules stores Optimal / Improvement / Out of Range per marker in `logic_rules`, with the tier on `tags.scoring_tier`; the Criteria tab is a second view onto the same table. `evaluateRules.ts:tagToScore()` already reads that tier DB-first with a hardcoded fallback (F47), and `Low_Normal_B12` was already in `IMPROVEMENT_TAGS`. Both the data and the pattern existed.
+- Verified in Supabase: the scored markers have complete tier sets entered (e.g. Fasting Glucose — optimal 70–90, improvement 90–124, out_of_range 0–62 and 125–800), with zero untiered rules.
+
+### The actual bug, still open
+- `bhasV2.ts` (NHLS v2.3, the 8-point pills on Home) was written as a standalone engine reading none of the above — its own hardcoded cutoffs, no connection to `logic_rules` or `scoring_tier`. That is why B12 at 600 scored 0 and rendered an X while the rest of the app treated the same value as fine.
+- Correct fix is to have v2.3 read `logic_rules` the way v1 does, not to add a second source of the same numbers.
+- **Blocked on a design decision:** HOMA-IR, TG/HDL and Waist-to-Height are derived ratios (insulin×glucose/405, TG÷HDL, waist÷height) with no `lab_markers` row, so `logic_rules` cannot express them as it stands. Either they get synthetic marker rows or they stay in code. Eddie's call.
+
+### Left in place deliberately
+- The `score_thresholds` table still exists in Supabase, unread by any code. Dropping it is irreversible and can wait until the replacement is agreed.
+
+### Process note
+- The parallel system was built without checking the Markers editor — only the Criteria tab was reviewed before concluding no home existed. On this repo, establish where data currently lives, and confirm it, before adding a table or screen.
+
 ## 2026-09-14 — feat: admin-categorised NHLS markers appear in the metrics panel
 
 ### Marking a marker "NHLS Score" in Admin now has an effect on Home
