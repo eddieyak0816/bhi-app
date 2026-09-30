@@ -101,6 +101,15 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
     } catch { return null }
   })
 
+  // Recompute whenever this page mounts, not only when results/rules change. Navigating
+  // Admin → Home is a client-side route change: the effect's other deps are identical, so
+  // without this it never re-runs and a score cleared by an admin save is never refilled
+  // (the user sees "Calculating…" until they reload the whole page).
+  const [recomputeKey, setRecomputeKey] = useState(0)
+  useEffect(() => {
+    if (!sessionStorage.getItem('nhl-bhas-v23-result')) setRecomputeKey(k => k + 1)
+  }, [])
+
   useEffect(() => {
     if (!user?.id) return
 
@@ -176,7 +185,7 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
         }
       })
     return () => { cancelled = true }
-  }, [user?.id, results, adminRules])
+  }, [user?.id, results, adminRules, recomputeKey])
 
   const statCard = (label: string, value: string | number, icon: string, onClick?: () => void) => (
     <div
