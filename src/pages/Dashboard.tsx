@@ -15,6 +15,7 @@ import LabSetsComparison from '../components/LabSetsComparison'
 import { calculateBhasV2Score, type BhasV2Result, type BhasV2Profile } from '../utils/bhasV2'
 import { supabase, getStoredJwt } from '../lib/supabase'
 import { getBenchmark } from '../utils/nationalBenchmarks'
+import { loadMarkerGroups } from '../utils/markerGroups'
 import { getRecentlyViewed, getBookmarkedIds } from '../utils/recentlyViewed'
 
 const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string || ''
@@ -110,7 +111,7 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
       .select('sex, height_cm, weight_kg, waist_circumference, waist_unit, grip_strength, is_type1_diabetes, total_daily_insulin_units, has_advanced_care_plan, acute_visits')
       .eq('id', user.id)
       .single()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (!data || cancelled) return
 
         // Convert waist to cm if stored in inches
@@ -135,10 +136,14 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
 
         // Raw markers score against Damon's Admin ranges where he has set them
         // (Admin → Markers → Edit → Scoring Rules); anything unset stays on the spec.
+        // Interchangeable marker groups (Admin → Markers → Marker Groups). Returns an
+        // empty list on any failure, in which case the score is exactly as before.
+        const groups = await loadMarkerGroups()
         const v2 = calculateBhasV2Score(
           results.map(r => ({ markerName: r.markerName, value: r.value, date: r.date })),
           profile,
-          adminRules || undefined
+          adminRules || undefined,
+          groups
         )
         setBhasV2Result(v2)
         // Cache so the panel reappears instantly on next remount
@@ -233,7 +238,7 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
                 {bhasV2Result.totalScore.toFixed(1)}
               </div>
               <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                / 8.0
+                / {bhasV2Result.maxPossible.toFixed(1)}
               </div>
             </div>
 
@@ -260,7 +265,7 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
                 </span>
               </div>
               <div style={{ fontSize: 12, color: theme.textMuted }}>
-                {bhasV2Result.metricScores.length} of 8 metrics scored · uses derived ratios ({' '}
+                {bhasV2Result.metricScores.filter(m => m.included).length} of {bhasV2Result.maxPossible} metrics scored · uses derived ratios ({' '}
                 <a
                   href="https://en.wikipedia.org/wiki/Homeostatic_model_assessment"
                   target="_blank"

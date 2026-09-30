@@ -3209,6 +3209,96 @@ app.delete('/api/admin/providers/:id', async (req, res) => {
   }
 });
 
+// ── Marker Groups (interchangeable markers sharing one NHLS score slot) ──────
+//
+// Several markers can measure the same thing — HbA1c / fructosamine / c-peptide /
+// HOMA-IR all describe glucose control. A group makes them ONE score slot filled by the
+// highest-priority result the patient actually has, so nobody loses a point for a test
+// their doctor didn't order. Damon manages these himself; no code change per tweak.
+
+function adminGuard(req, res) {
+  if (!BACKEND_API_KEY || !SERVICE_ROLE || !SUPABASE_URL) { res.status(501).json({ error: 'backend-disabled' }); return null; }
+  const incomingKey = req.header('x-backend-api-key') || '';
+  if (!incomingKey || incomingKey !== BACKEND_API_KEY) { res.status(403).json({ error: 'forbidden' }); return null; }
+  return createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+}
+
+app.get('/api/admin/marker-groups', async (req, res) => {
+  const sb = adminGuard(req, res); if (!sb) return;
+  try {
+    const [{ data: groups, error: gErr }, { data: members, error: mErr }] = await Promise.all([
+      sb.from('marker_groups').select('*').order('sort_order'),
+      sb.from('marker_group_members').select('*').order('sort_order'),
+    ]);
+    if (gErr || mErr) {
+      console.error('admin-marker-groups-error', gErr || mErr);
+      return res.status(500).json({ error: 'db_error', detail: gErr || mErr });
+    }
+    const byGroup = {};
+    for (const m of (members || [])) (byGroup[m.group_key] = byGroup[m.group_key] || []).push(m);
+    return res.status(200).json({
+      groups: (groups || []).map(g => ({ ...g, members: byGroup[g.group_key] || [] })),
+    });
+  } catch (err) {
+    console.error('admin-marker-groups-exception', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Replaces a group's whole member list in one call — simpler and safer than per-row
+// edits, since order matters and a half-applied reorder would score people wrongly.
+app.put('/api/admin/marker-groups/:groupKey/members', async (req, res) => {
+  const sb = adminGuard(req, res); if (!sb) return;
+  const { groupKey } = req.params;
+  const { markerNames } = req.body || {};
+  if (!Array.isArray(markerNames)) return res.status(400).json({ error: 'missing-markerNames' });
+
+  const clean = markerNames.map(n => String(n || '').trim()).filter(Boolean);
+  if (new Set(clean.map(n => n.toLowerCase())).size !== clean.length) {
+    return res.status(400).json({ error: 'duplicate-marker', message: 'The same marker is listed twice in this group.' });
+  }
+  try {
+    const { data: grp } = await sb.from('marker_groups').select('group_key').eq('group_key', groupKey).maybeSingle();
+    if (!grp) return res.status(404).json({ error: 'group-not-found' });
+
+    const { error: delErr } = await sb.from('marker_group_members').delete().eq('group_key', groupKey);
+    if (delErr) throw delErr;
+    if (clean.length > 0) {
+      const rows = clean.map((marker_name, i) => ({ group_key: groupKey, marker_name, sort_order: i + 1 }));
+      const { error: insErr } = await sb.from('marker_group_members').insert(rows);
+      if (insErr) throw insErr;
+    }
+    try {
+      await sb.rpc('log_admin_action', { p_admin_text: 'dev', p_action: 'update_marker_group_members', p_target_table: 'marker_group_members', p_target_id: null, p_details: { group_key: groupKey, markerNames: clean } });
+    } catch (err) { console.warn('admin-audit-exception', err) }
+    return res.status(200).json({ ok: true, group_key: groupKey, markerNames: clean });
+  } catch (err) {
+    console.error('admin-marker-group-members-exception', err);
+    return res.status(500).json({ error: 'server_error', detail: String(err && err.message || err) });
+  }
+});
+
+app.patch('/api/admin/marker-groups/:groupKey', async (req, res) => {
+  const sb = adminGuard(req, res); if (!sb) return;
+  const { groupKey } = req.params;
+  const { label, description, is_active, sort_order } = req.body || {};
+  const patch = {};
+  if (label !== undefined) { if (!String(label).trim()) return res.status(400).json({ error: 'empty-label' }); patch.label = String(label).trim(); }
+  if (description !== undefined) patch.description = description || null;
+  if (is_active !== undefined) patch.is_active = !!is_active;
+  if (sort_order !== undefined) patch.sort_order = Number(sort_order) || 0;
+  if (Object.keys(patch).length === 0) return res.status(400).json({ error: 'nothing-to-update' });
+  patch.updated_at = new Date().toISOString();
+  try {
+    const { data, error } = await sb.from('marker_groups').update(patch).eq('group_key', groupKey).select('*');
+    if (error) { console.error('admin-marker-group-patch-error', error); return res.status(500).json({ error: 'db_error', detail: error }); }
+    return res.status(200).json(Array.isArray(data) ? data[0] : data);
+  } catch (err) {
+    console.error('admin-marker-group-patch-exception', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // ── Nav Links (top nav dropdown, e.g. "25% Off Supplements") ──────────────────
 // Independent from affiliate_products — deleting a product should not remove it
 // from the nav, and vice versa. Public reads (active only) go straight through

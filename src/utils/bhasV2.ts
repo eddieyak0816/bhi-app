@@ -1,4 +1,5 @@
 import { scoreMarkerFromRules, type LogicRule, type TagTierMap } from './evaluateRules'
+import type { MarkerGroup } from './markerGroups'
 
 /**
  * Admin-managed scoring rules, passed in by the caller (Dashboard) when available.
@@ -45,7 +46,7 @@ export interface BhasV2MetricScore {
 export interface BhasV2Result {
   metricScores: BhasV2MetricScore[]
   totalScore: number          // sum of included scores
-  maxPossible: number         // always 8.0
+  maxPossible: number         // number of scored slots — 8 by default, fewer when markers are grouped
   label: 'Optimal' | 'Healthy' | 'Needs Improvement' | 'High Risk'
   // Derived values (stored for leaderboard/analytics use)
   derived: {
@@ -94,6 +95,107 @@ function toLabel(score: 0 | 0.5 | 1): 'Optimal' | 'Improvement' | 'Out of Range'
   return 'Out of Range'
 }
 
+/**
+ * Collapse interchangeable metrics into one slot each.
+ *
+ * For every configured group, find which of its markers produced a score above. The
+ * winner is the FIRST one present in the group's priority order — Damon's ordering is
+ * clinical (2026-09-28): HbA1c and fructosamine reflect weeks-to-months, so they outrank
+ * a single-moment c-peptide or HOMA-IR reading. The losers are dropped entirely rather
+ * than left in as missing, which is the whole point: a patient who only had HbA1c should
+ * not also be marked down for the HOMA-IR nobody ordered.
+ *
+ * A group whose markers are all missing still contributes one slot, marked Missing, so
+ * the denominator stays honest — the patient genuinely has no glucose measure at all.
+ *
+ * Ungrouped metrics pass through untouched, and no groups at all means no change.
+ */
+function applyMarkerGroups(
+  metricScores: BhasV2MetricScore[],
+  groups?: MarkerGroup[]
+): BhasV2MetricScore[] {
+  if (!groups || groups.length === 0) return metricScores
+
+  // A metric's display name doesn't always equal its lab marker name — the engine
+  // reads the marker "Hemoglobin A1c" but labels the metric "HbA1c". An admin naming
+  // either one in a group should match, so fold the known pairs to one spelling.
+  const SYNONYMS: Record<string, string> = {
+    hemoglobina1c: 'hba1c',
+    haemoglobina1c: 'hba1c',
+    a1c: 'hba1c',
+    waisttoheightratio: 'wthr',
+    tghdlratio: 'tghdl',
+  }
+  const norm = (s: string) => {
+    const base = (s || '').toLowerCase().replace(/[-\s.]/g, '')
+    return SYNONYMS[base] || base
+  }
+
+  // Every marker name claimed by any group, so ungrouped metrics can pass through.
+  const claimed = new Set<string>()
+  for (const g of groups) for (const n of g.markerNames) claimed.add(norm(n))
+
+  const out: BhasV2MetricScore[] = []
+  const usedGroupKeys = new Set<string>()
+
+  for (const m of metricScores) {
+    const key = norm(m.metric)
+    if (!claimed.has(key)) { out.push(m); continue }
+
+    // This metric belongs to a group — emit the group once, in the position of its
+    // first member encountered, so the pill order on Home stays stable.
+    const group = groups.find(g => g.markerNames.some(n => norm(n) === key))
+    if (!group || usedGroupKeys.has(group.groupKey)) continue
+    usedGroupKeys.add(group.groupKey)
+
+    const present = metricScores.filter(
+      s => group.markerNames.some(n => norm(n) === norm(s.metric)) && s.included
+    )
+    if (present.length === 0) {
+      out.push({
+        metric: group.label,
+        derived: 'No result recorded',
+        score: 0,
+        label: 'Missing',
+        included: false,
+      })
+      continue
+    }
+
+    // Priority order decides the winner, not the value — a lower-priority optimal
+    // result does not override a higher-priority one.
+    let winner = present[0]
+    let best = Number.MAX_SAFE_INTEGER
+    for (const s of present) {
+      const rank = group.markerNames.findIndex(n => norm(n) === norm(s.metric))
+      if (rank !== -1 && rank < best) { best = rank; winner = s }
+    }
+
+    out.push({
+      ...winner,
+      metric: group.label,
+      // Name the test that actually scored, so a clinician can see which one was used.
+      derived: `${winner.metric}: ${winner.derived}`,
+    })
+  }
+
+  // A group whose markers never reached metricScores at all (e.g. fructosamine, which
+  // the engine doesn't compute) still deserves a slot, or the denominator would silently
+  // shrink and inflate everyone's percentage.
+  for (const g of groups) {
+    if (usedGroupKeys.has(g.groupKey)) continue
+    out.push({
+      metric: g.label,
+      derived: 'No result recorded',
+      score: 0,
+      label: 'Missing',
+      included: false,
+    })
+  }
+
+  return out
+}
+
 function interpretTotal(total: number): 'Optimal' | 'Healthy' | 'Needs Improvement' | 'High Risk' {
   if (total >= 7.0) return 'Optimal'
   if (total >= 5.5) return 'Healthy'
@@ -137,7 +239,8 @@ export interface LabInput {
 export function calculateBhasV2Score(
   results: LabInput[],
   profile: BhasV2Profile,
-  adminRules?: AdminRuleContext
+  adminRules?: AdminRuleContext,
+  markerGroups?: MarkerGroup[]
 ): BhasV2Result {
   const missingInputs: string[] = []
 
@@ -329,17 +432,32 @@ export function calculateBhasV2Score(
     included: true,
   })
 
+  // ── Interchangeable marker groups ─────────────────────────────────────────
+  // Several markers can measure the same thing (HbA1c / fructosamine / c-peptide /
+  // HOMA-IR all describe glucose control). Where an admin has grouped them, they
+  // collapse into ONE slot scored by the highest-priority marker the patient actually
+  // has — so nobody loses a point for a test their doctor didn't order.
+  //
+  // Everything above ran unchanged, so with no groups configured this is a no-op and
+  // the score is identical to before.
+  const groupedScores = applyMarkerGroups(metricScores, markerGroups)
+
   // ── Totals ────────────────────────────────────────────────────────────────
-  const scoredMetrics = metricScores.filter(m => m.included)
+  const scoredMetrics = groupedScores.filter(m => m.included)
   const totalScore = scoredMetrics.reduce((sum, m) => sum + m.score, 0)
 
-  // Require at least 4 of 8 scored metrics to show the panel
+  // The denominator follows the metric list: merging two metrics into one group takes
+  // the total from 8 to 7, which is what Damon asked for (2026-09-19, "if a metric is
+  // removed it would drop the scoring to out of 7").
+  const maxPossible = groupedScores.length
+
+  // Require at least 4 scored metrics to show the panel
   const hasEnoughData = scoredMetrics.length >= 4
 
   return {
-    metricScores,
+    metricScores: groupedScores,
     totalScore,
-    maxPossible: 8,
+    maxPossible,
     label: interpretTotal(totalScore),
     derived: { homaIr, tgHdlRatio, gripRatio, wthr, insulinUnitsPerKg },
     biometrics: {
