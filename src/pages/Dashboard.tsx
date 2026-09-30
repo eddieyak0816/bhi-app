@@ -212,6 +212,18 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
       <StaleLabBanner latestLabDate={latestLabDate} onNavigate={onNavigate} />
 
       {/* NHLS Score Panel — shown only when enough data exists */}
+      {/* No cached result yet (first load, or an admin just changed the scoring config and
+          cleared it) — hold the space with a placeholder rather than dropping the panel,
+          which reads as "my score vanished" instead of "still loading". */}
+      {!bhasV2Result && results.length > 0 && (
+        <div style={{
+          background: theme.card, border: `1.5px solid ${theme.borderColor}`, borderRadius: 10,
+          padding: '20px 24px', marginBottom: 20, color: theme.textMuted, fontSize: 13,
+        }}>
+          Calculating your NHLS score&hellip;
+        </div>
+      )}
+
       {bhasV2Result && bhasV2Result.hasEnoughData && (
         <div
           ref={nhlsRef}

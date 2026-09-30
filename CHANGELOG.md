@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## 2026-09-30 — feat: interchangeable marker groups (NHLS v2.3)
+
+### Why
+- Damon (2026-09-19): *"Can we make HOMA-IR and HGB A1C interchangeable so people can use any of them to help assess their metabolism and glucose control"*, and (2026-09-26) *"Are you able to add c peptide, HOMA-IR and hemoglobin A1C to one category"*.
+- HbA1c and HOMA-IR both describe glucose control, but the score counted them as two separate points out of 8. A patient whose doctor ordered one and not the other lost a point for a test they never had — nothing to do with their health.
+
+### What a group is
+- One score slot several markers can fill. The engine walks the group in priority order and scores the **first marker the patient has a result for**; the rest are dropped, not marked missing.
+- Seeded with Damon's two groups and his exact ordering (2026-09-28): Glucose Control = HbA1c → Fructosamine → C-Peptide → HOMA-IR; Vitamin B12 = Methylmalonic Acid → RBC B12 → B12. His reasoning is clinical, not arbitrary — the first two reflect weeks-to-months, so they outrank a single-moment reading.
+- Priority beats value: a lower-priority optimal result does **not** override a higher-priority poor one. Damon's answer named three rules (most recent / any in good range / tier order) that can disagree; the tier order was implemented because it is the one he justified. Worth confirming with him now it's visible.
+- Two markers in one group takes the score from 8 to 7, which he confirmed he wants (*"if a metric is removed it would drop the scoring to out of 7"*).
+
+### Dynamic, per Eddie
+- New **Admin → Marker Groups** tab: add a marker, reorder with arrows, remove, save. No code change per clinical tweak, which was Eddie's explicit requirement.
+- `PUT /api/admin/marker-groups/:groupKey/members` replaces a group's whole member list in one call — order matters, and a half-applied reorder would score people wrongly.
+
+### Safety
+- `maxPossible` is now the number of scored slots rather than a hardcoded 8, so the denominator always matches the metric list.
+- Every failure path — table missing, offline, malformed rows, empty group — returns no groups, and the engine then behaves **exactly** as before. Verified: with no groups the score is byte-identical to the previous behaviour.
+- The derived ratios (HOMA-IR, TG/HDL, WtHR) still score against the spec values, and Eddie's v1 engine (`evaluateRules.ts`, `EvaluationContext.tsx`) is untouched — confirmed by diff. Groups only decide *which* metric fills a slot; Damon's Admin ranges still decide whether that value is optimal.
+
+### Bugs found while building
+- **HbA1c appeared twice.** The engine labels the metric `HbA1c` but reads the marker `Hemoglobin A1c`; name normalisation stripped spaces and hyphens but couldn't equate those. Added a small synonym map so an admin naming either spelling matches. Caught by testing before wiring, not in production.
+- **Home and the health report disagreed on the denominator** — Home hardcoded `/ 8.0`, the report hardcoded `/ 7.00`. Pre-existing, unrelated to groups. Both now read `maxPossible`.
+- **Panel vanished after an admin save.** Clearing the cached score left `bhasV2Result` null, and the panel renders only when it exists — so it disappeared until the refetch landed, reading as "my score is gone". Now shows a "Calculating…" placeholder.
+
+### Still open
+- Fructosamine, C-Peptide, RBC B12 and Methylmalonic Acid are named in the groups but **do not exist as markers yet**. The groups skip them harmlessly until someone creates them; Damon needs to add them with their clinical ranges (Admin → Markers), as only he has those values.
+
 ## 2026-09-15 (later) — feat: NHLS v2.3 scores raw markers from Damon's Admin ranges
 
 ### What changed

@@ -4,7 +4,7 @@ Client: **Damon DiLorenzo** (Balanced Health Institute / National Health League)
 
 Detailed technical notes for everything below (root causes, exact code changes) are kept in `DEVELOPER_REQUIREMENTS.md`, `CHANGELOG.md`, and `IMPLEMENTATION_TRACKER.html` — this doc is the simple day-to-day tracker.
 
-Last updated: 2026-09-15
+Last updated: 2026-09-30
 
 ---
 
@@ -37,6 +37,14 @@ Last updated: 2026-09-15
 25. Built multi-org providers — one provider can now be linked to several organizations at once (checklist in Admin), not just one-or-global like before. Confirmed tested: checked 2+ orgs, saved, reopened, both stayed checked.
 26. Marking a marker "NHLS Score" in Admin now actually shows it in "Log Your NHLS Metrics" on Home — previously that dropdown had no effect there (the 8 fields were hardcoded). Extra markers appear under "Additional NHLS Markers" and save to lab history. The v2.3 score formula itself is unchanged, so a note makes clear those extras are tracked, not scored. Confirmed tested with Ferritin.
 27. Confirmed NOT a bug: provider photo not showing. The URL had been saved as `https://=https://img1.wsimg.com/...` — `https://` typed manually on top of a pasted URL that already had it, plus a stray `=`. Code behaved correctly; Damon just needs to paste the link on its own.
+
+## ✅ DONE — 2026-09-30
+
+28. **Interchangeable marker groups** — markers that measure the same thing now share ONE point in the score, so nobody loses a point for a test their doctor didn't order. Glucose Control = HbA1c -> Fructosamine -> C-Peptide -> HOMA-IR; Vitamin B12 = MMA -> RBC B12 -> B12. Score went 8 -> 7 automatically.
+  - Damon manages it himself: **Admin -> Marker Groups**. Add, reorder, remove, save. No developer needed for future changes (Eddie's requirement).
+  - Confirmed tested live: Glucose Control pill showed "HbA1c: 5.4%"; moving HOMA-IR to 1st changed it to "HOMA-IR = 0.86"; moving it back restored HbA1c.
+  - **Needs Damon:** Fructosamine, C-Peptide, RBC B12 and Methylmalonic Acid don't exist as markers yet. He must add them in Admin -> Markers with their clinical ranges — only he has those numbers. Until then the groups skip them harmlessly.
+  - **Confirm with Damon:** he gave three rules that can disagree (most recent / any in good range / tier order). The tier order was built, since that's the one he explained clinically. Worth showing him now it's live.
 
 ## ✅ DONE — 2026-09-15 (after the revert below)
 
