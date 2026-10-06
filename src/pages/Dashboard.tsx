@@ -550,7 +550,9 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
                     background: theme.card,
                     border: `1.5px solid ${theme.borderColor}`,
                     borderRadius: 8,
-                    padding: 16,
+                    // Padding sits on the inner wrapper instead, so a thumbnail can run
+                    // flush to the card edges the way the Library grid renders it.
+                    overflow: 'hidden',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                   }}
@@ -563,6 +565,18 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
                     ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
                   }}
                 >
+                  {/* Damon, 2026-10-06: resource thumbnails uploaded in Admin showed in
+                      the Library but never on Home — this card simply didn't render one.
+                      Same guard and sizing as the Library grid; cards without an image
+                      just start at the text, as they do there. */}
+                  {resource.thumbnail_url && (
+                    <img
+                      src={resource.thumbnail_url}
+                      alt=""
+                      style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }}
+                    />
+                  )}
+                  <div style={{ padding: 16 }}>
                   <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
                     📌 Recommended
                   </div>
@@ -587,6 +601,7 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
                   >
                     View Resource
                   </button>
+                  </div>
                 </div>
               ))}
             </div>

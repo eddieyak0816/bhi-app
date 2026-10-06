@@ -224,6 +224,8 @@ export interface Resource {
   link_url?: string
   categories?: string[]
   duration_type?: 'short' | 'long' | 'both'
+  /** Uploaded in Admin → Resources. Already fetched (select=*); rendered on Home and in the Library. */
+  thumbnail_url?: string | null
 }
 
 export function getRecommendedResources(
