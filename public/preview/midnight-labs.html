@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Lab Results — Design Preview 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B1211; --bg-2:#111A19; --surface:#16211F; --surface-2:#1C2927;
+    --ink:#F2F5F4; --ink-soft:#9DAEAB; --ink-faint:#6B7D7A;
+    --gold:#D9A441; --gold-soft:#E8C27E; --gold-tint:rgba(217,164,65,.12);
+    --sage:#6FBF9E; --sage-tint:rgba(111,191,158,.13);
+    --clay:#D97757; --clay-tint:rgba(217,119,87,.14);
+    --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.12);
+    --r:16px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  .serif{font-family:Fraunces,Georgia,serif;font-optical-sizing:auto}
+
+  .banner{background:var(--gold);color:#17120A;font-size:12.5px;font-weight:600;padding:9px 20px;text-align:center}
+
+  .nav{position:sticky;top:0;z-index:50;background:rgba(11,18,17,.78);backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;gap:30px;height:70px}
+  .logo{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:17px;line-height:1.1;flex-shrink:0}
+  .logo span{color:var(--gold)}
+  .nav-links{display:flex;gap:28px;font-size:14px;color:var(--ink-soft);font-weight:500}
+  .nav-links a{padding:3px 0;border-bottom:1px solid transparent;white-space:nowrap}
+  .nav-links a.on{color:var(--ink);border-bottom-color:var(--gold)}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--gold-tint);color:var(--gold-soft);display:grid;place-items:center;font-weight:600;font-size:12.5px;border:1px solid rgba(217,164,65,.25)}
+  .burger{display:none;width:40px;height:40px;border:1px solid var(--line-2);background:var(--surface);border-radius:11px;cursor:pointer;padding:0;place-items:center}
+  .burger span{display:block;width:17px;height:1.6px;background:var(--ink);border-radius:2px;position:relative;transition:.25s}
+  .burger span::before,.burger span::after{content:'';position:absolute;left:0;width:17px;height:1.6px;background:var(--ink);border-radius:2px;transition:.25s}
+  .burger span::before{top:-5.5px} .burger span::after{top:5.5px}
+  #mnav:checked ~ .nav .burger span{background:transparent}
+  #mnav:checked ~ .nav .burger span::before{top:0;transform:rotate(45deg)}
+  #mnav:checked ~ .nav .burger span::after{top:0;transform:rotate(-45deg)}
+  #mnav{display:none}
+  .sheet{display:none}
+
+  .head{padding:50px 0 30px;display:flex;align-items:flex-end;justify-content:space-between;gap:22px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .kicker{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:14px}
+  h1{font-family:Fraunces,Georgia,serif;font-size:clamp(32px,5.4vw,48px);line-height:1.06;font-weight:300;margin:0}
+  h1 em{font-style:italic;color:var(--gold-soft)}
+  .head p{margin:12px 0 0;font-size:14px;color:var(--ink-soft)}
+  .acts{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{font:inherit;font-size:13.5px;font-weight:600;padding:12px 22px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap;transition:.2s}
+  .btn:hover{border-color:var(--gold);color:var(--gold-soft)}
+  .btn.pri{background:var(--gold);border-color:var(--gold);color:#17120A}
+  .btn.pri:hover{color:#17120A;opacity:.92}
+
+  .bar{display:flex;gap:9px;overflow-x:auto;padding:24px 0;scrollbar-width:none}
+  .bar::-webkit-scrollbar{display:none}
+  .pill{font-size:12.5px;font-weight:600;padding:9px 18px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-soft);white-space:nowrap;cursor:pointer;transition:.2s}
+  .pill:hover{border-color:var(--line-2);color:var(--ink)}
+  .pill.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+
+  .lab{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:16px 0 20px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(282px,1fr));gap:18px;margin-bottom:46px}
+  .m{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;position:relative;transition:.2s}
+  .m:hover{border-color:var(--line-2);background:var(--surface-2)}
+  .m-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .m-n{font-size:14px;font-weight:500;color:var(--ink-soft);letter-spacing:-.005em}
+  .st{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;padding:5px 11px;border-radius:999px;white-space:nowrap}
+  .st-ok{background:var(--sage-tint);color:var(--sage)}
+  .st-mid{background:var(--gold-tint);color:var(--gold-soft)}
+  .st-bad{background:var(--clay-tint);color:var(--clay)}
+  .m-v{font-family:Fraunces,Georgia,serif;font-size:38px;font-weight:300;line-height:1;letter-spacing:-.02em}
+  .m-v small{font-size:14px;font-family:Inter,sans-serif;color:var(--ink-faint);margin-left:5px;font-weight:400}
+
+  .scale{margin-top:22px}
+  .track{height:2px;background:var(--line-2);position:relative}
+  .band{position:absolute;top:0;height:2px;background:var(--sage);opacity:.45}
+  .pin{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;transform:translate(-50%,-50%);border:2.5px solid var(--bg)}
+  .ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-faint);margin-top:12px}
+  .ends b{color:var(--ink-soft);font-weight:500}
+  .m-f{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-faint)}
+  .tr{font-weight:600}
+  .tr.up{color:var(--sage)} .tr.dn{color:var(--clay)}
+
+  .flag{position:fixed;right:15px;bottom:15px;background:var(--gold);color:#17120A;font-size:11.5px;font-weight:700;padding:10px 16px;border-radius:999px;z-index:99}
+
+  @media(max-width:760px){
+    .nav-links{display:none}
+    .burger{display:grid}
+    .sheet{display:block;position:fixed;inset:70px 0 auto;background:var(--surface);border-bottom:1px solid var(--line-2);z-index:49;transform:translateY(-130%);transition:transform .28s cubic-bezier(.4,0,.2,1);padding:8px 0 14px}
+    #mnav:checked ~ .sheet{transform:translateY(0)}
+    .sheet a{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;font-size:16px;font-weight:500;border-bottom:1px solid var(--line)}
+    .sheet a:last-child{border-bottom:0}
+    .sheet a.on{color:var(--gold-soft)}
+    .sheet a span{color:var(--ink-faint)}
+  }
+  @media(max-width:560px){
+    .wrap{padding:0 18px}
+    .head{padding:34px 0 24px}
+    .grid{grid-template-columns:1fr;gap:14px}
+    .acts{width:100%}
+    .btn{flex:1;text-align:center}
+    .m{padding:20px}
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">Design preview — Option 2 of 3 · Midnight Editorial</div>
+
+<input type="checkbox" id="mnav">
+<nav class="nav"><div class="wrap nav-in">
+  <div class="logo">National<br>Health <span>League</span></div>
+  <div class="nav-links">
+    <a href="midnight.html">Home</a>
+    <a class="on" href="midnight-labs.html">Lab Results</a>
+  </div>
+  <div class="nav-right">
+    <label class="burger" for="mnav" aria-label="Menu"><span></span></label>
+    <div class="avatar">EY</div>
+  </div>
+</div></nav>
+<div class="sheet">
+  <a href="midnight.html">Home <span>&rarr;</span></a>
+  <a class="on" href="midnight-labs.html">Lab Results <span>&rarr;</span></a>
+</div>
+
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <div class="kicker">Your panel</div>
+      <h1 class="serif">Lab <em>results</em></h1>
+      <p>28 results across 9 markers · last updated 15 September</p>
+    </div>
+    <div class="acts">
+      <button class="btn pri">+ Log result</button>
+      <button class="btn">Upload PDF</button>
+    </div>
+  </div>
+
+  <div class="bar">
+    <span class="pill on">All markers</span>
+    <span class="pill">NHLS scored</span>
+    <span class="pill">Needs attention</span>
+    <span class="pill">Hormones</span>
+    <span class="pill">Additional</span>
+  </div>
+
+  <div class="lab">Scored markers · these seven make your NHLS</div>
+
+  <div class="grid">
+
+    <div class="m">
+      <div class="m-h"><span class="m-n">Hemoglobin A1c</span><span class="st st-ok">Optimal</span></div>
+      <div class="m-v serif">5.4<small>%</small></div>
+      <div class="scale">
+        <div class="track"><div class="band" style="left:0;width:57%"></div><div class="pin" style="left:47%;background:var(--sage)"></div></div>
+        <div class="ends"><span>4.0</span><span><b>Optimal below 5.7</b></span><span>9.0</span></div>
+      </div>
+      <div class="m-f"><span>24 May 2026</span><span class="tr up">↓ 0.3 since last</span></div>
+    </div>
+
+    <div class="m">
+      <div class="m-h"><span class="m-n">hs-CRP</span><span class="st st-ok">Optimal</span></div>
+      <div class="m-v serif">0.8<small>mg/L</small></div>
+      <div class="scale">
+        <div class="track"><div class="band" style="left:0;width:20%"></div><div class="pin" style="left:16%;background:var(--sage)"></div></div>
+        <div class="ends"><span>0</span><span><b>Optimal below 1.0</b></span><span>5.0</span></div>
+      </div>
+      <div class="m-f"><span>24 May 2026</span><span class="tr up">↓ 1.3 since last</span></div>
+    </div>
+
+    <div class="m">
+      <div class="m-h"><span class="m-n">Vitamin B12</span><span class="st st-ok">Optimal</span></div>
+      <div class="m-v serif">600<small>pg/mL</small></div>
+      <div class="scale">
+        <div class="track"><div class="band" style="left:40%;width:50%"></div><div class="pin" style="left:55%;background:var(--sage)"></div></div>
+        <div class="ends"><span>0</span><span><b>Optimal 500–900</b></span><span>1200</span></div>
+      </div>
+      <div class="m-f"><span>15 Sept 2026</span><span class="tr up">↑ 100 since last</span></div>
+    </div>
+
+    <div class="m">
+      <div class="m-h"><span class="m-n">Vitamin D</span><span class="st st-mid">Improvement</span></div>
+      <div class="m-v serif">45<small>ng/mL</small></div>
+      <div class="scale">
+        <div class="track"><div class="band" style="left:50%;width:50%"></div><div class="pin" style="left:45%;background:var(--gold)"></div></div>
+        <div class="ends"><span>0</span><span><b>Optimal 50 and above</b></span><span>100</span></div>
+      </div>
+      <div class="m-f"><span>4 July 2026</span><span class="tr up">↑ 8 since last</span></div>
+    </div>
+
+    <div class="m">
+      <div class="m-h"><span class="m-n">Triglycerides</span><span class="st st-ok">Optimal</span></div>
+      <div class="m-v serif">88<small>mg/dL</small></div>
+      <div class="scale">
+        <div class="track"><div class="band" style="left:0;width:50%"></div><div class="pin" style="left:29%;background:var(--sage)"></div></div>
+        <div class="ends"><span>0</span><span><b>Optimal below 150</b></span><span>300</span></div>
+      </div>
+      <div class="m-f"><span>20 May 2026</span><span class="tr up">↓ 12 since last</span></div>
+    </div>
+
+    <div class="m">
+      <div class="m-h"><span class="m-n">Fasting Glucose</span><span class="st st-bad">Out of range</span></div>
+      <div class="m-v serif">50<small>mg/dL</small></div>
+      <div class="scale">
+        <div class="track"><div class="band" style="left:35%;width:25%"></div><div class="pin" style="left:10%;background:var(--clay)"></div></div>
+        <div class="ends"><span>20</span><span><b>Optimal 70–99</b></span><span>200</span></div>
+      </div>
+      <div class="m-f"><span>14 Sept 2026</span><span class="tr dn">↓ 35 since last</span></div>
+    </div>
+
+  </div>
+
+  <div class="lab">Additional markers · tracked, not scored</div>
+
+  <div class="grid">
+    <div class="m">
+      <div class="m-h"><span class="m-n">Fasting Insulin</span><span class="st st-ok">Optimal</span></div>
+      <div class="m-v serif">7<small>uIU/mL</small></div>
+      <div class="scale">
+        <div class="track"><div class="band" style="left:10%;width:40%"></div><div class="pin" style="left:28%;background:var(--sage)"></div></div>
+        <div class="ends"><span>0</span><span><b>Optimal 2–10</b></span><span>25</span></div>
+      </div>
+      <div class="m-f"><span>24 May 2026</span><span class="tr up">↓ 2 since last</span></div>
+    </div>
+    <div class="m">
+      <div class="m-h"><span class="m-n">HDL</span><span class="st st-ok">Optimal</span></div>
+      <div class="m-v serif">52<small>mg/dL</small></div>
+      <div class="scale">
+        <div class="track"><div class="band" style="left:40%;width:60%"></div><div class="pin" style="left:43%;background:var(--sage)"></div></div>
+        <div class="ends"><span>20</span><span><b>Optimal 40 and above</b></span><span>100</span></div>
+      </div>
+      <div class="m-f"><span>24 May 2026</span><span class="tr up">↑ 3 since last</span></div>
+    </div>
+    <div class="m">
+      <div class="m-h"><span class="m-n">Ferritin</span><span class="st st-ok">Optimal</span></div>
+      <div class="m-v serif">50<small>ng/mL</small></div>
+      <div class="scale">
+        <div class="track"><div class="band" style="left:15%;width:60%"></div><div class="pin" style="left:22%;background:var(--sage)"></div></div>
+        <div class="ends"><span>0</span><span><b>Optimal 30–300</b></span><span>400</span></div>
+      </div>
+      <div class="m-f"><span>14 Sept 2026</span><span>First result</span></div>
+    </div>
+  </div>
+
+</div>
+
+<a class="flag" href="midnight.html">← Home</a>
+</body>
+</html>
