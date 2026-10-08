@@ -199,31 +199,32 @@
   }
 
 
-  /* Mobile nav — hamburger opens a sheet; desktop keeps inline links */
-  .burger{display:none;width:40px;height:40px;border:1px solid var(--line);background:var(--surface);border-radius:11px;cursor:pointer;padding:0;place-items:center;box-shadow:var(--shadow)}
-  .burger span{display:block;width:17px;height:1.8px;background:var(--ink);border-radius:2px;position:relative;transition:.25s}
-  .burger span::before,.burger span::after{content:'';position:absolute;left:0;width:17px;height:1.8px;background:var(--ink);border-radius:2px;transition:.25s}
-  .burger span::before{top:-5.5px} .burger span::after{top:5.5px}
-  #mnav:checked ~ .nav .burger span{background:transparent}
-  #mnav:checked ~ .nav .burger span::before{top:0;transform:rotate(45deg)}
-  #mnav:checked ~ .nav .burger span::after{top:0;transform:rotate(-45deg)}
-  #mnav{display:none}
-  .sheet{display:none}
 
-  @media(max-width:760px){
+
+  /* ── Mobile nav ──────────────────────────────────────── */
+  #mnav{position:absolute;opacity:0;pointer-events:none}
+  .burger{display:none}
+  .sheet{
+    position:fixed;left:0;right:0;top:0;z-index:70;
+    background:var(--surface);
+    transform:translateY(-101%);
+    transition:transform .3s cubic-bezier(.32,.72,0,1);
+    visibility:hidden;
+    padding:calc(env(safe-area-inset-top,0px) + 14px) 0 18px;
+  }
+  .sheet-top{display:flex;align-items:center;justify-content:space-between;padding:0 20px 14px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+  .sheet a{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;font-size:17px;font-weight:600;letter-spacing:-.01em}
+  .sheet a span{color:var(--ink-faint);font-weight:400}
+  .scrim{position:fixed;inset:0;z-index:65;background:rgba(10,14,23,.45);opacity:0;visibility:hidden;transition:opacity .3s}
+  #mnav:checked ~ .sheet{transform:translateY(0);visibility:visible;box-shadow:0 20px 48px -18px rgba(0,0,0,.4)}
+  #mnav:checked ~ .scrim{opacity:1;visibility:visible}
+
+  @media(max-width:780px){
     .nav-links{display:none}
-    .burger{display:grid}
-    .sheet{display:block;position:fixed;inset:68px 0 auto;background:var(--surface);border-bottom:1px solid var(--line);
-      box-shadow:var(--shadow-lg);z-index:60;transform:translateY(-110%);transition:transform .28s cubic-bezier(.4,0,.2,1);padding:10px 0 16px}
-    #mnav:checked ~ .sheet{transform:translateY(0)}
-
-    .scrim{position:fixed;inset:0;background:rgba(0,0,0,.42);opacity:0;pointer-events:none;transition:opacity .28s;z-index:55}
-    #mnav:checked ~ .scrim{opacity:1;pointer-events:auto}
-    #mnav:checked ~ .sheet{box-shadow:0 24px 48px -16px rgba(0,0,0,.45)}
-    .sheet a{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;font-size:16px;font-weight:600;border-bottom:1px solid var(--line)}
-    .sheet a:last-child{border-bottom:0}
-    .sheet a.on{color:var(--teal-dark)}
-    .sheet a span{color:var(--ink-faint);font-weight:400;font-size:19px}
+    .burger{display:grid;width:42px;height:42px;place-items:center;border:1px solid var(--line);background:var(--surface);border-radius:12px;cursor:pointer;padding:0}
+    .burger i{display:block;width:17px;height:1.8px;background:var(--ink);border-radius:2px;position:relative}
+    .burger i::before,.burger i::after{content:'';position:absolute;left:0;width:17px;height:1.8px;background:var(--ink);border-radius:2px}
+    .burger i::before{top:-5.5px} .burger i::after{top:5.5px}
   }
 
   .flag{position:fixed;right:14px;bottom:14px;background:var(--ink);color:#fff;font-size:11.5px;font-weight:600;padding:9px 15px;border-radius:999px;z-index:99;box-shadow:var(--shadow-lg);letter-spacing:.01em}
@@ -255,16 +256,20 @@
 <div class="banner">Design preview &mdash; <b>Option 1 of 3 &middot; Clinical Calm</b></div>
 
 <input type="checkbox" id="mnav">
-<label class="scrim" for="mnav" aria-hidden="true"></label>
 <nav class="nav"><div class="wrap nav-in">
   <div class="logo">National<br>Health <span>League</span></div>
   <div class="nav-links">
     <a class="on" href="clinical.html">Home</a>
     <a href="clinical-labs.html">Lab Results</a>
   </div>
-  <div class="nav-right"><label class="burger" for="mnav" aria-label="Menu"><span></span></label><div class="avatar">EY</div></div>
+  <div class="nav-right"><label class="burger" for="mnav" aria-label="Open menu"><i></i></label><div class="avatar">EY</div></div>
 </div></nav>
+<label class="scrim" for="mnav" aria-hidden="true"></label>
 <div class="sheet">
+  <div class="sheet-top">
+    <div class="logo">National<br>Health <span>League</span></div>
+    <label class="burger" for="mnav" aria-label="Close menu" style="display:grid"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M1 1l15 15M16 1L1 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></label>
+  </div>
   <a class="on" href="clinical.html">Home <span>&rarr;</span></a>
   <a href="clinical-labs.html">Lab Results <span>&rarr;</span></a>
 </div>

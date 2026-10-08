@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>National Health League — Design Preview 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F6F3; --card:#FFFFFF;
+    --ink:#1A1A1F; --soft:#6C6C78; --faint:#A3A3B0;
+    --violet:#5B5BD6; --violet-2:#8B8BE8; --violet-t:#EEEEFC;
+    --mint:#0F9D74; --amber:#C77D20; --coral:#D64545;
+    --line:#E8E6E0; --r:20px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  .ser{font-family:'Instrument Serif',Georgia,serif;font-weight:400}
+
+  .tag{background:var(--ink);color:#fff;font-size:12px;padding:9px 20px;text-align:center}
+  .tag b{color:var(--violet-2)}
+
+  .nav{position:sticky;top:0;z-index:50;background:rgba(247,246,243,.85);backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;gap:32px;height:72px}
+  .logo{font-size:15.5px;font-weight:700;letter-spacing:-.02em;line-height:1.15;flex-shrink:0}
+  .logo span{color:var(--violet)}
+  .nav-links{display:flex;gap:4px}
+  .nav-links a{font-size:14px;font-weight:550;color:var(--soft);padding:8px 15px;border-radius:999px;white-space:nowrap}
+  .nav-links a.on{background:var(--ink);color:#fff}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:11px;flex-shrink:0}
+  .av{width:35px;height:35px;border-radius:50%;background:var(--violet);color:#fff;display:grid;place-items:center;font-weight:600;font-size:12.5px}
+
+  #mnav{position:absolute;opacity:0;pointer-events:none}
+  .burger{display:none}
+  .sheet{position:fixed;left:0;right:0;top:0;z-index:70;background:var(--card);transform:translateY(-101%);visibility:hidden;
+    transition:transform .3s cubic-bezier(.32,.72,0,1);padding:calc(env(safe-area-inset-top,0px) + 16px) 0 20px}
+  .sheet-top{display:flex;align-items:center;justify-content:space-between;padding:0 22px 16px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .sheet a{display:flex;align-items:center;justify-content:space-between;padding:17px 22px;font-size:17px;font-weight:600}
+  .sheet a.on{color:var(--violet)}
+  .sheet a span{color:var(--faint);font-weight:400}
+  .scrim{position:fixed;inset:0;z-index:65;background:rgba(26,26,31,.4);opacity:0;visibility:hidden;transition:opacity .3s}
+  #mnav:checked ~ .sheet{transform:translateY(0);visibility:visible;box-shadow:0 22px 50px -18px rgba(26,26,31,.3)}
+  #mnav:checked ~ .scrim{opacity:1;visibility:visible}
+
+  .mast{padding:52px 0 34px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+  .date{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:12px}
+  h1{font-size:clamp(38px,6.4vw,62px);line-height:.98;letter-spacing:-.02em;margin:0}
+  h1 i{font-style:italic;color:var(--violet)}
+  .streak{background:var(--card);border-radius:999px;padding:11px 20px;font-size:13px;font-weight:600;box-shadow:0 1px 2px rgba(26,26,31,.05);display:flex;align-items:center;gap:9px}
+  .streak b{color:var(--violet)}
+
+  .band{background:var(--ink);border-radius:26px;padding:34px 36px;color:#fff;margin-bottom:14px;position:relative;overflow:hidden}
+  .band::after{content:'';position:absolute;right:-70px;top:-70px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(91,91,214,.4),transparent 68%)}
+  .band-in{position:relative;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;gap:32px;flex-wrap:wrap}
+  .band-k{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:600;margin-bottom:14px}
+  .big{font-size:clamp(62px,11vw,96px);line-height:.85;letter-spacing:-.04em}
+  .big small{font-size:22px;color:rgba(255,255,255,.42);margin-left:8px}
+  .band-s{font-size:15px;color:rgba(255,255,255,.72);margin:16px 0 0;max-width:34ch;line-height:1.55}
+  .band-r{text-align:right;flex-shrink:0}
+  .verdict{display:inline-flex;align-items:center;gap:8px;background:rgba(125,211,176,.16);color:#7DD3B0;font-size:12.5px;font-weight:650;padding:7px 16px;border-radius:999px;margin-bottom:16px}
+  .seg-bar{display:flex;gap:4px;margin-top:4px}
+  .seg{width:26px;height:7px;border-radius:3px;background:rgba(255,255,255,.14)}
+  .seg.f{background:#7DD3B0} .seg.h{background:linear-gradient(90deg,#7DD3B0 50%,rgba(255,255,255,.14) 50%)}
+  .seg-l{font-size:11.5px;color:rgba(255,255,255,.45);margin-top:11px}
+
+  .split{display:grid;grid-template-columns:340px 1fr;gap:14px;margin-bottom:56px}
+  .focus,.ledger{background:var(--card);border-radius:var(--r);box-shadow:0 1px 2px rgba(26,26,31,.05)}
+  .focus{padding:26px} .ledger{padding:26px 28px}
+  .eyebrow{font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:650;margin-bottom:20px}
+  .fitem{padding:18px 0;border-bottom:1px solid var(--line)}
+  .fitem:last-child{border-bottom:0;padding-bottom:0}
+  .fitem:first-of-type{padding-top:0}
+  .fn{font-size:17px;font-weight:600;letter-spacing:-.015em;margin-bottom:5px}
+  .fgap{font-size:13px;color:var(--soft);margin-bottom:13px}
+  .fgap b{color:var(--ink);font-weight:600}
+  .ftrack{height:5px;background:var(--line);border-radius:999px;overflow:hidden}
+  .ftrack i{display:block;height:100%;border-radius:999px}
+  .lrow{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:15px 0;border-bottom:1px solid var(--line)}
+  .lrow:last-child{border-bottom:0}
+  .lrow:first-of-type{padding-top:0}
+  .ln{font-size:15px;font-weight:550;letter-spacing:-.01em}
+  .lsub{font-size:12.5px;color:var(--faint);margin-top:2px}
+  .lv{display:flex;align-items:center;gap:13px}
+  .lnum{font-size:16px;font-weight:600;letter-spacing:-.02em;white-space:nowrap}
+  .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .d-ok{background:var(--mint)} .d-mid{background:var(--amber)} .d-bad{background:var(--coral)}
+
+  .sh{margin-bottom:26px}
+  h2{font-size:clamp(28px,4.4vw,40px);line-height:1.05;letter-spacing:-.02em;margin:0 0 7px}
+  h2 i{font-style:italic;color:var(--violet)}
+  .sh p{font-size:15px;color:var(--soft);margin:0;max-width:56ch}
+
+  .bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:206px;gap:14px;margin-bottom:56px}
+  .b{border-radius:var(--r);overflow:hidden;position:relative;cursor:pointer;background:var(--card);box-shadow:0 1px 2px rgba(26,26,31,.05)}
+  .b img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s}
+  .b:hover img{transform:scale(1.05)}
+  .b-v{position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,26,31,0) 35%,rgba(26,26,31,.9))}
+  .b-c{position:absolute;left:0;right:0;bottom:0;padding:20px;color:#fff}
+  .b-k{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--violet-2);margin-bottom:7px}
+  .b-t{font-size:17px;font-weight:600;letter-spacing:-.015em;line-height:1.25}
+  .b-w{font-size:13px;color:rgba(255,255,255,.7);margin:6px 0 0;line-height:1.45}
+  .wide{grid-column:span 2} .tall{grid-row:span 2}
+  .b-plain{padding:22px;display:flex;flex-direction:column;justify-content:space-between}
+  .b-plain .b-t{color:var(--ink)} .b-plain .b-w{color:var(--soft)} .b-plain .b-k{color:var(--violet)}
+  .arrow{align-self:flex-start;width:34px;height:34px;border-radius:50%;background:var(--violet-t);color:var(--violet);display:grid;place-items:center;font-size:15px}
+
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:56px}
+  .pan{background:var(--card);border-radius:var(--r);padding:28px;box-shadow:0 1px 2px rgba(26,26,31,.05)}
+  .ph{font-size:19px;font-weight:600;letter-spacing:-.015em;margin-bottom:3px}
+  .ps{font-size:13px;color:var(--faint);margin:0 0 20px}
+  .rk{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .rk:last-child{border-bottom:0}
+  .rk-n{width:22px;color:var(--faint);font-weight:600;font-size:13px}
+  .rk-nm{flex:1;color:var(--soft)}
+  .rk-s{font-weight:650;letter-spacing:-.01em}
+  .rk.me{background:var(--violet-t);margin:0 -16px;padding:12px 16px;border-radius:12px;border-bottom:0}
+  .rk.me .rk-nm{color:var(--ink);font-weight:650} .rk.me .rk-s{color:var(--violet)}
+  .ring-wrap{display:flex;align-items:center;gap:22px;margin-top:22px}
+  .ring{position:relative;width:96px;height:96px;flex-shrink:0}
+  .ring svg{transform:rotate(-90deg)}
+  .ring-m{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+  .ring-n{font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1}
+  .ring-d{font-size:11px;color:var(--faint);margin-top:2px}
+
+  .log{background:var(--card);border-radius:var(--r);padding:30px;box-shadow:0 1px 2px rgba(26,26,31,.05);margin-bottom:56px}
+  .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(164px,1fr));gap:16px;margin:22px 0}
+  .fl{font-size:12px;font-weight:600;color:var(--soft);display:block;margin-bottom:7px}
+  .fi{width:100%;border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:12px 14px;font:inherit;font-size:15px;color:var(--ink)}
+  .fi:focus{outline:0;border-color:var(--violet);background:var(--card)}
+  .vbtn{background:var(--violet);color:#fff;border:0;border-radius:999px;padding:13px 28px;font:inherit;font-size:14px;font-weight:650;cursor:pointer}
+
+  .prods{display:grid;grid-template-columns:repeat(auto-fill,minmax(214px,1fr));gap:14px;margin-bottom:56px}
+  .pr{background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 2px rgba(26,26,31,.05);display:flex;flex-direction:column;cursor:pointer;transition:transform .2s}
+  .pr:hover{transform:translateY(-3px)}
+  .pr-th{height:118px;display:grid;place-items:center;font-size:34px;background:var(--violet-t)}
+  .pr-b{padding:17px;flex:1;display:flex;flex-direction:column}
+  .pr-t{font-size:14.5px;font-weight:650;margin-bottom:5px;letter-spacing:-.01em}
+  .pr-w{font-size:12.5px;color:var(--soft);flex:1;margin:0 0 13px}
+  .pr-f{display:flex;align-items:center;justify-content:space-between}
+  .pr-p{font-size:16px;font-weight:700;letter-spacing:-.02em}
+  .pr-l{font-size:12.5px;font-weight:650;color:var(--violet)}
+  .qa{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:56px}
+  .qa-b{background:var(--card);border:0;border-radius:var(--r);padding:22px;text-align:left;font:inherit;cursor:pointer;box-shadow:0 1px 2px rgba(26,26,31,.05);transition:transform .18s}
+  .qa-b:hover{transform:translateY(-2px)}
+  .qa-i{font-size:21px;margin-bottom:13px}
+  .qa-t{font-size:15px;font-weight:650;letter-spacing:-.01em}
+  .qa-s{font-size:12.5px;color:var(--faint);margin-top:3px}
+
+  .note{display:flex;gap:14px;align-items:flex-start;padding:0 0 60px;font-size:13px;color:var(--soft);line-height:1.6;max-width:66ch}
+  .note b{color:var(--ink);font-weight:650}
+  .flag{position:fixed;right:16px;bottom:16px;background:var(--violet);color:#fff;font-size:12px;font-weight:650;padding:11px 18px;border-radius:999px;z-index:60;box-shadow:0 8px 24px -8px rgba(91,91,214,.6)}
+
+  @media(max-width:1000px){
+    .split{grid-template-columns:1fr}
+    .bento{grid-template-columns:repeat(2,1fr);grid-auto-rows:190px}
+    .tall{grid-row:span 1}
+  }
+  @media(max-width:780px){
+    .nav-links{display:none}
+    .burger{display:grid;width:42px;height:42px;place-items:center;border:1px solid var(--line);background:var(--card);border-radius:12px;cursor:pointer;padding:0}
+    .burger i{display:block;width:17px;height:1.8px;background:var(--ink);border-radius:2px;position:relative}
+    .burger i::before,.burger i::after{content:'';position:absolute;left:0;width:17px;height:1.8px;background:var(--ink);border-radius:2px}
+    .burger i::before{top:-5.5px} .burger i::after{top:5.5px}
+    .duo{grid-template-columns:1fr}
+    .band-r{text-align:left}
+  }
+  @media(max-width:620px){
+    .wrap{padding:0 18px}
+    .mast{padding:34px 0 24px}
+    .band{padding:26px 22px;border-radius:20px}
+    .bento{grid-template-columns:1fr;grid-auto-rows:176px}
+    .wide{grid-column:span 1}
+    .prods{grid-template-columns:1fr 1fr}
+    .pr-th{height:96px;font-size:28px}
+    .focus,.ledger,.pan,.log{padding:22px}
+  }
+</style>
+</head>
+<body>
+
+<div class="tag">Design preview &mdash; <b>Option 2 of 3 &middot; Paper &amp; Ink</b></div>
+
+<input type="checkbox" id="mnav">
+<nav class="nav"><div class="wrap nav-in">
+  <div class="logo">National<br>Health <span>League</span></div>
+  <div class="nav-links">
+    <a class="on" href="paper.html">Home</a>
+    <a href="paper-labs.html">Lab Results</a>
+  </div>
+  <div class="nav-right">
+    <label class="burger" for="mnav" aria-label="Open menu"><i></i></label>
+    <div class="av">EY</div>
+  </div>
+</div></nav>
+<label class="scrim" for="mnav" aria-hidden="true"></label>
+<div class="sheet">
+  <div class="sheet-top">
+    <div class="logo">National<br>Health <span>League</span></div>
+    <label class="burger" for="mnav" aria-label="Close menu" style="display:grid">
+      <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M1 1l15 15M16 1L1 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </label>
+  </div>
+  <a class="on" href="paper.html">Home <span>&rarr;</span></a>
+  <a href="paper-labs.html">Lab Results <span>&rarr;</span></a>
+</div>
+
+<div class="wrap">
+
+  <div class="mast">
+    <div>
+      <div class="date">Tuesday, 6 October</div>
+      <h1 class="ser">Morning, <i>Eddie</i></h1>
+    </div>
+    <div class="streak">&#128293; <span><b>12 weeks</b> of tracking</span></div>
+  </div>
+
+  <div class="band">
+    <div class="band-in">
+      <div>
+        <div class="band-k">NHLS score</div>
+        <div class="big ser">5.5<small>/ 7.0</small></div>
+        <p class="band-s">Five markers optimal. Two left to move &mdash; and both are within reach this quarter.</p>
+      </div>
+      <div class="band-r">
+        <div class="verdict">&#9679; Healthy</div>
+        <div class="seg-bar">
+          <span class="seg f"></span><span class="seg f"></span><span class="seg f"></span>
+          <span class="seg f"></span><span class="seg f"></span><span class="seg h"></span><span class="seg"></span>
+        </div>
+        <div class="seg-l">5.5 of 7 points earned</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="split">
+    <div class="focus">
+      <div class="eyebrow">Close the gap</div>
+      <div class="fitem">
+        <div class="fn">Vitamin D</div>
+        <div class="fgap">At <b>45 ng/mL</b> &middot; needs 5 more</div>
+        <div class="ftrack"><i style="width:90%;background:var(--amber)"></i></div>
+      </div>
+      <div class="fitem">
+        <div class="fn">Waist-to-Height</div>
+        <div class="fgap">At <b>0.562</b> &middot; optimal is 0.50</div>
+        <div class="ftrack"><i style="width:84%;background:var(--coral)"></i></div>
+      </div>
+    </div>
+
+    <div class="ledger">
+      <div class="eyebrow">All seven markers</div>
+      <div class="lrow"><div><div class="ln">Glucose Control</div><div class="lsub">HbA1c &middot; 24 May</div></div><div class="lv"><span class="lnum">5.4%</span><span class="dot d-ok"></span></div></div>
+      <div class="lrow"><div><div class="ln">hs-CRP</div><div class="lsub">Inflammation &middot; 24 May</div></div><div class="lv"><span class="lnum">0.8 mg/L</span><span class="dot d-ok"></span></div></div>
+      <div class="lrow"><div><div class="ln">TG/HDL Ratio</div><div class="lsub">Metabolic &middot; 24 May</div></div><div class="lv"><span class="lnum">1.69</span><span class="dot d-ok"></span></div></div>
+      <div class="lrow"><div><div class="ln">Vitamin D</div><div class="lsub">4 July</div></div><div class="lv"><span class="lnum">45 ng/mL</span><span class="dot d-mid"></span></div></div>
+      <div class="lrow"><div><div class="ln">Vitamin B12</div><div class="lsub">15 September</div></div><div class="lv"><span class="lnum">600 pg/mL</span><span class="dot d-ok"></span></div></div>
+      <div class="lrow"><div><div class="ln">Waist-to-Height</div><div class="lsub">From your profile</div></div><div class="lv"><span class="lnum">0.562</span><span class="dot d-bad"></span></div></div>
+      <div class="lrow"><div><div class="ln">Advance Care Plan</div><div class="lsub">On file</div></div><div class="lv"><span class="lnum">Complete</span><span class="dot d-ok"></span></div></div>
+    </div>
+  </div>
+
+  <div class="sh">
+    <h2 class="ser">Chosen <i>for you</i></h2>
+    <p>Weighted toward the two markers still moving.</p>
+  </div>
+
+  <div class="bento">
+    <article class="b wide tall">
+      <img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/de67f0e5-2cbf-48a3-b618-7ffab951189c.jfif" alt="" loading="lazy">
+      <div class="b-v"></div>
+      <div class="b-c">
+        <div class="b-k">Start here &middot; Video</div>
+        <div class="b-t" style="font-size:22px">Vitamin D3 &amp; K2</div>
+        <p class="b-w">You are five points from optimal. Dosing, timing, and why K2 belongs alongside it.</p>
+      </div>
+    </article>
+    <article class="b">
+      <img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/f86714e6-75ab-4e81-ad55-c6ca051fbd3c.jfif" alt="" loading="lazy">
+      <div class="b-v"></div>
+      <div class="b-c"><div class="b-k">Video</div><div class="b-t">Ketogenic Diet</div></div>
+    </article>
+    <article class="b">
+      <img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/86d9ca55-75a7-4f99-9cde-d526af10c045.jpg" alt="" loading="lazy">
+      <div class="b-v"></div>
+      <div class="b-c"><div class="b-k">Video</div><div class="b-t">Omega Fish Oil</div></div>
+    </article>
+    <article class="b b-plain">
+      <div><div class="b-k">Reading</div><div class="b-t">Why 50 ng/mL is the mark</div><p class="b-w">The evidence behind the threshold.</p></div>
+      <span class="arrow">&rarr;</span>
+    </article>
+    <article class="b">
+      <img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/36d3c9f5-83de-4c28-85c4-7e33f46f979c.jfif" alt="" loading="lazy">
+      <div class="b-v"></div>
+      <div class="b-c"><div class="b-k">Video</div><div class="b-t">Anti-inflammatory Diet</div></div>
+    </article>
+    <article class="b">
+      <img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/b9205528-c283-4277-b814-37c07e011578.jfif" alt="" loading="lazy">
+      <div class="b-v"></div>
+      <div class="b-c"><div class="b-k">Video</div><div class="b-t">Methylated B Vitamins</div></div>
+    </article>
+  </div>
+
+  <div class="duo">
+    <div class="pan">
+      <div class="ph">Your team</div>
+      <p class="ps">Maximus Digital &middot; 12 members</p>
+      <div class="rk"><span class="rk-n">1</span><span class="rk-nm">NHL-4821-9043</span><span class="rk-s">6.5</span></div>
+      <div class="rk"><span class="rk-n">2</span><span class="rk-nm">NHL-2290-1174</span><span class="rk-s">6.0</span></div>
+      <div class="rk me"><span class="rk-n">3</span><span class="rk-nm">You</span><span class="rk-s">5.5</span></div>
+      <div class="rk"><span class="rk-n">4</span><span class="rk-nm">NHL-7733-0210</span><span class="rk-s">5.0</span></div>
+    </div>
+    <div class="pan">
+      <div class="ph">October challenge</div>
+      <p class="ps">Move three markers into optimal range</p>
+      <div class="ring-wrap">
+        <div class="ring">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="41" fill="none" stroke="#E8E6E0" stroke-width="8"/>
+            <circle cx="48" cy="48" r="41" fill="none" stroke="#5B5BD6" stroke-width="8" stroke-linecap="round"
+                    stroke-dasharray="257.6" stroke-dashoffset="85"/>
+          </svg>
+          <div class="ring-m"><div class="ring-n">2<span style="font-size:15px;color:var(--faint)">/3</span></div><div class="ring-d">done</div></div>
+        </div>
+        <div>
+          <div style="font-size:14.5px;font-weight:600;margin-bottom:5px">Vitamin D is closest</div>
+          <div style="font-size:13px;color:var(--soft)">5 ng/mL from optimal &middot; 23 days left in the round.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="log">
+    <div class="ph">Log your metrics</div>
+    <p class="ps">About a minute &middot; last entry 15 September</p>
+    <div class="fields">
+      <div><label class="fl">Vitamin D</label><input class="fi" placeholder="45"></div>
+      <div><label class="fl">Vitamin B12</label><input class="fi" placeholder="600"></div>
+      <div><label class="fl">hs-CRP</label><input class="fi" placeholder="0.8"></div>
+      <div><label class="fl">Hemoglobin A1c</label><input class="fi" placeholder="5.4"></div>
+      <div><label class="fl">Triglycerides</label><input class="fi" placeholder="88"></div>
+      <div><label class="fl">HDL</label><input class="fi" placeholder="52"></div>
+    </div>
+    <button class="vbtn">Save metrics</button>
+  </div>
+
+  <div class="sh">
+    <h2 class="ser">Recommended <i>products</i></h2>
+    <p>Matched to the markers you are working on.</p>
+  </div>
+  <div class="prods">
+    <article class="pr"><div class="pr-th">&#128167;</div><div class="pr-b">
+      <div class="pr-t">Vitamin D3 + K2 5000 IU</div><p class="pr-w">For your Vitamin D, currently 45 ng/mL.</p>
+      <div class="pr-f"><span class="pr-p">$24</span><span class="pr-l">View &rarr;</span></div></div></article>
+    <article class="pr"><div class="pr-th">&#129418;</div><div class="pr-b">
+      <div class="pr-t">Triple Strength Omega-3</div><p class="pr-w">Supports the hs-CRP you have brought down.</p>
+      <div class="pr-f"><span class="pr-p">$32</span><span class="pr-l">View &rarr;</span></div></div></article>
+    <article class="pr"><div class="pr-th">&#127793;</div><div class="pr-b">
+      <div class="pr-t">Methylated B-Complex</div><p class="pr-w">Keeps B12 in the optimal band.</p>
+      <div class="pr-f"><span class="pr-p">$19</span><span class="pr-l">View &rarr;</span></div></div></article>
+    <article class="pr"><div class="pr-th">&#129516;</div><div class="pr-b">
+      <div class="pr-t">At-Home Lab Panel</div><p class="pr-w">Retest all seven without a lab visit.</p>
+      <div class="pr-f"><span class="pr-p">$99</span><span class="pr-l">View &rarr;</span></div></div></article>
+  </div>
+
+  <div class="sh"><h2 class="ser">Quick <i>actions</i></h2></div>
+  <div class="qa">
+    <button class="qa-b"><div class="qa-i">&#128202;</div><div class="qa-t">Log lab results</div><div class="qa-s">Enter new values</div></button>
+    <button class="qa-b"><div class="qa-i">&#128269;</div><div class="qa-t">Browse library</div><div class="qa-s">52 resources</div></button>
+    <button class="qa-b"><div class="qa-i">&#127942;</div><div class="qa-t">View leagues</div><div class="qa-s">See where you rank</div></button>
+    <button class="qa-b"><div class="qa-i">&#128203;</div><div class="qa-t">My directives</div><div class="qa-s">Advance care plan</div></button>
+  </div>
+
+  <div class="note">
+    <span style="font-size:16px">&#128274;</span>
+    <div><b>Your data stays yours.</b> We only analyse the results you enter here. We have no access to your medical records, and nothing identifiable is ever shared with your employer or insurer.</div>
+  </div>
+
+</div>
+
+<a class="flag" href="paper-labs.html">Lab Results &rarr;</a>
+</body>
+</html>
