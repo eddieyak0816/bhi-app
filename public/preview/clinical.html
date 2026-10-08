@@ -59,26 +59,39 @@
   h1{font-size:clamp(30px,5.2vw,46px);line-height:1.08;letter-spacing:-.035em;font-weight:300;margin:0 0 30px}
   h1 b{font-weight:700}
 
-  .score-card{background:var(--surface);border-radius:26px;box-shadow:var(--shadow-lg);padding:32px;margin-bottom:16px}
-  .score-top{display:flex;align-items:flex-start;gap:30px;flex-wrap:wrap}
-  .dial{position:relative;width:148px;height:148px;flex-shrink:0}
+  .score-card{background:var(--surface);border-radius:26px;box-shadow:var(--shadow-lg);overflow:hidden;margin-bottom:16px}
+  .score-top{display:flex;align-items:center;gap:34px;padding:32px;flex-wrap:wrap}
+  .dial{position:relative;width:152px;height:152px;flex-shrink:0}
   .dial svg{transform:rotate(-90deg);display:block}
   .dial-mid{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
-  .dial-num{font-size:40px;font-weight:700;letter-spacing:-.04em;line-height:1}
+  .dial-num{font-size:42px;font-weight:700;letter-spacing:-.04em;line-height:1}
   .dial-den{font-size:12.5px;color:var(--ink-faint);margin-top:3px;font-weight:500}
-  .score-meta{flex:1;min-width:230px;padding-top:6px}
-  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--teal-tint);color:var(--teal-dark);font-size:12.5px;font-weight:650;padding:5px 13px;border-radius:999px;letter-spacing:.01em}
-  .score-h{font-size:21px;font-weight:650;letter-spacing:-.02em;margin:13px 0 7px}
-  .score-p{font-size:14.5px;color:var(--ink-soft);margin:0;max-width:46ch}
+  .score-meta{flex:1;min-width:240px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--teal-tint);color:var(--teal-dark);font-size:12.5px;font-weight:650;padding:5px 13px;border-radius:999px}
+  .score-h{font-size:22px;font-weight:650;letter-spacing:-.025em;margin:13px 0 7px}
+  .score-p{font-size:14.5px;color:var(--ink-soft);margin:0 0 18px;max-width:46ch}
+  .score-cta{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:650;color:var(--teal-dark)}
 
-  /* ── Metric rows ────────────────────────────────────── */
-  .metrics{border-top:1px solid var(--line);margin-top:28px;padding-top:6px}
-  .m{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+  /* Attention strip — the two that matter, lifted out of the list */
+  .focus{background:linear-gradient(180deg,#FFFDF9,#FDF8F0);border-top:1px solid var(--line);padding:20px 32px}
+  .focus-h{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:13px}
+  .focus-row{display:flex;gap:12px;flex-wrap:wrap}
+  .fc{flex:1;min-width:210px;background:var(--surface);border-radius:14px;padding:15px 17px;box-shadow:var(--shadow);display:flex;align-items:center;gap:13px}
+  .fc-ring{width:42px;height:42px;flex-shrink:0;position:relative}
+  .fc-ring svg{transform:rotate(-90deg);display:block}
+  .fc-pct{position:absolute;inset:0;display:grid;place-content:center;font-size:11px;font-weight:700}
+  .fc-n{font-size:14px;font-weight:650;line-height:1.3}
+  .fc-s{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+
+  /* Remaining markers — quieter, collapsible feel */
+  .rest{padding:8px 32px 26px}
+  .rest-h{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 4px}
+  .m{display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--line)}
   .m:last-child{border-bottom:0}
-  .m-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-  .m-name{font-size:14.5px;font-weight:550;flex:1;min-width:0}
-  .m-sub{display:block;font-size:12.5px;color:var(--ink-faint);font-weight:400;margin-top:2px}
-  .m-tag{font-size:12px;font-weight:650;padding:4px 11px;border-radius:999px;white-space:nowrap}
+  .m-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .m-name{font-size:14px;font-weight:550;flex:1;min-width:0}
+  .m-val{font-size:13px;color:var(--ink-faint);font-weight:500;white-space:nowrap}
+  .m-tag{font-size:11.5px;font-weight:650;padding:3px 10px;border-radius:999px;white-space:nowrap}
   .ok{background:var(--teal-tint);color:var(--teal-dark)}
   .mid{background:var(--amber-tint);color:#B96A09}
   .bad{background:var(--rose-tint);color:#C0412D}
@@ -103,8 +116,8 @@
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:18px;margin-bottom:52px}
   .card{background:var(--surface);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s;cursor:pointer}
   .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
-  .thumb{height:138px;position:relative;background:var(--teal-tint)}
-  .thumb-grad{position:absolute;inset:0}
+  .thumb{height:138px;position:relative;background:var(--teal-tint);overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
   .kind{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.93);backdrop-filter:blur(8px);font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:5px 10px;border-radius:7px;color:var(--ink)}
   .card-b{padding:17px;display:flex;flex-direction:column;flex:1}
   .card-t{font-size:15.5px;font-weight:650;letter-spacing:-.015em;margin-bottom:7px;line-height:1.32}
@@ -118,17 +131,85 @@
   .note p{margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.55}
   .note b{color:var(--ink);font-weight:650}
 
+
+  /* Log metrics panel */
+  .logp{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:52px;overflow:hidden}
+  .logp-h{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:19px 24px;cursor:pointer}
+  .logp-t{font-size:16px;font-weight:650;letter-spacing:-.015em}
+  .logp-s{font-size:13px;color:var(--ink-faint);margin-top:2px}
+  .logp-b{border-top:1px solid var(--line);padding:22px 24px}
+  .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;margin-bottom:18px}
+  .fl{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:6px}
+  .fi{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:11px;padding:11px 13px;font:inherit;font-size:14px;color:var(--ink)}
+  .fi::placeholder{color:#C3CCCB}
+  .save{background:var(--teal);color:#fff;border:0;border-radius:999px;padding:12px 26px;font:inherit;font-size:14px;font-weight:650;cursor:pointer;box-shadow:0 6px 18px -6px rgba(25,195,178,.6)}
+
+  /* Team / challenge */
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:52px}
+  .panel{background:var(--surface);border-radius:var(--r);padding:24px;box-shadow:var(--shadow)}
+  .panel-h{font-size:16px;font-weight:650;letter-spacing:-.015em;margin-bottom:3px}
+  .panel-s{font-size:13px;color:var(--ink-faint);margin:0 0 18px}
+  .rank{display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .rank:last-child{border-bottom:0}
+  .rank-n{width:25px;font-size:13px;font-weight:700;color:var(--ink-faint)}
+  .rank-a{width:33px;height:33px;border-radius:50%;background:var(--teal-tint);color:var(--teal-dark);display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0}
+  .rank-nm{flex:1;font-size:14px;font-weight:550}
+  .rank-s{font-size:14px;font-weight:700}
+  .rank.me{background:var(--teal-tint);margin:0 -14px;padding:11px 14px;border-radius:11px;border-bottom:0}
+  .ch-bar{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin:15px 0 9px}
+  .ch-fill{height:100%;background:linear-gradient(90deg,var(--teal),#56D9CB);border-radius:999px}
+  .ch-meta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-faint);font-weight:500}
+
+  /* Quick actions */
+  .qa{display:grid;grid-template-columns:repeat(auto-fit,minmax(176px,1fr));gap:12px;margin-bottom:52px}
+  .qa-b{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:19px;text-align:left;font:inherit;cursor:pointer;box-shadow:var(--shadow);transition:transform .18s}
+  .qa-b:hover{transform:translateY(-2px)}
+  .qa-i{width:38px;height:38px;border-radius:11px;background:var(--teal-tint);display:grid;place-items:center;font-size:17px;margin-bottom:12px}
+  .qa-t{font-size:14.5px;font-weight:650;letter-spacing:-.01em}
+  .qa-s{font-size:12.5px;color:var(--ink-faint);margin-top:3px}
+
+  /* Small horizontal cards */
+  .mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:13px;margin-bottom:52px}
+  .mc{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);display:flex;gap:13px;align-items:center;padding:11px;cursor:pointer;transition:transform .18s}
+  .mc:hover{transform:translateY(-2px)}
+  .mc-th{width:62px;height:62px;border-radius:10px;flex-shrink:0;overflow:hidden;background:var(--teal-tint)}
+  .mc-th img{width:100%;height:100%;object-fit:cover;display:block}
+  .mc-t{font-size:14px;font-weight:600;line-height:1.35}
+  .mc-s{font-size:12.5px;color:var(--ink-faint);margin-top:3px}
+
+  /* Products */
+  .prods{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:16px;margin-bottom:52px}
+  .pr{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .2s,box-shadow .2s}
+  .pr:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+  .pr-th{height:124px;display:grid;place-items:center;font-size:38px;background:var(--teal-tint)}
+  .pr-b{padding:15px;flex:1;display:flex;flex-direction:column}
+  .pr-t{font-size:14.5px;font-weight:650;line-height:1.35;margin-bottom:5px}
+  .pr-w{font-size:12.5px;color:var(--ink-soft);flex:1;margin:0 0 12px}
+  .pr-f{display:flex;align-items:center;justify-content:space-between}
+  .pr-p{font-size:15px;font-weight:700}
+  .pr-l{font-size:12.5px;font-weight:650;color:var(--teal-dark)}
+
+  @media(max-width:700px){ .duo{grid-template-columns:1fr} }
+  @media(max-width:620px){
+    .logp-h{padding:16px 18px} .logp-b{padding:18px}
+    .panel{padding:19px}
+    .prods{grid-template-columns:1fr 1fr;gap:12px}
+    .pr-th{height:100px;font-size:30px}
+    .pr-b{padding:12px}
+  }
+
   .flag{position:fixed;right:14px;bottom:14px;background:var(--ink);color:#fff;font-size:11.5px;font-weight:600;padding:9px 15px;border-radius:999px;z-index:99;box-shadow:var(--shadow-lg);letter-spacing:.01em}
 
   @media(max-width:860px){
     .stats{grid-template-columns:repeat(2,1fr)}
-    .nav-links{display:none}
   }
   @media(max-width:620px){
     .wrap{padding:0 16px}
     .hero{padding:30px 0 4px}
-    .score-card{padding:22px;border-radius:20px}
-    .score-top{gap:20px}
+    .score-card{border-radius:20px}
+    .score-top{gap:20px;padding:22px}
+    .focus{padding:18px 20px}
+    .rest{padding:4px 20px 20px}
     .dial{width:118px;height:118px;margin:0 auto}
     .score-meta{text-align:center;min-width:100%}
     .score-p{margin-inline:auto}
@@ -150,7 +231,6 @@
   <div class="nav-links">
     <a class="on" href="clinical.html">Home</a>
     <a href="clinical-labs.html">Lab Results</a>
-    <a href="#">Library</a><a href="#">Leagues</a><a href="#">Profile</a>
   </div>
   <div class="nav-right"><div class="avatar">EY</div></div>
 </div></nav>
@@ -165,10 +245,10 @@
   <div class="score-card">
     <div class="score-top">
       <div class="dial">
-        <svg width="148" height="148" viewBox="0 0 148 148">
-          <circle cx="74" cy="74" r="63" fill="none" stroke="#EDEAE5" stroke-width="13"/>
-          <circle cx="74" cy="74" r="63" fill="none" stroke="#19C3B2" stroke-width="13"
-                  stroke-linecap="round" stroke-dasharray="395.8" stroke-dashoffset="84.8"/>
+        <svg width="152" height="152" viewBox="0 0 152 152">
+          <circle cx="76" cy="76" r="65" fill="none" stroke="#EDEAE5" stroke-width="12"/>
+          <circle cx="76" cy="76" r="65" fill="none" stroke="#19C3B2" stroke-width="12"
+                  stroke-linecap="round" stroke-dasharray="408.4" stroke-dashoffset="87.5"/>
         </svg>
         <div class="dial-mid">
           <div class="dial-num">5.5</div>
@@ -178,18 +258,52 @@
       <div class="score-meta">
         <span class="chip">&#9679; Healthy</span>
         <div class="score-h">Your NHLS score</div>
-        <p class="score-p">Four of seven markers are in optimal range. Vitamin D and waist-to-height are the two worth focusing on next.</p>
+        <p class="score-p">Five of seven markers are optimal. Two need attention &mdash; both are things you can move.</p>
+        <a class="score-cta" href="clinical-labs.html">See all results <span>&rarr;</span></a>
       </div>
     </div>
 
-    <div class="metrics">
-      <div class="m"><span class="m-dot d-ok"></span><span class="m-name">Glucose Control<span class="m-sub">HbA1c &middot; 5.4%</span></span><span class="m-tag ok">Optimal</span></div>
-      <div class="m"><span class="m-dot d-ok"></span><span class="m-name">hs-CRP<span class="m-sub">0.8 mg/L</span></span><span class="m-tag ok">Optimal</span></div>
-      <div class="m"><span class="m-dot d-ok"></span><span class="m-name">TG/HDL Ratio<span class="m-sub">1.69</span></span><span class="m-tag ok">Optimal</span></div>
-      <div class="m"><span class="m-dot d-mid"></span><span class="m-name">Vitamin D<span class="m-sub">45 ng/mL</span></span><span class="m-tag mid">Improvement</span></div>
-      <div class="m"><span class="m-dot d-ok"></span><span class="m-name">Vitamin B12<span class="m-sub">600 pg/mL</span></span><span class="m-tag ok">Optimal</span></div>
-      <div class="m"><span class="m-dot d-bad"></span><span class="m-name">Waist-to-Height<span class="m-sub">0.562</span></span><span class="m-tag bad">Out of range</span></div>
-      <div class="m"><span class="m-dot d-ok"></span><span class="m-name">Advance Care Plan<span class="m-sub">Documented</span></span><span class="m-tag ok">Complete</span></div>
+    <div class="focus">
+      <div class="focus-h">Worth your attention</div>
+      <div class="focus-row">
+        <div class="fc">
+          <div class="fc-ring">
+            <svg width="42" height="42" viewBox="0 0 42 42">
+              <circle cx="21" cy="21" r="17" fill="none" stroke="#FEF3E2" stroke-width="6"/>
+              <circle cx="21" cy="21" r="17" fill="none" stroke="#F6911E" stroke-width="6"
+                      stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="10.7"/>
+            </svg>
+            <div class="fc-pct" style="color:#B96A09">90%</div>
+          </div>
+          <div>
+            <div class="fc-n">Vitamin D</div>
+            <div class="fc-s">45 &rarr; 50 ng/mL to reach optimal</div>
+          </div>
+        </div>
+        <div class="fc">
+          <div class="fc-ring">
+            <svg width="42" height="42" viewBox="0 0 42 42">
+              <circle cx="21" cy="21" r="17" fill="none" stroke="#FDECE9" stroke-width="6"/>
+              <circle cx="21" cy="21" r="17" fill="none" stroke="#E8614D" stroke-width="6"
+                      stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="17.1"/>
+            </svg>
+            <div class="fc-pct" style="color:#C0412D">84%</div>
+          </div>
+          <div>
+            <div class="fc-n">Waist-to-Height</div>
+            <div class="fc-s">0.562 &rarr; 0.50 is the optimal mark</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rest">
+      <div class="rest-h">On track</div>
+      <div class="m"><span class="m-dot d-ok"></span><span class="m-name">Glucose Control</span><span class="m-val">HbA1c 5.4%</span><span class="m-tag ok">Optimal</span></div>
+      <div class="m"><span class="m-dot d-ok"></span><span class="m-name">hs-CRP</span><span class="m-val">0.8 mg/L</span><span class="m-tag ok">Optimal</span></div>
+      <div class="m"><span class="m-dot d-ok"></span><span class="m-name">TG/HDL Ratio</span><span class="m-val">1.69</span><span class="m-tag ok">Optimal</span></div>
+      <div class="m"><span class="m-dot d-ok"></span><span class="m-name">Vitamin B12</span><span class="m-val">600 pg/mL</span><span class="m-tag ok">Optimal</span></div>
+      <div class="m"><span class="m-dot d-ok"></span><span class="m-name">Advance Care Plan</span><span class="m-val">Documented</span><span class="m-tag ok">Complete</span></div>
     </div>
   </div>
 
@@ -208,7 +322,7 @@
 
   <div class="cards">
     <article class="card">
-      <div class="thumb"><div class="thumb-grad" style="background:linear-gradient(135deg,#FFB547,#F6911E 55%,#E8614D)"></div><span class="kind">Video</span></div>
+      <div class="thumb"><img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/86d9ca55-75a7-4f99-9cde-d526af10c045.jpg" alt="" loading="lazy"><span class="kind">Video</span></div>
       <div class="card-b">
         <div class="card-t">Omega Fish Oil for Heart Health</div>
         <p class="why">Relevant because your <em>hs-CRP</em> is tracking well &mdash; keep it there.</p>
@@ -216,7 +330,7 @@
       </div>
     </article>
     <article class="card">
-      <div class="thumb"><div class="thumb-grad" style="background:linear-gradient(135deg,#8FD96B,#19C3B2 60%,#15A99B)"></div><span class="kind">Video</span></div>
+      <div class="thumb"><img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/b9205528-c283-4277-b814-37c07e011578.jfif" alt="" loading="lazy"><span class="kind">Video</span></div>
       <div class="card-b">
         <div class="card-t">Methylated B Vitamins</div>
         <p class="why">Supports your <em>B12</em> levels, now in optimal range.</p>
@@ -224,7 +338,7 @@
       </div>
     </article>
     <article class="card">
-      <div class="thumb"><div class="thumb-grad" style="background:linear-gradient(135deg,#FFC978,#F6911E 70%,#D2730C)"></div><span class="kind">Video</span></div>
+      <div class="thumb"><img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/de67f0e5-2cbf-48a3-b618-7ffab951189c.jfif" alt="" loading="lazy"><span class="kind">Video</span></div>
       <div class="card-b">
         <div class="card-t">Vitamin D3 &amp; K2</div>
         <p class="why">Your <em>Vitamin D</em> is 45 ng/mL &mdash; below the 50 optimal mark.</p>
@@ -232,7 +346,7 @@
       </div>
     </article>
     <article class="card">
-      <div class="thumb"><div class="thumb-grad" style="background:linear-gradient(135deg,#A8E063,#56C596 60%,#19C3B2)"></div><span class="kind">Video</span></div>
+      <div class="thumb"><img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/f86714e6-75ab-4e81-ad55-c6ca051fbd3c.jfif" alt="" loading="lazy"><span class="kind">Video</span></div>
       <div class="card-b">
         <div class="card-t">Ketogenic Diet</div>
         <p class="why">May help with <em>waist-to-height</em>, your one out-of-range marker.</p>
@@ -240,13 +354,102 @@
       </div>
     </article>
     <article class="card">
-      <div class="thumb"><div class="thumb-grad" style="background:linear-gradient(135deg,#FFD88A,#F6911E 65%,#C65D1E)"></div><span class="kind">Video</span></div>
+      <div class="thumb"><img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/36d3c9f5-83de-4c28-85c4-7e33f46f979c.jfif" alt="" loading="lazy"><span class="kind">Video</span></div>
       <div class="card-b">
-        <div class="card-t">Vitamin D Deficiency</div>
-        <p class="why">Why levels below 50 matter, and how to raise them.</p>
+        <div class="card-t">Anti-inflammatory Diet</div>
+        <p class="why">Keeps <em>hs-CRP</em> low &mdash; inflammation is where it starts.</p>
         <div class="go"><span>Watch</span><span>&rarr;</span></div>
       </div>
     </article>
+  </div>
+
+
+  <div class="logp">
+    <div class="logp-h">
+      <div>
+        <div class="logp-t">Log your NHLS metrics</div>
+        <div class="logp-s">Takes about a minute &middot; last entry 15 September</div>
+      </div>
+      <span style="font-size:20px;color:var(--ink-faint)">&#9662;</span>
+    </div>
+    <div class="logp-b">
+      <div class="fields">
+        <div><label class="fl">Vitamin D <span style="color:var(--ink-faint);font-weight:400">ng/mL</span></label><input class="fi" placeholder="45"></div>
+        <div><label class="fl">Vitamin B12 <span style="color:var(--ink-faint);font-weight:400">pg/mL</span></label><input class="fi" placeholder="600"></div>
+        <div><label class="fl">hs-CRP <span style="color:var(--ink-faint);font-weight:400">mg/L</span></label><input class="fi" placeholder="0.8"></div>
+        <div><label class="fl">Hemoglobin A1c <span style="color:var(--ink-faint);font-weight:400">%</span></label><input class="fi" placeholder="5.4"></div>
+        <div><label class="fl">Triglycerides <span style="color:var(--ink-faint);font-weight:400">mg/dL</span></label><input class="fi" placeholder="88"></div>
+        <div><label class="fl">HDL <span style="color:var(--ink-faint);font-weight:400">mg/dL</span></label><input class="fi" placeholder="52"></div>
+      </div>
+      <button class="save">Save metrics</button>
+    </div>
+  </div>
+
+  <div class="sec"><h2>Recommended <b>products</b></h2></div>
+  <p class="sec-p">Matched to the markers you are working on.</p>
+  <div class="prods">
+    <article class="pr"><div class="pr-th">&#128167;</div><div class="pr-b">
+      <div class="pr-t">Vitamin D3 + K2 5000 IU</div><p class="pr-w">For your Vitamin D, currently 45 ng/mL.</p>
+      <div class="pr-f"><span class="pr-p">$24</span><span class="pr-l">View &rarr;</span></div></div></article>
+    <article class="pr"><div class="pr-th">&#129418;</div><div class="pr-b">
+      <div class="pr-t">Triple Strength Omega-3</div><p class="pr-w">Supports the hs-CRP level you have brought down.</p>
+      <div class="pr-f"><span class="pr-p">$32</span><span class="pr-l">View &rarr;</span></div></div></article>
+    <article class="pr"><div class="pr-th">&#127793;</div><div class="pr-b">
+      <div class="pr-t">Methylated B-Complex</div><p class="pr-w">Keeps B12 in the optimal 500&ndash;900 band.</p>
+      <div class="pr-f"><span class="pr-p">$19</span><span class="pr-l">View &rarr;</span></div></div></article>
+    <article class="pr"><div class="pr-th">&#129516;</div><div class="pr-b">
+      <div class="pr-t">At-Home Lab Panel</div><p class="pr-w">Retest all seven markers without a lab visit.</p>
+      <div class="pr-f"><span class="pr-p">$99</span><span class="pr-l">View &rarr;</span></div></div></article>
+  </div>
+
+  <div class="duo">
+    <div class="panel">
+      <div class="panel-h">Your team</div>
+      <p class="panel-s">Maximus Digital &middot; 12 members</p>
+      <div class="rank"><span class="rank-n">1</span><span class="rank-a">JM</span><span class="rank-nm">NHL-4821-9043</span><span class="rank-s">6.5</span></div>
+      <div class="rank"><span class="rank-n">2</span><span class="rank-a">SK</span><span class="rank-nm">NHL-2290-1174</span><span class="rank-s">6.0</span></div>
+      <div class="rank me"><span class="rank-n">3</span><span class="rank-a">EY</span><span class="rank-nm">You</span><span class="rank-s">5.5</span></div>
+      <div class="rank"><span class="rank-n">4</span><span class="rank-a">RP</span><span class="rank-nm">NHL-7733-0210</span><span class="rank-s">5.0</span></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h">October challenge</div>
+      <p class="panel-s">Move three markers into optimal range</p>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-top:20px">
+        <span style="font-size:34px;font-weight:700;letter-spacing:-.04em">2</span>
+        <span style="font-size:14px;color:var(--ink-faint);font-weight:500">of 3 complete</span>
+      </div>
+      <div class="ch-bar"><div class="ch-fill" style="width:67%"></div></div>
+      <div class="ch-meta"><span>Vitamin D is closest</span><span>23 days left</span></div>
+    </div>
+  </div>
+
+  <div class="sec"><h2>Recently <b>viewed</b></h2></div>
+  <p class="sec-p">Pick up where you left off.</p>
+  <div class="mini">
+    <div class="mc"><div class="mc-th"><img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/817c020a-18e6-428c-ac58-d25ecb388cd7.jfif" alt="" loading="lazy"></div>
+      <div><div class="mc-t">How to Lower Insulin with Fasting</div><div class="mc-s">Video &middot; viewed yesterday</div></div></div>
+    <div class="mc"><div class="mc-th"><img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/7686a298-b483-464a-be71-fed99e12c74f.jfif" alt="" loading="lazy"></div>
+      <div><div class="mc-t">30-30-30 Weight Loss Tips</div><div class="mc-s">Video &middot; viewed 3 days ago</div></div></div>
+    <div class="mc"><div class="mc-th"><img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/06d87adf-ea2d-4e5c-9c25-03dc74d6cb2c.jfif" alt="" loading="lazy"></div>
+      <div><div class="mc-t">Unlocking Thyroid Health</div><div class="mc-s">Video &middot; viewed last week</div></div></div>
+  </div>
+
+  <div class="sec"><h2>Your <b>bookmarks</b></h2></div>
+  <p class="sec-p">Saved to come back to.</p>
+  <div class="mini">
+    <div class="mc"><div class="mc-th"><img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/3b42e375-0dcd-454c-a3b3-396c78cc7619.jfif" alt="" loading="lazy"></div>
+      <div><div class="mc-t">Glucose / Sugar Control</div><div class="mc-s">Video</div></div></div>
+    <div class="mc"><div class="mc-th"><img src="https://fgduvnmsvkhrhcxykkyc.supabase.co/storage/v1/object/public/resource-thumbnails/07602bf1-1fba-4299-877e-1df9b6367e38.jfif" alt="" loading="lazy"></div>
+      <div><div class="mc-t">Improving Nitric Oxide for Cardiac Health</div><div class="mc-s">Video</div></div></div>
+  </div>
+
+  <div class="sec"><h2>Quick <b>actions</b></h2></div>
+  <div style="height:14px"></div>
+  <div class="qa">
+    <button class="qa-b"><div class="qa-i">&#128202;</div><div class="qa-t">Log lab results</div><div class="qa-s">Enter new values</div></button>
+    <button class="qa-b"><div class="qa-i">&#128269;</div><div class="qa-t">Browse library</div><div class="qa-s">52 resources</div></button>
+    <button class="qa-b"><div class="qa-i">&#127942;</div><div class="qa-t">View leagues</div><div class="qa-s">See where you rank</div></button>
+    <button class="qa-b"><div class="qa-i">&#128203;</div><div class="qa-t">My directives</div><div class="qa-s">Advance care plan</div></button>
   </div>
 
   <div class="note">
