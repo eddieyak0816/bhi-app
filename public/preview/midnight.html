@@ -10,20 +10,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0B1211;          /* deep ink, green-shifted */
-    --bg-2:#111A19;
-    --surface:#16211F;
-    --surface-2:#1C2927;
-    --ink:#F2F5F4;
-    --ink-soft:#9DAEAB;
-    --ink-faint:#6B7D7A;
-    --gold:#D9A441;        /* the accent — warm, not yellow */
-    --gold-soft:#E8C27E;
-    --gold-tint:rgba(217,164,65,.12);
-    --sage:#6FBF9E;        /* optimal */
-    --sage-tint:rgba(111,191,158,.13);
-    --clay:#D97757;        /* out of range */
-    --clay-tint:rgba(217,119,87,.14);
+    --bg:#0A0E17;          /* deep ink, green-shifted */
+    --bg-2:#101625;
+    --surface:#141B2B;
+    --surface-2:#1B2338;
+    --ink:#EEF1F8;
+    --ink-soft:#A3ADC4;
+    --ink-faint:#6D7693;
+    --gold:#A5B4FC;        /* the accent — warm, not yellow */
+    --gold-soft:#C7D2FE;
+    --gold-tint:rgba(165,180,252,.13);
+    --sage:#7DD3B0;        /* optimal */
+    --sage-tint:rgba(125,211,176,.14);
+    --clay:#F28B82;        /* out of range */
+    --clay-tint:rgba(242,139,130,.14);
     --line:rgba(255,255,255,.07);
     --line-2:rgba(255,255,255,.12);
     --r:16px;
@@ -35,10 +35,10 @@
   .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
   .serif{font-family:Fraunces,Georgia,serif;font-optical-sizing:auto}
 
-  .banner{background:var(--gold);color:#17120A;font-size:12.5px;font-weight:600;padding:9px 20px;text-align:center}
+  .banner{background:var(--gold-tint);color:var(--gold-soft);font-size:12.5px;font-weight:600;padding:10px 20px;text-align:center;border-bottom:1px solid rgba(165,180,252,.16)}
 
   /* ── Nav ─────────────────────────────────────────── */
-  .nav{position:sticky;top:0;z-index:50;background:rgba(11,18,17,.78);backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid var(--line)}
+  .nav{position:sticky;top:0;z-index:50;background:rgba(10,14,23,.8);backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid var(--line)}
   .nav-in{display:flex;align-items:center;gap:30px;height:70px}
   .logo{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:17px;letter-spacing:-.01em;line-height:1.1;flex-shrink:0}
   .logo span{color:var(--gold)}
@@ -46,7 +46,7 @@
   .nav-links a{padding:3px 0;border-bottom:1px solid transparent;white-space:nowrap}
   .nav-links a.on{color:var(--ink);border-bottom-color:var(--gold)}
   .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px;flex-shrink:0}
-  .avatar{width:34px;height:34px;border-radius:50%;background:var(--gold-tint);color:var(--gold-soft);display:grid;place-items:center;font-weight:600;font-size:12.5px;border:1px solid rgba(217,164,65,.25)}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--gold-tint);color:var(--gold-soft);display:grid;place-items:center;font-weight:600;font-size:12.5px;border:1px solid rgba(165,180,252,.28)}
 
   .burger{display:none;width:40px;height:40px;border:1px solid var(--line-2);background:var(--surface);border-radius:11px;cursor:pointer;padding:0;place-items:center}
   .burger span{display:block;width:17px;height:1.6px;background:var(--ink);border-radius:2px;position:relative;transition:.25s}
@@ -100,14 +100,14 @@
   .sp{font-size:14.5px;color:var(--ink-soft);margin:0 0 28px;max-width:58ch}
   .segs{display:flex;gap:2px;border:1px solid var(--line-2);border-radius:999px;padding:3px}
   .segs button{border:0;background:transparent;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-soft);padding:7px 16px;border-radius:999px;cursor:pointer}
-  .segs button.on{background:var(--gold);color:#17120A}
+  .segs button.on{background:var(--gold);color:#141B2B}
 
   /* ── Editorial cards ─────────────────────────────── */
   .feature{display:grid;grid-template-columns:1.25fr 1fr;gap:22px;margin-bottom:22px}
   .big{position:relative;border-radius:var(--r);overflow:hidden;min-height:308px;cursor:pointer}
   .big img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s}
   .big:hover img{transform:scale(1.04)}
-  .big-v{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,18,17,0) 28%,rgba(11,18,17,.93))}
+  .big-v{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,14,23,0) 28%,rgba(10,14,23,.94))}
   .big-c{position:absolute;left:0;right:0;bottom:0;padding:28px}
   .tagx{display:inline-block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--gold);margin-bottom:10px}
   .big-t{font-family:Fraunces,Georgia,serif;font-size:25px;font-weight:400;line-height:1.22;margin-bottom:9px}
@@ -134,7 +134,7 @@
   .fi{width:100%;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:12px 14px;font:inherit;font-size:15px;color:var(--ink)}
   .fi::placeholder{color:var(--ink-faint)}
   .fi:focus{outline:0;border-color:var(--gold)}
-  .gold-btn{background:var(--gold);color:#17120A;border:0;border-radius:999px;padding:13px 28px;font:inherit;font-size:14px;font-weight:650;cursor:pointer}
+  .gold-btn{background:var(--gold);color:#141B2B;border:0;border-radius:999px;padding:13px 28px;font:inherit;font-size:14px;font-weight:650;cursor:pointer}
 
   /* ── Team / challenge ────────────────────────────── */
   .duo{display:grid;grid-template-columns:1fr 1fr;gap:22px}
@@ -173,7 +173,7 @@
   .note{display:flex;gap:15px;align-items:flex-start;padding:46px 0 60px}
   .note div{font-size:13px;color:var(--ink-faint);line-height:1.6;max-width:62ch}
   .note b{color:var(--ink-soft);font-weight:600}
-  .flag{position:fixed;right:15px;bottom:15px;background:var(--gold);color:#17120A;font-size:11.5px;font-weight:700;padding:10px 16px;border-radius:999px;z-index:99}
+  .flag{position:fixed;right:15px;bottom:15px;background:var(--gold);color:#141B2B;font-size:11.5px;font-weight:700;padding:10px 16px;border-radius:999px;z-index:99}
 
   @media(max-width:900px){
     .feature{grid-template-columns:1fr}
@@ -182,8 +182,12 @@
   @media(max-width:760px){
     .nav-links{display:none}
     .burger{display:grid}
-    .sheet{display:block;position:fixed;inset:70px 0 auto;background:var(--surface);border-bottom:1px solid var(--line-2);z-index:49;transform:translateY(-130%);transition:transform .28s cubic-bezier(.4,0,.2,1);padding:8px 0 14px}
+    .sheet{display:block;position:fixed;inset:70px 0 auto;background:var(--surface);border-bottom:1px solid var(--line-2);z-index:60;transform:translateY(-110%);transition:transform .28s cubic-bezier(.4,0,.2,1);padding:8px 0 14px}
     #mnav:checked ~ .sheet{transform:translateY(0)}
+
+    .scrim{position:fixed;inset:0;background:rgba(0,0,0,.42);opacity:0;pointer-events:none;transition:opacity .28s;z-index:55}
+    #mnav:checked ~ .scrim{opacity:1;pointer-events:auto}
+    #mnav:checked ~ .sheet{box-shadow:0 24px 48px -16px rgba(0,0,0,.45)}
     .sheet a{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;font-size:16px;font-weight:500;border-bottom:1px solid var(--line)}
     .sheet a:last-child{border-bottom:0}
     .sheet a.on{color:var(--gold-soft)}
@@ -212,6 +216,7 @@
 <div class="banner">Design preview — Option 2 of 3 · Midnight Editorial</div>
 
 <input type="checkbox" id="mnav">
+<label class="scrim" for="mnav" aria-hidden="true"></label>
 <nav class="nav"><div class="wrap nav-in">
   <div class="logo">National<br>Health <span>League</span></div>
   <div class="nav-links">
@@ -239,10 +244,10 @@
     <div class="dial">
       <svg width="188" height="188" viewBox="0 0 188 188">
         <circle cx="94" cy="94" r="82" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="2"/>
-        <circle cx="94" cy="94" r="82" fill="none" stroke="#D9A441" stroke-width="2"
+        <circle cx="94" cy="94" r="82" fill="none" stroke="#A5B4FC" stroke-width="2"
                 stroke-linecap="round" stroke-dasharray="515.2" stroke-dashoffset="110.4"/>
         <circle cx="94" cy="94" r="70" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="10"/>
-        <circle cx="94" cy="94" r="70" fill="none" stroke="#6FBF9E" stroke-width="10"
+        <circle cx="94" cy="94" r="70" fill="none" stroke="#7DD3B0" stroke-width="10"
                 stroke-linecap="round" stroke-dasharray="439.8" stroke-dashoffset="94.2" opacity=".92"/>
       </svg>
       <div class="dial-mid">

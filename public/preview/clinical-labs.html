@@ -92,8 +92,12 @@
     .nav-links{display:none}
     .burger{display:grid}
     .sheet{display:block;position:fixed;inset:68px 0 auto;background:var(--surface);border-bottom:1px solid var(--line);
-      box-shadow:var(--shadow-lg);z-index:49;transform:translateY(-120%);transition:transform .28s cubic-bezier(.4,0,.2,1);padding:10px 0 16px}
+      box-shadow:var(--shadow-lg);z-index:60;transform:translateY(-110%);transition:transform .28s cubic-bezier(.4,0,.2,1);padding:10px 0 16px}
     #mnav:checked ~ .sheet{transform:translateY(0)}
+
+    .scrim{position:fixed;inset:0;background:rgba(0,0,0,.42);opacity:0;pointer-events:none;transition:opacity .28s;z-index:55}
+    #mnav:checked ~ .scrim{opacity:1;pointer-events:auto}
+    #mnav:checked ~ .sheet{box-shadow:0 24px 48px -16px rgba(0,0,0,.45)}
     .sheet a{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;font-size:16px;font-weight:600;border-bottom:1px solid var(--line)}
     .sheet a:last-child{border-bottom:0}
     .sheet a.on{color:var(--teal-dark)}
@@ -117,6 +121,7 @@
 <div class="banner">Design preview &mdash; <b>Option 1 of 3 &middot; Clinical Calm</b></div>
 
 <input type="checkbox" id="mnav">
+<label class="scrim" for="mnav" aria-hidden="true"></label>
 <nav class="nav"><div class="wrap nav-in">
   <div class="logo">National<br>Health <span>League</span></div>
   <div class="nav-links">
