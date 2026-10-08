@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Lab Results — Design Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FBFAF8; --surface:#FFFFFF; --ink:#14201F; --ink-soft:#5B6B6A; --ink-faint:#93A1A0;
+    --teal:#19C3B2; --teal-dark:#0FA193; --teal-tint:#E7F9F7;
+    --amber:#F6911E; --amber-tint:#FEF3E2; --rose:#E8614D; --rose-tint:#FDECE9;
+    --line:#EDEAE5;
+    --shadow:0 1px 2px rgba(20,32,31,.04), 0 8px 24px -12px rgba(20,32,31,.10);
+    --shadow-lg:0 2px 4px rgba(20,32,31,.04), 0 20px 40px -20px rgba(20,32,31,.16);
+    --r:18px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+
+  .banner{background:var(--ink);color:#fff;font-size:12.5px;padding:9px 20px;text-align:center}
+  .banner b{color:var(--teal)}
+
+  .nav{position:sticky;top:0;z-index:50;background:rgba(251,250,248,.82);backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;gap:28px;height:68px}
+  .logo{font-weight:800;font-size:16px;letter-spacing:-.02em;line-height:1.15;flex-shrink:0}
+  .logo span{color:var(--teal)}
+  .nav-links{display:flex;gap:26px;font-size:14.5px;color:var(--ink-soft);font-weight:500;overflow-x:auto;scrollbar-width:none}
+  .nav-links::-webkit-scrollbar{display:none}
+  .nav-links a{white-space:nowrap;padding:4px 0;border-bottom:2px solid transparent}
+  .nav-links a.on{color:var(--ink);font-weight:600;border-bottom-color:var(--teal)}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:14px;flex-shrink:0}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--teal-tint);color:var(--teal-dark);display:grid;place-items:center;font-weight:700;font-size:13px}
+
+  .head{padding:40px 0 26px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  h1{font-size:clamp(28px,4.8vw,42px);line-height:1.08;letter-spacing:-.035em;font-weight:300;margin:0}
+  h1 b{font-weight:700}
+  .head p{margin:9px 0 0;font-size:14.5px;color:var(--ink-soft)}
+  .acts{display:flex;gap:9px;flex-wrap:wrap}
+  .btn{font:inherit;font-size:13.5px;font-weight:650;padding:11px 19px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap;box-shadow:var(--shadow)}
+  .btn.pri{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 6px 18px -6px rgba(25,195,178,.6)}
+
+  .bar{display:flex;gap:7px;overflow-x:auto;padding-bottom:18px;scrollbar-width:none}
+  .bar::-webkit-scrollbar{display:none}
+  .pill{font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);white-space:nowrap;cursor:pointer}
+  .pill.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px;margin-bottom:40px}
+  .lab{background:var(--surface);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .lab::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+  .lab.ok::before{background:var(--teal)} .lab.mid::before{background:var(--amber)} .lab.bad::before{background:var(--rose)}
+  .lab-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:13px}
+  .lab-n{font-size:13.5px;font-weight:600;color:var(--ink-soft)}
+  .tag{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;letter-spacing:.01em}
+  .ok-t{background:var(--teal-tint);color:var(--teal-dark)} .mid-t{background:var(--amber-tint);color:#B96A09} .bad-t{background:var(--rose-tint);color:#C0412D}
+  .val{font-size:31px;font-weight:700;letter-spacing:-.035em;line-height:1}
+  .val small{font-size:14px;font-weight:500;color:var(--ink-faint);letter-spacing:0;margin-left:4px}
+
+  /* range track */
+  .track{margin-top:17px}
+  .track-bar{height:6px;border-radius:999px;background:var(--line);position:relative;overflow:visible}
+  .track-ok{position:absolute;top:0;bottom:0;border-radius:999px;background:var(--teal-tint)}
+  .track-dot{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;border:3px solid var(--surface);transform:translate(-50%,-50%);box-shadow:0 1px 4px rgba(20,32,31,.25)}
+  .track-l{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-faint);margin-top:9px;font-weight:500}
+  .meta{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:13px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-faint)}
+  .trend{font-weight:650}
+  .trend.up{color:var(--teal-dark)} .trend.dn{color:#C0412D}
+
+  h2{font-size:clamp(21px,3.4vw,27px);font-weight:300;letter-spacing:-.03em;margin:0 0 4px}
+  h2 b{font-weight:700}
+  .sub{font-size:14px;color:var(--ink-soft);margin:0 0 20px}
+
+  .flag{position:fixed;right:14px;bottom:14px;background:var(--ink);color:#fff;font-size:11.5px;font-weight:600;padding:9px 15px;border-radius:999px;z-index:99;box-shadow:var(--shadow-lg)}
+
+  @media(max-width:860px){ .nav-links{display:none} }
+  @media(max-width:620px){
+    .wrap{padding:0 16px}
+    .head{padding:28px 0 20px}
+    .grid{grid-template-columns:1fr;gap:12px}
+    .acts{width:100%}
+    .btn{flex:1;text-align:center}
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">Design preview &mdash; <b>Option 1 of 3 &middot; Clinical Calm</b></div>
+
+<nav class="nav"><div class="wrap nav-in">
+  <div class="logo">National<br>Health <span>League</span></div>
+  <div class="nav-links">
+    <a href="clinical.html">Home</a>
+    <a class="on" href="clinical-labs.html">Lab Results</a>
+    <a href="#">Library</a><a href="#">Leagues</a><a href="#">Profile</a>
+  </div>
+  <div class="nav-right"><div class="avatar">EY</div></div>
+</div></nav>
+
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <h1>Lab <b>Results</b></h1>
+      <p>28 results across 9 markers &middot; last updated 15 September</p>
+    </div>
+    <div class="acts">
+      <button class="btn pri">+ Log result</button>
+      <button class="btn">Upload PDF</button>
+    </div>
+  </div>
+
+  <div class="bar">
+    <span class="pill on">All markers</span>
+    <span class="pill">NHLS scored</span>
+    <span class="pill">Needs attention</span>
+    <span class="pill">Hormones</span>
+    <span class="pill">Additional</span>
+  </div>
+
+  <h2>Scored <b>markers</b></h2>
+  <p class="sub">These seven make up your NHLS score.</p>
+
+  <div class="grid">
+
+    <div class="lab ok">
+      <div class="lab-top"><span class="lab-n">Hemoglobin A1c</span><span class="tag ok-t">Optimal</span></div>
+      <div class="val">5.4<small>%</small></div>
+      <div class="track">
+        <div class="track-bar"><div class="track-ok" style="left:0;width:57%"></div><div class="track-dot" style="left:47%;background:var(--teal)"></div></div>
+        <div class="track-l"><span>4.0</span><span>Optimal &lt; 5.7</span><span>9.0</span></div>
+      </div>
+      <div class="meta"><span>24 May 2026</span><span class="trend up">&darr; 0.3 since last</span></div>
+    </div>
+
+    <div class="lab ok">
+      <div class="lab-top"><span class="lab-n">hs-CRP</span><span class="tag ok-t">Optimal</span></div>
+      <div class="val">0.8<small>mg/L</small></div>
+      <div class="track">
+        <div class="track-bar"><div class="track-ok" style="left:0;width:20%"></div><div class="track-dot" style="left:16%;background:var(--teal)"></div></div>
+        <div class="track-l"><span>0</span><span>Optimal &lt; 1.0</span><span>5.0</span></div>
+      </div>
+      <div class="meta"><span>24 May 2026</span><span class="trend up">&darr; 1.3 since last</span></div>
+    </div>
+
+    <div class="lab ok">
+      <div class="lab-top"><span class="lab-n">Vitamin B12</span><span class="tag ok-t">Optimal</span></div>
+      <div class="val">600<small>pg/mL</small></div>
+      <div class="track">
+        <div class="track-bar"><div class="track-ok" style="left:40%;width:50%"></div><div class="track-dot" style="left:55%;background:var(--teal)"></div></div>
+        <div class="track-l"><span>0</span><span>Optimal 500&ndash;900</span><span>1200</span></div>
+      </div>
+      <div class="meta"><span>15 Sept 2026</span><span class="trend up">&uarr; 100 since last</span></div>
+    </div>
+
+    <div class="lab mid">
+      <div class="lab-top"><span class="lab-n">Vitamin D</span><span class="tag mid-t">Improvement</span></div>
+      <div class="val">45<small>ng/mL</small></div>
+      <div class="track">
+        <div class="track-bar"><div class="track-ok" style="left:50%;width:50%"></div><div class="track-dot" style="left:45%;background:var(--amber)"></div></div>
+        <div class="track-l"><span>0</span><span>Optimal &ge; 50</span><span>100</span></div>
+      </div>
+      <div class="meta"><span>4 July 2026</span><span class="trend up">&uarr; 8 since last</span></div>
+    </div>
+
+    <div class="lab ok">
+      <div class="lab-top"><span class="lab-n">Triglycerides</span><span class="tag ok-t">Optimal</span></div>
+      <div class="val">88<small>mg/dL</small></div>
+      <div class="track">
+        <div class="track-bar"><div class="track-ok" style="left:0;width:50%"></div><div class="track-dot" style="left:29%;background:var(--teal)"></div></div>
+        <div class="track-l"><span>0</span><span>Optimal &lt; 150</span><span>300</span></div>
+      </div>
+      <div class="meta"><span>20 May 2026</span><span class="trend up">&darr; 12 since last</span></div>
+    </div>
+
+    <div class="lab bad">
+      <div class="lab-top"><span class="lab-n">Fasting Glucose</span><span class="tag bad-t">Out of range</span></div>
+      <div class="val">50<small>mg/dL</small></div>
+      <div class="track">
+        <div class="track-bar"><div class="track-ok" style="left:35%;width:25%"></div><div class="track-dot" style="left:10%;background:var(--rose)"></div></div>
+        <div class="track-l"><span>20</span><span>Optimal 70&ndash;99</span><span>200</span></div>
+      </div>
+      <div class="meta"><span>14 Sept 2026</span><span class="trend dn">&darr; 35 since last</span></div>
+    </div>
+
+  </div>
+
+  <h2>Additional <b>markers</b></h2>
+  <p class="sub">Tracked in your history, not part of the NHLS score.</p>
+
+  <div class="grid">
+    <div class="lab ok">
+      <div class="lab-top"><span class="lab-n">Fasting Insulin</span><span class="tag ok-t">Optimal</span></div>
+      <div class="val">7<small>uIU/mL</small></div>
+      <div class="track">
+        <div class="track-bar"><div class="track-ok" style="left:10%;width:40%"></div><div class="track-dot" style="left:28%;background:var(--teal)"></div></div>
+        <div class="track-l"><span>0</span><span>Optimal 2&ndash;10</span><span>25</span></div>
+      </div>
+      <div class="meta"><span>24 May 2026</span><span class="trend up">&darr; 2 since last</span></div>
+    </div>
+    <div class="lab ok">
+      <div class="lab-top"><span class="lab-n">HDL</span><span class="tag ok-t">Optimal</span></div>
+      <div class="val">52<small>mg/dL</small></div>
+      <div class="track">
+        <div class="track-bar"><div class="track-ok" style="left:40%;width:60%"></div><div class="track-dot" style="left:43%;background:var(--teal)"></div></div>
+        <div class="track-l"><span>20</span><span>Optimal &ge; 40</span><span>100</span></div>
+      </div>
+      <div class="meta"><span>24 May 2026</span><span class="trend up">&uarr; 3 since last</span></div>
+    </div>
+    <div class="lab ok">
+      <div class="lab-top"><span class="lab-n">Ferritin</span><span class="tag ok-t">Optimal</span></div>
+      <div class="val">50<small>ng/mL</small></div>
+      <div class="track">
+        <div class="track-bar"><div class="track-ok" style="left:15%;width:60%"></div><div class="track-dot" style="left:22%;background:var(--teal)"></div></div>
+        <div class="track-l"><span>0</span><span>Optimal 30&ndash;300</span><span>400</span></div>
+      </div>
+      <div class="meta"><span>14 Sept 2026</span><span>First result</span></div>
+    </div>
+  </div>
+
+</div>
+
+<a class="flag" href="clinical.html">&larr; Back to Home</a>
+</body>
+</html>
