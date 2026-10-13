@@ -36,28 +36,33 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [darkMode])
 
+  // "Vital" palette — chosen by Damon from the three design previews (public/preview/).
+  // `blue` is a legacy token name: it is the primary accent, used both as a fill behind
+  // white text and as link/border colour, so the value must hold contrast in both roles.
+  // Lime (#B8E62E) is deliberately NOT used here — it is unreadable on light surfaces and
+  // behind white text; it is reserved for the dark hero blocks added in later steps.
   const theme: Theme = darkMode
     ? {
-        bg: '#252525',
-        bgSecondary: '#252525',
-        text: '#e0e0e0',
-        textMuted: '#aaa',
-        textLight: '#ccc',
-        card: '#252525',
-        borderColor: '#888888',
-        borderLight: '#444',
-        blue: '#3B82F6',
+        bg: '#0C1512',
+        bgSecondary: '#101B17',
+        text: '#EAF1ED',
+        textMuted: '#9AAAA2',
+        textLight: '#7A8A82',
+        card: '#14211C',
+        borderColor: '#2A3A33',
+        borderLight: '#1F2D27',
+        blue: '#1F8F63',
       }
     : {
-        bg: '#ffffff',
-        bgSecondary: '#f9fafb',
-        text: '#1F2937',
-        textMuted: '#666',
-        textLight: '#9CA3AF',
+        bg: '#F4F6F3',
+        bgSecondary: '#F4F6F3',
+        text: '#101A16',
+        textMuted: '#5E6B65',
+        textLight: '#97A39D',
         card: '#ffffff',
-        borderColor: '#d0d0d0',
-        borderLight: '#eee',
-        blue: '#2563EB',
+        borderColor: '#E4E8E3',
+        borderLight: '#EEF1ED',
+        blue: '#12332A',
       }
 
   return <ThemeContext.Provider value={{ darkMode, setDarkMode, theme }}>{children}</ThemeContext.Provider>

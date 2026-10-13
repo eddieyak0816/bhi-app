@@ -1,24 +1,31 @@
+/* "Vital" palette — kept in step with src/context/ThemeContext.tsx. The app reads colour
+   from two places (these variables, and the inline-style theme tokens), so change both
+   together or screens will disagree. The --primary-blue* names are legacy; they now hold
+   the forest-green accent. */
 :root {
-  --primary-blue: #3D7DCA;
-  --primary-blue-dark: #2B5FA0;
-  --primary-blue-light: #E8F0F9;
-  --bg: #F8F9FC;
+  --primary-blue: #12332A;
+  --primary-blue-dark: #0B2119;
+  --primary-blue-light: #E3F5EC;
+  --bg: #F4F6F3;
   --card: #FFFFFF;
-  --text-primary: #1A1F36;
-  --text-secondary: #697386;
-  --border: #999999;
-  --success: #0A7D4A;
+  --text-primary: #101A16;
+  --text-secondary: #5E6B65;
+  --border: #D5DCD7;
+  --success: #0F8A5C;
   --error: #C5281C;
   --warning: #B45309;
 }
 
 /* Dark mode colors */
 body.dark-mode {
-  --bg: #252525;
-  --card: #252525;
-  --text-primary: #e0e0e0;
-  --text-secondary: #aaa;
-  --border: #555;
+  --primary-blue: #1F8F63;
+  --primary-blue-dark: #178558;
+  --primary-blue-light: #14211C;
+  --bg: #0C1512;
+  --card: #14211C;
+  --text-primary: #EAF1ED;
+  --text-secondary: #9AAAA2;
+  --border: #2A3A33;
 }
 
 * {
