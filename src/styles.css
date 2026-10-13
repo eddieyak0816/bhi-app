@@ -1617,3 +1617,39 @@ body.dark-mode .adm-tab.on .adm-tab-i{background:rgba(12,21,18,.14)}
   .adm-tab{padding:10px 12px;white-space:normal;min-width:0}
   .adm-tab-i{width:26px;height:26px}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin → Resources, chunk 1: Create New Resource + Filter Resources
+   (shared building blocks — panel, label, input, chips, add button — reused by later tabs)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-root .adm-panel{background:var(--card);border:1px solid var(--hd-fill-2);border-radius:22px;padding:22px;margin-bottom:22px;
+  box-shadow:0 1px 2px rgba(16,26,22,.04)}
+.adm-root .adm-panel-h{margin:0 0 18px;font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--text-primary)}
+.adm-root .adm-lbl{display:block;margin:0 0 8px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary)}
+
+.adm-root .adm-in{box-sizing:border-box;min-width:0;border:1.5px solid var(--border);border-radius:12px;padding:10px 13px;
+  background:var(--bg);color:var(--text-primary);font:inherit;font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s}
+.adm-root .adm-in:focus{border-color:#15A06B;box-shadow:0 0 0 4px rgba(21,160,107,.15)}
+.adm-root .adm-in-sm{width:112px;flex-shrink:0;cursor:pointer}
+.adm-root .adm-in-grow{flex:1}
+.adm-root .adm-in-grow.title{min-width:160px}
+.adm-root .adm-in-search{width:100%;padding-right:32px}
+.adm-in-arrow{position:absolute;right:12px;pointer-events:none;color:var(--text-secondary);font-size:11px}
+
+.adm-chip{display:inline-flex;align-items:center;gap:8px;padding:5px 7px 5px 13px;border-radius:999px;font-size:13px;font-weight:700;color:#fff;max-width:100%}
+.adm-chip span{overflow-wrap:anywhere;min-width:0}
+.adm-chip.cat{background:#15A06B}
+.adm-chip.tag{background:#2D7FC0}
+.adm-chip.type{background:#6D5BD0}
+.adm-chip-x{flex-shrink:0;width:20px;height:20px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.22);color:#fff;
+  cursor:pointer;font-size:11px;line-height:1;display:grid;place-items:center;transition:background .15s}
+.adm-chip-x:hover{background:rgba(255,255,255,.4)}
+
+.adm-add{padding:6px 14px;border:1.5px dashed var(--border);border-radius:999px;background:transparent;color:var(--text-primary);
+  font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s}
+.adm-add:hover{border-color:#15A06B;background:rgba(21,160,107,.08)}
+.adm-clear{padding:8px 16px;border:0;border-radius:999px;background:rgba(239,68,68,.12);color:#C13B36;font:inherit;font-size:12.5px;
+  font-weight:800;cursor:pointer;transition:background .15s}
+.adm-clear:hover{background:rgba(239,68,68,.22)}
+body.dark-mode .adm-clear{color:#F2A29E}
+.adm-root .adm-panel .btn-primary{border-radius:999px}

@@ -1488,36 +1488,36 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Create New Resource - Always Visible */}
-              <div style={{marginBottom:40,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
-                  <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Create New Resource</h3>
+              <div className="adm-panel">
+                  <h3 className="adm-panel-h">Create New Resource</h3>
                   <div className="admin-create-row" style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
-                    <select value={type} onChange={e => { console.info('type select changed:', e.target.value); setType(e.target.value) }} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                    <select value={type} onChange={e => { console.info('type select changed:', e.target.value); setType(e.target.value) }} className="adm-in adm-in-sm">
                       {(resourceTypes || []).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(rt => <option key={rt} value={rt}>{rt}</option>)}
                     </select>
-                    <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{flex:1,minWidth:160,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
+                    <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className="adm-in adm-in-grow title" />
                     <div style={{display:'flex',gap:6,flex:1,minWidth:220}}>
-                      <select value={linkProtocol} onChange={e => setLinkProtocol(e.target.value)} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                      <select value={linkProtocol} onChange={e => setLinkProtocol(e.target.value)} className="adm-in adm-in-sm">
                         <option value="https://">https://</option>
                         <option value="http://">http://</option>
                       </select>
-                      <input placeholder="example.com" value={linkUrl} onChange={e => setLinkUrl(stripProtocol(e.target.value))} style={{flex:1,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}} />
+                      <input placeholder="example.com" value={linkUrl} onChange={e => setLinkUrl(stripProtocol(e.target.value))} className="adm-in adm-in-grow" />
                     </div>
                     <button className="btn-primary" onClick={create} disabled={!title}>Create</button>
                   </div>
                   <div className="admin-two-col-grid" style={{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
                     <div>
-                      <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Categories:</label>
+                      <label className="adm-lbl">Categories:</label>
                       <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                         {selectedCategories.map(c => (
-                          <div key={c} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#10b981',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                          <div key={c} className="adm-chip cat">
                             <span>{c}</span>
-                            <button onClick={() => setSelectedCategories(s => s.filter(x => x !== c))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                            <button onClick={() => setSelectedCategories(s => s.filter(x => x !== c))} className="adm-chip-x">✕</button>
                           </div>
                         ))}
                         <div style={{position:'relative'}}>
                           <button
                             onClick={() => {setCategorySearchModalOpen(true); setCategorySearchContext('create'); setCategorySearchInput('')}}
-                            style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                            className="adm-add"
                           >
                             + Add Category
                           </button>
@@ -1525,18 +1525,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       </div>
                     </div>
                     <div>
-                      <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Tags:</label>
+                      <label className="adm-lbl">Tags:</label>
                       <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                         {selectedTags.map(t => (
-                          <div key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#2563eb',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                          <div key={t} className="adm-chip tag">
                             <span>{t}</span>
-                            <button onClick={() => setSelectedTags(s => s.filter(x => x !== t))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                            <button onClick={() => setSelectedTags(s => s.filter(x => x !== t))} className="adm-chip-x">✕</button>
                           </div>
                         ))}
                         <div style={{position:'relative'}}>
                           <button
                             onClick={() => {setTagSearchModalOpen(true); setTagSearchContext('create'); setTagSearchInput('')}}
-                            style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                            className="adm-add"
                           >
                             + Add Tag
                           </button>
@@ -1547,13 +1547,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 </div>
 
               {/* Filtering section - Matching Create New Resource style */}
-              <div style={{marginTop:0,marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
+              <div className="adm-panel">
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-                  <h3 style={{margin:0,fontSize:16,fontWeight:600,color:theme.text}}>Filter Resources</h3>
+                  <h3 className="adm-panel-h" style={{margin:0}}>Filter Resources</h3>
                 </div>
-                <div className="admin-filter-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:16,alignItems:'start'}}>
+                <div className="admin-filter-grid" style={{display:'grid',gridTemplateColumns:'repeat(4, minmax(0, 1fr))',gap:16,alignItems:'start'}}>
                   <div>
-                    <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Keyword Search</label>
+                    <label className="adm-lbl">Keyword Search</label>
                     <div style={{position:'relative',display:'flex',alignItems:'center'}}>
                       <input
                         type="text"
@@ -1561,9 +1561,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         value={filterKeyword}
                         onChange={e => setFilterKeyword(e.target.value)}
                         list="resource-titles-list"
-                        style={{width:'100%',padding:'6px 8px',paddingRight:28,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}
+                        className="adm-in adm-in-search"
                       />
-                      <div style={{position:'absolute',right:8,pointerEvents:'none',color:theme.text,fontSize:12}}>▼</div>
+                      <div className="adm-in-arrow">▼</div>
                       <datalist id="resource-titles-list">
                         {Array.from(new Set(
                           resources
@@ -1579,51 +1579,51 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     </div>
                   </div>
                   <div>
-                    <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Resource Types:</label>
+                    <label className="adm-lbl">Resource Types:</label>
                     <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                       {filterTypes.map(t => (
-                        <div key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#667eea',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                        <div key={t} className="adm-chip type">
                           <span>{t}</span>
-                          <button onClick={() => setFilterTypes(s => s.filter(x => x !== t))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                          <button onClick={() => setFilterTypes(s => s.filter(x => x !== t))} className="adm-chip-x">✕</button>
                         </div>
                       ))}
                       <button
                         onClick={() => {setTagSearchModalOpen(true); setTagSearchContext('filter-type'); setTagSearchInput('')}}
-                        style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                        className="adm-add"
                       >
                         + Add Type
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Tags:</label>
+                    <label className="adm-lbl">Tags:</label>
                     <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                       {filterTags.map(t => (
-                        <div key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#2563eb',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                        <div key={t} className="adm-chip tag">
                           <span>{t}</span>
-                          <button onClick={() => setFilterTags(s => s.filter(x => x !== t))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                          <button onClick={() => setFilterTags(s => s.filter(x => x !== t))} className="adm-chip-x">✕</button>
                         </div>
                       ))}
                       <button
                         onClick={() => {setTagSearchModalOpen(true); setTagSearchContext('filter-tag'); setTagSearchInput('')}}
-                        style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                        className="adm-add"
                       >
                         + Add Tag
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Categories:</label>
+                    <label className="adm-lbl">Categories:</label>
                     <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                       {filterCategories.map(c => (
-                        <div key={c} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#10b981',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                        <div key={c} className="adm-chip cat">
                           <span>{c}</span>
-                          <button onClick={() => setFilterCategories(s => s.filter(x => x !== c))} style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                          <button onClick={() => setFilterCategories(s => s.filter(x => x !== c))} className="adm-chip-x">✕</button>
                         </div>
                       ))}
                       <button
                         onClick={() => {setCategorySearchModalOpen(true); setCategorySearchContext('filter'); setCategorySearchInput('')}}
-                        style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                        className="adm-add"
                       >
                         + Add Category
                       </button>
@@ -1641,7 +1641,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         setSelectedIds([])
                         setSelectAll(false)
                       }}
-                      style={{padding:'6px 12px',background:'#EF4444',color:'#fff',border:'none',borderRadius:4,cursor:'pointer',fontSize:12,fontWeight:600}}
+                      className="adm-clear"
                     >
                       Clear All
                     </button>
