@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../lib/supabase'
+import { getStoredJwt } from '../lib/supabase'
 import {
   rockportVo2,
   restingHrVo2,
@@ -46,6 +46,7 @@ export default function Vo2CalcModal({ onClose, onSave, theme }: Props) {
   const [method, setMethod] = useState<Method>('rockport')
   const [profile, setProfile] = useState<Profile>({ age: null, sex: null, weight_kg: null })
   const [profileLoading, setProfileLoading] = useState(true)
+  const [profileFailed, setProfileFailed] = useState(false)
 
   // Rockport inputs
   const [walkMinutes, setWalkMinutes] = useState('')   // whole minutes
@@ -63,17 +64,32 @@ export default function Vo2CalcModal({ onClose, onSave, theme }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   // Load profile for age/sex/weight
+  // Direct REST read, not the Supabase JS client. The client waits on its internal auth lock,
+  // which can abort after a refresh — and this used to swallow that failure silently, leaving
+  // age/sex/weight empty so the modal reported them as "missing" when the lookup had simply
+  // failed. A failed lookup now says so instead of blaming the user's profile.
   useEffect(() => {
     if (!user?.id) { setProfileLoading(false); return }
-    supabase
-      .from('profiles')
-      .select('age, sex, weight_kg')
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) setProfile({ age: data.age, sex: data.sex as any, weight_kg: data.weight_kg })
-        setProfileLoading(false)
-      })
+    let cancelled = false
+    ;(async () => {
+      try {
+        const url = import.meta.env.VITE_SUPABASE_URL as string
+        const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+        const jwt = getStoredJwt()
+        const res = await fetch(`${url}/rest/v1/profiles?select=age,sex,weight_kg&id=eq.${user.id}&limit=1`, {
+          headers: { apikey: anon, Authorization: `Bearer ${jwt ?? anon}`, Accept: 'application/json' },
+        })
+        if (!res.ok) throw new Error(String(res.status))
+        const rows = await res.json()
+        const data = Array.isArray(rows) ? rows[0] : null
+        if (!cancelled && data) setProfile({ age: data.age, sex: data.sex as any, weight_kg: data.weight_kg })
+      } catch {
+        if (!cancelled) setProfileFailed(true)
+      } finally {
+        if (!cancelled) setProfileLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
   }, [user?.id])
 
   function validate(): string | null {
@@ -125,30 +141,30 @@ export default function Vo2CalcModal({ onClose, onSave, theme }: Props) {
   }
 
   const inputStyle: React.CSSProperties = {
-    background: theme.card,
-    border: `1px solid ${theme.borderColor}`,
-    borderRadius: 6,
-    padding: '7px 10px',
+    background: theme.bg,
+    border: `1.5px solid ${theme.borderColor}`,
+    borderRadius: 12,
+    padding: '11px 13px',
     color: theme.text,
-    fontSize: 13,
+    fontSize: 14,
     outline: 'none',
     width: '100%',
     boxSizing: 'border-box',
   }
 
   const labelStyle: React.CSSProperties = {
-    fontSize: 12,
-    fontWeight: 600,
+    fontSize: 12.5,
+    fontWeight: 700,
     color: theme.textMuted,
-    marginBottom: 4,
+    marginBottom: 7,
     display: 'block',
   }
 
   const sectionStyle: React.CSSProperties = {
-    background: theme.bgSecondary,
-    border: `1px solid ${theme.borderColor}`,
-    borderRadius: 8,
-    padding: '14px 16px',
+    background: theme.bg,
+    border: `1px solid ${theme.borderLight}`,
+    borderRadius: 16,
+    padding: '16px 18px',
     marginBottom: 16,
   }
 
@@ -160,25 +176,29 @@ export default function Vo2CalcModal({ onClose, onSave, theme }: Props) {
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(10,14,23,0.55)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 20px', overflowY: 'auto' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ background: theme.bg, border: `1px solid ${theme.borderColor}`, borderRadius: 12, width: '100%', maxWidth: 560, boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+      <div style={{ background: theme.card, border: `1px solid ${theme.borderLight}`, borderRadius: 26, width: '100%', maxWidth: 560, boxShadow: '0 30px 70px -20px rgba(0,0,0,0.45)', overflow: 'hidden' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 16px', borderBottom: `1px solid ${theme.borderColor}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px 18px', borderBottom: `1px solid ${theme.borderLight}` }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: theme.text }}>VO2 Max Calculator</h2>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: '-0.025em', color: theme.text }}>VO2 Max Calculator</h2>
             <p style={{ margin: '2px 0 0 0', fontSize: 13, color: theme.textMuted }}>Estimate your cardiorespiratory fitness percentile</p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: theme.textMuted, padding: '2px 6px' }} aria-label="Close">×</button>
         </div>
 
-        <div style={{ padding: 24 }}>
+        <div style={{ padding: 28 }}>
 
           {/* Profile data note */}
           {profileLoading ? (
             <div style={{ fontSize: 13, color: theme.textMuted, marginBottom: 16 }}>Loading your profile…</div>
+          ) : profileFailed ? (
+            <div style={{ ...sectionStyle, marginBottom: 16, fontSize: 13, color: theme.textMuted }}>
+              We couldn&rsquo;t load your profile just now. Close this window and reopen it to try again.
+            </div>
           ) : (
             <div style={{ ...sectionStyle, marginBottom: 16, fontSize: 13 }}>
               <strong style={{ color: theme.text }}>Your profile data:</strong>
@@ -198,17 +218,17 @@ export default function Vo2CalcModal({ onClose, onSave, theme }: Props) {
           )}
 
           {/* Method tabs */}
-          <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${theme.borderColor}`, marginBottom: 20 }}>
+          <div style={{ display: 'flex', gap: 4, background: theme.bg, padding: 4, borderRadius: 999, marginBottom: 20, overflowX: 'auto' }}>
             {tabs.map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => { setMethod(id); setResult(null); setError(null) }}
                 style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  padding: '9px 14px', fontSize: 12, fontWeight: 600,
-                  color: method === id ? (theme.blue ?? '#3B82F6') : theme.textMuted,
-                  borderBottom: method === id ? `2px solid ${theme.blue ?? '#3B82F6'}` : '2px solid transparent',
-                  marginBottom: -1, whiteSpace: 'nowrap',
+                  background: method === id ? theme.card : 'transparent', border: 'none', cursor: 'pointer',
+                  padding: '9px 16px', fontSize: 13, fontWeight: 700, borderRadius: 999,
+                  color: method === id ? theme.text : theme.textMuted,
+                  boxShadow: method === id ? '0 1px 3px rgba(16,26,22,0.14)' : 'none',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {label}
@@ -283,7 +303,7 @@ export default function Vo2CalcModal({ onClose, onSave, theme }: Props) {
           <button
             onClick={calculate}
             disabled={profileLoading}
-            style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 14, fontWeight: 600, cursor: 'pointer', marginBottom: result ? 20 : 0 }}
+            style={{ background: theme.blue ?? '#12332A', color: '#fff', border: 'none', borderRadius: 999, padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: result ? 20 : 0 }}
           >
             Calculate
           </button>
@@ -294,11 +314,11 @@ export default function Vo2CalcModal({ onClose, onSave, theme }: Props) {
               <h3 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 700, color: theme.text }}>Your Result</h3>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 8, padding: '12px 16px' }}>
+                <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 14, padding: '14px 16px' }}>
                   <div style={{ fontSize: 28, fontWeight: 800, color: theme.text }}>{result.vo2}</div>
                   <div style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>ml/kg/min</div>
                 </div>
-                <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 8, padding: '12px 16px' }}>
+                <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 14, padding: '14px 16px' }}>
                   <div style={{ fontSize: 28, fontWeight: 800, color: vo2PercentileColor(result.percentile) }}>{result.percentile}<span style={{ fontSize: 16 }}>th %ile</span></div>
                   <div style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>{vo2PercentileLabel(result.percentile)} (ACSM norms)</div>
                 </div>
@@ -328,7 +348,7 @@ export default function Vo2CalcModal({ onClose, onSave, theme }: Props) {
 
               <button
                 onClick={() => onSave(result.percentile)}
-                style={{ background: '#15803d', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                style={{ background: '#15803d', color: '#fff', border: 'none', borderRadius: 999, padding: '12px 26px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
               >
                 Save to Lab Results
               </button>
@@ -337,11 +357,11 @@ export default function Vo2CalcModal({ onClose, onSave, theme }: Props) {
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '14px 24px', borderTop: `1px solid ${theme.borderColor}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '16px 28px', borderTop: `1px solid ${theme.borderLight}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <p style={{ margin: 0, fontSize: 11, color: theme.textMuted }}>
             Estimates use validated exercise science formulas. For clinical precision, use a laboratory metabolic test.
           </p>
-          <button onClick={onClose} style={{ background: 'none', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '7px 18px', fontSize: 13, color: theme.text, cursor: 'pointer', flexShrink: 0, marginLeft: 12 }}>Close</button>
+          <button onClick={onClose} style={{ background: 'none', border: `1.5px solid ${theme.borderColor}`, borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 700, color: theme.text, cursor: 'pointer', flexShrink: 0, marginLeft: 12 }}>Close</button>
         </div>
       </div>
     </div>

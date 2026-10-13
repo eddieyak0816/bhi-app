@@ -447,6 +447,47 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
     boxSizing: 'border-box',
   }
 
+  // The trend chart for one marker. Rendered as a full-width grid item directly after the
+  // tile it belongs to (see renderMarkerSection), so it opens right under the row you clicked
+  // instead of at the bottom of the whole section.
+  const renderTrendChart = (chartMarker: string) => {
+    const chartData = buildChartData(chartMarker)
+    const latest = getResultsForMarker(chartMarker)[0]
+    const markerObj = labMarkers.find(m => m.name === chartMarker)
+    const optimal = markerObj ? optimalRanges[markerObj.id] : null
+    const unit = latest?.unit || ''
+    const values = chartData.map(d => d.value)
+    const dataMin = Math.min(...values)
+    const dataMax = Math.max(...values)
+    const yMin = optimal ? Math.min(dataMin, optimal.min) : dataMin
+    const yMax = optimal ? Math.max(dataMax, optimal.max) : dataMax
+    const pad = (yMax - yMin) * 0.15 || 1
+    return (
+      <div key={`${chartMarker}-trend`} className="lab-chart lab-chart-row">
+        <div className="lab-chart-h">
+          <b>{chartMarker} — Trend</b>
+          {optimal && (
+            <span>
+              Optimal range: <span style={{ color: '#10B981', fontWeight: 700 }}>{optimal.min} – {optimal.max} {unit}</span>
+            </span>
+          )}
+        </div>
+        <ResponsiveContainer width="100%" height={220}>
+          <ComposedChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
+            <XAxis dataKey="date" tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} />
+            <YAxis domain={[yMin - pad, yMax + pad]} tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} tickFormatter={(v: number) => String(Math.round(v * 10) / 10)} width={40} />
+            <Tooltip contentStyle={{ background: theme.card as string, border: `1px solid ${theme.borderColor}`, borderRadius: 12, fontSize: 12 }} labelStyle={{ color: theme.textMuted as string }} formatter={(val: number) => [`${val} ${unit}`, chartMarker]} />
+            {optimal && <ReferenceArea y1={optimal.min} y2={optimal.max} fill="#10B981" fillOpacity={0.08} stroke="#10B981" strokeOpacity={0.3} label="" />}
+            {optimal && <ReferenceLine y={optimal.min} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
+            {optimal && <ReferenceLine y={optimal.max} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
+            <Line type="monotone" dataKey="value" stroke={theme.blue as string} strokeWidth={2.5} dot={{ r: 4, fill: theme.blue as string, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={false} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    )
+  }
+
   // One marker section (NHLS Score / Additional / Hormone). Same data sources and the same
   // helpers as before — getResultsForMarker, getEffectiveRange, buildChartData — so a tile
   // shows exactly the value, range and status it always did.
@@ -490,96 +531,65 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
             const delta = latest && previous ? Math.round((latest.value - previous.value) * 100) / 100 : null
 
             return (
-              <div key={marker} className={`lab-tile${selectedMarker === marker ? ' sel' : ''}`}>
-                <button
-                  className="lab-tile-btn"
-                  onClick={() => setSelectedMarker(selectedMarker === marker ? null : marker)}
-                >
-                  <div className="lab-tile-top">
-                    <span className="lab-tile-n">{marker}</span>
-                    {inRange !== null && (
-                      <span className={`lab-pill ${inRange ? 'ok' : 'bad'}`}>{inRange ? 'In range' : 'Out of range'}</span>
-                    )}
-                  </div>
-
-                  {latest && (
-                    <>
-                      <div className={`lab-val${inRange === false ? ' bad' : ''}`}>
-                        {latest.value}<small>{latest.unit}</small>
-                      </div>
-
-                      {scale && (
-                        <div className="lab-scale">
-                          <div className="lab-track">
-                            <div className="lab-band" style={{ left: `${scale.bandLeft}%`, width: `${scale.bandWidth}%` }} />
-                            <div className={`lab-pin ${inRange ? 'ok' : 'bad'}`} style={{ left: `${scale.pin}%` }} />
-                          </div>
-                        </div>
-                      )}
-                      {rangeText && <div className="lab-rng">{rangeText}</div>}
-
-                      <div className="lab-foot">
-                        <span>{latest.date}</span>
-                        {delta !== null && (
-                          <span>{delta > 0 ? '↑' : delta < 0 ? '↓' : '—'} {Math.abs(delta)} since last</span>
-                        )}
-                      </div>
-                    </>
-                  )}
-                  {markerDef?.cpt_code && <div className="lab-cpt">CPT: {markerDef.cpt_code}</div>}
-                </button>
-
-                {history.length > 1 && (
+              <React.Fragment key={marker}>
+                <div className={`lab-tile${selectedMarker === marker ? ' sel' : ''}`}>
                   <button
-                    className={`lab-trend${isChartOpen ? ' on' : ''}`}
-                    onClick={() => setChartOpenMarker(isChartOpen ? null : marker)}
+                    className="lab-tile-btn"
+                    onClick={() => setSelectedMarker(selectedMarker === marker ? null : marker)}
                   >
-                    {isChartOpen ? '▲ Hide Trend' : '▼ Show Trend'}
+                    <div className="lab-tile-top">
+                      <span className="lab-tile-n">{marker}</span>
+                      {inRange !== null && (
+                        <span className={`lab-pill ${inRange ? 'ok' : 'bad'}`}>{inRange ? 'In range' : 'Out of range'}</span>
+                      )}
+                    </div>
+
+                    {latest && (
+                      <>
+                        <div className={`lab-val${inRange === false ? ' bad' : ''}`}>
+                          {latest.value}<small>{latest.unit}</small>
+                        </div>
+
+                        {scale && (
+                          <div className="lab-scale">
+                            <div className="lab-track">
+                              <div className="lab-band" style={{ left: `${scale.bandLeft}%`, width: `${scale.bandWidth}%` }} />
+                              <div className={`lab-pin ${inRange ? 'ok' : 'bad'}`} style={{ left: `${scale.pin}%` }} />
+                            </div>
+                          </div>
+                        )}
+                        {rangeText && <div className="lab-rng">{rangeText}</div>}
+
+                        <div className="lab-foot">
+                          <span>{latest.date}</span>
+                          {delta !== null && (
+                            <span>{delta > 0 ? '↑' : delta < 0 ? '↓' : '—'} {Math.abs(delta)} since last</span>
+                          )}
+                        </div>
+                      </>
+                    )}
+                    {markerDef?.cpt_code && <div className="lab-cpt">CPT: {markerDef.cpt_code}</div>}
                   </button>
-                )}
-              </div>
+
+                  {/* Only markers with more than one result have a trend. Single-result tiles get an
+                      invisible placeholder of the same size so every tile in a row is level. */}
+                  {history.length > 1 ? (
+                    <button
+                      className={`lab-trend${isChartOpen ? ' on' : ''}`}
+                      onClick={() => setChartOpenMarker(isChartOpen ? null : marker)}
+                    >
+                      {isChartOpen ? '▲ Hide Trend' : '▼ Show Trend'}
+                    </button>
+                  ) : (
+                    <button className="lab-trend" style={{ visibility: 'hidden' }} tabIndex={-1} aria-hidden="true">▼ Show Trend</button>
+                  )}
+                </div>
+
+                {isChartOpen && history.length > 1 && renderTrendChart(marker)}
+              </React.Fragment>
             )
           })}
         </div>
-
-        {/* Inline trend chart */}
-        {chartOpenMarker && markers.includes(chartOpenMarker) && (() => {
-          const chartData = buildChartData(chartOpenMarker)
-          const latest = getResultsForMarker(chartOpenMarker)[0]
-          const markerObj = labMarkers.find(m => m.name === chartOpenMarker)
-          const optimal = markerObj ? optimalRanges[markerObj.id] : null
-          const unit = latest?.unit || ''
-          const values = chartData.map(d => d.value)
-          const dataMin = Math.min(...values)
-          const dataMax = Math.max(...values)
-          const yMin = optimal ? Math.min(dataMin, optimal.min) : dataMin
-          const yMax = optimal ? Math.max(dataMax, optimal.max) : dataMax
-          const pad = (yMax - yMin) * 0.15 || 1
-          return (
-            <div className="lab-chart">
-              <div className="lab-chart-h">
-                <b>{chartOpenMarker} — Trend</b>
-                {optimal && (
-                  <span>
-                    Optimal range: <span style={{ color: '#10B981', fontWeight: 700 }}>{optimal.min} – {optimal.max} {unit}</span>
-                  </span>
-                )}
-              </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <ComposedChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} />
-                  <YAxis domain={[yMin - pad, yMax + pad]} tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} tickFormatter={(v: number) => String(Math.round(v * 10) / 10)} width={40} />
-                  <Tooltip contentStyle={{ background: theme.card as string, border: `1px solid ${theme.borderColor}`, borderRadius: 12, fontSize: 12 }} labelStyle={{ color: theme.textMuted as string }} formatter={(val: number) => [`${val} ${unit}`, chartOpenMarker]} />
-                  {optimal && <ReferenceArea y1={optimal.min} y2={optimal.max} fill="#10B981" fillOpacity={0.08} stroke="#10B981" strokeOpacity={0.3} label="" />}
-                  {optimal && <ReferenceLine y={optimal.min} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
-                  {optimal && <ReferenceLine y={optimal.max} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
-                  <Line type="monotone" dataKey="value" stroke={theme.blue as string} strokeWidth={2.5} dot={{ r: 4, fill: theme.blue as string, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={false} />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          )
-        })()}
       </section>
     )
   }
