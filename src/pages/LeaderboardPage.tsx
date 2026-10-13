@@ -26,11 +26,11 @@ interface LeaderboardPageProps {
   onNavigate?: (page: string) => void
 }
 
-const LABEL_COLOR: Record<string, { bg: string; color: string }> = {
-  'Optimal':           { bg: '#dcfce7', color: '#15803d' },
-  'Healthy':           { bg: '#dbeafe', color: '#1d4ed8' },
-  'Needs Improvement': { bg: '#fef3c7', color: '#b45309' },
-  'High Risk':         { bg: '#fee2e2', color: '#b91c1c' },
+const LABEL_TONE: Record<string, string> = {
+  'Optimal':           'optimal',
+  'Healthy':           'healthy',
+  'Needs Improvement': 'needs',
+  'High Risk':         'risk',
 }
 
 const TEAM_PALETTE_LIGHT: Array<{ bg: string; color: string }> = [
@@ -58,10 +58,10 @@ function teamColor(teamName: string, teams: string[], darkMode: boolean) {
 }
 
 function RankBadge({ rank }: { rank: number }) {
-  if (rank === 1) return <span style={{ fontSize: 20 }}>🥇</span>
-  if (rank === 2) return <span style={{ fontSize: 20 }}>🥈</span>
-  if (rank === 3) return <span style={{ fontSize: 20 }}>🥉</span>
-  return <span style={{ fontSize: 13, fontWeight: 700, color: '#6b7280' }}>#{rank}</span>
+  if (rank === 1) return <span className="medal">🥇</span>
+  if (rank === 2) return <span className="medal">🥈</span>
+  if (rank === 3) return <span className="medal">🥉</span>
+  return <span>#{rank}</span>
 }
 
 const LABELS = ['Optimal', 'Healthy', 'Needs Improvement', 'High Risk'] as const
@@ -102,25 +102,18 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px', color: theme.text }}>
-        Loading leaderboard…
+      <div className="em-root">
+        <div className="em-loading">Loading leaderboard…</div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px' }}>
-        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: 16, color: '#b91c1c' }}>
-          {error}
-        </div>
+      <div className="em-root">
+        <div className="em-err">{error}</div>
         {onNavigate && (
-          <button
-            onClick={() => onNavigate('home')}
-            style={{ marginTop: 16, background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '7px 16px', cursor: 'pointer', color: theme.text, fontSize: 14 }}
-          >
-            ← Back
-          </button>
+          <button className="em-back" onClick={() => onNavigate('home')}>← Back</button>
         )}
       </div>
     )
@@ -163,47 +156,39 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
     downloadCsv(buildCsvString(headers, rows), `nhl-leaderboard-${orgSlug}-${todayIso()}.csv`)
   }
 
-  const inputStyle: React.CSSProperties = {
-    background: theme.card,
-    border: `1px solid ${theme.borderColor}`,
-    borderRadius: 6,
-    padding: '6px 10px',
-    color: theme.text,
-    fontSize: 13,
-    outline: 'none',
-  }
-
+  // ── Presentation only below this line ───────────────────────────────────────
+  // Same data, same filters, same rank logic and CSV export as before.
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
+    <div className="em-root">
       {/* Back link */}
       {onNavigate && (
-        <button
-          onClick={() => onNavigate(`employer/${orgSlug}`)}
-          style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '6px 14px', cursor: 'pointer', color: theme.text, fontSize: 13, marginBottom: 16 }}
-        >
+        <button className="em-back" onClick={() => onNavigate(`employer/${orgSlug}`)}>
           ← Employer View
         </button>
       )}
 
       {/* PHI notice */}
-      <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 6, padding: '8px 14px', marginBottom: 20, fontSize: 12, color: '#713f12' }}>
-        <strong>De-identified view:</strong> Real names, emails, and individual lab values are never shown. Only usernames, public IDs, teams, and NHLS scores are displayed.
+      <div className="em-note">
+        <span aria-hidden="true">🔒</span>
+        <div>
+          <b>De-identified view:</b> Real names, emails, and individual lab values are never shown. Only usernames, public IDs, teams, and NHLS scores are displayed.
+        </div>
       </div>
 
       {/* Header */}
-      <h2 style={{ margin: '0 0 4px 0', fontSize: 22, fontWeight: 700, color: theme.text }}>
-        {data.org.name} — NHLS Leaderboard
-      </h2>
-      <p style={{ margin: '0 0 12px 0', color: theme.textMuted, fontSize: 14 }}>
-        {entries.length} participant{entries.length !== 1 ? 's' : ''} with a scored result · Ranked by NHLS score with tie-breaker logic
-      </p>
+      <div className="em-head">
+        <div>
+          <h2>{data.org.name} — NHLS Leaderboard</h2>
+          <div className="em-meta">
+            <span className="em-chip">{entries.length} participant{entries.length !== 1 ? 's' : ''} with a scored result</span>
+            <span className="em-chip">Ranked by NHLS score with tie-breaker logic</span>
+          </div>
+        </div>
+      </div>
 
       {filtered.length > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-          <button
-            onClick={handleExportLeaderboard}
-            style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-          >
+        <div className="lb-export">
+          <button className="em-btn primary sm" onClick={handleExportLeaderboard}>
             Export CSV
           </button>
         </div>
@@ -211,26 +196,22 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
 
       {entries.length > 0 && (
         <>
-          {/* Filter bar — inline strip */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: `1fr 130px 180px auto${hasFilters ? ' auto' : ''}`,
-            gap: 8, alignItems: 'center',
-            background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`,
-            borderRadius: 8, padding: '10px 14px', marginBottom: 16,
-          }}>
+          {/* Filter bar */}
+          <div className="em-filters">
             <input
+              className="em-input grow"
               type="text"
               placeholder="Search username or public ID…"
+              aria-label="Search username or public ID"
               value={searchUsername}
               onChange={e => setSearchUsername(e.target.value)}
-              style={{ ...inputStyle, width: '100%' }}
             />
 
             <select
+              className="em-select"
+              aria-label="Filter by team"
               value={filterTeam}
               onChange={e => setFilterTeam(e.target.value)}
-              style={{ ...inputStyle, cursor: 'pointer', width: '100%' }}
             >
               <option value="">All teams</option>
               {allTeams.map(t => (
@@ -239,9 +220,10 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
             </select>
 
             <select
+              className="em-select"
+              aria-label="Filter by label"
               value={filterLabel}
               onChange={e => setFilterLabel(e.target.value)}
-              style={{ ...inputStyle, cursor: 'pointer', width: '100%' }}
             >
               <option value="">All labels</option>
               {LABELS.map(l => (
@@ -249,23 +231,21 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
               ))}
             </select>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
-              <span style={{ fontSize: 12, color: theme.textMuted }}>
-                Min: <strong style={{ color: theme.text }}>{minScore.toFixed(1)}</strong>
-              </span>
+            <div className="em-range">
+              <span>Min: <strong>{minScore.toFixed(1)}</strong></span>
               <input
                 type="range"
+                aria-label="Minimum NHLS score"
                 min={0} max={9} step={0.5}
                 value={minScore}
                 onChange={e => setMinScore(Number(e.target.value))}
-                style={{ width: 80, cursor: 'pointer', accentColor: theme.blue }}
               />
             </div>
 
             {hasFilters && (
               <button
+                className="em-btn ghost sm"
                 onClick={() => { setSearchUsername(''); setFilterTeam(''); setFilterLabel(''); setMinScore(0) }}
-                style={{ ...inputStyle, cursor: 'pointer', color: theme.textMuted, fontSize: 12, whiteSpace: 'nowrap' }}
               >
                 Clear
               </button>
@@ -274,7 +254,7 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
 
           {/* Result count when filtered */}
           {hasFilters && (
-            <p style={{ margin: '0 0 10px 0', fontSize: 12, color: theme.textMuted }}>
+            <p className="em-showing">
               Showing {filtered.length} of {entries.length} participants
             </p>
           )}
@@ -282,83 +262,65 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
       )}
 
       {entries.length === 0 ? (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 40, textAlign: 'center', color: theme.textMuted }}>
+        <div className="lb-empty">
           No scored participants yet. Members need to log enough lab data for an NHLS score to appear here.
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 40, textAlign: 'center', color: theme.textMuted }}>
+        <div className="lb-empty">
           No participants match the current filters.
         </div>
       ) : (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div className="lb-card">
+          <div className="em-tablewrap">
+            <table className="em-table lb">
               <thead>
-                <tr style={{ borderBottom: `1px solid ${theme.borderColor}`, background: theme.bgSecondary }}>
+                <tr>
                   {['Rank', 'Username', 'Public ID', 'Team', 'Score', 'Label', 'VO2 %ile', 'WtHR', 'hs-CRP', 'As of'].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '10px 12px', color: theme.textMuted, fontWeight: 600, fontSize: 11, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                      {h}
-                    </th>
+                    <th key={h} style={{ cursor: 'default' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map(({ entry: e, rank }) => {
-                  const lc = LABEL_COLOR[e.label] ?? LABEL_COLOR['High Risk']
+                  const tone = LABEL_TONE[e.label] ?? 'risk'
                   const tc = e.team ? teamColor(e.team, allTeams, darkMode) : null
                   return (
-                    <tr
-                      key={rank}
-                      style={{
-                        borderBottom: `1px solid ${theme.borderColor}`,
-                        background: rank === 1 ? 'rgba(16,185,129,0.04)' : 'transparent',
-                      }}
-                    >
+                    <tr key={rank} className={rank === 1 ? 'lb-top' : undefined}>
                       {/* Rank — always reflects position in full unfiltered list */}
-                      <td style={{ padding: '10px 12px', textAlign: 'center', minWidth: 48 }}>
-                        <RankBadge rank={rank} />
-                      </td>
+                      <td className="lb-rank"><RankBadge rank={rank} /></td>
                       {/* Username */}
-                      <td style={{ padding: '10px 12px', fontWeight: 600, color: theme.text }}>
-                        {e.username || <em style={{ color: theme.textMuted, fontWeight: 400 }}>not set</em>}
+                      <td className="em-user">
+                        {e.username || <em className="em-nodata">not set</em>}
                       </td>
                       {/* Public ID */}
-                      <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: 12, color: theme.textMuted }}>
-                        {e.public_id || '—'}
-                      </td>
+                      <td className="em-mono">{e.public_id || '—'}</td>
                       {/* Team */}
-                      <td style={{ padding: '10px 12px' }}>
+                      <td>
                         {e.team && tc ? (
-                          <span style={{ background: tc.bg, color: tc.color, borderRadius: 4, padding: '2px 8px', fontWeight: 600, fontSize: 12 }}>
-                            {e.team}
-                          </span>
-                        ) : <span style={{ color: theme.textMuted }}>—</span>}
+                          <span className="em-pill" style={{ background: tc.bg, color: tc.color }}>{e.team}</span>
+                        ) : <span className="em-nodata">—</span>}
                       </td>
                       {/* Score */}
-                      <td style={{ padding: '10px 12px', fontWeight: 800, fontSize: 15, color: lc.color }}>
+                      <td className={`lb-score ${tone}`}>
                         {e.total_score.toFixed(1)}
-                        <span style={{ fontSize: 11, fontWeight: 400, color: theme.textMuted }}> / 9</span>
+                        <small>/ 9</small>
                       </td>
                       {/* Label */}
-                      <td style={{ padding: '10px 12px' }}>
-                        <span style={{ background: lc.bg, color: lc.color, borderRadius: 4, padding: '2px 8px', fontWeight: 600, fontSize: 12 }}>
-                          {e.label}
-                        </span>
-                      </td>
+                      <td><span className={`lb-lab ${tone}`}>{e.label}</span></td>
                       {/* VO2 percentile */}
-                      <td style={{ padding: '10px 12px', color: theme.textMuted }}>
+                      <td className="muted">
                         {e.vo2_max_percentile != null ? `${e.vo2_max_percentile}th` : '—'}
                       </td>
                       {/* WtHR */}
-                      <td style={{ padding: '10px 12px', color: theme.textMuted }}>
+                      <td className="muted">
                         {e.wthr != null ? e.wthr.toFixed(3) : '—'}
                       </td>
                       {/* hs-CRP */}
-                      <td style={{ padding: '10px 12px', color: theme.textMuted }}>
+                      <td className="muted">
                         {e.hs_crp != null ? e.hs_crp.toFixed(2) : '—'}
                       </td>
                       {/* Score date */}
-                      <td style={{ padding: '10px 12px', color: theme.textMuted, whiteSpace: 'nowrap' }}>
+                      <td className="muted nw">
                         {e.score_date ? new Date(e.score_date).toLocaleDateString() : '—'}
                       </td>
                     </tr>
@@ -369,7 +331,7 @@ export default function LeaderboardPage({ orgSlug, onNavigate }: LeaderboardPage
           </div>
 
           {/* Tie-breaker legend */}
-          <div style={{ padding: '10px 16px', borderTop: `1px solid ${theme.borderColor}`, fontSize: 11, color: theme.textMuted }}>
+          <div className="lb-foot">
             Tie-breaker order: 1) Higher NHLS score · 2) Higher VO2 Max percentile · 3) Lower WtHR · 4) Lower hs-CRP · 5) Fewer acute care visits
           </div>
         </div>

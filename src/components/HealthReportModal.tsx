@@ -241,68 +241,31 @@ export default function HealthReportModal({ userName, publicId, bhasResult, bhas
     w.document.close()
   }
 
-  const overlay: React.CSSProperties = {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-  }
-  const modal: React.CSSProperties = {
-    background: theme.card, border: `1.5px solid ${theme.borderColor}`,
-    borderRadius: 12, padding: '28px 32px', width: 480, maxWidth: '95vw',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-  }
-
+  // Presentation only below — the printable report (buildPrintHtml) is a separate
+  // white print document and is intentionally unchanged.
   return (
-    <div style={overlay} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={modal}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: theme.text }}>Personal Health Report</h3>
-          <button
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: theme.textMuted, lineHeight: 1 }}
-          >
-            ×
-          </button>
+    <div className="md-bg" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="md sm" role="dialog" aria-modal="true" aria-label="Personal Health Report">
+        <div className="md-head">
+          <h3>Personal Health Report</h3>
+          <button className="md-x" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
-        <p style={{ margin: '0 0 20px 0', fontSize: 13, color: theme.textMuted, lineHeight: 1.6 }}>
-          Generates a printable personal health summary containing your NHLS scores,
-          per-marker breakdown, and national benchmark comparisons. Use your browser's
-          "Save as PDF" option to download.
-        </p>
+        <div className="md-body">
+          <p className="md-text">
+            Generates a printable personal health summary containing your NHLS scores,
+            per-marker breakdown, and national benchmark comparisons. Use your browser's
+            "Save as PDF" option to download.
+          </p>
 
-        {!hasData && (
-          <div style={{
-            background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`,
-            borderRadius: 8, padding: '12px 16px', marginBottom: 20,
-            fontSize: 13, color: theme.textMuted,
-          }}>
-            Log lab results to generate a scored health report.
-          </div>
-        )}
+          {!hasData && (
+            <div className="md-info">Log lab results to generate a scored health report.</div>
+          )}
+        </div>
 
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button
-            onClick={onClose}
-            style={{
-              background: theme.bgSecondary, color: theme.text,
-              border: `1px solid ${theme.borderColor}`, borderRadius: 8,
-              padding: '9px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handlePrint}
-            disabled={!hasData}
-            style={{
-              background: hasData ? '#3B82F6' : theme.bgSecondary,
-              color: hasData ? '#fff' : theme.textMuted,
-              border: 'none', borderRadius: 8,
-              padding: '9px 20px', fontSize: 13, fontWeight: 600,
-              cursor: hasData ? 'pointer' : 'default',
-              transition: 'background 0.2s',
-            }}
-          >
+        <div className="md-foot">
+          <button className="md-btn ghost" onClick={onClose}>Cancel</button>
+          <button className="md-btn primary" onClick={handlePrint} disabled={!hasData}>
             Open Report
           </button>
         </div>

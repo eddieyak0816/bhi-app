@@ -170,97 +170,74 @@ export default function HealthAssessmentModal({ onClose }: Props) {
     }
   }
 
-  const overlay: React.CSSProperties = {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    zIndex: 1000, padding: 16,
-  }
-  const modal: React.CSSProperties = {
-    background: theme.card, borderRadius: 12, padding: '28px 28px 24px',
-    width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto',
-    boxShadow: '0 8px 40px rgba(0,0,0,0.25)',
-  }
-  const sectionTitle: React.CSSProperties = {
-    fontSize: 13, fontWeight: 700, color: theme.textMuted,
-    textTransform: 'uppercase', letterSpacing: '0.06em', margin: '20px 0 10px',
-  }
-  const yesNoRow: React.CSSProperties = {
-    background: theme.bgSecondary, borderRadius: 8, padding: '12px 14px',
-    marginBottom: 10, border: `1px solid ${theme.borderColor}`,
-  }
-  const btnBase: React.CSSProperties = {
-    border: 'none', borderRadius: 6, padding: '5px 18px',
-    fontSize: 13, fontWeight: 600, cursor: 'pointer', marginLeft: 8,
-  }
-
+  // ── Presentation only below this line ───────────────────────────────────────
+  // Same load / save (direct REST) logic above; same Yes/No + symptom handlers.
   if (loading) return (
-    <div style={overlay}>
-      <div style={modal}><p style={{ color: theme.textMuted }}>Loading…</p></div>
+    <div className="md-bg">
+      <div className="md"><div className="md-loading">Loading…</div></div>
     </div>
   )
 
   return (
-    <div style={overlay} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div style={modal}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+    <div className="md-bg" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="md" role="dialog" aria-modal="true" aria-label="Health Check-In">
+        <div className="md-head">
           <div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: theme.text }}>Health Check-In</h2>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: theme.textMuted }}>
-              Tracked separately from your NHLS score — for your personal health awareness only.
-            </p>
+            <h2>Health Check-In</h2>
+            <p>Tracked separately from your NHLS score — for your personal health awareness only.</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: theme.textMuted, lineHeight: 1 }}>✕</button>
+          <button className="md-x" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
-        {error && (
-          <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px', color: '#b91c1c', fontSize: 13, marginBottom: 12 }}>
-            {error}
-          </div>
-        )}
+        <div className="md-body">
+          {error && <div className="md-err">{error}</div>}
 
-        {/* Lifestyle */}
-        <p style={sectionTitle}>Lifestyle</p>
-        {LIFESTYLE_QUESTIONS.map(q => {
-          const val = assessment[q.key] as boolean | null
-          return (
-            <div key={q.key} style={yesNoRow}>
-              <div style={{ fontSize: 14, color: theme.text, marginBottom: q.hint ? 4 : 8 }}>{q.label}</div>
-              {q.hint && <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 8 }}>{q.hint}</div>}
-              <div>
-                <button
-                  style={{ ...btnBase, background: val === true ? '#16a34a' : theme.bgSecondary, color: val === true ? '#fff' : theme.textMuted, border: `1px solid ${val === true ? '#16a34a' : theme.borderColor}` }}
-                  onClick={() => setLifestyle(q.key, true)}
-                >Yes</button>
-                <button
-                  style={{ ...btnBase, background: val === false ? '#dc2626' : theme.bgSecondary, color: val === false ? '#fff' : theme.textMuted, border: `1px solid ${val === false ? '#dc2626' : theme.borderColor}` }}
-                  onClick={() => setLifestyle(q.key, false)}
-                >No</button>
-              </div>
-            </div>
-          )
-        })}
-
-        {/* Symptoms */}
-        <p style={sectionTitle}>Symptoms — check any you are currently experiencing</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {SYMPTOMS.map(s => {
-            const checked = assessment[s.key] as boolean
+          {/* Lifestyle */}
+          <p className="md-sec">Lifestyle</p>
+          {LIFESTYLE_QUESTIONS.map(q => {
+            const val = assessment[q.key] as boolean | null
             return (
-              <label key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', background: checked ? '#fef3c722' : theme.bgSecondary, border: `1px solid ${checked ? '#f59e0b' : theme.borderColor}`, borderRadius: 7, padding: '8px 10px', fontSize: 13, color: theme.text }}>
-                <input type="checkbox" checked={checked} onChange={() => toggleSymptom(s.key)} style={{ accentColor: '#f59e0b', width: 15, height: 15 }} />
-                {s.label}
-              </label>
+              <div key={q.key} className="md-q">
+                <div className="md-q-t">{q.label}</div>
+                {q.hint && <div className="md-q-h">{q.hint}</div>}
+                <div className="md-yn">
+                  <button
+                    className={`yes${val === true ? ' on' : ''}`}
+                    aria-pressed={val === true}
+                    onClick={() => setLifestyle(q.key, true)}
+                  >Yes</button>
+                  <button
+                    className={`no${val === false ? ' on' : ''}`}
+                    aria-pressed={val === false}
+                    onClick={() => setLifestyle(q.key, false)}
+                  >No</button>
+                </div>
+              </div>
             )
           })}
+
+          {/* Symptoms */}
+          <p className="md-sec">Symptoms — check any you are currently experiencing</p>
+          <div className="md-sym">
+            {SYMPTOMS.map(s => {
+              const checked = assessment[s.key] as boolean
+              return (
+                <label key={s.key} className={checked ? 'on' : ''}>
+                  <input type="checkbox" checked={checked} onChange={() => toggleSymptom(s.key)} />
+                  <span>{s.label}</span>
+                </label>
+              )
+            })}
+          </div>
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}>
-          <button onClick={onClose} style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 8, padding: '9px 18px', fontSize: 14, cursor: 'pointer', color: theme.text }}>Cancel</button>
+        <div className="md-foot">
+          <button className="md-btn ghost" onClick={onClose}>Cancel</button>
           <button
+            className={`md-btn ${saved ? 'done' : 'primary'}`}
             onClick={handleSave}
             disabled={saving || saved}
-            style={{ background: saved ? '#16a34a' : theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 22px', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}
           >
             {saved ? 'Saved!' : saving ? 'Saving…' : 'Save Check-In'}
           </button>
