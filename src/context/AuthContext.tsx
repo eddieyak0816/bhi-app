@@ -99,10 +99,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Hydrate the Supabase JS client session so its own queries (insert/update/delete)
         // can authenticate via RLS. setSession() does not call getSession().
+        // Hydration is best-effort. On a hard refresh the client can fail to get its internal
+        // auth lock ("AbortError: signal is aborted without reason") while a token refresh
+        // from the previous page load is still holding it. That used to throw straight into
+        // the outer catch below and abandon the whole restore — logging a perfectly valid
+        // session out. Everything the app needs to proceed (user id, profile fetch) comes
+        // from the stored JWT via plain fetch, so a failed hydration is only worth a warning.
         const storedSession = getStoredSession()
+        let jwtForProfile = jwt
         if (storedSession) {
-          await supabase.auth.setSession(storedSession)
-          console.log('[Auth] Supabase client session hydrated')
+          try {
+            await supabase.auth.setSession(storedSession)
+            console.log('[Auth] Supabase client session hydrated')
+            // setSession() may have refreshed an expired token; use the fresh one for the
+            // profile fetch below instead of the stale value read before it ran.
+            jwtForProfile = getStoredJwt() || jwt
+          } catch (hydrateErr) {
+            console.warn('[Auth] Could not hydrate Supabase client session — continuing with stored JWT:', hydrateErr)
+          }
         }
 
         // Set basic user immediately so the UI unblocks
@@ -122,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               {
                 headers: {
                   'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${jwt}`,
+                  'Authorization': `Bearer ${jwtForProfile}`,
                   'Accept': 'application/json',
                 },
               }

@@ -27,6 +27,26 @@ interface DashboardProps {
   onNavigate?: (page: string) => void
 }
 
+// Profile fields the NHLS v2.3 score needs. Returns { data } so the caller reads exactly
+// like the Supabase client's response; any failure resolves to { data: null } and the
+// score simply doesn't render, as it did before.
+async function fetchProfileRow(userId: string): Promise<{ data: any | null }> {
+  try {
+    const url = import.meta.env.VITE_SUPABASE_URL as string
+    const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+    const jwt = getStoredJwt()
+    const cols = 'sex,height_cm,weight_kg,waist_circumference,waist_unit,grip_strength,is_type1_diabetes,total_daily_insulin_units,has_advanced_care_plan,acute_visits'
+    const res = await fetch(`${url}/rest/v1/profiles?select=${cols}&id=eq.${userId}&limit=1`, {
+      headers: { apikey: anon, Authorization: `Bearer ${jwt ?? anon}`, Accept: 'application/json' },
+    })
+    if (!res.ok) return { data: null }
+    const rows = await res.json()
+    return { data: Array.isArray(rows) && rows.length > 0 ? rows[0] : null }
+  } catch {
+    return { data: null }
+  }
+}
+
 export default function Dashboard({ userEmail = '', userName = '', onNavigate }: DashboardProps) {
   const { theme } = useTheme()
   const { applicableTags, recommendedResources, bhasResult, loading, error, adminRules } = useEvaluation()
@@ -115,11 +135,10 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
 
     let cancelled = false
 
-    supabase
-      .from('profiles')
-      .select('sex, height_cm, weight_kg, waist_circumference, waist_unit, grip_strength, is_type1_diabetes, total_daily_insulin_units, has_advanced_care_plan, acute_visits')
-      .eq('id', user.id)
-      .single()
+    // Direct REST read rather than the Supabase JS client: the client waits on its internal
+    // auth lock, which can abort after a hard refresh and leave the score panel empty even
+    // though the profile is fine. Same columns as before; the code below is unchanged.
+    fetchProfileRow(user.id)
       .then(async ({ data }) => {
         if (!data || cancelled) return
 

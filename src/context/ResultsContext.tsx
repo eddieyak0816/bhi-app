@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { supabase, getStoredJwt } from '../lib/supabase'
+import { getStoredJwt } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
@@ -96,19 +96,26 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
     if (!user?.id) return
 
     async function fetchResults() {
-      const { data, error } = await supabase
-        .from('user_lab_results')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('date', { ascending: false })
-
-      if (error) {
-        console.error('Error fetching user lab results:', error)
-        return
-      }
-
-      if (data) {
-        setResults(data.map(rowToResult))
+      // Direct REST read, same as the writes below. This used to go through the Supabase
+      // JS client, which waits on the client's internal auth lock — after a hard refresh
+      // that wait can abort ("AbortError"), the query errors, and Home is left with zero
+      // results and no NHLS score even though the data is fine.
+      try {
+        const res = await sbFetch(
+          `user_lab_results?select=*&user_id=eq.${user!.id}&order=date.desc`,
+          { method: 'GET' }
+        )
+        if (!res.ok) {
+          // Status only — never log the body, it holds lab values.
+          console.error('Error fetching user lab results: HTTP', res.status)
+          return
+        }
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setResults(data.map(rowToResult))
+        }
+      } catch (err) {
+        console.error('Error fetching user lab results:', (err as Error)?.name || 'unknown error')
       }
     }
 
