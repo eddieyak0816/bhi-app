@@ -373,190 +373,155 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
     }))
   }
 
-  const sectionStyle = {
-    background: theme.card,
-    border: `1.5px solid ${theme.borderColor}`,
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 20,
-  }
+  // ── Presentation only below this line ───────────────────────────────────────
+  // Every state setter and handler is the one that was here before (setFormData, saveUsername,
+  // onUsernameInputChange, handleJoinOrg, handleCategoryToggle, handleResourceTypeToggle,
+  // setIsPublic, handleSave, setSaveMessage, onNavigate). Only markup and styling changed.
 
-  const labelStyle = {
-    display: 'block',
-    fontSize: 12,
-    fontWeight: 600,
-    marginBottom: 6,
-    color: theme.textMuted,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-  }
-
-  const inputStyle = {
-    width: '100%',
-    padding: '10px 12px',
-    border: `1.5px solid ${theme.borderColor}`,
-    borderRadius: 6,
-    fontSize: 14,
-    background: theme.bg,
-    color: theme.text,
-    marginBottom: 16,
-  }
+  const usernameTone =
+    usernameStatus === 'available' || usernameStatus === 'saved' ? 'ok'
+    : usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'bad'
+    : ''
 
   return (
-    <div style={{ width: '100%' }}>
-      <div style={{ marginBottom: 32 }}>
-        <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Profile Settings</h2>
-        <p style={{ color: theme.textMuted, margin: 0 }}>Manage your account and preferences</p>
+    <div className="pf-root">
+      <div className="pf-head">
+        <h2>Profile Settings</h2>
+        <p>Manage your account and preferences</p>
       </div>
 
       {/* Personal Information */}
-      <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 20px 0', fontSize: 16, fontWeight: 600 }}>Personal Information</h3>
-        <div>
-          <label style={labelStyle}>Full Name</label>
-          <input
-            type="text"
-            value={formData.fullName}
-            onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-            style={inputStyle}
-          />
-        </div>
-        <div>
-          <label style={labelStyle}>Email</label>
-          <input type="email" value={formData.email} disabled style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed' }} />
-        </div>
-        {/* Username (Feature 15) */}
-        <div>
-          <label style={labelStyle}>Username</label>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div className="pf-card">
+        <h3>Personal Information</h3>
+        <div className="pf-fields">
+          <div className="pf-field">
+            <label className="pf-label">Full Name</label>
             <input
+              className="pf-input"
               type="text"
-              value={usernameInput}
-              onChange={e => onUsernameInputChange(e.target.value)}
-              placeholder="your_username"
-              maxLength={30}
-              style={{ ...inputStyle, marginBottom: 0, flex: 1, borderColor: usernameStatus === 'available' ? '#16a34a' : usernameStatus === 'taken' || usernameStatus === 'invalid' ? '#dc2626' : undefined }}
+              value={formData.fullName}
+              onChange={e => setFormData({ ...formData, fullName: e.target.value })}
             />
-            <button
-              onClick={saveUsername}
-              disabled={usernameStatus !== 'available'}
-              style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: 13, cursor: usernameStatus === 'available' ? 'pointer' : 'not-allowed', opacity: usernameStatus === 'available' ? 1 : 0.5, whiteSpace: 'nowrap' }}
-            >{usernameStatus === 'saving' ? 'Saving…' : 'Save Username'}</button>
           </div>
-          <div style={{ fontSize: 12, marginTop: 4, color: usernameStatus === 'available' || usernameStatus === 'saved' ? '#16a34a' : usernameStatus === 'taken' ? '#dc2626' : usernameStatus === 'invalid' ? '#dc2626' : usernameStatus === 'checking' ? '#6b7280' : '#6b7280' }}>
-            {usernameStatus === 'checking' && 'Checking…'}
-            {usernameStatus === 'available' && 'Available'}
-            {usernameStatus === 'taken' && 'Already taken — choose another'}
-            {usernameStatus === 'invalid' && 'At least 3 characters (letters, numbers, underscores)'}
-            {usernameStatus === 'saved' && 'Username saved'}
-            {usernameStatus === 'error' && 'Error — try again'}
-            {usernameStatus === 'idle' && username && <span style={{ color: '#6b7280' }}>Current: <strong>{username}</strong></span>}
+          <div className="pf-field">
+            <label className="pf-label">Email</label>
+            <input className="pf-input" type="email" value={formData.email} disabled />
           </div>
-        </div>
-        <div>
-          <label style={labelStyle}>Age</label>
-          <input
-            type="number"
-            value={formData.age}
-            onChange={e => setFormData({ ...formData, age: e.target.value })}
-            placeholder="Enter your age"
-            style={inputStyle}
-          />
-        </div>
-        <div>
-          <label style={labelStyle}>Sex</label>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            {(['male', 'female'] as const).map(s => (
+          {/* Username (Feature 15) */}
+          <div className="pf-field">
+            <label className="pf-label">Username</label>
+            <div className="pf-row">
+              <input
+                className={`pf-input${usernameStatus === 'available' ? ' ok' : usernameStatus === 'taken' || usernameStatus === 'invalid' ? ' bad' : ''}`}
+                type="text"
+                value={usernameInput}
+                onChange={e => onUsernameInputChange(e.target.value)}
+                placeholder="your_username"
+                maxLength={30}
+              />
               <button
-                key={s}
-                type="button"
-                onClick={() => setFormData({ ...formData, sex: s })}
-                style={{
-                  flex: 1,
-                  padding: '10px 12px',
-                  border: `1.5px solid ${formData.sex === s ? theme.blue : theme.borderColor}`,
-                  borderRadius: 6,
-                  background: formData.sex === s ? theme.blue : theme.bg,
-                  color: formData.sex === s ? '#fff' : theme.text,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {s}
-              </button>
-            ))}
+                className="pf-btn primary sm"
+                onClick={saveUsername}
+                disabled={usernameStatus !== 'available'}
+              >{usernameStatus === 'saving' ? 'Saving…' : 'Save Username'}</button>
+            </div>
+            <div className={`pf-status ${usernameTone}`}>
+              {usernameStatus === 'checking' && 'Checking…'}
+              {usernameStatus === 'available' && 'Available'}
+              {usernameStatus === 'taken' && 'Already taken — choose another'}
+              {usernameStatus === 'invalid' && 'At least 3 characters (letters, numbers, underscores)'}
+              {usernameStatus === 'saved' && 'Username saved'}
+              {usernameStatus === 'error' && 'Error — try again'}
+              {usernameStatus === 'idle' && username && <span>Current: <strong>{username}</strong></span>}
+            </div>
+          </div>
+          <div className="pf-field">
+            <label className="pf-label">Age</label>
+            <input
+              className="pf-input"
+              type="number"
+              value={formData.age}
+              onChange={e => setFormData({ ...formData, age: e.target.value })}
+              placeholder="Enter your age"
+            />
+          </div>
+          <div className="pf-field">
+            <label className="pf-label">Sex</label>
+            <div className="pf-pills">
+              {(['male', 'female'] as const).map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`pf-pill${formData.sex === s ? ' on' : ''}`}
+                  aria-pressed={formData.sex === s}
+                  onClick={() => setFormData({ ...formData, sex: s })}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Biometrics */}
-      <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>Biometrics</h3>
-        <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
+      <div className="pf-card">
+        <h3>Biometrics</h3>
+        <p className="pf-sub">
           Used for NHLS scoring. Waist thresholds vary by sex — set your sex above first.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div>
-            <label style={labelStyle}>Waist Circumference</label>
-            <div style={{ display: 'flex', gap: 8 }}>
+        <div className="pf-grid">
+          <div className="pf-field">
+            <label className="pf-label">Waist Circumference</label>
+            <div className="pf-row">
               <input
+                className="pf-input"
                 type="number"
                 step="0.1"
                 value={formData.waistCircumference}
                 onChange={e => setFormData({ ...formData, waistCircumference: e.target.value })}
                 placeholder={formData.waistUnit === 'in' ? 'e.g. 34' : 'e.g. 86'}
-                style={{ ...inputStyle, marginBottom: 0, flex: 1, fontSize: 16 }}
               />
               <select
+                className="pf-select"
+                aria-label="Waist unit"
                 value={formData.waistUnit}
                 onChange={e => setFormData({ ...formData, waistUnit: e.target.value as 'in' | 'cm' })}
-                style={{
-                  padding: '10px 6px',
-                  border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 6,
-                  fontSize: 13,
-                  background: theme.bg,
-                  color: theme.text,
-                  cursor: 'pointer',
-                  width: 52,
-                  flexShrink: 0,
-                }}
               >
                 <option value="in">in</option>
                 <option value="cm">cm</option>
               </select>
             </div>
           </div>
-          <div>
-            <label style={labelStyle}>Grip Strength (kg)</label>
+          <div className="pf-field">
+            <label className="pf-label">Grip Strength (kg)</label>
             <input
+              className="pf-input"
               type="number"
               step="0.1"
               value={formData.gripStrength}
               onChange={e => setFormData({ ...formData, gripStrength: e.target.value })}
               placeholder="e.g. 38"
-              style={{ ...inputStyle, marginBottom: 0 }}
             />
           </div>
-          <div>
-            <label style={labelStyle}>Height</label>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <div style={{ flex: 1 }}>
+          <div className="pf-field">
+            <label className="pf-label">Height</label>
+            <div className="pf-split">
+              <div>
                 <input
+                  className="pf-input"
                   type="number"
                   min="0"
                   step="1"
                   value={formData.heightFt}
                   onChange={e => setFormData({ ...formData, heightFt: e.target.value })}
                   placeholder="ft"
-                  style={{ ...inputStyle, marginBottom: 0 }}
                 />
-                <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 2, textAlign: 'center' }}>feet</div>
+                <div className="pf-cap">feet</div>
               </div>
-              <div style={{ flex: 1 }}>
+              <div>
                 <input
+                  className="pf-input"
                   type="number"
                   min="0"
                   max="11"
@@ -564,440 +529,266 @@ export default function Profile({ userEmail, userName, onNavigate }: ProfilePage
                   value={formData.heightIn}
                   onChange={e => setFormData({ ...formData, heightIn: e.target.value })}
                   placeholder="in"
-                  style={{ ...inputStyle, marginBottom: 0 }}
                 />
-                <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 2, textAlign: 'center' }}>inches</div>
+                <div className="pf-cap">inches</div>
               </div>
             </div>
           </div>
-          <div>
-            <label style={labelStyle}>Body Weight (lbs)</label>
+          <div className="pf-field">
+            <label className="pf-label">Body Weight (lbs)</label>
             <input
+              className="pf-input"
               type="number"
               step="1"
               value={formData.weightLbs}
               onChange={e => setFormData({ ...formData, weightLbs: e.target.value })}
               placeholder="e.g. 175"
-              style={{ ...inputStyle, marginBottom: 0 }}
             />
           </div>
         </div>
       </div>
 
       {/* BHAS v2.3 Clinical Inputs */}
-      <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>Clinical Information</h3>
-        <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
+      <div className="pf-card">
+        <h3>Clinical Information</h3>
+        <p className="pf-sub">
           Used for NHLS scoring. These affect which metrics are calculated.
         </p>
 
-        {/* Type 1 Diabetes toggle */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', marginBottom: 16 }}>
-          <input
-            type="checkbox"
-            checked={formData.isType1Diabetes}
-            onChange={e => setFormData({ ...formData, isType1Diabetes: e.target.checked, totalDailyInsulinUnits: '' })}
-            style={{ width: 18, height: 18, cursor: 'pointer' }}
-          />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Type 1 Diabetes</div>
-            <div style={{ fontSize: 12, color: theme.textMuted }}>Switches NHLS scoring from HOMA-IR to Insulin Units/kg</div>
-          </div>
-        </label>
-
-        {/* Total Daily Insulin — only shown for Type 1 */}
-        {formData.isType1Diabetes && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Total Daily Insulin Units (units/day)</label>
+        <div className="pf-fields">
+          {/* Type 1 Diabetes toggle */}
+          <label className="pf-check">
             <input
-              type="number"
-              step="0.5"
-              value={formData.totalDailyInsulinUnits}
-              onChange={e => setFormData({ ...formData, totalDailyInsulinUnits: e.target.value })}
-              placeholder="e.g. 42"
-              style={inputStyle}
+              type="checkbox"
+              checked={formData.isType1Diabetes}
+              onChange={e => setFormData({ ...formData, isType1Diabetes: e.target.checked, totalDailyInsulinUnits: '' })}
             />
-          </div>
-        )}
+            <div>
+              <b>Type 1 Diabetes</b>
+              <span>Switches NHLS scoring from HOMA-IR to Insulin Units/kg</span>
+            </div>
+          </label>
 
-        {/* Advanced Care Plan */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', marginBottom: 16 }}>
-          <input
-            type="checkbox"
-            checked={formData.hasAdvancedCarePlan}
-            onChange={e => setFormData({ ...formData, hasAdvancedCarePlan: e.target.checked })}
-            style={{ width: 18, height: 18, cursor: 'pointer' }}
-          />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Advance Care Plan documented</div>
-            <div style={{ fontSize: 12, color: theme.textMuted }}>Living will, healthcare proxy, or similar document on file. Worth 1 point in your NHLS score.</div>
-          </div>
-        </label>
+          {/* Total Daily Insulin — only shown for Type 1 */}
+          {formData.isType1Diabetes && (
+            <div className="pf-field">
+              <label className="pf-label">Total Daily Insulin Units (units/day)</label>
+              <input
+                className="pf-input"
+                type="number"
+                step="0.5"
+                value={formData.totalDailyInsulinUnits}
+                onChange={e => setFormData({ ...formData, totalDailyInsulinUnits: e.target.value })}
+                placeholder="e.g. 42"
+              />
+            </div>
+          )}
 
-        {/* Acute Care Visits */}
-        <div>
-          <label style={labelStyle}>Acute Care Visits (past 12 months)</label>
-          <input
-            type="number"
-            min="0"
-            step="1"
-            value={formData.acuteVisits}
-            onChange={e => setFormData({ ...formData, acuteVisits: e.target.value })}
-            placeholder="e.g. 0"
-            style={inputStyle}
-          />
-          <div style={{ fontSize: 12, color: theme.textMuted, marginTop: -12, marginBottom: 8 }}>
-            ER or urgent care visits. Used as a tie-breaker in leaderboard ranking — not directly scored.
+          {/* Advanced Care Plan */}
+          <label className="pf-check">
+            <input
+              type="checkbox"
+              checked={formData.hasAdvancedCarePlan}
+              onChange={e => setFormData({ ...formData, hasAdvancedCarePlan: e.target.checked })}
+            />
+            <div>
+              <b>Advance Care Plan documented</b>
+              <span>Living will, healthcare proxy, or similar document on file. Worth 1 point in your NHLS score.</span>
+            </div>
+          </label>
+
+          {/* Acute Care Visits */}
+          <div className="pf-field">
+            <label className="pf-label">Acute Care Visits (past 12 months)</label>
+            <input
+              className="pf-input"
+              type="number"
+              min="0"
+              step="1"
+              value={formData.acuteVisits}
+              onChange={e => setFormData({ ...formData, acuteVisits: e.target.value })}
+              placeholder="e.g. 0"
+            />
+            <div className="pf-help">
+              ER or urgent care visits. Used as a tie-breaker in leaderboard ranking — not directly scored.
+            </div>
           </div>
         </div>
       </div>
 
       {/* Video Category Preferences */}
-      <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Video Category Preferences</h3>
-        <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>Select health topics you want to see content for. Your dashboard feed will filter to these categories.</p>
+      <div className="pf-card">
+        <h3>Video Category Preferences</h3>
+        <p className="pf-sub">Select health topics you want to see content for. Your dashboard feed will filter to these categories.</p>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>Loading categories...</div>
+          <div className="pf-note">Loading categories...</div>
         ) : loadError ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: '#DC2626' }}>{loadError}</div>
+          <div className="pf-note err">{loadError}</div>
         ) : categories.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>No categories configured yet.</div>
+          <div className="pf-note">No categories configured yet.</div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, alignItems: 'start' }}>
-            {categories.map(cat => (
-              <label
-                key={cat.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  height: 52,
-                  padding: '0 12px',
-                  boxSizing: 'border-box',
-                  lineHeight: '20px',
-                  background: theme.bg,
-                  border: `1.5px solid ${formData.categoryPreferences.includes(cat.name) ? theme.blue : theme.borderColor}`,
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  color: theme.text,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  marginTop: 0,
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={formData.categoryPreferences.includes(cat.name)}
-                  onChange={() => handleCategoryToggle(cat.name)}
-                  style={{ cursor: 'pointer', flexShrink: 0, alignSelf: 'center' }}
-                />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{cat.name}</span>
-              </label>
-            ))}
+          <div className="pf-opts">
+            {categories.map(cat => {
+              const on = formData.categoryPreferences.includes(cat.name)
+              return (
+                <label key={cat.id} className={`pf-opt${on ? ' on' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={() => handleCategoryToggle(cat.name)}
+                  />
+                  <span>{cat.name}</span>
+                </label>
+              )
+            })}
           </div>
         )}
       </div>
 
       {/* Resource Type Preferences */}
-      <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Preferred Resource Types</h3>
-        <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>Choose which types of resources you prefer to see</p>
+      <div className="pf-card">
+        <h3>Preferred Resource Types</h3>
+        <p className="pf-sub">Choose which types of resources you prefer to see</p>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>Loading options...</div>
+          <div className="pf-note">Loading options...</div>
         ) : loadError ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: '#DC2626' }}>{loadError}</div>
+          <div className="pf-note err">{loadError}</div>
         ) : resourceTypes.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>No resource types configured yet.</div>
+          <div className="pf-note">No resource types configured yet.</div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, alignItems: 'start' }}>
-            {resourceTypes.map(type => (
-              <label
-                key={type}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  height: 52,
-                  padding: '0 12px',
-                  boxSizing: 'border-box',
-                  lineHeight: '20px',
-                  background: theme.bg,
-                  border: `1.5px solid ${formData.preferredResourceTypes.includes(type) ? theme.blue : theme.borderColor}`,
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  color: theme.text,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    marginTop: 0,
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={formData.preferredResourceTypes.includes(type)}
-                  onChange={() => handleResourceTypeToggle(type)}
-                  style={{ cursor: 'pointer', flexShrink: 0 }}
-                />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{type}</span>
-              </label>
-            ))}
+          <div className="pf-opts">
+            {resourceTypes.map(type => {
+              const on = formData.preferredResourceTypes.includes(type)
+              return (
+                <label key={type} className={`pf-opt${on ? ' on' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={() => handleResourceTypeToggle(type)}
+                  />
+                  <span>{type}</span>
+                </label>
+              )
+            })}
           </div>
         )}
       </div>
 
-      {/* Notifications */}
       {/* F70: Join Organization */}
-      <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>Join an Organization</h3>
-        <p style={{ margin: '0 0 16px 0', fontSize: 13, color: theme.textMuted }}>
+      <div className="pf-card">
+        <h3>Join an Organization</h3>
+        <p className="pf-sub">
           Enter the invite code provided by your employer or organization. Your real name and email are never shared — only your username and NHLS score are visible to org admins.
         </p>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="pf-row">
           <input
+            className="pf-input mono"
             type="text"
             value={inviteCode}
             onChange={e => { setInviteCode(e.target.value.toUpperCase()); setJoinStatus('idle') }}
             placeholder="e.g. ABC12345"
             maxLength={12}
-            style={{ ...inputStyle, flex: 1, marginBottom: 0, fontFamily: 'monospace', letterSpacing: 2 }}
           />
           <button
+            className="pf-btn primary sm"
             onClick={handleJoinOrg}
             disabled={joinStatus === 'loading' || !inviteCode.trim()}
-            style={{ background: theme.blue, color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: joinStatus === 'loading' || !inviteCode.trim() ? 'not-allowed' : 'pointer', opacity: joinStatus === 'loading' || !inviteCode.trim() ? 0.5 : 1, whiteSpace: 'nowrap' }}
           >
             {joinStatus === 'loading' ? 'Joining…' : 'Join'}
           </button>
         </div>
-        {joinStatus === 'success' && <div style={{ marginTop: 8, fontSize: 13, color: '#16a34a', fontWeight: 600 }}>Joined {joinOrgName} successfully.</div>}
-        {joinStatus === 'already_member' && <div style={{ marginTop: 8, fontSize: 13, color: '#2563eb' }}>You're already a member of {joinOrgName}.</div>}
-        {joinStatus === 'invalid' && <div style={{ marginTop: 8, fontSize: 13, color: '#dc2626' }}>Invalid invite code — check with your organization admin.</div>}
-        {joinStatus === 'error' && <div style={{ marginTop: 8, fontSize: 13, color: '#dc2626' }}>Something went wrong — please try again.</div>}
+        {joinStatus === 'success' && <div className="pf-status ok">Joined {joinOrgName} successfully.</div>}
+        {joinStatus === 'already_member' && <div className="pf-status info">You're already a member of {joinOrgName}.</div>}
+        {joinStatus === 'invalid' && <div className="pf-status bad">Invalid invite code — check with your organization admin.</div>}
+        {joinStatus === 'error' && <div className="pf-status bad">Something went wrong — please try again.</div>}
       </div>
 
-      <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 20px 0', fontSize: 16, fontWeight: 600 }}>Notifications</h3>
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: 12,
-            background: theme.bg,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 6,
-            cursor: 'pointer',
-            marginBottom: 12,
-            color: theme.text,
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={formData.notificationsEnabled}
-            onChange={e => setFormData({ ...formData, notificationsEnabled: e.target.checked })}
-            style={{ cursor: 'pointer' }}
-          />
-          <div>
-            <div style={{ fontWeight: 600 }}>In-App Notifications</div>
-            <div style={{ fontSize: 12, color: theme.textMuted }}>Get alerts about new resources and lab results</div>
-          </div>
-        </label>
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: 12,
-            background: theme.bg,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 6,
-            cursor: 'pointer',
-            color: theme.text,
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={formData.emailUpdates}
-            onChange={e => setFormData({ ...formData, emailUpdates: e.target.checked })}
-            style={{ cursor: 'pointer' }}
-          />
-          <div>
-            <div style={{ fontWeight: 600 }}>Email Updates</div>
-            <div style={{ fontSize: 12, color: theme.textMuted }}>Weekly summary of new resources</div>
-          </div>
-        </label>
+      {/* Notifications */}
+      <div className="pf-card">
+        <h3>Notifications</h3>
+        <div className="pf-fields">
+          <label className="pf-check">
+            <input
+              type="checkbox"
+              checked={formData.notificationsEnabled}
+              onChange={e => setFormData({ ...formData, notificationsEnabled: e.target.checked })}
+            />
+            <div>
+              <b>In-App Notifications</b>
+              <span>Get alerts about new resources and lab results</span>
+            </div>
+          </label>
+          <label className="pf-check">
+            <input
+              type="checkbox"
+              checked={formData.emailUpdates}
+              onChange={e => setFormData({ ...formData, emailUpdates: e.target.checked })}
+            />
+            <div>
+              <b>Email Updates</b>
+              <span>Weekly summary of new resources</span>
+            </div>
+          </label>
+        </div>
       </div>
 
       {/* Save feedback */}
       {saveMessage && (
-        <div style={{
-          padding: '12px 16px',
-          borderRadius: 6,
-          marginBottom: 12,
-          fontSize: 14,
-          fontWeight: 600,
-          background: saveMessage.type === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-          color: saveMessage.type === 'success' ? '#10B981' : '#EF4444',
-          border: `1.5px solid ${saveMessage.type === 'success' ? '#10B981' : '#EF4444'}`,
-        }}>
+        <div className={`pf-msg ${saveMessage.type === 'success' ? 'success' : 'error'}`} role="status">
           {saveMessage.type === 'success' ? '✓ ' : '✕ '}{saveMessage.text}
         </div>
       )}
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 12 }}>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          style={{
-            background: saving ? theme.borderColor : theme.blue,
-            color: '#fff',
-            border: 'none',
-            borderRadius: 6,
-            padding: '12px 24px',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: saving ? 'not-allowed' : 'pointer',
-            flex: 1,
-          }}
-        >
+      <div className="pf-actions">
+        <button className="pf-btn primary" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
-        <button
-          onClick={() => setSaveMessage(null)}
-          style={{
-            background: 'transparent',
-            color: theme.text,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 6,
-            padding: '12px 24px',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
+        <button className="pf-btn ghost" onClick={() => setSaveMessage(null)}>
           Cancel
         </button>
       </div>
 
       {/* Privacy / Public Profile */}
-      <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 600 }}>Privacy</h3>
+      <div className="pf-card">
+        <h3>Privacy</h3>
 
         {/* Public ID display */}
-        <div
-          style={{
-            background: theme.bg,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 6,
-            padding: '12px 14px',
-            marginBottom: 16,
-          }}
-        >
-          <div style={{ fontSize: 11, fontWeight: 600, color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-            Your Public ID
-          </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>
-            {publicId ?? '—'}
-          </div>
-          <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 8 }}>
+        <div className="pf-pid">
+          <div className="pf-pid-k">Your Public ID</div>
+          <div className="pf-pid-v">{publicId ?? '—'}</div>
+          <div className="pf-help" style={{ marginTop: 0 }}>
             This randomly generated ID is the only identifier ever shown alongside your health data. Your real name is never shared.
           </div>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 12,
-              color: theme.textMuted,
-              background: 'rgba(217,119,6,0.08)',
-              border: '1px solid #D97706',
-              borderRadius: 4,
-              padding: '4px 10px',
-            }}
-          >
-            <span style={{ color: '#D97706', fontWeight: 700 }}>Coming soon</span>
-            — Changing your Public ID requires a signed HIPAA authorization form.
+          <div className="pf-soon">
+            <b>Coming soon</b>
+            <span>— Changing your Public ID requires a signed HIPAA authorization form.</span>
           </div>
         </div>
-        <label
-          style={{ display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', marginBottom: 12 }}
-        >
-          <div
+
+        <div className="pf-toggle">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isPublic}
+            aria-label={isPublic ? 'Profile is public' : 'Profile is private'}
+            className={`pf-switch${isPublic ? ' on' : ''}`}
             onClick={() => setIsPublic(v => !v)}
-            style={{
-              width: 48,
-              height: 26,
-              borderRadius: 13,
-              background: isPublic ? '#10B981' : theme.borderColor,
-              position: 'relative',
-              cursor: 'pointer',
-              flexShrink: 0,
-              transition: 'background 0.2s',
-            }}
-          >
-            <div
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: '#fff',
-                position: 'absolute',
-                top: 3,
-                left: isPublic ? 25 : 3,
-                transition: 'left 0.2s',
-              }}
-            />
-          </div>
+          />
           <div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>
-              {isPublic ? 'Profile is public' : 'Profile is private'}
-            </div>
-            <div style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
-              Share your NHLS score and health tags — no raw values or personal details are ever shared.
-            </div>
+            <b>{isPublic ? 'Profile is public' : 'Profile is private'}</b>
+            <span>Share your NHLS score and health tags — no raw values or personal details are ever shared.</span>
           </div>
-        </label>
-        <button
-          onClick={() => onNavigate?.('consent')}
-          style={{
-            background: 'transparent',
-            color: theme.blue,
-            border: 'none',
-            padding: 0,
-            fontSize: 13,
-            cursor: 'pointer',
-            textDecoration: 'underline',
-          }}
-        >
+        </div>
+        <button className="pf-link" onClick={() => onNavigate?.('consent')}>
           Learn more about what is shared
         </button>
       </div>
 
       {/* Danger Zone */}
-      <div
-        style={{
-          marginTop: 32,
-          background: 'rgba(239, 68, 68, 0.1)',
-          border: `1.5px solid #FCA5A5`,
-          borderRadius: 8,
-          padding: 20,
-        }}
-      >
-        <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, color: '#DC2626' }}>Danger Zone</h3>
-        <button
-          style={{
-            background: 'transparent',
-            color: '#DC2626',
-            border: `1.5px solid #FCA5A5`,
-            borderRadius: 6,
-            padding: '10px 16px',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
+      <div className="pf-danger">
+        <h3>Danger Zone</h3>
+        <button className="pf-btn danger">
           Delete Account
         </button>
       </div>
