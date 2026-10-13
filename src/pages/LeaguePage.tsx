@@ -30,12 +30,13 @@ interface LeaguePageProps {
   onNavigate?: (page: string) => void
 }
 
-const LABEL_FOR_SCORE = (score: number | null): { label: string; bg: string; color: string } => {
-  if (score === null) return { label: '—', bg: '#f3f4f6', color: '#6b7280' }
-  if (score >= 6.0) return { label: 'Optimal',           bg: '#dcfce7', color: '#15803d' }
-  if (score >= 5.0) return { label: 'Healthy',           bg: '#dbeafe', color: '#1d4ed8' }
-  if (score >= 4.0) return { label: 'Needs Improvement', bg: '#fef3c7', color: '#b45309' }
-  return                    { label: 'High Risk',         bg: '#fee2e2', color: '#b91c1c' }
+type BandTone = 'optimal' | 'healthy' | 'needs' | 'risk' | 'none'
+const LABEL_FOR_SCORE = (score: number | null): { label: string; tone: BandTone } => {
+  if (score === null) return { label: '—', tone: 'none' }
+  if (score >= 6.0) return { label: 'Optimal',           tone: 'optimal' }
+  if (score >= 5.0) return { label: 'Healthy',           tone: 'healthy' }
+  if (score >= 4.0) return { label: 'Needs Improvement', tone: 'needs' }
+  return                    { label: 'High Risk',         tone: 'risk' }
 }
 
 export default function LeaguePage({ leagueSlug, onNavigate }: LeaguePageProps) {
@@ -65,27 +66,17 @@ export default function LeaguePage({ leagueSlug, onNavigate }: LeaguePageProps) 
       .catch(err => { setError(err.message); setLoading(false) })
   }, [user?.id, leagueSlug])
 
+  // Presentation only below this line — same data, same two navigation handlers.
   if (loading) {
-    return (
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', color: theme.text }}>
-        Loading league…
-      </div>
-    )
+    return <div className="lg-root"><div className="lg-loading">Loading league…</div></div>
   }
 
   if (error) {
     return (
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px' }}>
-        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: 16, color: '#b91c1c' }}>
-          {error}
-        </div>
+      <div className="lg-root">
+        <div className="lg-err">{error}</div>
         {onNavigate && (
-          <button
-            onClick={() => onNavigate('leagues')}
-            style={{ marginTop: 16, background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '7px 16px', cursor: 'pointer', color: theme.text, fontSize: 14 }}
-          >
-            ← Back to Leagues
-          </button>
+          <button className="lg-back" onClick={() => onNavigate('leagues')}>← Back to Leagues</button>
         )}
       </div>
     )
@@ -96,90 +87,93 @@ export default function LeaguePage({ leagueSlug, onNavigate }: LeaguePageProps) 
   const { league, entries } = data
   const starts = new Date(league.starts_at).toLocaleDateString()
   const ends   = new Date(league.ends_at).toLocaleDateString()
+  const medal = (rank: number) => rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px' }}>
+    <div className="lg-root">
       {onNavigate && (
-        <button
-          onClick={() => onNavigate('leagues')}
-          style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '6px 14px', cursor: 'pointer', color: theme.text, fontSize: 13, marginBottom: 16 }}
-        >
-          ← All Leagues
-        </button>
+        <button className="lg-back" onClick={() => onNavigate('leagues')}>← All Leagues</button>
       )}
 
-      {/* PHI notice */}
-      <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 6, padding: '8px 14px', marginBottom: 20, fontSize: 12, color: '#713f12' }}>
-        <strong>De-identified view:</strong> Only organization names and aggregate average NHLS scores are shown. No individual data is ever displayed.
+      {/* PHI notice — wording unchanged */}
+      <div className="lg-note">
+        <span aria-hidden="true">🔒</span>
+        <div>
+          <b>De-identified view:</b> Only organization names and aggregate average NHLS scores are shown. No individual data is ever displayed.
+        </div>
       </div>
 
-      <h2 style={{ margin: '0 0 4px 0', fontSize: 22, fontWeight: 700, color: theme.text }}>
-        {league.name}
-      </h2>
-      <p style={{ margin: '0 0 20px 0', color: theme.textMuted, fontSize: 13 }}>
-        {starts} – {ends} · {entries.length} organization{entries.length !== 1 ? 's' : ''} competing
-      </p>
+      <div className="lg-head">
+        <h2>{league.name}</h2>
+        <div className="lg-meta">
+          <span className="lg-chip">{starts} – {ends}</span>
+          <span className="lg-chip">{entries.length} organization{entries.length !== 1 ? 's' : ''} competing</span>
+        </div>
+      </div>
 
       {entries.length === 0 ? (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 40, textAlign: 'center', color: theme.textMuted }}>
-          No organizations with scored participants yet.
-        </div>
+        <div className="lg-empty">No organizations with scored participants yet.</div>
       ) : (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${theme.borderColor}`, background: theme.bgSecondary }}>
-                {['Rank', 'Organization', 'Avg NHLS Score', 'Health Band', 'Scored Members', 'Total Members'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '10px 14px', color: theme.textMuted, fontWeight: 600, fontSize: 11, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e, i) => {
-                const rank = i + 1
-                const { label, bg, color } = LABEL_FOR_SCORE(e.avg_score)
-                return (
-                  <tr
-                    key={e.org_id}
-                    style={{ borderBottom: `1px solid ${theme.borderColor}`, background: rank === 1 ? 'rgba(16,185,129,0.04)' : 'transparent' }}
-                  >
-                    <td style={{ padding: '10px 14px', textAlign: 'center', minWidth: 48 }}>
-                      {rank === 1 && <span style={{ fontSize: 18 }}>🥇</span>}
-                      {rank === 2 && <span style={{ fontSize: 18 }}>🥈</span>}
-                      {rank === 3 && <span style={{ fontSize: 18 }}>🥉</span>}
-                      {rank > 3 && <span style={{ fontWeight: 700, color: '#6b7280', fontSize: 13 }}>#{rank}</span>}
-                    </td>
-                    <td style={{ padding: '10px 14px', fontWeight: 600, color: theme.text }}>
-                      {e.org_name}
-                    </td>
-                    <td style={{ padding: '10px 14px', fontWeight: 800, fontSize: 15, color }}>
-                      {e.avg_score !== null ? e.avg_score.toFixed(2) : '—'}
-                      {e.avg_score !== null && <span style={{ fontSize: 11, fontWeight: 400, color: theme.textMuted }}> / 7.0</span>}
-                    </td>
-                    <td style={{ padding: '10px 14px' }}>
-                      {e.avg_score !== null && (
-                        <span style={{ background: bg, color, borderRadius: 4, padding: '2px 8px', fontWeight: 600, fontSize: 12 }}>
-                          {label}
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: '10px 14px', color: theme.textMuted }}>
-                      {e.participant_count}
-                    </td>
-                    <td style={{ padding: '10px 14px', color: theme.textMuted }}>
-                      {e.member_count}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-          <div style={{ padding: '10px 16px', borderTop: `1px solid ${theme.borderColor}`, fontSize: 11, color: theme.textMuted }}>
-            Ranked by average NHLS score across all scored participants in each organization.
+        <>
+          {/* Top three — same entries, same order, shown as cards */}
+          <div className="lg-podium">
+            {entries.slice(0, 3).map((e, i) => {
+              const rank = i + 1
+              const { label, tone } = LABEL_FOR_SCORE(e.avg_score)
+              return (
+                <div key={e.org_id} className={`lg-pod${rank === 1 ? ' first' : ''}`}>
+                  <div className="lg-medal" aria-label={`Rank ${rank}`}>{medal(rank)}</div>
+                  <div className="lg-pod-name">{e.org_name}</div>
+                  <div className="lg-pod-score">
+                    {e.avg_score !== null ? e.avg_score.toFixed(2) : '—'}
+                    {e.avg_score !== null && <small>/ 7.0</small>}
+                  </div>
+                  {e.avg_score !== null && <span className={`lg-band ${tone}`}>{label}</span>}
+                  <div className="lg-pod-sub">{e.participant_count} of {e.member_count} members scored</div>
+                </div>
+              )
+            })}
           </div>
-        </div>
+
+          {/* Full standings — every organization, every column, as before */}
+          <div className="lg-tablewrap">
+            <table className="lg-table">
+              <thead>
+                <tr>
+                  {['Rank', 'Organization', 'Avg NHLS Score', 'Health Band', 'Scored Members', 'Total Members'].map(h => (
+                    <th key={h}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((e, i) => {
+                  const rank = i + 1
+                  const { label, tone } = LABEL_FOR_SCORE(e.avg_score)
+                  return (
+                    <tr key={e.org_id} className={rank === 1 ? 'top' : undefined}>
+                      <td className="lg-rank">{rank <= 3 ? medal(rank) : `#${rank}`}</td>
+                      <td className="lg-org">{e.org_name}</td>
+                      <td className="lg-score">
+                        {e.avg_score !== null ? e.avg_score.toFixed(2) : '—'}
+                        {e.avg_score !== null && <small>/ 7.0</small>}
+                      </td>
+                      <td>
+                        {e.avg_score !== null && (
+                          <span className={`lg-band ${tone}`} style={{ marginTop: 0 }}>{label}</span>
+                        )}
+                      </td>
+                      <td className="muted">{e.participant_count}</td>
+                      <td className="muted">{e.member_count}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            <div className="lg-foot">
+              Ranked by average NHLS score across all scored participants in each organization.
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

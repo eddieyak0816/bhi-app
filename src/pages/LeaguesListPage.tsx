@@ -35,49 +35,44 @@ export default function LeaguesListPage({ onNavigate }: LeaguesListPageProps) {
       .catch(() => { setError('Could not load leagues.'); setLoading(false) })
   }, [user?.id])
 
+  // Presentation only below this line — same data, same click target (league/<slug>).
   if (loading) {
-    return <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', color: theme.text }}>Loading leagues…</div>
+    return <div className="lg-root"><div className="lg-loading">Loading leagues…</div></div>
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px' }}>
-      <h2 style={{ margin: '0 0 6px 0', fontSize: 22, fontWeight: 700, color: theme.text }}>
-        National Health League — Leagues
-      </h2>
-      <p style={{ margin: '0 0 24px 0', fontSize: 14, color: theme.textMuted }}>
-        Cross-organization health competitions. Click a league to view the standings.
-      </p>
+    <div className="lg-root">
+      <div className="lg-head">
+        <h2>National Health League — Leagues</h2>
+        <p>Cross-organization health competitions. Click a league to view the standings.</p>
+      </div>
 
-      {error && (
-        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: 14, color: '#b91c1c', marginBottom: 16 }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="lg-err">{error}</div>}
 
       {leagues.length === 0 && !error ? (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 40, textAlign: 'center', color: theme.textMuted }}>
-          No active leagues at this time.
-        </div>
+        <div className="lg-empty">No active leagues at this time.</div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="lg-list">
           {leagues.map(league => (
-            <div
+            <button
               key={league.id}
-              style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '16px 20px', cursor: 'pointer', transition: 'box-shadow 0.15s' }}
+              className="lg-card"
               onClick={() => onNavigate?.(`league/${league.slug}`)}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 16, color: theme.text }}>{league.name}</div>
-                  <div style={{ fontSize: 13, color: theme.textMuted, marginTop: 3 }}>
-                    {new Date(league.starts_at).toLocaleDateString()} – {new Date(league.ends_at).toLocaleDateString()}
-                  </div>
-                </div>
-                <span style={{ fontSize: 13, color: theme.blue ?? '#3B82F6', fontWeight: 600 }}>
-                  View standings →
+              <span className="lg-ic" aria-hidden="true">🏆</span>
+              <span className="lg-card-main">
+                <span className="lg-name" style={{ display: 'block' }}>{league.name}</span>
+                <span className="lg-dates" style={{ display: 'block' }}>
+                  {new Date(league.starts_at).toLocaleDateString()} – {new Date(league.ends_at).toLocaleDateString()}
                 </span>
-              </div>
-            </div>
+              </span>
+              <span className="lg-go">
+                <span>View standings</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </button>
           ))}
         </div>
       )}
