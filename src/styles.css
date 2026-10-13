@@ -1572,3 +1572,37 @@ body.dark-mode .md-msg.danger .md-lvl{color:#F2A29E}
   .md-foot .md-btn{width:100%}
   .md-sym{grid-template-columns:minmax(0,1fr)}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin shell — "Vital" design (src/pages/Admin.tsx): outer card, title, tab bar,
+   and a few safe baseline rules every tab inherits. Tab contents are unchanged
+   and are restyled one tab at a time later.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.card.adm-root{border:1px solid var(--hd-fill-2);border-left:1px solid var(--hd-fill-2);border-radius:26px;padding:28px 30px;
+  box-shadow:0 1px 2px rgba(16,26,22,.05)}
+.adm-title{margin:0 0 6px;font-size:clamp(24px,3vw,30px);font-weight:800;letter-spacing:-.035em;line-height:1.15;color:var(--text-primary)}
+.card.adm-root h3.adm-title{font-size:clamp(24px,3vw,30px);margin-bottom:6px}
+
+.adm-tabs{display:flex;flex-wrap:nowrap;gap:6px;margin:18px 0 28px;padding:6px;overflow-x:auto;scrollbar-width:thin;
+  background:var(--hd-fill);border-radius:20px}
+.adm-tab{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;white-space:nowrap;padding:9px 16px;border-radius:999px;border:0;
+  background:transparent;color:var(--text-secondary);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+  transition:background .15s,color .15s,box-shadow .15s}
+.adm-tab:hover{color:var(--text-primary);background:rgba(21,160,107,.1)}
+.adm-tab.on{background:#12332A;color:#B8E62E;box-shadow:0 2px 8px -2px rgba(18,51,42,.5)}
+.adm-tab.on:hover{background:#12332A;color:#B8E62E}
+body.dark-mode .adm-tab.on{background:#B8E62E;color:#0C1512;box-shadow:none}
+body.dark-mode .adm-tab.on:hover{background:#B8E62E;color:#0C1512}
+.adm-tab:focus-visible{outline:3px solid rgba(21,160,107,.45);outline-offset:2px}
+.adm-tab-i{font-size:15px;line-height:1}
+
+/* Baseline inherited by every tab — colours/focus only, no size or spacing changes */
+.adm-root input:focus,.adm-root select:focus,.adm-root textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(21,160,107,.18)}
+.adm-root thead,.adm-root thead tr{background:var(--hd-fill) !important}
+.adm-root thead th{color:var(--text-secondary) !important;font-size:12px;letter-spacing:.04em}
+.adm-root .btn-ghost{border-radius:999px}
+
+@media(max-width:700px){
+  .card.adm-root{padding:18px 16px;border-radius:22px}
+  .adm-tabs{margin:14px 0 22px}
+}

@@ -1300,7 +1300,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   }
 
   return (
-    <div className="card" style={{background:theme.bg,color:theme.text}}>
+    <div className="card adm-root" style={{background:theme.bg,color:theme.text}}>
       {/* Global mobile-responsive safety net for the whole Admin page.
           Admin.tsx has many fixed multi-column grids and un-scrollable tables written
           as inline styles across every tab. Rather than editing each one individually,
@@ -1335,7 +1335,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           .admin-item-card-buttons > * { flex: 1 1 auto !important; }
         }
       `}</style>
-      <h3 style={{color:theme.text}}>Admin — Content manager (dev)</h3>
+      <h3 className="adm-title">Admin — Content manager (dev)</h3>
 
 
 
@@ -1364,27 +1364,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           { id: 'marker-groups' as AdminTab, icon: '🔗', label: 'Marker Groups' },
         ]
         return (
-          <div style={{
-            display: 'flex', flexWrap: 'nowrap', gap: 4, marginBottom: 28,
-            overflowX: 'auto', borderBottom: `2px solid ${theme.borderColor}`, paddingBottom: 12,
-            scrollbarWidth: 'thin',
-          }}>
+          <div className="adm-tabs" role="tablist">
             {tabs.map(t => {
               const isActive = activeTab === t.id
               return (
                 <button
                   key={t.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`adm-tab${isActive ? ' on' : ''}`}
                   onClick={() => setActiveTab(t.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
-                    padding: '7px 14px', borderRadius: 6, whiteSpace: 'nowrap',
-                    border: `1px solid ${isActive ? (theme.blue ?? '#3b82f6') : theme.borderColor}`,
-                    background: isActive ? (theme.blue ?? '#3b82f6') : 'transparent',
-                    color: isActive ? '#fff' : theme.textMuted,
-                    fontWeight: isActive ? 600 : 500, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s',
-                  }}
                 >
-                  <span style={{ fontSize: 15, lineHeight: 1 }}>{t.icon}</span>
+                  <span className="adm-tab-i">{t.icon}</span>
                   {t.label}
                 </button>
               )
