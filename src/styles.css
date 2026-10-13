@@ -1653,3 +1653,14 @@ body.dark-mode .adm-tab.on .adm-tab-i{background:rgba(12,21,18,.14)}
 .adm-clear:hover{background:rgba(239,68,68,.22)}
 body.dark-mode .adm-clear{color:#F2A29E}
 .adm-root .adm-panel .btn-primary{border-radius:999px}
+
+/* Admin → Resources create row on phones: every field on its own full-width line
+   (the URL field was being squeezed into a stub next to the title) */
+@media(max-width:700px){
+  .adm-root .admin-create-row{gap:10px}
+  .adm-root .admin-create-row > *{flex:1 1 100% !important;width:100% !important;min-width:0 !important}
+  .adm-root .admin-create-row > div{display:flex}
+  .adm-root .admin-create-row > div .adm-in-sm{width:104px}
+  .adm-root .admin-create-row > div .adm-in-grow{min-width:0}
+  .adm-root .adm-panel{padding:18px 16px;border-radius:20px}
+}
