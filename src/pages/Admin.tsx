@@ -1651,7 +1651,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
 
               {/* Filter results summary */}
               {(filterKeyword || filterTypes.length > 0 || filterTags.length > 0 || filterCategories.length > 0) && (
-                <div style={{marginBottom:12,fontSize:13,color:theme.text}}>
+                <div className="adm-count">
                   {(() => {
                     const filtered = resources.filter(r => {
                       if (filterKeyword && !r.title.toLowerCase().includes(filterKeyword.toLowerCase())) return false
@@ -1665,32 +1665,32 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 </div>
               )}
 
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
-                <label style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:selectAll ? '#3D7DCA' : 'transparent',borderRadius:4,transition:'all 0.2s',cursor:'pointer'}}>
+              <div className="adm-bar">
+                <label className={`adm-selall${selectAll ? ' on' : ''}`}>
                   <input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.currentTarget.checked)} />
-                  <span className="small muted" style={{color:selectAll ? '#ffffff' : theme.textMuted,fontWeight:selectAll ? 600 : 400}}>Select all</span>
+                  <span>Select all</span>
                 </label>
                 <button className="btn-danger" onClick={bulkDelete} disabled={selectedIds.length === 0}>Delete selected ({selectedIds.length})</button>
               </div>
 
               {/* Resources table/cards */}
-              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Resources</h3>
-                <button onClick={() => toggleViewMode('resources')} title={viewMode.resources === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:'1px solid #ffffff',borderRadius:4,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.resources === 'card' ? '📋' : '🗂️'}</button>
+              <div className="adm-bar">
+                <h3 className="adm-panel-h" style={{margin:0}}>Resources</h3>
+                <button onClick={() => toggleViewMode('resources')} title={viewMode.resources === 'card' ? 'Table view' : 'Card view'} className="adm-view">{viewMode.resources === 'card' ? '📋' : '🗂️'}</button>
               </div>
 
               {viewMode.resources === 'table' ? (
-              <div style={{border:`1px solid ${theme.borderColor}`,borderRadius:6,overflow:'auto'}}>
-                <table style={styles.table}>
-                  <thead style={styles.tableHeader}>
+              <div className="adm-tablewrap">
+                <table className="adm-table">
+                  <thead>
                     <tr>
-                      <th style={{padding:8,textAlign:'left',color:'#ffffff'}}><input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.currentTarget.checked)} /></th>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('title')}>Title{getSortIndicator('title')}</th>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('type')}>Type{getSortIndicator('type')}</th>
-                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>URL</th>
-                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Tags</th>
-                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Categories</th>
-                      <th style={{padding:8,textAlign:'right',color:'#ffffff',fontWeight:500}}>Actions</th>
+                      <th><input type="checkbox" checked={selectAll} onChange={e => toggleSelectAll(e.currentTarget.checked)} /></th>
+                      <th className="sortable" onClick={() => handleSort('title')}>Title{getSortIndicator('title')}</th>
+                      <th className="sortable" onClick={() => handleSort('type')}>Type{getSortIndicator('type')}</th>
+                      <th>URL</th>
+                      <th>Tags</th>
+                      <th>Categories</th>
+                      <th className="r">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1710,23 +1710,23 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         }).slice().sort((a,b) => (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' }))
                     )
                       .map(r => (
-                        <tr key={r.id} data-id={r.id} style={styles.tableRow}>
-                          <td style={{padding:8}}><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
-                          <td style={{padding:8}}><strong>{r.title}</strong></td>
-                          <td style={{padding:8,fontSize:12}}>{r.type}</td>
-                          <td style={{padding:8,fontSize:12}}>
+                        <tr key={r.id} data-id={r.id}>
+                          <td><input type="checkbox" checked={selectedIds.includes(r.id || '')} onChange={() => toggleSelect(r.id || '')} /></td>
+                          <td><strong>{r.title}</strong></td>
+                          <td className="s">{r.type}</td>
+                          <td className="s">
                             {r.link_url ? (
-                              <a href={r.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>
+                              <a href={r.link_url} target="_blank" rel="noopener noreferrer" className="adm-link">
                                 Visit Site
                               </a>
                             ) : (
-                              <span style={{color:theme.textMuted}}>—</span>
+                              <span className="adm-dim">—</span>
                             )}
                           </td>
-                          <td style={{padding:8,fontSize:12}}>{(r.tags || []).join(', ') || <span style={{color:theme.textMuted}}>—</span>}</td>
-                          <td style={{padding:8,fontSize:12}}>{(r.categories || []).join(', ') || <span style={{color:theme.textMuted}}>—</span>}</td>
-                          <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
-                            <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
+                          <td className="s">{(r.tags || []).join(', ') || <span className="adm-dim">—</span>}</td>
+                          <td className="s">{(r.categories || []).join(', ') || <span className="adm-dim">—</span>}</td>
+                          <td className="r">
+                            <div className="adm-acts">
                               <button onClick={() => {
                                 if (r.id) {
                                   const capitalizedType = resourceTypes.find(t => t.toLowerCase() === r.type.toLowerCase()) || r.type
@@ -1735,8 +1735,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                   setIsEditingResource(true)
                                   setResourceModalOpen(true)
                                 }
-                              }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
-                              <button onClick={() => remove(r.id)} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕</button>
+                              }} className="adm-ibtn" title="Edit">✎</button>
+                              <button onClick={() => remove(r.id)} className="adm-ibtn del" title="Delete">✕</button>
                             </div>
                           </td>
                         </tr>
@@ -1745,7 +1745,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 </table>
               </div>
               ) : (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
+              <div className="adm-cards">
                 {(
                   sortColumn ? sortData(resources
                     .filter(r => {
@@ -1763,33 +1763,33 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       return true
                     }).slice().sort((a,b) => (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' }))
                 ).map(r => (
-                  <div key={r.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%',position:'relative'}}>
+                  <div key={r.id} className="adm-card">
                     {editingId === r.id ? (
                       <>
-                        <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus placeholder="Title" style={styles.input} />
+                        <input type="text" value={editData.title || ''} onChange={e => setEditData({...editData, title: e.target.value})} autoFocus placeholder="Title" className="adm-in adm-in-full" />
                         <div style={{display:'flex',gap:8,marginTop:8}}>
-                          <select value={editData.type || r.type} onChange={e => setEditData({...editData, type: e.target.value})} style={{width:100,flexShrink:0,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 8px',background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                          <select value={editData.type || r.type} onChange={e => setEditData({...editData, type: e.target.value})} className="adm-in adm-in-sm">
                             {(resourceTypes || []).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(rt => <option key={rt} value={rt}>{rt}</option>)}
                           </select>
-                          <select value={editData.link_protocol || 'https://'} onChange={e => setEditData({...editData, link_protocol: e.target.value})} style={{padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',width:'auto',flexShrink:0}}>
+                          <select value={editData.link_protocol || 'https://'} onChange={e => setEditData({...editData, link_protocol: e.target.value})} className="adm-in adm-in-sm">
                             <option value="https://">https://</option>
                             <option value="http://">http://</option>
                           </select>
-                          <input type="text" value={editData.link_url || ''} onChange={e => setEditData({...editData, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" style={{padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,flex:1,minWidth:0}} />
+                          <input type="text" value={editData.link_url || ''} onChange={e => setEditData({...editData, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" className="adm-in adm-in-grow" />
                         </div>
                         <div style={{marginTop:12,marginBottom:12}}>
-                          <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Tags:</label>
+                          <label className="adm-lbl">Tags:</label>
                           <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:8}}>
                             {(editData.tags || []).map((t: string) => (
-                              <div key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#2563eb',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                              <div key={t} className="adm-chip tag">
                                 <span>{t}</span>
-                                <button onClick={() => setEditData({...editData, tags: (editData.tags || []).filter((x: string) => x !== t)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                                <button onClick={() => setEditData({...editData, tags: (editData.tags || []).filter((x: string) => x !== t)}) } className="adm-chip-x">✕</button>
                               </div>
                             ))}
                             <div style={{position:'relative'}}>
                               <button
                                 onClick={() => {setTagSearchModalOpen(true); setTagSearchContext('edit'); setTagSearchInput('')}}
-                                style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                                className="adm-add"
                               >
                                 + Add Tag
                               </button>
@@ -1797,18 +1797,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           </div>
                         </div>
                         <div style={{marginTop:12,marginBottom:12}}>
-                          <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Categories:</label>
+                          <label className="adm-lbl">Categories:</label>
                           <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:8}}>
                             {(editData.categories || []).map((c: string) => (
-                              <div key={c} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',background:'#16a34a',color:'#fff',borderRadius:16,fontSize:13,fontWeight:500}}>
+                              <div key={c} className="adm-chip cat">
                                 <span>{c}</span>
-                                <button onClick={() => setEditData({...editData, categories: (editData.categories || []).filter((x: string) => x !== c)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>✕</button>
+                                <button onClick={() => setEditData({...editData, categories: (editData.categories || []).filter((x: string) => x !== c)}) } className="adm-chip-x">✕</button>
                               </div>
                             ))}
                             <div style={{position:'relative'}}>
                               <button
                                 onClick={() => setEditingCategoriesDropdownOpen(!editingCategoriesDropdownOpen)}
-                                style={{padding:'4px 12px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:13,fontWeight:500}}
+                                className="adm-add"
                               >
                                 + Add Category
                               </button>
@@ -1876,7 +1876,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                   {r.title}
                                 </span>
                                 {titleTooLong && (
-                                  <button onClick={() => {setResourceModalData(r); setResourceEditForm({title: r.title, type: r.type, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')}); setIsEditingResource(true); setResourceModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,paddingLeft:8,fontSize:15,fontWeight:600,flexShrink:0,textDecoration:'underline'}}>
+                                  <button onClick={() => {setResourceModalData(r); setResourceEditForm({title: r.title, type: r.type, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')}); setIsEditingResource(true); setResourceModalOpen(true)}} style={{background:'transparent',border:'none',color:'var(--primary-blue)',cursor:'pointer',padding:0,paddingLeft:8,fontSize:15,fontWeight:600,flexShrink:0,textDecoration:'underline'}}>
                                     more
                                   </button>
                                 )}
@@ -1893,7 +1893,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               {r.link_url && (
                                 <div style={{fontSize:12,color:theme.textMuted,marginBottom:6,lineHeight:'1.4',minHeight:'18.4px',maxHeight:'18.4px',overflow:'hidden',position:'relative'}}>
                                   <span style={{display:'-webkit-box',WebkitLineClamp:1,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
-                                    <strong>URL:</strong> <a href={r.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>Visit Site</a>
+                                    <strong>URL:</strong> <a href={r.link_url} target="_blank" rel="noopener noreferrer" className="adm-link">Visit Site</a>
                                   </span>
                                 </div>
                               )}
@@ -1922,7 +1922,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               
                               {/* More button for non-title overflow */}
                               {(tagsTooLong || categoriesTooLong) && !titleTooLong && (
-                                <button onClick={() => {setResourceModalData(r); setResourceEditForm({title: r.title, type: r.type, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')}); setIsEditingResource(true); setResourceModalOpen(true)}} style={{position:'absolute',top:12,right:12,background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'right',fontSize:13,fontWeight:600,display:'inline',textDecoration:'underline'}}>
+                                <button onClick={() => {setResourceModalData(r); setResourceEditForm({title: r.title, type: r.type, tags: r.tags || [], categories: r.categories || [], link_url: stripProtocol(r.link_url || ''), link_protocol: getProtocol(r.link_url || '')}); setIsEditingResource(true); setResourceModalOpen(true)}} style={{position:'absolute',top:12,right:12,background:'transparent',border:'none',color:'var(--primary-blue)',cursor:'pointer',padding:0,textAlign:'right',fontSize:13,fontWeight:600,display:'inline',textDecoration:'underline'}}>
                                   more
                                 </button>
                               )}
@@ -1939,8 +1939,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                 setIsEditingResource(true)
                                 setResourceModalOpen(true)
                               }
-                            }} style={cardButtonStyles.edit as any} {...getButtonHoverHandlers(false)}>✎ Edit</button>
-                            <button onClick={() => remove(r.id)} style={cardButtonStyles.delete as any} {...getButtonHoverHandlers(true)}>✕ Delete</button>
+                            }} className="adm-cbtn">✎ Edit</button>
+                            <button onClick={() => remove(r.id)} className="adm-cbtn del">✕ Delete</button>
                           </div>
                       </>
                     )}
@@ -1955,52 +1955,52 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
 
       {/* Resource Modal */}
       {resourceModalOpen && resourceModalData && (
-        <div onKeyDown={(e) => { if (e.key === 'Escape') { setResourceModalOpen(false); setIsEditingResource(false) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
-          <div onKeyDown={handleModalKeyDown} style={{background:theme.bg,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:4}}>
+        <div onKeyDown={(e) => { if (e.key === 'Escape') { setResourceModalOpen(false); setIsEditingResource(false) } }} className="adm-mbg">
+          <div onKeyDown={handleModalKeyDown} className="adm-modal">
+            <div className="adm-mhead">
               {!isEditingResource ? (
-                <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Resource</h3>
+                <h3 className="adm-mtitle">Edit Resource</h3>
               ) : (
-                <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Resource</h3>
+                <h3 className="adm-mtitle">Edit Resource</h3>
               )}
-              <button onClick={() => { setResourceModalOpen(false); setIsEditingResource(false) }} tabIndex={-1} style={{position:'absolute',top:-5,right:-5,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
+              <button onClick={() => { setResourceModalOpen(false); setIsEditingResource(false) }} tabIndex={-1} className="adm-mx" aria-label="Close">✕</button>
             </div>
-            <div style={{marginBottom:16,paddingBottom:12,borderBottom:`1px solid ${theme.borderColor}`}}>
-              <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Title:</p>
-              <p style={{margin:0,fontSize:16,fontWeight:600,color:theme.text}}>{resourceModalData.title}</p>
+            <div className="adm-mtitleblock">
+              <p className="adm-k">Title:</p>
+              <p className="adm-v-lg">{resourceModalData.title}</p>
             </div>
             {!isEditingResource ? (
               <>
-                <div style={{flex:1,overflowY:'auto',marginBottom:16}}>
+                <div className="adm-mbody">
                   {resourceModalData.thumbnail_url && (
-                    <div style={{marginBottom:12}}>
-                      <img src={resourceModalData.thumbnail_url} alt="Thumbnail" style={{width:'100%',maxHeight:160,objectFit:'cover',borderRadius:6,border:`1px solid ${theme.borderColor}`}} />
+                    <div className="adm-field">
+                      <img src={resourceModalData.thumbnail_url} alt="Thumbnail" className="adm-mthumb" />
                     </div>
                   )}
-                  <div style={{marginBottom:12}}>
-                    <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Type:</p>
-                    <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.type}</p>
+                  <div className="adm-field">
+                    <p className="adm-k">Type:</p>
+                    <p className="adm-v">{resourceModalData.type}</p>
                   </div>
                   {resourceModalData.link_url && (
-                    <div style={{marginBottom:12}}>
-                      <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>URL:</p>
-                      <p style={{margin:0,fontSize:14,color:theme.text}}><a href={resourceModalData.link_url} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>Visit Site</a></p>
+                    <div className="adm-field">
+                      <p className="adm-k">URL:</p>
+                      <p className="adm-v"><a href={resourceModalData.link_url} target="_blank" rel="noopener noreferrer" className="adm-link">Visit Site</a></p>
                     </div>
                   )}
                   {resourceModalData.tags && resourceModalData.tags.length > 0 && (
-                    <div style={{marginBottom:12}}>
-                      <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Tags:</p>
-                      <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.tags.join(', ')}</p>
+                    <div className="adm-field">
+                      <p className="adm-k">Tags:</p>
+                      <p className="adm-v">{resourceModalData.tags.join(', ')}</p>
                     </div>
                   )}
                   {resourceModalData.categories && resourceModalData.categories.length > 0 && (
-                    <div style={{marginBottom:12}}>
-                      <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Categories:</p>
-                      <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceModalData.categories.join(', ')}</p>
+                    <div className="adm-field">
+                      <p className="adm-k">Categories:</p>
+                      <p className="adm-v">{resourceModalData.categories.join(', ')}</p>
                     </div>
                   )}
                 </div>
-                <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+                <div className="adm-mfoot">
                   <button onClick={() => { 
                     console.log('Edit button clicked, resourceModalData:', resourceModalData)
                     const capitalizedType = resourceModalData.type ? resourceTypes.find(t => t.toLowerCase() === resourceModalData.type.toLowerCase()) || resourceModalData.type : ''
@@ -2009,7 +2009,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     setThumbnailError(null)
                     setResourceEditForm(formData)
                     setIsEditingResource(true)
-                  }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text}}>✎ Edit</button>
+                  }} className="adm-mbtn ghost">✎ Edit</button>
                   <button onClick={async () => {
                     if (!confirm('Delete this resource?')) return
                     try {
@@ -2020,44 +2020,44 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     } catch (err) {
                       alert('Delete resource failed — ' + ((err as any)?.message || 'check server logs'))
                     }
-                  }} style={{background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444'}}>✕ Delete</button>
+                  }} className="adm-mbtn danger">✕ Delete</button>
                 </div>
               </>
             ) : (
               <>
-                <div style={{flex:1,display:'flex',gap:24,marginBottom:16,minWidth:0,overflowY:'auto'}}>
+                <div className="adm-mcols">
                   {/* Left column - Main fields */}
-                  <div style={{flex:1,minWidth:0,paddingRight:12}}>
-                    <div style={{marginBottom:12}}>
-                      <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Type</label>
-                      <select autoFocus value={resourceEditForm.type || ''} onChange={e => setResourceEditForm({...resourceEditForm, type: e.target.value})} style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box',width:'100%'}}>
+                  <div className="adm-mleft">
+                    <div className="adm-field">
+                      <label className="adm-lbl">Type</label>
+                      <select autoFocus value={resourceEditForm.type || ''} onChange={e => setResourceEditForm({...resourceEditForm, type: e.target.value})} className="adm-in adm-in-full">
                         <option value="">Select a type</option>
                         {(resourceTypes || []).slice().sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
-                    <div style={{marginBottom:12}}>
-                      <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>URL</label>
-                      <div style={{display:'flex',gap:4,minWidth:0}}>
-                        <select value={resourceEditForm.link_protocol || 'https://'} onChange={e => setResourceEditForm({...resourceEditForm, link_protocol: e.target.value})} style={{padding:'6px 4px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12,flex:'0 0 auto',width:'85px',background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}>
+                    <div className="adm-field">
+                      <label className="adm-lbl">URL</label>
+                      <div className="adm-urlrow">
+                        <select value={resourceEditForm.link_protocol || 'https://'} onChange={e => setResourceEditForm({...resourceEditForm, link_protocol: e.target.value})} className="adm-in adm-in-sm">
                           <option value="https://">https://</option>
                           <option value="http://">http://</option>
                         </select>
-                        <input type="text" value={resourceEditForm.link_url || ''} onChange={e => setResourceEditForm({...resourceEditForm, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box',minWidth:0}} />
+                        <input type="text" value={resourceEditForm.link_url || ''} onChange={e => setResourceEditForm({...resourceEditForm, link_url: stripProtocol(e.target.value)})} placeholder="URL (optional)" className="adm-in adm-in-grow" />
                       </div>
                     </div>
-                    <div style={{marginBottom:12}}>
-                      <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Thumbnail</label>
+                    <div className="adm-field">
+                      <label className="adm-lbl">Thumbnail</label>
                       {resourceEditForm.thumbnail_url ? (
-                        <div style={{marginBottom:8,position:'relative',display:'inline-block'}}>
-                          <img src={resourceEditForm.thumbnail_url} alt="Thumbnail preview" style={{width:'100%',maxHeight:120,objectFit:'cover',borderRadius:6,border:`1px solid ${theme.borderColor}`,display:'block'}} />
+                        <div className="adm-thumbbox">
+                          <img src={resourceEditForm.thumbnail_url} alt="Thumbnail preview" className="adm-mthumb" />
                           <button
                             type="button"
                             onClick={() => setResourceEditForm({...resourceEditForm, thumbnail_url: ''})}
-                            style={{position:'absolute',top:4,right:4,background:'rgba(0,0,0,0.6)',border:'none',borderRadius:4,color:'#fff',cursor:'pointer',fontSize:12,padding:'2px 6px',fontWeight:600}}
+                            className="adm-thumb-x"
                           >Remove</button>
                         </div>
                       ) : (
-                        <div style={{border:`2px dashed ${theme.borderColor}`,borderRadius:6,padding:'16px 12px',textAlign:'center',color:theme.textMuted,fontSize:13}}>
+                        <div className="adm-nothumb">
                           No thumbnail
                         </div>
                       )}
@@ -2114,15 +2114,15 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             }
                           }}
                         />
-                        <span style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 10px',fontSize:12,fontWeight:600,color:theme.text,pointerEvents:'none'}}>
+                        <span className="adm-upload">
                           {thumbnailUploading ? 'Uploading…' : 'Upload Image'}
                         </span>
                       </label>
                       {thumbnailError && <div style={{color:'#dc2626',fontSize:12,marginTop:4}}>{thumbnailError}</div>}
                     </div>
-                    <div style={{marginBottom:12}}>
-                      <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Duration Type</label>
-                      <select value={resourceEditForm.duration_type || 'both'} onChange={e => setResourceEditForm({...resourceEditForm, duration_type: e.target.value})} style={{padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,width:'100%',boxSizing:'border-box'}}>
+                    <div className="adm-field">
+                      <label className="adm-lbl">Duration Type</label>
+                      <select value={resourceEditForm.duration_type || 'both'} onChange={e => setResourceEditForm({...resourceEditForm, duration_type: e.target.value})} className="adm-in adm-in-full">
                         <option value="both">Both (Short &amp; Long)</option>
                         <option value="short">Short</option>
                         <option value="long">Long</option>
@@ -2131,35 +2131,35 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                   </div>
 
                   {/* Right column - Tags & Categories */}
-                  <div style={{flex:'0 0 280px',borderLeft:`1px solid ${theme.borderColor}`,paddingLeft:16,overflowY:'auto',paddingRight:8}}>
+                  <div className="adm-mright">
                     <div style={{marginBottom:20}}>
-                      <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:6,textTransform:'uppercase',letterSpacing:'0.5px'}}>Tags</label>
+                      <label className="adm-lbl">Tags</label>
                       <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
                         {(resourceEditForm.tags || []).map((tag: string) => (
-                          <span key={tag} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 8px',background:'#3b82f6',color:'#fff',borderRadius:12,fontSize:12,fontWeight:500}}>
+                          <span key={tag} className="adm-chip tag">
                             {tag}
-                            <button onClick={() => setResourceEditForm({...resourceEditForm, tags: (resourceEditForm.tags || []).filter((t: string) => t !== tag)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:12,lineHeight:1}}>✕</button>
+                            <button onClick={() => setResourceEditForm({...resourceEditForm, tags: (resourceEditForm.tags || []).filter((t: string) => t !== tag)}) } className="adm-chip-x">✕</button>
                           </span>
                         ))}
                       </div>
-                      <button onClick={() => { setTagSearchContext('edit'); setTagSearchModalOpen(true) }} style={{padding:'4px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:12,fontWeight:500}}>+ Add Tag</button>
+                      <button onClick={() => { setTagSearchContext('edit'); setTagSearchModalOpen(true) }} className="adm-add">+ Add Tag</button>
                     </div>
 
                     <div>
-                      <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:6,textTransform:'uppercase',letterSpacing:'0.5px'}}>Categories</label>
+                      <label className="adm-lbl">Categories</label>
                       <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
                         {(resourceEditForm.categories || []).map((cat: string) => (
-                          <span key={cat} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 8px',background:'#10b981',color:'#fff',borderRadius:12,fontSize:12,fontWeight:500}}>
+                          <span key={cat} className="adm-chip cat">
                             {cat}
-                            <button onClick={() => setResourceEditForm({...resourceEditForm, categories: (resourceEditForm.categories || []).filter((c: string) => c !== cat)}) } style={{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:0,fontSize:12,lineHeight:1}}>✕</button>
+                            <button onClick={() => setResourceEditForm({...resourceEditForm, categories: (resourceEditForm.categories || []).filter((c: string) => c !== cat)}) } className="adm-chip-x">✕</button>
                           </span>
                         ))}
                       </div>
-                      <button onClick={() => { setCategorySearchContext('edit'); setCategorySearchModalOpen(true) }} style={{padding:'4px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:4,background:theme.bg,color:theme.text,cursor:'pointer',fontSize:12,fontWeight:500}}>+ Add Category</button>
+                      <button onClick={() => { setCategorySearchContext('edit'); setCategorySearchModalOpen(true) }} className="adm-add">+ Add Category</button>
                     </div>
                   </div>
                 </div>
-                <div style={{display:'flex',gap:12,marginTop:'auto',borderTop:`1px solid ${theme.borderColor}`,paddingTop:16}}>
+                <div className="adm-mfoot edit">
                   <button type="button" onClick={async () => {
                     try {
                       if (!resourceEditForm.title || !resourceEditForm.title.toString().trim()) return alert('Title required')
@@ -2174,8 +2174,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       console.error('Save resource error', err)
                       alert('Save failed — ' + ((err as any)?.message || 'check server logs'))
                     }
-                  }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'12px 16px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
-                  <button onClick={() => { setIsEditingResource(false); setResourceModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'12px 16px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
+                  }} className="adm-mbtn primary">Save</button>
+                  <button onClick={() => { setIsEditingResource(false); setResourceModalOpen(false) }} className="adm-mbtn ghost">Cancel</button>
                 </div>
               </>
             )}
