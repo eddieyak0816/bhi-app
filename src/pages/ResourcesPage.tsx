@@ -236,470 +236,251 @@ export default function Resources() {
     return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
   })
 
+  // ── Presentation only below this line ───────────────────────────────────────
+  // Every handler is the one that was here before: setFilter*/setSearchTerm, setViewMode,
+  // toggleBookmark, setSelectedResource, recordView, loadResources. Only markup and styling changed.
+
+  // Cards show the first few tags (the user's recommended ones first, so the ones that matter
+  // to them are always visible) and "+N more"; View Details lists every tag.
+  const MAX_TAGS = 6
+
+  const starIcon = (filled: boolean) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z" />
+    </svg>
+  )
+
   return (
-    <div>
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Library</h2>
-        <p style={{ color: theme.textMuted, margin: 0 }}>Explore health articles, guides, and recommendations</p>
+    <div className="lib-root">
+      <div className="lib-head">
+        <h2>Library</h2>
+        <p>Explore health articles, guides, and recommendations</p>
       </div>
 
-      {error && (
-        <div
-          style={{
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1.5px solid #FCA5A5',
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 24,
-            color: '#DC2626',
-          }}
-        >
-          Error loading resources: {error}
-        </div>
-      )}
+      {error && <div className="lib-err">Error loading resources: {error}</div>}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 48, color: theme.textMuted }}>
-          Loading resources...
+        <div className="lib-grid" aria-busy="true" aria-label="Loading resources">
+          {[0, 1, 2, 3, 4, 5].map(i => <div key={i} className="lib-skel" />)}
         </div>
       ) : (
         <>
           {/* Search and Filters */}
-          <div
-            style={{
-              background: theme.card,
-              border: `1.5px solid ${theme.borderColor}`,
-              borderRadius: 8,
-              padding: 16,
-              marginBottom: 24,
-            }}
-          >
-            <div style={{ marginBottom: 16 }}>
+          <div className="lib-filters">
+            <div className="lib-search">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" />
+              </svg>
               <input
+                className="lib-input"
                 type="text"
                 placeholder="Search library..."
+                aria-label="Search library"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 6,
-                  fontSize: 14,
-                  background: theme.bg,
-                  color: theme.text,
-                }}
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
+            <div className="lib-selects">
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Type</label>
-                <select
-                  value={filterType}
-                  onChange={e => setFilterType(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    border: `1.5px solid ${theme.borderColor}`,
-                    borderRadius: 6,
-                    fontSize: 14,
-                    background: theme.bg,
-                    color: theme.text,
-                  }}
-                >
+                <label className="lib-label" htmlFor="lib-type">Type</label>
+                <select id="lib-type" className="lib-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
                   <option value="">All Types</option>
-                  {uniqueTypes.map(t => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
+                  {uniqueTypes.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Tag</label>
-                <select
-                  value={filterTag}
-                  onChange={e => setFilterTag(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    border: `1.5px solid ${theme.borderColor}`,
-                    borderRadius: 6,
-                    fontSize: 14,
-                    background: theme.bg,
-                    color: theme.text,
-                  }}
-                >
+                <label className="lib-label" htmlFor="lib-tag">Tag</label>
+                <select id="lib-tag" className="lib-select" value={filterTag} onChange={e => setFilterTag(e.target.value)}>
                   <option value="">All Tags</option>
-                  {uniqueTags.map(t => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
+                  {uniqueTags.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Category</label>
-                <select
-                  value={filterCategory}
-                  onChange={e => setFilterCategory(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    border: `1.5px solid ${theme.borderColor}`,
-                    borderRadius: 6,
-                    fontSize: 14,
-                    background: theme.bg,
-                    color: theme.text,
-                  }}
-                >
+                <label className="lib-label" htmlFor="lib-cat">Category</label>
+                <select id="lib-cat" className="lib-select" value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
                   <option value="">All Categories</option>
-                  {uniqueCategories.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
+                  {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
           </div>
 
           {/* View Mode Toggle */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <p style={{ color: theme.textMuted, margin: 0 }}>
+          <div className="lib-bar">
+            <p className="lib-count">
               {prioritized.length} resource{prioritized.length !== 1 ? 's' : ''} found
             </p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => setViewMode('grid')}
-                style={{
-                  background: viewMode === 'grid' ? theme.blue : theme.card,
-                  color: viewMode === 'grid' ? '#fff' : theme.text,
-                  border: viewMode === 'grid' ? 'none' : `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 6,
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
-                📊 Grid
+            <div className="lib-segs" role="group" aria-label="View mode">
+              <button className={viewMode === 'grid' ? 'on' : ''} onClick={() => setViewMode('grid')} aria-pressed={viewMode === 'grid'}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+                <span>Grid</span>
               </button>
-              <button
-                onClick={() => setViewMode('list')}
-                style={{
-                  background: viewMode === 'list' ? theme.blue : theme.card,
-                  color: viewMode === 'list' ? '#fff' : theme.text,
-                  border: viewMode === 'list' ? 'none' : `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 6,
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
-                📋 List
+              <button className={viewMode === 'list' ? 'on' : ''} onClick={() => setViewMode('list')} aria-pressed={viewMode === 'list'}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+                </svg>
+                <span>List</span>
               </button>
             </div>
           </div>
 
           {/* Resources Display */}
           {prioritized.length > 0 ? (
-            <div
-              style={{
-                display: viewMode === 'grid' ? 'grid' : 'flex',
-                gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(280px, 1fr))' : 'auto',
-                flexDirection: viewMode === 'list' ? 'column' : 'row',
-                gap: 16,
-              }}
-            >
+            <div className={viewMode === 'grid' ? 'lib-grid' : 'lib-list'}>
               {prioritized.map(resource => {
                 const isBookmarked = bookmarks.has(resource.id)
-                const matchingTags = resource.tags.filter(t => applicableTags.includes(t))
+                const orderedTags = [...resource.tags].sort(
+                  (x, y) => Number(applicableTags.includes(y)) - Number(applicableTags.includes(x))
+                )
+                const shownTags = orderedTags.slice(0, MAX_TAGS)
+                const hiddenCount = orderedTags.length - shownTags.length
                 return (
-                  <div
-                    key={resource.id}
-                    style={{
-                      background: theme.card,
-                      border: `1.5px solid ${theme.borderColor}`,
-                      borderRadius: 8,
-                      padding: 0,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      display: 'flex',
-                      flexDirection: viewMode === 'list' ? 'row' : 'column',
-                      gap: 0,
-                      justifyContent: viewMode === 'list' ? 'space-between' : 'flex-start',
-                      alignItems: viewMode === 'list' ? 'stretch' : 'stretch',
-                      overflow: 'hidden',
-                    }}
-                    onMouseEnter={e => {
-                      ;(e.currentTarget as HTMLElement).style.borderColor = theme.blue
-                    }}
-                    onMouseLeave={e => {
-                      ;(e.currentTarget as HTMLElement).style.borderColor = theme.borderColor
-                    }}
-                  >
-                    {/* Thumbnail */}
-                    {resource.thumbnail_url && viewMode === 'grid' && (
-                      <img
-                        src={resource.thumbnail_url}
-                        alt=""
-                        style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block', flexShrink: 0 }}
-                      />
+                  <article key={resource.id} className={`lib-card${viewMode === 'list' ? ' row' : ''}`}>
+                    <button
+                      className={`lib-bm${isBookmarked ? ' on' : ''}`}
+                      onClick={() => toggleBookmark(resource.id)}
+                      aria-pressed={isBookmarked}
+                      aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this resource'}
+                      title={isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                    >
+                      {starIcon(isBookmarked)}
+                    </button>
+
+                    {resource.thumbnail_url && (
+                      <img className="lib-thumb" src={resource.thumbnail_url} alt="" loading="lazy" />
                     )}
-                    {resource.thumbnail_url && viewMode === 'list' && (
-                      <img
-                        src={resource.thumbnail_url}
-                        alt=""
-                        style={{ width: 100, flexShrink: 0, objectFit: 'cover', display: 'block' }}
-                      />
-                    )}
-                    <div style={{ flex: 1, padding: 16 }}>
-                      <div style={{ fontSize: 11, color: theme.textMuted, fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {resource.type}
+
+                    <div className="lib-body">
+                      <div className="lib-main">
+                        <div className="lib-kicker">{resource.type}</div>
+                        <h3 className="lib-title">{resource.title}</h3>
+                        {resource.description && <p className="lib-desc">{resource.description}</p>}
+                        {resource.tags.length > 0 && (
+                          <div className="lib-tags">
+                            {shownTags.map(tag => {
+                              const isRecommended = applicableTags.includes(tag)
+                              return (
+                                <span key={tag} className={`lib-tag${isRecommended ? ' rec' : ''}`}>
+                                  {isRecommended ? '✓ ' : ''}{tag}
+                                </span>
+                              )
+                            })}
+                            {hiddenCount > 0 && <span className="lib-tag more">+{hiddenCount} more</span>}
+                          </div>
+                        )}
                       </div>
-                      <h3 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600, color: theme.text }}>{resource.title}</h3>
-                      <p style={{ margin: '0 0 12px 0', color: theme.textMuted, fontSize: 14 }}>{resource.description}</p>
-                      {resource.tags.length > 0 && (
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-                          {resource.tags.map(tag => {
-                            const isRecommended = applicableTags.includes(tag)
-                            return (
-                              <span
-                                key={tag}
-                                style={{
-                                  background: isRecommended ? 'rgba(59, 130, 246, 0.15)' : theme.bgSecondary,
-                                  border: `1px solid ${isRecommended ? '#93C5FD' : theme.borderColor}`,
-                                  borderRadius: 4,
-                                  padding: '4px 8px',
-                                  fontSize: 12,
-                                  color: isRecommended ? theme.blue : theme.textMuted,
-                                  fontWeight: isRecommended ? 500 : 400,
-                                }}
-                              >
-                                {isRecommended ? '✓ ' : ''}{tag}
-                              </span>
-                            )
-                          })}
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', gap: 8, flexDirection: viewMode === 'list' ? 'row' : 'column', marginTop: 12 }}>
-                        <button
-                          onClick={() => toggleBookmark(resource.id)}
-                          style={{
-                            background: isBookmarked ? theme.blue : 'transparent',
-                            color: isBookmarked ? '#fff' : theme.text,
-                            border: `1.5px solid ${theme.borderColor}`,
-                            borderRadius: 6,
-                            padding: '8px 12px',
-                            cursor: 'pointer',
-                            fontSize: 14,
-                            fontWeight: 600,
-                          }}
-                        >
-                          {isBookmarked ? '⭐ Bookmarked' : '☆ Bookmark'}
-                        </button>
+
+                      <div className="lib-actions">
                         {resource.link_url && (
                           <a
+                            className="lib-btn primary"
                             href={resource.link_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={() => recordView(resource)}
-                            style={{
-                              background: '#10b981',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: 6,
-                              padding: '8px 12px',
-                              cursor: 'pointer',
-                              fontSize: 14,
-                              fontWeight: 600,
-                              textDecoration: 'none',
-                              textAlign: 'center',
-                            }}
                           >
                             Open →
                           </a>
                         )}
                         <button
+                          className="lib-btn ghost"
                           onClick={() => { setSelectedResource(resource); recordView(resource) }}
-                          style={{
-                            background: theme.blue,
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: 6,
-                            padding: '8px 12px',
-                            cursor: 'pointer',
-                            fontSize: 14,
-                            fontWeight: 600,
-                          }}
                         >
                           View Details
                         </button>
                       </div>
-                    </div>{/* end padded wrapper */}
-                  </div>
+                    </div>
+                  </article>
                 )
               })}
             </div>
           ) : (
-            <div
-              style={{
-                background: theme.card,
-                border: `1.5px solid ${theme.borderColor}`,
-                borderRadius: 8,
-                padding: 48,
-                textAlign: 'center',
-                color: theme.textMuted,
-              }}
-            >
+            <div className="lib-empty">
               <p style={{ margin: 0 }}>No resources found. Try adjusting your filters.</p>
             </div>
           )}
 
           {/* Detail Panel Modal */}
           {selectedResource && (
-            <div
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0,0,0,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000,
-              }}
-              onClick={() => setSelectedResource(null)}
-            >
+            <div className="lib-modal-bg" onClick={() => setSelectedResource(null)}>
               <div
-                style={{
-                  background: theme.bg,
-                  border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 8,
-                  padding: 32,
-                  maxWidth: 600,
-                  maxHeight: '80vh',
-                  overflow: 'auto',
-                  color: theme.text,
-                }}
+                className="lib-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-label={selectedResource.title}
                 onClick={e => e.stopPropagation()}
               >
                 {selectedResource.thumbnail_url && (
-                  <img
-                    src={selectedResource.thumbnail_url}
-                    alt=""
-                    style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 6, marginBottom: 20, display: 'block' }}
-                  />
+                  <img className="lib-modal-img" src={selectedResource.thumbnail_url} alt="" />
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 16 }}>
-                  <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>{selectedResource.title}</h2>
-                  <button
-                    onClick={() => setSelectedResource(null)}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      fontSize: 24,
-                      cursor: 'pointer',
-                      color: theme.text,
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 16, textTransform: 'uppercase', fontWeight: 600 }}>
-                  {selectedResource.type}
-                </div>
-
-                <p style={{ color: theme.textMuted, marginBottom: 16, fontSize: 15, lineHeight: 1.6 }}>
-                  {selectedResource.description}
-                </p>
-
-                {selectedResource.tags.length > 0 && (
-                  <div style={{ marginBottom: 24 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: theme.textMuted }}>TAGS</div>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {selectedResource.tags.map(tag => (
-                        <span
-                          key={tag}
-                          style={{
-                            background: theme.bgSecondary,
-                            border: `1px solid ${theme.borderColor}`,
-                            borderRadius: 4,
-                            padding: '6px 12px',
-                            fontSize: 13,
-                            color: theme.text,
-                          }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                <div className="lib-modal-in">
+                  <div className="lib-kicker" style={{ paddingRight: 0 }}>{selectedResource.type}</div>
+                  <div className="lib-modal-top">
+                    <h2>{selectedResource.title}</h2>
+                    <button className="lib-x" onClick={() => setSelectedResource(null)} aria-label="Close">
+                      <svg width="16" height="16" viewBox="0 0 17 17" fill="none" aria-hidden="true">
+                        <path d="M1 1l15 15M16 1L1 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </button>
                   </div>
-                )}
 
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <button
-                    onClick={() => {
-                      toggleBookmark(selectedResource.id)
-                    }}
-                    style={{
-                      background: bookmarks.has(selectedResource.id) ? theme.blue : 'transparent',
-                      color: bookmarks.has(selectedResource.id) ? '#fff' : theme.text,
-                      border: `1.5px solid ${theme.borderColor}`,
-                      borderRadius: 6,
-                      padding: '10px 16px',
-                      cursor: 'pointer',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      flex: 1,
-                    }}
-                  >
-                    {bookmarks.has(selectedResource.id) ? '⭐ Bookmarked' : '☆ Bookmark'}
-                  </button>
-                  {selectedResource.link_url && (
-                    <a
-                      href={selectedResource.link_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        background: theme.blue,
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 6,
-                        padding: '10px 16px',
-                        cursor: 'pointer',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                        flex: 1,
-                        textAlign: 'center',
-                      }}
-                    >
-                      Learn More →
-                    </a>
+                  {selectedResource.description && <p className="lib-modal-desc">{selectedResource.description}</p>}
+
+                  {selectedResource.tags.length > 0 && (
+                    <div>
+                      <div className="lib-modal-tags-h">Tags</div>
+                      <div className="lib-tags" style={{ flex: 'none', marginBottom: 0 }}>
+                        {selectedResource.tags.map(tag => (
+                          <span key={tag} className="lib-tag">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
                   )}
+
+                  <div className="lib-modal-actions">
+                    <button
+                      className="lib-btn ghost"
+                      onClick={() => { toggleBookmark(selectedResource.id) }}
+                      aria-pressed={bookmarks.has(selectedResource.id)}
+                    >
+                      <span style={{ display: 'inline-flex', marginRight: 8 }}>{starIcon(bookmarks.has(selectedResource.id))}</span>
+                      {bookmarks.has(selectedResource.id) ? 'Bookmarked' : 'Bookmark'}
+                    </button>
+                    {selectedResource.link_url && (
+                      <a
+                        className="lib-btn primary"
+                        href={selectedResource.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Learn More →
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-            {/* Retry overlay when loading stalls */}
-            {showRetryOverlay && (
-              <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:2000}}>
-                <div style={{background:theme.card,padding:24,borderRadius:8,maxWidth:420,textAlign:'center',color:theme.text}}>
-                  <h3 style={{marginTop:0}}>Still loading?</h3>
-                  <p style={{color:theme.textMuted,marginBottom:12}}>The data load appears to be taking longer than expected. You can retry manually.</p>
-                  <div style={{display:'flex',gap:8,justifyContent:'center'}}>
-                    <button onClick={() => { setShowRetryOverlay(false); loadResources() }} style={{background:'#16a34a',border:'none',borderRadius:6,padding:'10px 14px',color:'#fff',cursor:'pointer'}}>Retry</button>
-                    <button onClick={() => setShowRetryOverlay(false)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'10px 14px',color:theme.text,cursor:'pointer'}}>Dismiss</button>
-                  </div>
+          {/* Retry overlay when loading stalls */}
+          {showRetryOverlay && (
+            <div className="lib-retry">
+              <div className="lib-retry-card">
+                <h3>Still loading?</h3>
+                <p>The data load appears to be taking longer than expected. You can retry manually.</p>
+                <div className="row">
+                  <button className="lib-btn primary" style={{ flex: 'none', padding: '11px 22px' }} onClick={() => { setShowRetryOverlay(false); loadResources() }}>Retry</button>
+                  <button className="lib-btn ghost" style={{ flex: 'none', padding: '11px 22px' }} onClick={() => setShowRetryOverlay(false)}>Dismiss</button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
         </>
       )}
     </div>
