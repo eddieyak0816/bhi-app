@@ -44,30 +44,51 @@ export default function CategoriesPage() {
     window.location.hash = '#/library'
   }
 
+  // Presentation only below this line. Each card is one button that does what the old
+  // "Browse" button did: openLibrary(name) — set the Library category filter and jump there.
   return (
-    <div>
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Categories</h2>
-        <p style={{ color: theme.textMuted, margin: 0 }}>Browse categories used to match lab results and discover related content.</p>
+    <div className="cat-root">
+      <div className="cat-head">
+        <h2>Categories</h2>
+        <p>Browse categories used to match lab results and discover related content.</p>
+        {!loading && !error && categories.length > 0 && (
+          <span className="cat-count">{categories.length} {categories.length === 1 ? 'category' : 'categories'}</span>
+        )}
       </div>
 
-      {loading && <div style={{ color: theme.textMuted }}>Loading categories…</div>}
-      {error && (
-        <div style={{ background: 'rgba(239,68,68,0.06)', padding: 12, borderRadius: 6, color: '#b91c1c' }}>
-          Error loading categories: {error}
+      {loading && (
+        <div className="cat-grid" aria-busy="true" aria-label="Loading categories">
+          {[0, 1, 2, 3, 4, 5].map(i => <div key={i} className="cat-skel" />)}
         </div>
       )}
 
-      {!loading && !error && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
-          {categories.map(cat => (
-            <div key={cat.id} style={{ background: theme.card, border: `1.5px solid ${theme.borderColor}`, borderRadius: 8, padding: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{cat.name}</div>
-              <div style={{ color: theme.textMuted, fontSize: 13, marginBottom: 12 }}>{cat.description || ''}</div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => openLibrary(cat.name)} style={{ background: theme.blue, color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 6, cursor: 'pointer' }}>Browse</button>
-              </div>
-            </div>
+      {error && <div className="cat-err">Error loading categories: {error}</div>}
+
+      {!loading && !error && categories.length === 0 && (
+        <div className="cat-empty">No categories have been set up yet.</div>
+      )}
+
+      {!loading && !error && categories.length > 0 && (
+        <div className="cat-grid">
+          {categories.map((cat, i) => (
+            <button
+              key={cat.id}
+              className="cat-card"
+              onClick={() => openLibrary(cat.name)}
+              aria-label={`Browse ${cat.name}`}
+            >
+              <span className={`cat-badge t${i % 4}`} aria-hidden="true">
+                {(cat.name || '?').trim().charAt(0).toUpperCase()}
+              </span>
+              <span className="cat-name">{cat.name}</span>
+              {cat.description && <span className="cat-desc">{cat.description}</span>}
+              <span className="cat-go">
+                Browse
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </button>
           ))}
         </div>
       )}

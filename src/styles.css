@@ -844,3 +844,53 @@ body.dark-mode .lab-val.bad{color:#F2A29E}
   .lab-trend{padding:9px 10px;font-size:12px}
   .lab-chart{padding:16px 12px}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Categories — "Vital" design (src/pages/CategoriesPage.tsx)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.cat-root{max-width:1200px;margin:0 auto}
+.cat-head{margin-bottom:28px}
+.cat-head h2{margin:0 0 6px;font-size:clamp(26px,3.4vw,34px);font-weight:800;letter-spacing:-.035em;line-height:1.1;color:var(--text-primary)}
+.cat-head p{margin:0;font-size:14.5px;color:var(--text-secondary);max-width:60ch;line-height:1.55}
+.cat-count{display:inline-block;margin-top:14px;font-size:12.5px;font-weight:700;color:var(--text-secondary);
+  background:var(--hd-fill);padding:5px 13px;border-radius:999px}
+
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.cat-card{display:flex;flex-direction:column;text-align:left;font:inherit;color:var(--text-primary);cursor:pointer;min-width:0;
+  background:var(--card);border:1px solid var(--hd-fill-2);border-radius:22px;padding:22px;
+  box-shadow:0 1px 2px rgba(16,26,22,.05);transition:transform .2s,box-shadow .2s,border-color .2s}
+.cat-card:hover{transform:translateY(-3px);box-shadow:0 18px 36px -18px rgba(16,26,22,.3);border-color:rgba(21,160,107,.45)}
+.cat-card:focus-visible{outline:3px solid rgba(21,160,107,.4);outline-offset:2px}
+.cat-badge{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:19px;font-weight:800;
+  letter-spacing:-.02em;margin-bottom:16px;flex-shrink:0}
+.cat-badge.t0{background:rgba(21,160,107,.13);color:#0F8A5C}
+.cat-badge.t1{background:rgba(224,149,42,.15);color:#A8680F}
+.cat-badge.t2{background:rgba(45,150,190,.14);color:#1F7399}
+.cat-badge.t3{background:rgba(124,92,214,.14);color:#6347BF}
+body.dark-mode .cat-badge.t0{color:#5DD6A0}
+body.dark-mode .cat-badge.t1{color:#F0B35E}
+body.dark-mode .cat-badge.t2{color:#7CC8E6}
+body.dark-mode .cat-badge.t3{color:#B7A3F2}
+.cat-name{font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1.25;margin-bottom:8px;overflow-wrap:break-word}
+.cat-desc{font-size:13.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:18px;flex:1;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow-wrap:break-word}
+.cat-go{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:800;color:#12332A;margin-top:auto}
+body.dark-mode .cat-go{color:#B8E62E}
+.cat-go svg{transition:transform .2s}
+.cat-card:hover .cat-go svg{transform:translateX(4px)}
+
+.cat-skel{height:196px;border-radius:22px;background:linear-gradient(90deg,var(--hd-fill) 25%,var(--hd-fill-2) 37%,var(--hd-fill) 63%);
+  background-size:400% 100%;animation:cat-shimmer 1.4s ease infinite}
+@keyframes cat-shimmer{0%{background-position:100% 50%}100%{background-position:0 50%}}
+.cat-empty{background:var(--card);border:1px solid var(--hd-fill-2);border-radius:20px;padding:46px 24px;text-align:center;color:var(--text-secondary)}
+.cat-err{background:rgba(217,84,79,.09);border:1px solid rgba(217,84,79,.38);border-radius:16px;padding:14px 18px;color:#C13B36;font-size:14px}
+body.dark-mode .cat-err{color:#F2A29E}
+
+@media(max-width:560px){
+  .cat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .cat-card{padding:16px;border-radius:20px}
+  .cat-badge{width:40px;height:40px;font-size:17px;margin-bottom:12px}
+  .cat-name{font-size:15px}
+  .cat-desc{font-size:12.5px;-webkit-line-clamp:2}
+}
+@media(max-width:340px){ .cat-grid{grid-template-columns:minmax(0,1fr)} }
