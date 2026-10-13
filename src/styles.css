@@ -1024,3 +1024,22 @@ body.dark-mode .lib-bm.on{background:#B8E62E;color:#0C1512}
 }
 
 .lib-main{display:flex;flex-direction:column;flex:1;min-width:0}
+
+/* Library fixes: the app has a global `input:not([type="checkbox"])` rule that is MORE specific
+   than a single class and was silently overriding .lib-input's padding (icon sat on the text).
+   Two classes beat it. */
+.lib-search .lib-input{padding:13px 16px 13px 46px;border-radius:14px;font-size:14.5px;border:1.5px solid var(--border);background:var(--bg);width:100%}
+.lib-search .lib-input:focus{border-color:#15A06B;box-shadow:0 0 0 4px rgba(21,160,107,.15)}
+
+/* List view: the bookmark sits INSIDE the button column instead of floating over the card */
+.lib-actions-row{display:flex;gap:8px}
+.lib-actions-row .lib-btn{flex:1}
+.lib-bm.inline{position:static;top:auto;right:auto;width:42px;height:42px;border-radius:999px;flex-shrink:0;
+  background:transparent;border:1.5px solid var(--border);box-shadow:none;color:var(--text-secondary);backdrop-filter:none}
+.lib-bm.inline:hover{border-color:#15A06B;transform:none}
+.lib-bm.inline.on{background:#12332A;color:#B8E62E;border-color:#12332A}
+body.dark-mode .lib-bm.inline{background:transparent;color:#9AAAA2}
+body.dark-mode .lib-bm.inline.on{background:#B8E62E;color:#0C1512;border-color:#B8E62E}
+@media(max-width:700px){
+  .lib-card.row .lib-actions-row{display:contents}
+}

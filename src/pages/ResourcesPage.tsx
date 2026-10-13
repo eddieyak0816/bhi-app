@@ -340,17 +340,32 @@ export default function Resources() {
                 )
                 const shownTags = orderedTags.slice(0, MAX_TAGS)
                 const hiddenCount = orderedTags.length - shownTags.length
+                const isList = viewMode === 'list'
+                const bookmarkBtn = (
+                  <button
+                    className={`lib-bm${isList ? ' inline' : ''}${isBookmarked ? ' on' : ''}`}
+                    onClick={() => toggleBookmark(resource.id)}
+                    aria-pressed={isBookmarked}
+                    aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this resource'}
+                    title={isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                  >
+                    {starIcon(isBookmarked)}
+                  </button>
+                )
+                const openLink = resource.link_url ? (
+                  <a
+                    className="lib-btn primary"
+                    href={resource.link_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => recordView(resource)}
+                  >
+                    Open →
+                  </a>
+                ) : null
                 return (
-                  <article key={resource.id} className={`lib-card${viewMode === 'list' ? ' row' : ''}`}>
-                    <button
-                      className={`lib-bm${isBookmarked ? ' on' : ''}`}
-                      onClick={() => toggleBookmark(resource.id)}
-                      aria-pressed={isBookmarked}
-                      aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this resource'}
-                      title={isBookmarked ? 'Bookmarked' : 'Bookmark'}
-                    >
-                      {starIcon(isBookmarked)}
-                    </button>
+                  <article key={resource.id} className={`lib-card${isList ? ' row' : ''}`}>
+                    {!isList && bookmarkBtn}
 
                     {resource.thumbnail_url && (
                       <img className="lib-thumb" src={resource.thumbnail_url} alt="" loading="lazy" />
@@ -377,17 +392,9 @@ export default function Resources() {
                       </div>
 
                       <div className="lib-actions">
-                        {resource.link_url && (
-                          <a
-                            className="lib-btn primary"
-                            href={resource.link_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => recordView(resource)}
-                          >
-                            Open →
-                          </a>
-                        )}
+                        {isList ? (
+                          <div className="lib-actions-row">{bookmarkBtn}{openLink}</div>
+                        ) : openLink}
                         <button
                           className="lib-btn ghost"
                           onClick={() => { setSelectedResource(resource); recordView(resource) }}
