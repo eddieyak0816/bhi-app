@@ -435,88 +435,192 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
       .map(r => ({ date: r.date, value: r.value, unit: r.unit }))
   }
 
+  // Shared look for the Add-Result form inputs.
+  const inputBase: React.CSSProperties = {
+    width: '100%',
+    padding: '12px 14px',
+    border: `1.5px solid ${theme.borderColor}`,
+    borderRadius: 12,
+    fontSize: 14,
+    background: theme.bg,
+    color: theme.text,
+    boxSizing: 'border-box',
+  }
+
+  // One marker section (NHLS Score / Additional / Hormone). Same data sources and the same
+  // helpers as before — getResultsForMarker, getEffectiveRange, buildChartData — so a tile
+  // shows exactly the value, range and status it always did.
+  const renderMarkerSection = (title: string, subtitle: string, markers: string[]) => {
+    if (markers.length === 0) return null
+    return (
+      <section className="lab-sec">
+        <div className="lab-sec-h">
+          <h3>{title}</h3>
+          {subtitle && <span>{subtitle}</span>}
+        </div>
+
+        <div className="lab-grid">
+          {markers.map(marker => {
+            const history = getResultsForMarker(marker)
+            const latest = history[0]
+            const previous = history[1]
+            const range = latest ? getEffectiveRange(marker, latest.minNormal, latest.maxNormal) : null
+            const inRange = latest && range ? (latest.value >= range.min && latest.value <= range.max) : null
+            const isChartOpen = chartOpenMarker === marker
+            const markerDef = labMarkers.find(m => m.name === marker)
+
+            // Where the value sits against its range. Skipped when the range is open-ended
+            // (stored max of 9999 / 99999 means "no upper bound") — a bar would mean nothing.
+            let scale: { bandLeft: number; bandWidth: number; pin: number } | null = null
+            if (latest && range && range.max > range.min && range.max < 9000) {
+              const lo = Math.min(range.min, latest.value)
+              const hi = Math.max(range.max, latest.value)
+              const pad = (hi - lo) * 0.25 || 1
+              const start = lo - pad
+              const span = hi + pad - start
+              scale = {
+                bandLeft: ((range.min - start) / span) * 100,
+                bandWidth: ((range.max - range.min) / span) * 100,
+                pin: ((latest.value - start) / span) * 100,
+              }
+            }
+            const rangeText = range
+              ? (range.max >= 9000 ? `Range: ${range.min} and above` : `Range: ${range.min} – ${range.max}${latest?.unit ? ' ' + latest.unit : ''}`)
+              : ''
+            const delta = latest && previous ? Math.round((latest.value - previous.value) * 100) / 100 : null
+
+            return (
+              <div key={marker} className={`lab-tile${selectedMarker === marker ? ' sel' : ''}`}>
+                <button
+                  className="lab-tile-btn"
+                  onClick={() => setSelectedMarker(selectedMarker === marker ? null : marker)}
+                >
+                  <div className="lab-tile-top">
+                    <span className="lab-tile-n">{marker}</span>
+                    {inRange !== null && (
+                      <span className={`lab-pill ${inRange ? 'ok' : 'bad'}`}>{inRange ? 'In range' : 'Out of range'}</span>
+                    )}
+                  </div>
+
+                  {latest && (
+                    <>
+                      <div className={`lab-val${inRange === false ? ' bad' : ''}`}>
+                        {latest.value}<small>{latest.unit}</small>
+                      </div>
+
+                      {scale && (
+                        <div className="lab-scale">
+                          <div className="lab-track">
+                            <div className="lab-band" style={{ left: `${scale.bandLeft}%`, width: `${scale.bandWidth}%` }} />
+                            <div className={`lab-pin ${inRange ? 'ok' : 'bad'}`} style={{ left: `${scale.pin}%` }} />
+                          </div>
+                        </div>
+                      )}
+                      {rangeText && <div className="lab-rng">{rangeText}</div>}
+
+                      <div className="lab-foot">
+                        <span>{latest.date}</span>
+                        {delta !== null && (
+                          <span>{delta > 0 ? '↑' : delta < 0 ? '↓' : '—'} {Math.abs(delta)} since last</span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {markerDef?.cpt_code && <div className="lab-cpt">CPT: {markerDef.cpt_code}</div>}
+                </button>
+
+                {history.length > 1 && (
+                  <button
+                    className={`lab-trend${isChartOpen ? ' on' : ''}`}
+                    onClick={() => setChartOpenMarker(isChartOpen ? null : marker)}
+                  >
+                    {isChartOpen ? '▲ Hide Trend' : '▼ Show Trend'}
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Inline trend chart */}
+        {chartOpenMarker && markers.includes(chartOpenMarker) && (() => {
+          const chartData = buildChartData(chartOpenMarker)
+          const latest = getResultsForMarker(chartOpenMarker)[0]
+          const markerObj = labMarkers.find(m => m.name === chartOpenMarker)
+          const optimal = markerObj ? optimalRanges[markerObj.id] : null
+          const unit = latest?.unit || ''
+          const values = chartData.map(d => d.value)
+          const dataMin = Math.min(...values)
+          const dataMax = Math.max(...values)
+          const yMin = optimal ? Math.min(dataMin, optimal.min) : dataMin
+          const yMax = optimal ? Math.max(dataMax, optimal.max) : dataMax
+          const pad = (yMax - yMin) * 0.15 || 1
+          return (
+            <div className="lab-chart">
+              <div className="lab-chart-h">
+                <b>{chartOpenMarker} — Trend</b>
+                {optimal && (
+                  <span>
+                    Optimal range: <span style={{ color: '#10B981', fontWeight: 700 }}>{optimal.min} – {optimal.max} {unit}</span>
+                  </span>
+                )}
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <ComposedChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} />
+                  <YAxis domain={[yMin - pad, yMax + pad]} tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} tickFormatter={(v: number) => String(Math.round(v * 10) / 10)} width={40} />
+                  <Tooltip contentStyle={{ background: theme.card as string, border: `1px solid ${theme.borderColor}`, borderRadius: 12, fontSize: 12 }} labelStyle={{ color: theme.textMuted as string }} formatter={(val: number) => [`${val} ${unit}`, chartOpenMarker]} />
+                  {optimal && <ReferenceArea y1={optimal.min} y2={optimal.max} fill="#10B981" fillOpacity={0.08} stroke="#10B981" strokeOpacity={0.3} label="" />}
+                  {optimal && <ReferenceLine y={optimal.min} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
+                  {optimal && <ReferenceLine y={optimal.max} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
+                  <Line type="monotone" dataKey="value" stroke={theme.blue as string} strokeWidth={2.5} dot={{ r: 4, fill: theme.blue as string, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          )
+        })()}
+      </section>
+    )
+  }
+
   return (
-    <div>
+    <div className="lab-root">
       <StaleLabBanner latestLabDate={latestLabDate} />
 
       {sexLoaded && !userSex && (
-        <div style={{
-          background: 'rgba(217,119,6,0.08)',
-          border: '1px solid #D97706',
-          borderRadius: 6,
-          padding: '10px 16px',
-          marginBottom: 16,
-          fontSize: 13,
-          color: '#92400e',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-        }}>
-          <span style={{ fontWeight: 600 }}>&#9888; Sex not set:</span>
+        <div className="lab-warn">
+          <strong>&#9888; Sex not set:</strong>
           {' '}Set your sex in{' '}
-          <button
-            onClick={() => onNavigate?.('profile')}
-            style={{ background: 'none', border: 'none', color: '#D97706', fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 13, textDecoration: 'underline' }}
-          >
-            Profile
-          </button>
+          <button className="lab-linkbtn" onClick={() => onNavigate?.('profile')}>Profile</button>
           {' '}to see sex-specific lab ranges.
         </div>
       )}
 
+      <div className="lab-head">
+        <h2>Lab Results</h2>
+        <p>Track your health markers and see personalized resources</p>
+      </div>
+
       {/* Privacy Disclaimer */}
-      <div
-        style={{
-          background: 'rgba(59, 130, 246, 0.1)',
-          border: `1.5px solid #93C5FD`,
-          borderRadius: 8,
-          padding: 16,
-          marginBottom: 24,
-          color: theme.text,
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>🔒 Your Data Privacy</div>
-        <div style={{ fontSize: 13, color: theme.textMuted }}>
+      <div className="lab-note">
+        <span aria-hidden="true">🔒</span>
+        <div>
+          <b>Your Data Privacy</b>
           We only analyze data you manually enter here. We have no access to your actual medical records or health data.
         </div>
       </div>
 
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Lab Results</h2>
-        <p style={{ color: theme.textMuted, margin: 0 }}>Track your health markers and see personalized resources</p>
-      </div>
-
       {/* Add New Result Button + Upload PDF Button */}
-      <div style={{ marginBottom: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          style={{
-            background: theme.blue,
-            color: '#fff',
-            border: 'none',
-            borderRadius: 6,
-            padding: '12px 16px',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
+      <div className="lab-actions">
+        <button className="lab-btn primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? '✕ Cancel' : '+ Log New Result'}
         </button>
 
         <button
+          className="lab-btn"
           onClick={() => pdfInputRef.current?.click()}
           disabled={pdfUploading}
-          style={{
-            background: pdfUploading ? theme.bgSecondary : 'transparent',
-            color: theme.blue,
-            border: `1.5px solid ${theme.blue}`,
-            borderRadius: 6,
-            padding: '12px 16px',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: pdfUploading ? 'not-allowed' : 'pointer',
-          }}
         >
           {pdfUploading ? 'Extracting...' : 'Upload Lab PDF'}
         </button>
@@ -532,19 +636,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
           }}
         />
 
-        <button
-          onClick={() => setShowVo2Calc(true)}
-          style={{
-            background: 'transparent',
-            color: theme.blue,
-            border: `1.5px solid ${theme.blue}`,
-            borderRadius: 6,
-            padding: '12px 16px',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
+        <button className="lab-btn" onClick={() => setShowVo2Calc(true)}>
           VO2 Max Calculator
         </button>
       </div>
@@ -572,43 +664,17 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
 
       {/* PDF duplicate warning */}
       {pdfDuplicateWarning && (
-        <div style={{
-          background: 'rgba(245,158,11,0.08)',
-          border: '1.5px solid #F59E0B',
-          borderRadius: 8,
-          padding: '12px 16px',
-          marginBottom: 12,
-          color: '#92400E',
-          fontSize: 14,
-        }}>
+        <div className="lab-warn">
           <strong>Possible duplicate:</strong> {pdfDuplicateWarning} You can still save the results below if this is intentional.
         </div>
       )}
 
       {/* PDF extraction error */}
-      {pdfError && (
-        <div style={{
-          background: 'rgba(239,68,68,0.08)',
-          border: '1.5px solid #EF4444',
-          borderRadius: 8,
-          padding: '12px 16px',
-          marginBottom: 20,
-          color: '#EF4444',
-          fontSize: 14,
-        }}>
-          {pdfError}
-        </div>
-      )}
+      {pdfError && <div className="lab-err">{pdfError}</div>}
 
       {/* PDF extraction review table */}
       {extractedRows && (
-        <div style={{
-          background: theme.card,
-          border: `1.5px solid ${theme.borderColor}`,
-          borderRadius: 8,
-          padding: 20,
-          marginBottom: 24,
-        }}>
+        <div className="lab-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Review Extracted Labs</h3>
@@ -758,8 +824,8 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                     background: 'transparent',
                     color: theme.textMuted,
                     border: `1.5px solid ${theme.borderColor}`,
-                    borderRadius: 6,
-                    padding: '10px 20px',
+                    borderRadius: 999,
+                    padding: '11px 22px',
                     fontSize: 14,
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -774,8 +840,8 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                     background: theme.blue,
                     color: '#fff',
                     border: 'none',
-                    borderRadius: 6,
-                    padding: '10px 20px',
+                    borderRadius: 999,
+                    padding: '11px 22px',
                     fontSize: 14,
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -791,16 +857,8 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
 
       {/* Add Result Form */}
       {showForm && (
-        <div
-          style={{
-            background: theme.card,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 8,
-            padding: 20,
-            marginBottom: 24,
-          }}
-        >
-          <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Add Lab Result</h3>
+        <div className="lab-card">
+          <h3 className="lab-card-h">Add Lab Result</h3>
 
           {loadingMarkers ? (
             <div style={{ color: theme.textMuted }}>Loading markers...</div>
@@ -812,122 +870,73 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 8, color: theme.textMuted, textTransform: 'uppercase' }}>
                   Select Marker or Enter Custom
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginBottom: 16 }}>
+                <div className="lab-chips">
                   {labMarkers.filter(m => m.is_active !== false && (!m.applicable_sex || m.applicable_sex === 'both' || !userSex || m.applicable_sex === userSex)).map(marker => (
                     <button
                       key={marker.id}
+                      className={`lab-chip${formData.markerName === marker.name ? ' sel' : ''}`}
                       onClick={() => handleSelectCommonMarker(marker)}
-                      style={{
-                        background: formData.markerName === marker.name ? theme.blue : theme.bg,
-                        color: formData.markerName === marker.name ? '#fff' : theme.text,
-                        border: `1.5px solid ${formData.markerName === marker.name ? theme.blue : theme.borderColor}`,
-                        borderRadius: 6,
-                        padding: '8px 12px',
-                        fontSize: 12,
-                        cursor: 'pointer',
-                        fontWeight: 500,
-                      }}
                     >
                       {marker.name}
                     </button>
                   ))}
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 14, marginBottom: 16 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Marker Name</label>
+                  <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 7, color: theme.textMuted }}>Marker Name</label>
                   <input
                     type="text"
                     placeholder="e.g., Blood Glucose"
                     value={formData.markerName}
                     onChange={e => setFormData({ ...formData, markerName: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: `1.5px solid ${theme.borderColor}`,
-                      borderRadius: 6,
-                      fontSize: 14,
-                      background: theme.bg,
-                      color: theme.text,
-                    }}
+                    style={inputBase}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Unit</label>
+                  <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 7, color: theme.textMuted }}>Unit</label>
                   <input
                     type="text"
                     placeholder="e.g., mg/dL"
                     value={formData.unit}
                     onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: `1.5px solid ${theme.borderColor}`,
-                      borderRadius: 6,
-                      fontSize: 14,
-                      background: theme.bg,
-                      color: theme.text,
-                    }}
+                    style={inputBase}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 14, marginBottom: 8 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Your Value</label>
+                  <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 7, color: theme.textMuted }}>Your Value</label>
                   <input
                     type="number"
                     step="0.1"
                     placeholder="Enter value"
                     value={formData.value}
                     onChange={e => setFormData({ ...formData, value: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: `1.5px solid ${theme.borderColor}`,
-                      borderRadius: 6,
-                      fontSize: 14,
-                      background: theme.bg,
-                      color: theme.text,
-                    }}
+                    style={inputBase}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Min Normal</label>
+                  <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 7, color: theme.textMuted }}>Min Normal</label>
                   <input
                     type="number"
                     step="0.1"
                     placeholder="Min"
                     value={formData.minNormal}
                     onChange={e => setFormData({ ...formData, minNormal: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: `1.5px solid ${theme.borderColor}`,
-                      borderRadius: 6,
-                      fontSize: 14,
-                      background: theme.bg,
-                      color: theme.text,
-                    }}
+                    style={inputBase}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: theme.textMuted }}>Max Normal</label>
+                  <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 7, color: theme.textMuted }}>Max Normal</label>
                   <input
                     type="number"
                     step="0.1"
                     placeholder="Max"
                     value={formData.maxNormal}
                     onChange={e => setFormData({ ...formData, maxNormal: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: `1.5px solid ${theme.borderColor}`,
-                      borderRadius: 6,
-                      fontSize: 14,
-                      background: theme.bg,
-                      color: theme.text,
-                    }}
+                    style={inputBase}
                   />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>
@@ -939,7 +948,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
               <div style={{ marginBottom: 16 }}>
                 <button
                   onClick={() => setShowVerification(v => !v)}
-                  style={{ background: 'transparent', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, padding: '8px 14px', fontSize: 13, cursor: 'pointer', color: showVerification ? theme.blue : theme.textMuted, fontWeight: 600 }}
+                  style={{ background: 'transparent', border: `1.5px solid ${theme.borderColor}`, borderRadius: 999, padding: '9px 16px', fontSize: 13, cursor: 'pointer', color: showVerification ? theme.blue : theme.textMuted, fontWeight: 700 }}
                 >
                   {showVerification ? '▾ Provider Verified' : '▸ Add Provider Verification (optional)'}
                 </button>
@@ -955,7 +964,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                           placeholder="e.g. Dr. Jane Smith"
                           value={verificationForm.verifierName}
                           onChange={e => setVerificationForm(v => ({ ...v, verifierName: e.target.value }))}
-                          style={{ width: '100%', padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '11px 13px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 12, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
                         />
                       </div>
                       <div>
@@ -964,7 +973,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                           placeholder="e.g. MD, RN, CSCS"
                           value={verificationForm.verifierCredential}
                           onChange={e => setVerificationForm(v => ({ ...v, verifierCredential: e.target.value }))}
-                          style={{ width: '100%', padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '11px 13px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 12, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
                         />
                       </div>
                       <div>
@@ -973,7 +982,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                           placeholder="10-digit NPI (optional)"
                           value={verificationForm.verifierNpi}
                           onChange={e => setVerificationForm(v => ({ ...v, verifierNpi: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
-                          style={{ width: '100%', padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '11px 13px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 12, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
                         />
                       </div>
                       <div>
@@ -982,7 +991,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                           type="date"
                           value={verificationForm.verifiedAt}
                           onChange={e => setVerificationForm(v => ({ ...v, verifiedAt: e.target.value }))}
-                          style={{ width: '100%', padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
+                          style={{ width: '100%', padding: '11px 13px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 12, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box' }}
                         />
                       </div>
                     </div>
@@ -992,7 +1001,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                         placeholder="Full name of verifying provider"
                         value={verificationForm.verifierSignature}
                         onChange={e => setVerificationForm(v => ({ ...v, verifierSignature: e.target.value }))}
-                        style={{ width: '100%', padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box', fontStyle: 'italic' }}
+                        style={{ width: '100%', padding: '11px 13px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 12, fontSize: 13, background: theme.bg, color: theme.text, boxSizing: 'border-box', fontStyle: 'italic' }}
                       />
                       <p style={{ margin: '4px 0 0', fontSize: 11, color: theme.textMuted }}>
                         By typing your full name you attest that the value above was measured and is accurate to the best of your knowledge.
@@ -1009,7 +1018,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                   <select
                     value={selectedLabSetId}
                     onChange={e => setSelectedLabSetId(e.target.value)}
-                    style={{ padding: '8px 10px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bg, color: theme.text, minWidth: 220 }}
+                    style={{ padding: '11px 13px', border: `1.5px solid ${theme.borderColor}`, borderRadius: 12, fontSize: 13, background: theme.bg, color: theme.text, minWidth: 220 }}
                   >
                     {labSets.map(s => (
                       <option key={s.id} value={s.id}>{s.label}{s.is_initial && s.label.toLowerCase() !== 'initial' ? ' (Initial)' : ''}</option>
@@ -1022,7 +1031,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   onClick={handleAddResult}
-                  style={{ background: theme.blue, color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                  style={{ background: theme.blue, color: '#fff', border: 'none', borderRadius: 999, padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
                 >
                   Save Result
                 </button>
@@ -1032,395 +1041,36 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
         </div>
       )}
 
-      {/* Results Overview — NHLS Score Markers */}
-      {nhlsScoreMarkers.length > 0 && (
-        <div
-          style={{
-            background: theme.card,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 8,
-            padding: 20,
-            marginBottom: 24,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 16 }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>NHLS Score Markers</h3>
-            <span style={{ fontSize: 12, color: theme.textMuted }}>Used to calculate your NHLS v2.3 score</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
-            {nhlsScoreMarkers.map(marker => {
-              const latest = getResultsForMarker(marker)[0]
-              const markerHistory = getResultsForMarker(marker)
-              const effectiveRange = latest ? getEffectiveRange(marker, latest.minNormal, latest.maxNormal) : null
-              const statusColor = latest && effectiveRange ? getStatusColor(latest.value, effectiveRange.min, effectiveRange.max) : theme.textMuted
-              const isChartOpen = chartOpenMarker === marker
-              const markerDef = labMarkers.find(m => m.name === marker)
-              return (
-                <div key={marker} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <button
-                    onClick={() => setSelectedMarker(selectedMarker === marker ? null : marker)}
-                    style={{
-                      background: selectedMarker === marker ? theme.bgSecondary : 'transparent',
-                      border: `1.5px solid ${selectedMarker === marker ? theme.blue : theme.borderColor}`,
-                      borderRadius: 6,
-                      padding: 12,
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      color: theme.text,
-                    }}
-                  >
-                    <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 6 }}>{marker}</div>
-                    {latest && (
-                      <div>
-                        <div style={{ fontSize: 16, fontWeight: 600, color: statusColor }}>
-                          {latest.value} {latest.unit}
-                        </div>
-                        <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>{latest.date}</div>
-                      </div>
-                    )}
-                    {markerDef?.cpt_code && (
-                      <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 6, opacity: 0.7 }}>CPT: {markerDef.cpt_code}</div>
-                    )}
-                  </button>
-                  {markerHistory.length > 1 && (
-                    <button
-                      onClick={() => setChartOpenMarker(isChartOpen ? null : marker)}
-                      style={{
-                        background: 'transparent',
-                        border: `1px solid ${isChartOpen ? theme.blue : theme.borderColor}`,
-                        borderRadius: 4,
-                        padding: '4px 8px',
-                        fontSize: 11,
-                        cursor: 'pointer',
-                        color: isChartOpen ? theme.blue : theme.textMuted,
-                        fontWeight: 600,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {isChartOpen ? '▲ Hide Trend' : '▼ Show Trend'}
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Inline trend chart */}
-          {chartOpenMarker && nhlsScoreMarkers.includes(chartOpenMarker) && (() => {
-            const chartData = buildChartData(chartOpenMarker)
-            const latest = getResultsForMarker(chartOpenMarker)[0]
-            const markerObj = labMarkers.find(m => m.name === chartOpenMarker)
-            const optimal = markerObj ? optimalRanges[markerObj.id] : null
-            const unit = latest?.unit || ''
-            const values = chartData.map(d => d.value)
-            const dataMin = Math.min(...values)
-            const dataMax = Math.max(...values)
-            const yMin = optimal ? Math.min(dataMin, optimal.min) : dataMin
-            const yMax = optimal ? Math.max(dataMax, optimal.max) : dataMax
-            const pad = (yMax - yMin) * 0.15 || 1
-            return (
-              <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${theme.borderColor}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{chartOpenMarker} — Trend</div>
-                  {optimal && (
-                    <div style={{ fontSize: 12, color: theme.textMuted }}>
-                      Optimal range: <span style={{ color: '#10B981', fontWeight: 600 }}>{optimal.min} – {optimal.max} {unit}</span>
-                    </div>
-                  )}
-                </div>
-                <ResponsiveContainer width="100%" height={220}>
-                  <ComposedChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} />
-                    <YAxis domain={[yMin - pad, yMax + pad]} tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} tickFormatter={(v: number) => String(Math.round(v * 10) / 10)} width={40} />
-                    <Tooltip contentStyle={{ background: theme.card as string, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 12 }} labelStyle={{ color: theme.textMuted as string }} formatter={(val: number) => [`${val} ${unit}`, chartOpenMarker]} />
-                    {optimal && <ReferenceArea y1={optimal.min} y2={optimal.max} fill="#10B981" fillOpacity={0.08} stroke="#10B981" strokeOpacity={0.3} label="" />}
-                    {optimal && <ReferenceLine y={optimal.min} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
-                    {optimal && <ReferenceLine y={optimal.max} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
-                    <Line type="monotone" dataKey="value" stroke={theme.blue as string} strokeWidth={2} dot={{ r: 4, fill: theme.blue as string, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={false} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            )
-          })()}
-        </div>
-      )}
-
-      {/* Results Overview — Additional Markers */}
-      {additionalMarkers.length > 0 && (
-        <div
-          style={{
-            background: theme.card,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 8,
-            padding: 20,
-            marginBottom: 24,
-          }}
-        >
-          <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Additional Markers</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
-            {additionalMarkers.map(marker => {
-              const latest = getResultsForMarker(marker)[0]
-              const markerHistory = getResultsForMarker(marker)
-              const effectiveRange = latest ? getEffectiveRange(marker, latest.minNormal, latest.maxNormal) : null
-              const statusColor = latest && effectiveRange ? getStatusColor(latest.value, effectiveRange.min, effectiveRange.max) : theme.textMuted
-              const isChartOpen = chartOpenMarker === marker
-              const markerDef = labMarkers.find(m => m.name === marker)
-              return (
-                <div key={marker} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <button
-                    onClick={() => setSelectedMarker(selectedMarker === marker ? null : marker)}
-                    style={{
-                      background: selectedMarker === marker ? theme.bgSecondary : 'transparent',
-                      border: `1.5px solid ${selectedMarker === marker ? theme.blue : theme.borderColor}`,
-                      borderRadius: 6,
-                      padding: 12,
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      color: theme.text,
-                    }}
-                  >
-                    <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 6 }}>{marker}</div>
-                    {latest && (
-                      <div>
-                        <div style={{ fontSize: 16, fontWeight: 600, color: statusColor }}>
-                          {latest.value} {latest.unit}
-                        </div>
-                        <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>{latest.date}</div>
-                      </div>
-                    )}
-                    {markerDef?.cpt_code && (
-                      <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 6, opacity: 0.7 }}>CPT: {markerDef.cpt_code}</div>
-                    )}
-                  </button>
-                  {markerHistory.length > 1 && (
-                    <button
-                      onClick={() => setChartOpenMarker(isChartOpen ? null : marker)}
-                      style={{
-                        background: 'transparent',
-                        border: `1px solid ${isChartOpen ? theme.blue : theme.borderColor}`,
-                        borderRadius: 4,
-                        padding: '4px 8px',
-                        fontSize: 11,
-                        cursor: 'pointer',
-                        color: isChartOpen ? theme.blue : theme.textMuted,
-                        fontWeight: 600,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {isChartOpen ? '▲ Hide Trend' : '▼ Show Trend'}
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Inline trend chart */}
-          {chartOpenMarker && additionalMarkers.includes(chartOpenMarker) && (() => {
-            const chartData = buildChartData(chartOpenMarker)
-            const latest = getResultsForMarker(chartOpenMarker)[0]
-            const markerObj = labMarkers.find(m => m.name === chartOpenMarker)
-            const optimal = markerObj ? optimalRanges[markerObj.id] : null
-            const unit = latest?.unit || ''
-            const values = chartData.map(d => d.value)
-            const dataMin = Math.min(...values)
-            const dataMax = Math.max(...values)
-            const yMin = optimal ? Math.min(dataMin, optimal.min) : dataMin
-            const yMax = optimal ? Math.max(dataMax, optimal.max) : dataMax
-            const pad = (yMax - yMin) * 0.15 || 1
-            return (
-              <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${theme.borderColor}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{chartOpenMarker} — Trend</div>
-                  {optimal && (
-                    <div style={{ fontSize: 12, color: theme.textMuted }}>
-                      Optimal range: <span style={{ color: '#10B981', fontWeight: 600 }}>{optimal.min} – {optimal.max} {unit}</span>
-                    </div>
-                  )}
-                </div>
-                <ResponsiveContainer width="100%" height={220}>
-                  <ComposedChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} />
-                    <YAxis domain={[yMin - pad, yMax + pad]} tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} tickFormatter={(v: number) => String(Math.round(v * 10) / 10)} width={40} />
-                    <Tooltip contentStyle={{ background: theme.card as string, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 12 }} labelStyle={{ color: theme.textMuted as string }} formatter={(val: number) => [`${val} ${unit}`, chartOpenMarker]} />
-                    {optimal && <ReferenceArea y1={optimal.min} y2={optimal.max} fill="#10B981" fillOpacity={0.08} stroke="#10B981" strokeOpacity={0.3} label="" />}
-                    {optimal && <ReferenceLine y={optimal.min} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
-                    {optimal && <ReferenceLine y={optimal.max} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
-                    <Line type="monotone" dataKey="value" stroke={theme.blue as string} strokeWidth={2} dot={{ r: 4, fill: theme.blue as string, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={false} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            )
-          })()}
-        </div>
-      )}
-
-      {/* Results Overview — Hormone Panel */}
-      {hormoneMarkers.length > 0 && (
-        <div
-          style={{
-            background: theme.card,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 8,
-            padding: 20,
-            marginBottom: 24,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 16 }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Hormone Panel</h3>
-            <span style={{ fontSize: 12, color: theme.textMuted }}>Personal tracking only — not included in NHLS score</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
-            {hormoneMarkers.map(marker => {
-              const latest = getResultsForMarker(marker)[0]
-              const markerHistory = getResultsForMarker(marker)
-              const effectiveRange = latest ? getEffectiveRange(marker, latest.minNormal, latest.maxNormal) : null
-              const statusColor = latest && effectiveRange ? getStatusColor(latest.value, effectiveRange.min, effectiveRange.max) : theme.textMuted
-              const isChartOpen = chartOpenMarker === marker
-              const markerDef = labMarkers.find(m => m.name === marker)
-              return (
-                <div key={marker} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <button
-                    onClick={() => setSelectedMarker(selectedMarker === marker ? null : marker)}
-                    style={{
-                      background: selectedMarker === marker ? theme.bgSecondary : 'transparent',
-                      border: `1.5px solid ${selectedMarker === marker ? theme.blue : theme.borderColor}`,
-                      borderRadius: 6,
-                      padding: 12,
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      color: theme.text,
-                    }}
-                  >
-                    <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 6 }}>{marker}</div>
-                    {latest && (
-                      <div>
-                        <div style={{ fontSize: 16, fontWeight: 600, color: statusColor }}>
-                          {latest.value} {latest.unit}
-                        </div>
-                        <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>{latest.date}</div>
-                      </div>
-                    )}
-                    {markerDef?.cpt_code && (
-                      <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 6, opacity: 0.7 }}>CPT: {markerDef.cpt_code}</div>
-                    )}
-                  </button>
-                  {markerHistory.length > 1 && (
-                    <button
-                      onClick={() => setChartOpenMarker(isChartOpen ? null : marker)}
-                      style={{
-                        background: 'transparent',
-                        border: `1px solid ${isChartOpen ? theme.blue : theme.borderColor}`,
-                        borderRadius: 4,
-                        padding: '4px 8px',
-                        fontSize: 11,
-                        cursor: 'pointer',
-                        color: isChartOpen ? theme.blue : theme.textMuted,
-                        fontWeight: 600,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {isChartOpen ? '▲ Hide Trend' : '▼ Show Trend'}
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Inline trend chart */}
-          {chartOpenMarker && hormoneMarkers.includes(chartOpenMarker) && (() => {
-            const chartData = buildChartData(chartOpenMarker)
-            const latest = getResultsForMarker(chartOpenMarker)[0]
-            const markerObj = labMarkers.find(m => m.name === chartOpenMarker)
-            const optimal = markerObj ? optimalRanges[markerObj.id] : null
-            const unit = latest?.unit || ''
-            const values = chartData.map(d => d.value)
-            const dataMin = Math.min(...values)
-            const dataMax = Math.max(...values)
-            const yMin = optimal ? Math.min(dataMin, optimal.min) : dataMin
-            const yMax = optimal ? Math.max(dataMax, optimal.max) : dataMax
-            const pad = (yMax - yMin) * 0.15 || 1
-            return (
-              <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${theme.borderColor}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{chartOpenMarker} — Trend</div>
-                  {optimal && (
-                    <div style={{ fontSize: 12, color: theme.textMuted }}>
-                      Optimal range: <span style={{ color: '#10B981', fontWeight: 600 }}>{optimal.min} – {optimal.max} {unit}</span>
-                    </div>
-                  )}
-                </div>
-                <ResponsiveContainer width="100%" height={220}>
-                  <ComposedChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} />
-                    <YAxis domain={[yMin - pad, yMax + pad]} tick={{ fontSize: 11, fill: theme.textMuted as string }} tickLine={false} tickFormatter={(v: number) => String(Math.round(v * 10) / 10)} width={40} />
-                    <Tooltip contentStyle={{ background: theme.card as string, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 12 }} labelStyle={{ color: theme.textMuted as string }} formatter={(val: number) => [`${val} ${unit}`, chartOpenMarker]} />
-                    {optimal && <ReferenceArea y1={optimal.min} y2={optimal.max} fill="#10B981" fillOpacity={0.08} stroke="#10B981" strokeOpacity={0.3} label="" />}
-                    {optimal && <ReferenceLine y={optimal.min} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
-                    {optimal && <ReferenceLine y={optimal.max} stroke="#10B981" strokeDasharray="4 3" strokeOpacity={0.5} />}
-                    <Line type="monotone" dataKey="value" stroke={theme.blue as string} strokeWidth={2} dot={{ r: 4, fill: theme.blue as string, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={false} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            )
-          })()}
-        </div>
-      )}
+      {/* Results Overview — NHLS Score Markers / Additional Markers / Hormone Panel */}
+      {renderMarkerSection('NHLS Score Markers', 'Used to calculate your NHLS v2.3 score', nhlsScoreMarkers)}
+      {renderMarkerSection('Additional Markers', '', additionalMarkers)}
+      {renderMarkerSection('Hormone Panel', 'Personal tracking only — not included in NHLS score', hormoneMarkers)}
 
       {/* Detailed Results Table */}
       {filteredResults.length > 0 ? (
         <div>
           {selectedMarker && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>History: {selectedMarker}</h3>
-              <button
-                onClick={() => setSelectedMarker(null)}
-                style={{
-                  background: 'none',
-                  border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 6,
-                  padding: '3px 10px',
-                  fontSize: 12,
-                  color: theme.textMuted,
-                  cursor: 'pointer',
-                }}
-              >
-                Show all
-              </button>
+            <div className="lab-hist-h">
+              <h3>History: {selectedMarker}</h3>
+              <button className="lab-trend" onClick={() => setSelectedMarker(null)}>Show all</button>
             </div>
           )}
-          <div
-            style={{
-              border: `1.5px solid ${theme.borderColor}`,
-              borderRadius: 8,
-              overflow: 'hidden',
-            }}
-          >
-            <table
-              style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                background: theme.card,
-              }}
-            >
+          <div className="lab-tablewrap">
+            <table className="lab-table">
               <thead>
-                <tr style={{ background: theme.bgSecondary, borderBottom: `1.5px solid ${theme.borderColor}` }}>
-                  <th style={{ padding: 12, textAlign: 'left', fontSize: 13, fontWeight: 600, color: theme.text }}>Date</th>
-                  <th style={{ padding: 12, textAlign: 'left', fontSize: 13, fontWeight: 600, color: theme.text }}>Marker</th>
-                  <th style={{ padding: 12, textAlign: 'right', fontSize: 13, fontWeight: 600, color: theme.text }}>Value</th>
-                  <th style={{ padding: 12, textAlign: 'left', fontSize: 13, fontWeight: 600, color: theme.text }}>Range</th>
-                  <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Status</th>
-                  <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>NHLS Score</th>
-                  <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Verified</th>
-                  <th style={{ padding: 12, textAlign: 'center', fontSize: 13, fontWeight: 600, color: theme.text }}>Action</th>
+                <tr>
+                  <th>Date</th>
+                  <th>Marker</th>
+                  <th className="r">Value</th>
+                  <th>Range</th>
+                  <th className="c">Status</th>
+                  <th className="c">NHLS Score</th>
+                  <th className="c">Verified</th>
+                  <th className="c">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredResults.map((result, i) => {
+                {filteredResults.map(result => {
                   const effRange = getEffectiveRange(result.markerName, result.minNormal, result.maxNormal)
                   const status = getStatusColor(result.value, effRange.min, effRange.max)
                   const isNormal = result.value >= effRange.min && result.value <= effRange.max
@@ -1439,40 +1089,25 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                     isNotScored                ? theme.textMuted :
                                                  '#EF4444'
                   return (
-                    <tr key={result.id} style={{ borderTop: i > 0 ? `1.5px solid ${theme.borderColor}` : 'none' }}>
-                      <td style={{ padding: 12, fontSize: 13 }}>{result.date}</td>
-                      <td style={{ padding: 12, fontSize: 13, fontWeight: 600 }}>{result.markerName}</td>
-                      <td style={{ padding: 12, textAlign: 'right', fontSize: 13, fontWeight: 600, color: status }}>
+                    <tr key={result.id}>
+                      <td>{result.date}</td>
+                      <td style={{ fontWeight: 700 }}>{result.markerName}</td>
+                      <td className="r" style={{ fontWeight: 700, color: status }}>
                         {result.value} {result.unit}
                       </td>
-                      <td style={{ padding: 12, fontSize: 13, color: theme.textMuted }}>
+                      <td style={{ color: theme.textMuted }}>
                         {result.minNormal} - {result.maxNormal}
                       </td>
-                      <td style={{ padding: 12, textAlign: 'center', fontSize: 13 }}>
-                        <span
-                          style={{
-                            background: isNormal ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                            color: isNormal ? '#10B981' : '#EF4444',
-                            padding: '4px 8px',
-                            borderRadius: 4,
-                            fontSize: 12,
-                            fontWeight: 600,
-                          }}
-                        >
+                      <td className="c">
+                        <span className={`lab-pill ${isNormal ? 'ok' : 'bad'}`}>
                           {isNormal ? 'Normal' : 'Out of Range'}
                         </span>
                       </td>
-                      <td style={{ padding: 12, textAlign: 'center', fontSize: 13 }}>
+                      <td className="c">
                         {markerScore ? (
                           <span
-                            style={{
-                              background: scoreBg,
-                              color: scoreColor,
-                              padding: '4px 10px',
-                              borderRadius: 4,
-                              fontSize: 12,
-                              fontWeight: 700,
-                            }}
+                            className="lab-pill"
+                            style={{ background: scoreBg, color: scoreColor }}
                             title={isNotScored ? 'No scoring rules configured for this marker' : (markerScore.tag || 'No matching rule')}
                           >
                             {isNotScored ? '— Not scored' : `${markerScore.score} — ${markerScore.label}`}
@@ -1481,34 +1116,23 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
                           <span style={{ color: theme.textMuted, fontSize: 12 }}>—</span>
                         )}
                       </td>
-                      <td style={{ padding: 12, textAlign: 'center', fontSize: 12 }}>
+                      <td className="c" style={{ fontSize: 12 }}>
                         {result.verificationType === 'provider' && result.verification ? (
                           <span
+                            className="lab-pill"
                             title={`Verified by ${result.verification.verifierName}${result.verification.verifierCredential ? ', ' + result.verification.verifierCredential : ''}${result.verification.verifierNpi ? ' (NPI: ' + result.verification.verifierNpi + ')' : ''} on ${result.verification.verifiedAt}`}
-                            style={{ background: 'rgba(16,185,129,0.12)', color: '#059669', borderRadius: 4, padding: '3px 8px', fontWeight: 700, cursor: 'default' }}
+                            style={{ background: 'rgba(16,185,129,0.12)', color: '#059669', cursor: 'default' }}
                           >
                             Provider
                           </span>
                         ) : result.verificationType === 'pdf' ? (
-                          <span style={{ background: 'rgba(59,130,246,0.1)', color: '#2563eb', borderRadius: 4, padding: '3px 8px', fontWeight: 700 }}>PDF</span>
+                          <span className="lab-pill" style={{ background: 'rgba(59,130,246,0.1)', color: '#2563eb' }}>PDF</span>
                         ) : (
                           <span style={{ color: theme.textMuted }}>Self</span>
                         )}
                       </td>
-                      <td style={{ padding: 12, textAlign: 'center' }}>
-                        <button
-                          onClick={() => removeResult(result.id)}
-                          style={{
-                            background: 'transparent',
-                            color: '#EF4444',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: 16,
-                            padding: 0,
-                          }}
-                        >
-                          ✕
-                        </button>
+                      <td className="c">
+                        <button className="lab-x" onClick={() => removeResult(result.id)} aria-label="Delete result">✕</button>
                       </td>
                     </tr>
                   )
@@ -1518,16 +1142,7 @@ export default function Labs({ onNavigate }: { onNavigate?: (page: string) => vo
           </div>
         </div>
       ) : (
-        <div
-          style={{
-            background: theme.card,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 8,
-            padding: 48,
-            textAlign: 'center',
-            color: theme.textMuted,
-          }}
-        >
+        <div className="lab-empty">
           <p style={{ margin: 0 }}>No lab results logged yet. Click "Log New Result" to get started.</p>
         </div>
       )}
