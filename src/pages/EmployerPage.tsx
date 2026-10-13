@@ -79,14 +79,9 @@ function teamColor(index: number, darkMode: boolean): { bg: string; color: strin
 }
 
 function BhasBadge({ pct }: { pct: number | null }) {
-  if (pct === null) return <span style={{ color: '#9ca3af', fontSize: 13 }}>No data</span>
-  const color = pct >= 80 ? '#15803d' : pct >= 50 ? '#b45309' : '#b91c1c'
-  const bg    = pct >= 80 ? '#dcfce7'  : pct >= 50 ? '#fef3c7'  : '#fee2e2'
-  return (
-    <span style={{ background: bg, color, borderRadius: 6, padding: '2px 10px', fontWeight: 700, fontSize: 14 }}>
-      {pct}%
-    </span>
-  )
+  if (pct === null) return <span className="em-nodata">No data</span>
+  const tone = pct >= 80 ? 'hi' : pct >= 50 ? 'mid' : 'lo'
+  return <span className={`em-score ${tone}`}>{pct}%</span>
 }
 
 export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps) {
@@ -158,32 +153,20 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
       .catch(err => { setAnalyticsError(err.message); setAnalyticsLoading(false) })
   }, [user?.id, orgSlug, activeTab])
 
-  const sectionStyle: React.CSSProperties = {
-    background: theme.bgSecondary,
-    border: `1px solid ${theme.borderColor}`,
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-  }
-
   if (loading) {
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px', color: theme.text }}>
-        Loading organization…
+      <div className="em-root">
+        <div className="em-loading">Loading organization…</div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 20px' }}>
-        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: 16, color: '#b91c1c' }}>
-          {error}
-        </div>
+      <div className="em-root">
+        <div className="em-err">{error}</div>
         {onNavigate && (
-          <button onClick={() => onNavigate('home')} style={{ marginTop: 16, background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '7px 16px', cursor: 'pointer', color: theme.text, fontSize: 14 }}>
-            ← Back
-          </button>
+          <button className="em-back" onClick={() => onNavigate('home')}>← Back</button>
         )}
       </div>
     )
@@ -239,65 +222,50 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
     downloadCsv(buildCsvString(headers, rows), `nhl-members-${orgSlug}-${todayIso()}.csv`)
   }
 
-  const inputStyle: React.CSSProperties = {
-    background: theme.card,
-    border: `1px solid ${theme.borderColor}`,
-    borderRadius: 6,
-    padding: '6px 10px',
-    color: theme.text,
-    fontSize: 13,
-    outline: 'none',
-  }
-
+  // ── Presentation only below this line ───────────────────────────────────────
+  // Same data, same filters / sort / export / tab handlers as before.
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
+    <div className="em-root">
       {/* Back to Admin / Organizations */}
       {onNavigate && (
-        <button
-          onClick={() => onNavigate('admin/organizations')}
-          style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '6px 14px', fontSize: 13, color: theme.textMuted, cursor: 'pointer', marginBottom: 16, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-        >
+        <button className="em-back" onClick={() => onNavigate('admin/organizations')}>
           ← Back to Organizations
         </button>
       )}
 
       {/* PHI notice */}
-      <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 6, padding: '8px 14px', marginBottom: 20, fontSize: 12, color: '#713f12' }}>
-        <strong>De-identified view:</strong> Real names, emails, and individual lab values are never shown here. Only usernames, public IDs, teams, and aggregate NHLS scores are displayed.
+      <div className="em-note">
+        <span aria-hidden="true">🔒</span>
+        <div>
+          <b>De-identified view:</b> Real names, emails, and individual lab values are never shown here. Only usernames, public IDs, teams, and aggregate NHLS scores are displayed.
+        </div>
       </div>
 
       {/* Org header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 4 }}>
-        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: theme.text }}>
-          {data.org.name}
-        </h2>
+      <div className="em-head">
+        <div>
+          <h2>{data.org.name}</h2>
+          <div className="em-meta">
+            <span className="em-chip">{members.length} member{members.length !== 1 ? 's' : ''}</span>
+            {avgBhas !== null && <span className="em-chip">Org avg NHLS: {avgBhas}%</span>}
+          </div>
+        </div>
         {onNavigate && (
-          <button
-            onClick={() => onNavigate(`leaderboard/${orgSlug}`)}
-            style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-          >
+          <button className="em-btn primary" onClick={() => onNavigate(`leaderboard/${orgSlug}`)}>
             View Leaderboard
           </button>
         )}
       </div>
-      <p style={{ margin: '0 0 16px 0', color: theme.textMuted, fontSize: 14 }}>
-        {members.length} member{members.length !== 1 ? 's' : ''}{avgBhas !== null ? ` · Org avg NHLS: ${avgBhas}%` : ''}
-      </p>
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: `2px solid ${theme.borderColor}` }}>
+      <div className="em-tabs" role="tablist">
         {(['members', 'analytics'] as const).map(tab => (
           <button
             key={tab}
+            role="tab"
+            aria-selected={activeTab === tab}
+            className={activeTab === tab ? 'on' : ''}
             onClick={() => setActiveTab(tab)}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: '8px 18px', fontSize: 14, fontWeight: 600,
-              color: activeTab === tab ? (theme.blue ?? '#3B82F6') : theme.textMuted,
-              borderBottom: activeTab === tab ? `2px solid ${theme.blue ?? '#3B82F6'}` : '2px solid transparent',
-              marginBottom: -2,
-              textTransform: 'capitalize',
-            }}
           >
             {tab === 'members' ? 'Members' : 'Analytics'}
           </button>
@@ -320,17 +288,17 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
 
       {/* Team summary cards — Feature 18: dynamic teams with color cycling */}
       {teamBreakdown.filter(t => t.member_count > 0).length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
+        <div className="em-teams">
           {teamBreakdown.filter(t => t.member_count > 0).map(({ team, member_count, avg_bhas_pct, optimal_pct }, idx) => {
             const tc = teamColor(idx, darkMode)
             return (
-              <div key={team} style={{ background: tc.bg, borderRadius: 8, padding: '14px 16px' }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: tc.color, marginBottom: 4 }}>{team}</div>
-                <div style={{ fontSize: 12, color: tc.color, marginBottom: 8 }}>{member_count} member{member_count !== 1 ? 's' : ''}</div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: tc.color }}>{avg_bhas_pct !== null ? `${avg_bhas_pct}%` : '—'}</div>
-                <div style={{ fontSize: 11, color: tc.color, opacity: 0.8 }}>avg NHLS</div>
+              <div key={team} className="em-team" style={{ background: tc.bg, color: tc.color }}>
+                <div className="em-team-n">{team}</div>
+                <div className="em-team-m">{member_count} member{member_count !== 1 ? 's' : ''}</div>
+                <div className="em-team-v">{avg_bhas_pct !== null ? `${avg_bhas_pct}%` : '—'}</div>
+                <div className="em-team-k">avg NHLS</div>
                 {optimal_pct !== null && (
-                  <div style={{ fontSize: 11, color: tc.color, opacity: 0.7, marginTop: 4 }}>{optimal_pct}% at optimal</div>
+                  <div className="em-team-o">{optimal_pct}% at optimal</div>
                 )}
               </div>
             )
@@ -339,14 +307,11 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
       )}
 
       {/* Member table */}
-      <div style={sectionStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: theme.text }}>Members</h3>
+      <div className="em-card">
+        <div className="em-card-top">
+          <h3>Members</h3>
           {filteredMembers.length > 0 && (
-            <button
-              onClick={handleExportMembers}
-              style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-            >
+            <button className="em-btn primary sm" onClick={handleExportMembers}>
               Export CSV
             </button>
           )}
@@ -355,59 +320,54 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
         {/* Filter bar */}
         {members.length > 0 && (
           <>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: `1fr 130px 120px auto${hasFilters ? ' auto' : ''}`,
-              gap: 8, alignItems: 'center',
-              background: theme.bg, border: `1px solid ${theme.borderColor}`,
-              borderRadius: 8, padding: '10px 12px', marginBottom: 12,
-            }}>
+            <div className="em-filters">
               <input
+                className="em-input grow"
                 type="text"
                 placeholder="Search username or public ID…"
+                aria-label="Search username or public ID"
                 value={searchUsername}
                 onChange={e => setSearchUsername(e.target.value)}
-                style={{ ...inputStyle, width: '100%' }}
               />
               <select
+                className="em-select"
+                aria-label="Filter by team"
                 value={filterTeam}
                 onChange={e => setFilterTeam(e.target.value)}
-                style={{ ...inputStyle, cursor: 'pointer', width: '100%' }}
               >
                 <option value="">All teams</option>
                 {allTeams.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
               <select
+                className="em-select"
+                aria-label="Filter by role"
                 value={filterRole}
                 onChange={e => setFilterRole(e.target.value)}
-                style={{ ...inputStyle, cursor: 'pointer', width: '100%' }}
               >
                 <option value="">All roles</option>
                 {allRoles.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
-                <span style={{ fontSize: 12, color: theme.textMuted }}>
-                  Min NHLS: <strong style={{ color: theme.text }}>{minBhas}%</strong>
-                </span>
+              <div className="em-range">
+                <span>Min NHLS: <strong>{minBhas}%</strong></span>
                 <input
                   type="range"
+                  aria-label="Minimum NHLS percent"
                   min={0} max={100} step={5}
                   value={minBhas}
                   onChange={e => setMinBhas(Number(e.target.value))}
-                  style={{ width: 80, cursor: 'pointer', accentColor: theme.blue }}
                 />
               </div>
               {hasFilters && (
                 <button
+                  className="em-btn ghost sm"
                   onClick={() => { setSearchUsername(''); setFilterTeam(''); setFilterRole(''); setMinBhas(0) }}
-                  style={{ ...inputStyle, cursor: 'pointer', color: theme.textMuted, fontSize: 12, whiteSpace: 'nowrap' }}
                 >
                   Clear
                 </button>
               )}
             </div>
             {hasFilters && (
-              <p style={{ margin: '0 0 10px 0', fontSize: 12, color: theme.textMuted }}>
+              <p className="em-showing">
                 Showing {filteredMembers.length} of {members.length} members
               </p>
             )}
@@ -415,14 +375,14 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
         )}
 
         {members.length === 0 ? (
-          <p style={{ color: theme.textMuted, fontSize: 14 }}>No members in this organization yet.</p>
+          <p className="em-empty">No members in this organization yet.</p>
         ) : filteredMembers.length === 0 ? (
-          <p style={{ color: theme.textMuted, fontSize: 14 }}>No members match the current filters.</p>
+          <p className="em-empty">No members match the current filters.</p>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <div className="em-tablewrap">
+            <table className="em-table">
               <thead>
-                <tr style={{ borderBottom: `1px solid ${theme.borderColor}` }}>
+                <tr>
                   {([
                     ['username',     'Username'],
                     ['public_id',    'Public ID'],
@@ -432,11 +392,7 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
                     ['role',         'Role'],
                     ['joined_at',    'Joined'],
                   ] as [typeof sortCol, string][]).map(([col, label]) => (
-                    <th
-                      key={col}
-                      onClick={() => toggleSort(col)}
-                      style={{ textAlign: 'left', padding: '6px 10px', color: theme.textMuted, fontWeight: 600, fontSize: 11, textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}
-                    >
+                    <th key={col} onClick={() => toggleSort(col)}>
                       {label}{sortArrow(col)}
                     </th>
                   ))}
@@ -447,26 +403,20 @@ export default function EmployerPage({ orgSlug, onNavigate }: EmployerPageProps)
                   const teamIdx = m.team ? teamBreakdown.findIndex(t => t.team === m.team) : -1
                   const tc = teamIdx >= 0 ? teamColor(teamIdx, darkMode) : null
                   return (
-                    <tr key={i} style={{ borderBottom: `1px solid ${theme.borderColor}` }}>
-                      <td style={{ padding: '8px 10px', color: theme.text, fontWeight: 500 }}>
-                        {m.username || <em style={{ color: theme.textMuted }}>not set</em>}
+                    <tr key={i}>
+                      <td className="em-user">
+                        {m.username || <em className="em-nodata">not set</em>}
                       </td>
-                      <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: 12, color: theme.textMuted }}>
-                        {m.public_id || '—'}
-                      </td>
-                      <td style={{ padding: '8px 10px' }}>
+                      <td className="em-mono">{m.public_id || '—'}</td>
+                      <td>
                         {m.team && tc ? (
-                          <span style={{ background: tc.bg, color: tc.color, borderRadius: 4, padding: '2px 8px', fontWeight: 600, fontSize: 12 }}>{m.team}</span>
-                        ) : <span style={{ color: theme.textMuted }}>—</span>}
+                          <span className="em-pill" style={{ background: tc.bg, color: tc.color }}>{m.team}</span>
+                        ) : <span className="em-nodata">—</span>}
                       </td>
-                      <td style={{ padding: '8px 10px' }}>
-                        <BhasBadge pct={m.bhas_pct} />
-                      </td>
-                      <td style={{ padding: '8px 10px', color: theme.textMuted }}>{m.result_count}</td>
-                      <td style={{ padding: '8px 10px' }}>
-                        <span style={{ background: m.role === 'admin' ? '#dbeafe' : '#f3f4f6', color: m.role === 'admin' ? '#1d4ed8' : '#374151', borderRadius: 4, padding: '1px 7px', fontSize: 11, fontWeight: 600 }}>{m.role}</span>
-                      </td>
-                      <td style={{ padding: '8px 10px', color: theme.textMuted, whiteSpace: 'nowrap' }}>
+                      <td><BhasBadge pct={m.bhas_pct} /></td>
+                      <td className="muted">{m.result_count}</td>
+                      <td><span className={`em-role${m.role === 'admin' ? ' admin' : ''}`}>{m.role}</span></td>
+                      <td className="muted nw">
                         {m.joined_at ? new Date(m.joined_at).toLocaleDateString() : '—'}
                       </td>
                     </tr>
@@ -516,23 +466,11 @@ function metricBarColor(pct: number): string {
 function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPanelProps) {
   const [reportOpen, setReportOpen] = useState(false)
 
-  const sectionStyle: React.CSSProperties = {
-    background: theme.bgSecondary,
-    border: `1px solid ${theme.borderColor}`,
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-  }
-
   if (loading) {
-    return <div style={{ color: theme.textMuted, padding: '40px 0', textAlign: 'center' }}>Loading analytics…</div>
+    return <div className="em-loading">Loading analytics…</div>
   }
   if (error) {
-    return (
-      <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: 16, color: '#b91c1c', marginBottom: 20 }}>
-        {error}
-      </div>
-    )
+    return <div className="em-err">{error}</div>
   }
   if (!data) return null
 
@@ -559,41 +497,36 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
     return <rect x={x} y={y} width={width} height={height} fill={metricBarColor(optimal_pct)} rx={3} />
   }
 
+  const labelTone = (label: string) =>
+    label === 'Optimal' ? 'optimal'
+    : label === 'Healthy' ? 'healthy'
+    : label === 'Needs Improvement' ? 'needs'
+    : label === 'High Risk' ? 'risk'
+    : 'none'
+
   return (
     <>
       {/* Insurance Report button */}
       {data && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-          <button
-            onClick={() => setReportOpen(true)}
-            style={{
-              background: 'none',
-              border: `1px solid ${theme.blue ?? '#3B82F6'}`,
-              borderRadius: 6,
-              padding: '7px 16px',
-              fontSize: 13,
-              fontWeight: 600,
-              color: theme.blue ?? '#3B82F6',
-              cursor: 'pointer',
-            }}
-          >
+        <div className="em-actions">
+          <button className="em-btn ghost" onClick={() => setReportOpen(true)}>
             Generate Insurance Report
           </button>
         </div>
       )}
 
       {/* KPI tiles */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
+      <div className="em-kpis">
         {kpiTiles.map(({ label, value }) => (
-          <div key={label} style={{ ...sectionStyle, marginBottom: 0, padding: '16px 18px' }}>
-            <div style={{ fontSize: 26, fontWeight: 800, color: theme.text }}>{value}</div>
-            <div style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>{label}</div>
+          <div key={label} className="em-kpi">
+            <div className="em-kpi-v">{value}</div>
+            <div className="em-kpi-k">{label}</div>
           </div>
         ))}
       </div>
 
       {!hasScoreData && (
-        <div style={{ ...sectionStyle, color: theme.textMuted, fontSize: 14 }}>
+        <div className="em-card" style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
           No NHLS score data yet for this organization. Members need to calculate their score on the Dashboard for analytics to populate.
         </div>
       )}
@@ -601,48 +534,47 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
       {hasScoreData && (<>
 
         {/* NHLS Score Distribution */}
-        <div style={sectionStyle}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>NHLS Score Distribution</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={score_distribution} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
-              <XAxis dataKey="label" tick={{ fontSize: 12, fill: theme.textMuted }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: theme.textMuted }} />
-              <Tooltip
-                contentStyle={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, color: theme.text }}
-                labelStyle={{ color: theme.text }}
-                itemStyle={{ color: theme.blue ?? '#3B82F6' }}
-                formatter={(value: number) => [value, 'Members']}
-              />
-              <Bar dataKey="count" shape={(props: any) => {
-                const entry = score_distribution.find(d => d.label === props.label)
-                return <rect {...props} fill={distBarColor(entry?.label ?? '')} rx={3} />
-              }} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="em-card">
+          <h3>NHLS Score Distribution</h3>
+          <div className="em-chartwrap">
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={score_distribution} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
+                <XAxis dataKey="label" tick={{ fontSize: 12, fill: theme.textMuted }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: theme.textMuted }} />
+                <Tooltip
+                  contentStyle={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, color: theme.text }}
+                  labelStyle={{ color: theme.text }}
+                  itemStyle={{ color: theme.blue ?? '#3B82F6' }}
+                  formatter={(value: number) => [value, 'Members']}
+                />
+                <Bar dataKey="count" shape={(props: any) => {
+                  const entry = score_distribution.find(d => d.label === props.label)
+                  return <rect {...props} fill={distBarColor(entry?.label ?? '')} rx={3} />
+                }} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* BHAS v2 Label Distribution */}
-        <div style={sectionStyle}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>Health Label Distribution</h3>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {label_distribution.map(({ label, count }) => {
-              const c = LABEL_COLORS[label] ?? { bg: '#f3f4f6', color: '#374151' }
-              return (
-                <div key={label} style={{ background: c.bg, borderRadius: 8, padding: '12px 18px', minWidth: 120 }}>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: c.color }}>{count}</div>
-                  <div style={{ fontSize: 12, color: c.color, marginTop: 2 }}>{label}</div>
-                </div>
-              )
-            })}
+        <div className="em-card">
+          <h3 style={{ marginBottom: 14 }}>Health Label Distribution</h3>
+          <div className="em-labels">
+            {label_distribution.map(({ label, count }) => (
+              <div key={label} className={`em-label ${labelTone(label)}`}>
+                <b>{count}</b>
+                <span>{label}</span>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* 12-Week Trend */}
         {trend.length > 0 && (
-          <div style={sectionStyle}>
-            <h3 style={{ margin: '0 0 4px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>Org NHLS Trend — Last 12 Weeks</h3>
-            <p style={{ margin: '0 0 16px 0', fontSize: 12, color: theme.textMuted }}>Weekly average NHLS % across members with data</p>
+          <div className="em-card">
+            <h3>Org NHLS Trend — Last 12 Weeks</h3>
+            <p className="em-sub">Weekly average NHLS % across members with data</p>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={trend} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={theme.borderColor} />
@@ -650,8 +582,8 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
                 <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: theme.textMuted }} unit="%" />
                 <Tooltip
                   contentStyle={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, color: theme.text }}
-                labelStyle={{ color: theme.text }}
-                itemStyle={{ color: theme.blue ?? '#3B82F6' }}
+                  labelStyle={{ color: theme.text }}
+                  itemStyle={{ color: theme.blue ?? '#3B82F6' }}
                   formatter={(value: number, name: string) => [
                     name === 'avg_score' ? `${value}%` : value,
                     name === 'avg_score' ? 'Avg NHLS' : 'Members',
@@ -666,9 +598,9 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
 
         {/* Per-Metric % Optimal */}
         {metric_breakdown.length > 0 && (
-          <div style={sectionStyle}>
-            <h3 style={{ margin: '0 0 4px 0', fontSize: 14, fontWeight: 600, color: theme.text }}>Per-Metric % at Optimal</h3>
-            <p style={{ margin: '0 0 16px 0', fontSize: 12, color: theme.textMuted }}>Percentage of members with data scoring Optimal on each NHLS metric</p>
+          <div className="em-card">
+            <h3>Per-Metric % at Optimal</h3>
+            <p className="em-sub">Percentage of members with data scoring Optimal on each NHLS metric</p>
             <ResponsiveContainer width="100%" height={Math.max(180, metric_breakdown.length * 36)}>
               <BarChart
                 layout="vertical"
@@ -680,8 +612,8 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
                 <YAxis type="category" dataKey="metric" width={140} tick={{ fontSize: 11, fill: theme.text }} />
                 <Tooltip
                   contentStyle={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, color: theme.text }}
-                labelStyle={{ color: theme.text }}
-                itemStyle={{ color: theme.blue ?? '#3B82F6' }}
+                  labelStyle={{ color: theme.text }}
+                  itemStyle={{ color: theme.blue ?? '#3B82F6' }}
                   formatter={(value: number, _name: string, props: any) => [
                     `${value}% (${props.payload.member_count} members)`,
                     '% at Optimal',
@@ -709,4 +641,3 @@ function AnalyticsPanel({ data, loading, error, theme, darkMode }: AnalyticsPane
     </>
   )
 }
-
