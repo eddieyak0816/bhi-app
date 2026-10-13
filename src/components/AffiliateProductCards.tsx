@@ -82,7 +82,7 @@ export default function AffiliateProductCards({ applicableTags, theme }: Props) 
       <p className="home-sec-p">
         Products matched to your health profile. These are affiliate links — National Health League may earn a commission.
       </p>
-      <div className="home-cards">
+      <div className="home-cards two">
         {products.map(p => (
           <div key={p.id} className="home-rc">
             {p.image_url && (
