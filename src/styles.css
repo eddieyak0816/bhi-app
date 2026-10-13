@@ -1583,18 +1583,20 @@ body.dark-mode .md-msg.danger .md-lvl{color:#F2A29E}
 .adm-title{margin:0 0 6px;font-size:clamp(24px,3vw,30px);font-weight:800;letter-spacing:-.035em;line-height:1.15;color:var(--text-primary)}
 .card.adm-root h3.adm-title{font-size:clamp(24px,3vw,30px);margin-bottom:6px}
 
-.adm-tabs{display:flex;flex-wrap:nowrap;gap:6px;margin:18px 0 28px;padding:6px;overflow-x:auto;scrollbar-width:thin;
-  background:var(--hd-fill);border-radius:20px}
-.adm-tab{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;white-space:nowrap;padding:9px 16px;border-radius:999px;border:0;
-  background:transparent;color:var(--text-secondary);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
-  transition:background .15s,color .15s,box-shadow .15s}
-.adm-tab:hover{color:var(--text-primary);background:rgba(21,160,107,.1)}
-.adm-tab.on{background:#12332A;color:#B8E62E;box-shadow:0 2px 8px -2px rgba(18,51,42,.5)}
-.adm-tab.on:hover{background:#12332A;color:#B8E62E}
-body.dark-mode .adm-tab.on{background:#B8E62E;color:#0C1512;box-shadow:none}
-body.dark-mode .adm-tab.on:hover{background:#B8E62E;color:#0C1512}
+/* Tabs: everything visible, no sideways scrolling. Desktop = wrapped tiles; mobile = collapsible grid. */
+.adm-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 30px}
+.adm-tab{display:inline-flex;align-items:center;gap:9px;padding:10px 16px;border-radius:16px;border:1.5px solid var(--hd-fill-2);
+  background:var(--card);color:var(--text-secondary);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;
+  transition:background .15s,color .15s,border-color .15s,transform .15s,box-shadow .15s}
+.adm-tab:hover{color:var(--text-primary);border-color:rgba(21,160,107,.55);transform:translateY(-1px)}
+.adm-tab.on{background:#12332A;border-color:#12332A;color:#B8E62E;box-shadow:0 8px 18px -10px rgba(18,51,42,.7)}
+.adm-tab.on:hover{transform:none}
+body.dark-mode .adm-tab.on{background:#B8E62E;border-color:#B8E62E;color:#0C1512;box-shadow:none}
 .adm-tab:focus-visible{outline:3px solid rgba(21,160,107,.45);outline-offset:2px}
-.adm-tab-i{font-size:15px;line-height:1}
+.adm-tab-i{width:28px;height:28px;border-radius:10px;background:var(--hd-fill);display:grid;place-items:center;font-size:15px;line-height:1;flex-shrink:0}
+.adm-tab.on .adm-tab-i{background:rgba(184,230,46,.16)}
+body.dark-mode .adm-tab.on .adm-tab-i{background:rgba(12,21,18,.14)}
+.adm-tabs-toggle{display:none}
 
 /* Baseline inherited by every tab — colours/focus only, no size or spacing changes */
 .adm-root input:focus,.adm-root select:focus,.adm-root textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(21,160,107,.18)}
@@ -1604,5 +1606,14 @@ body.dark-mode .adm-tab.on:hover{background:#B8E62E;color:#0C1512}
 
 @media(max-width:700px){
   .card.adm-root{padding:18px 16px;border-radius:22px}
-  .adm-tabs{margin:14px 0 22px}
+  .adm-tabs-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;box-sizing:border-box;margin:16px 0 0;
+    padding:13px 16px;border-radius:18px;border:1.5px solid var(--hd-fill-2);background:var(--card);color:var(--text-primary);
+    font:inherit;font-size:15px;font-weight:800;cursor:pointer}
+  .adm-tabs-toggle .cur{display:inline-flex;align-items:center;gap:10px}
+  .adm-tabs-toggle .chev{transition:transform .2s;color:var(--text-secondary)}
+  .adm-tabs-toggle.open .chev{transform:rotate(180deg)}
+  .adm-tabs{display:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0 22px}
+  .adm-tabs.open{display:grid}
+  .adm-tab{padding:10px 12px;white-space:normal;min-width:0}
+  .adm-tab-i{width:26px;height:26px}
 }

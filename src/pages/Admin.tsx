@@ -44,6 +44,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
   const VALID_TABS = ['resources','types','markers','tags','categories','criteria','goals','audit','organizations','products','brokers','providers','nav-links','leagues','users','challenges','lab-results','lab-sets','marker-groups'] as const
   type AdminTab = typeof VALID_TABS[number]
   const [activeTab, setActiveTab] = useState<AdminTab>(VALID_TABS.includes(initialTab as AdminTab) ? (initialTab as AdminTab) : 'resources')
+  // UI only: whether the tab grid is expanded on phones (desktop always shows every tab)
+  const [tabsOpen, setTabsOpen] = useState(false)
   // Use global theme context
   const { darkMode, theme: globalTheme } = useTheme()
   const { isSuperAdmin, user } = useAuth()
@@ -1363,24 +1365,39 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           { id: 'lab-sets' as AdminTab, icon: '📋', label: 'Lab Sets' },
           { id: 'marker-groups' as AdminTab, icon: '🔗', label: 'Marker Groups' },
         ]
+        const current = tabs.find(t => t.id === activeTab)
         return (
-          <div className="adm-tabs" role="tablist">
-            {tabs.map(t => {
-              const isActive = activeTab === t.id
-              return (
-                <button
-                  key={t.id}
-                  role="tab"
-                  aria-selected={isActive}
-                  className={`adm-tab${isActive ? ' on' : ''}`}
-                  onClick={() => setActiveTab(t.id)}
-                >
-                  <span className="adm-tab-i">{t.icon}</span>
-                  {t.label}
-                </button>
-              )
-            })}
-          </div>
+          <>
+            {/* Phones: shows the current tab; tap to expand the full grid */}
+            <button
+              className={`adm-tabs-toggle${tabsOpen ? ' open' : ''}`}
+              aria-expanded={tabsOpen}
+              onClick={() => setTabsOpen(o => !o)}
+            >
+              <span className="cur">
+                <span className="adm-tab-i">{current?.icon}</span>
+                {current?.label ?? 'Menu'}
+              </span>
+              <span className="chev" aria-hidden="true">▾</span>
+            </button>
+            <div className={`adm-tabs${tabsOpen ? ' open' : ''}`} role="tablist">
+              {tabs.map(t => {
+                const isActive = activeTab === t.id
+                return (
+                  <button
+                    key={t.id}
+                    role="tab"
+                    aria-selected={isActive}
+                    className={`adm-tab${isActive ? ' on' : ''}`}
+                    onClick={() => { setActiveTab(t.id); setTabsOpen(false) }}
+                  >
+                    <span className="adm-tab-i">{t.icon}</span>
+                    {t.label}
+                  </button>
+                )
+              })}
+            </div>
+          </>
         )
       })()}
 
