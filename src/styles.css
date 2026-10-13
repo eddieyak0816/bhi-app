@@ -436,3 +436,37 @@ body.dark-mode .auth-sent{color:#5DD6A0}
 @media(max-width:420px){
   .auth-reqs{grid-template-columns:1fr}
 }
+
+/* ── Onboarding (first-run welcome) — reuses the .auth shell ───────────── */
+.auth-main.has-top{padding-top:84px}
+.auth-top{position:absolute;top:20px;right:24px;display:flex;gap:8px;z-index:2}
+.auth-chip{height:38px;padding:0 14px;border:1.5px solid var(--border);background:var(--card);color:var(--text-primary);
+  border-radius:999px;font-size:13.5px;font-weight:650;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:border-color .15s}
+.auth-chip:hover{border-color:#15A06B}
+.auth-chip.icon{width:38px;padding:0}
+.auth-card.wide{max-width:520px}
+.auth-main{position:relative}
+
+.auth-notice{background:#FFF7ED;border-left:3px solid #B45309;border-radius:0 12px 12px 0;padding:15px 17px;margin:26px 0 30px}
+.auth-notice strong{display:block;font-size:13px;color:#92400E;margin-bottom:5px}
+.auth-notice p{margin:0;font-size:14px;line-height:1.6;color:var(--text-secondary)}
+body.dark-mode .auth-notice{background:rgba(180,83,9,.16)}
+body.dark-mode .auth-notice strong{color:#FBBF24}
+
+.auth-h2{font-size:13px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 14px}
+.auth-steps{list-style:none;margin:0 0 30px;padding:0;counter-reset:step;display:grid;gap:10px}
+.auth-steps li{counter-increment:step;display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:var(--card);
+  border:1.5px solid var(--border);border-radius:14px;font-size:14.5px;line-height:1.5;color:var(--text-primary)}
+.auth-steps li::before{content:counter(step);flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#12332A;color:#B8E62E;
+  font-size:13px;font-weight:800;display:grid;place-items:center;margin-top:-1px}
+body.dark-mode .auth-steps li::before{background:#B8E62E;color:#0C1512}
+
+.auth-link-btn{width:100%;margin-top:10px;padding:13px;border:0;background:none;color:var(--text-secondary);
+  font-size:14.5px;font-weight:650;cursor:pointer;border-radius:999px}
+.auth-link-btn:hover{color:var(--text-primary);background:rgba(18,51,42,.06)}
+
+@media(max-width:900px){
+  .auth-main.has-top{padding-top:70px}
+  .auth-top{top:14px;right:16px}
+}
