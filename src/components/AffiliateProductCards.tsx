@@ -77,53 +77,21 @@ export default function AffiliateProductCards({ applicableTags, theme }: Props) 
   if (loading || products.length === 0) return null
 
   return (
-    <div style={{ marginBottom: 32 }}>
-      <h3 style={{ marginBottom: 4, fontSize: 20, fontWeight: 600, color: theme.text }}>Recommended Products</h3>
-      <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
+    <div className="home-sec">
+      <div className="home-sec-h"><h3 className="home-h3">Recommended Products</h3></div>
+      <p className="home-sec-p">
         Products matched to your health profile. These are affiliate links — National Health League may earn a commission.
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
+      <div className="home-cards">
         {products.map(p => (
-          <div
-            key={p.id}
-            style={{
-              background: theme.card,
-              border: `1.5px solid ${theme.borderColor}`,
-              borderRadius: 10,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
+          <div key={p.id} className="home-rc">
             {p.image_url && (
-              <img
-                src={p.image_url}
-                alt={p.name}
-                style={{ width: '100%', height: 140, objectFit: 'cover' }}
-              />
+              <img className="home-rc-img" src={p.image_url} alt={p.name} loading="lazy" />
             )}
-            <div style={{ padding: '14px 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontWeight: 700, fontSize: 15, color: theme.text, marginBottom: 6 }}>{p.name}</div>
-              {p.description && (
-                <div style={{ fontSize: 13, color: theme.textMuted, marginBottom: 12, flex: 1 }}>{p.description}</div>
-              )}
-              <a
-                href={p.affiliate_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'block',
-                  textAlign: 'center',
-                  background: '#3B82F6',
-                  color: '#fff',
-                  borderRadius: 6,
-                  padding: '9px 12px',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  marginTop: 'auto',
-                }}
-              >
+            <div className="home-rc-b">
+              <div className="home-rc-t">{p.name}</div>
+              {p.description && <div className="home-rc-d">{p.description}</div>}
+              <a className="home-btn" href={p.affiliate_url} target="_blank" rel="noopener noreferrer">
                 Learn More
               </a>
             </div>

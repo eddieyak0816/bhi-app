@@ -18,9 +18,9 @@ export default function StaleLabBanner({ latestLabDate, onNavigate }: StaleLabBa
     <div
       style={{
         background: 'rgba(217, 119, 6, 0.08)',
-        border: '1.5px solid #D97706',
-        borderRadius: 8,
-        padding: '14px 18px',
+        border: '1px solid rgba(217, 119, 6, 0.4)',
+        borderRadius: 18,
+        padding: '16px 20px',
         marginBottom: 24,
         display: 'flex',
         alignItems: 'center',
@@ -44,10 +44,10 @@ export default function StaleLabBanner({ latestLabDate, onNavigate }: StaleLabBa
             background: '#D97706',
             color: '#fff',
             border: 'none',
-            borderRadius: 6,
-            padding: '8px 14px',
+            borderRadius: 999,
+            padding: '10px 18px',
             fontSize: 13,
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: 'pointer',
             whiteSpace: 'nowrap',
           }}

@@ -77,10 +77,11 @@ export default function MyTeamCard({ theme }: Props) {
   return (
     <div style={{
       background: theme.card ?? theme.bgSecondary,
-      border: `1.5px solid ${theme.borderColor}`,
-      borderRadius: 12,
-      padding: '20px 24px',
-      marginBottom: 24,
+      border: `1px solid ${theme.borderLight}`,
+      borderRadius: 22,
+      boxShadow: '0 1px 2px rgba(16,26,22,0.05)',
+      padding: '24px 26px',
+      marginBottom: 48,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
@@ -88,13 +89,13 @@ export default function MyTeamCard({ theme }: Props) {
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, color: theme.textMuted, textTransform: 'uppercase', marginBottom: 4 }}>
             {org_name}
           </div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: theme.text }}>
+          <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', color: theme.text }}>
             Team {user_team}
           </div>
         </div>
         {/* User's rank badge */}
         {user_rank !== null && user_team_size !== null && (
-          <div style={{ textAlign: 'center', background: theme.bg ?? theme.bgSecondary, border: `1.5px solid ${theme.borderColor}`, borderRadius: 8, padding: '8px 14px' }}>
+          <div style={{ textAlign: 'center', background: theme.bg ?? theme.bgSecondary, border: `1px solid ${theme.borderLight}`, borderRadius: 16, padding: '10px 16px' }}>
             <div style={{ fontSize: 22, fontWeight: 800, color: theme.text }}>#{user_rank}</div>
             <div style={{ fontSize: 11, color: theme.textMuted }}>of {user_team_size} on your team</div>
           </div>
@@ -113,11 +114,12 @@ export default function MyTeamCard({ theme }: Props) {
             <div key={t.team} style={{
               display: 'flex',
               alignItems: 'center',
+              flexWrap: 'wrap',
               gap: 10,
-              padding: '10px 14px',
-              borderRadius: 8,
+              padding: '12px 16px',
+              borderRadius: 14,
               background: isMyTeam ? `${theme.blue}18` : (theme.bg ?? theme.bgSecondary),
-              border: `1.5px solid ${isMyTeam ? theme.blue : theme.borderColor}`,
+              border: `1.5px solid ${isMyTeam ? theme.blue : theme.borderLight}`,
               transition: 'all 0.15s',
             }}>
               {/* Rank */}

@@ -208,33 +208,33 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
 
   const statCard = (label: string, value: string | number, icon: string, onClick?: () => void) => (
     <div
+      className={`home-stat${onClick ? ' click' : ''}`}
       onClick={onClick}
-      style={{
-        background: theme.card,
-        border: `1.5px solid ${theme.borderColor}`,
-        borderRadius: 8,
-        padding: '10px 14px',
-        flex: 1,
-        minWidth: 140,
-        cursor: onClick ? 'pointer' : 'default',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-      }}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }) : undefined}
     >
-      <div style={{ fontSize: 20 }}>{icon}</div>
+      <div className="home-stat-i" aria-hidden="true">{icon}</div>
       <div>
-        <div style={{ fontSize: 11, color: theme.textMuted }}>{label}</div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: theme.text }}>{value}</div>
+        <div className="home-stat-l">{label}</div>
+        <div className="home-stat-v">{value}</div>
       </div>
     </div>
   )
 
+  // Status of one NHLS metric, for the tile colour + wording. A grouped slot with no
+  // result at all reports label 'Missing' — shown neutrally rather than as a failure.
+  const statusOf = (m: { score: number; label: string }) =>
+    m.label === 'Missing' ? { k: 'none', text: 'No result' }
+    : m.score === 1 ? { k: 'ok', text: 'Optimal' }
+    : m.score === 0.5 ? { k: 'mid', text: 'Improvement' }
+    : { k: 'bad', text: 'Out of range' }
+
   return (
-    <div>
-      <div style={{ marginBottom: 32 }}>
-        <h2 style={{ marginBottom: 8, fontSize: 28, fontWeight: 700 }}>Welcome back{firstName ? `, ${firstName}` : ''}</h2>
-        <p style={{ color: theme.textMuted, margin: 0 }}>{userEmail}</p>
+    <div className="home-root">
+      <div className="home-hello">
+        <h2>Welcome back{firstName ? `, ${firstName}` : ''}</h2>
+        <p>{userEmail}</p>
       </div>
 
       <StaleLabBanner latestLabDate={latestLabDate} onNavigate={onNavigate} />
@@ -244,230 +244,175 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
           cleared it) — hold the space with a placeholder rather than dropping the panel,
           which reads as "my score vanished" instead of "still loading". */}
       {!bhasV2Result && results.length > 0 && (
-        <div style={{
-          background: theme.card, border: `1.5px solid ${theme.borderColor}`, borderRadius: 10,
-          padding: '20px 24px', marginBottom: 20, color: theme.textMuted, fontSize: 13,
-        }}>
-          Calculating your NHLS score&hellip;
-        </div>
+        <div className="home-card home-muted">Calculating your NHLS score&hellip;</div>
       )}
 
-      {bhasV2Result && bhasV2Result.hasEnoughData && (
-        <div
-          ref={nhlsRef}
-          style={{
-            background: theme.card,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 10,
-            padding: '20px 24px',
-            marginBottom: 32,
-          }}
-        >
-          {/* Header row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', marginBottom: 16 }}>
-            <div style={{ textAlign: 'center', minWidth: 80 }}>
-              <div style={{
-                fontSize: 36,
-                fontWeight: 800,
-                lineHeight: 1,
-                color: bhasV2Result.label === 'Optimal' ? '#10B981'
-                     : bhasV2Result.label === 'Healthy' ? '#3B82F6'
-                     : bhasV2Result.label === 'Needs Improvement' ? '#D97706'
-                     : '#EF4444',
-              }}>
-                {bhasV2Result.totalScore.toFixed(1)}
-              </div>
-              <div style={{ fontSize: 10, color: theme.textMuted, marginTop: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                / {bhasV2Result.maxPossible.toFixed(1)}
-              </div>
-            </div>
+      {bhasV2Result && bhasV2Result.hasEnoughData && (() => {
+        const r = bhasV2Result
+        const scored = r.metricScores.filter(m => m.included)
+        const optimalCount = scored.filter(m => m.score === 1).length
+        const attentionCount = scored.length - optimalCount
+        const tone = r.label === 'Optimal' ? 'optimal'
+                   : r.label === 'Healthy' ? 'healthy'
+                   : r.label === 'Needs Improvement' ? 'needs'
+                   : 'risk'
+        // Ring fill = points earned / points available, straight from the engine's result.
+        const frac = r.maxPossible > 0 ? Math.max(0, Math.min(1, r.totalScore / r.maxPossible)) : 0
+        const CIRC = 2 * Math.PI * 88
 
-            <div style={{ width: 1, height: 48, background: theme.borderColor, flexShrink: 0 }} />
+        // National Benchmarks rows — unchanged logic: latest value per marker that has a benchmark.
+        const benchmarkRows = results
+          .reduce<{ markerName: string; value: number; unit: string }[]>((acc, x) => {
+            if (!acc.find(y => y.markerName === x.markerName)) {
+              acc.push({ markerName: x.markerName, value: x.value, unit: x.unit })
+            }
+            return acc
+          }, [])
+          .map(x => ({ ...x, benchmark: getBenchmark(x.markerName) }))
+          .filter(x => x.benchmark !== null)
 
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: theme.text }}>NHLS</div>
-                <span style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: '2px 10px',
-                  borderRadius: 20,
-                  background: bhasV2Result.label === 'Optimal' ? 'rgba(16,185,129,0.12)'
-                             : bhasV2Result.label === 'Healthy' ? 'rgba(59,130,246,0.12)'
-                             : bhasV2Result.label === 'Needs Improvement' ? 'rgba(245,158,11,0.12)'
-                             : 'rgba(239,68,68,0.12)',
-                  color: bhasV2Result.label === 'Optimal' ? '#10B981'
-                       : bhasV2Result.label === 'Healthy' ? '#3B82F6'
-                       : bhasV2Result.label === 'Needs Improvement' ? '#D97706'
-                       : '#EF4444',
-                }}>
-                  {bhasV2Result.label}
-                </span>
-              </div>
-              <div style={{ fontSize: 12, color: theme.textMuted }}>
-                {bhasV2Result.metricScores.filter(m => m.included).length} of {bhasV2Result.maxPossible} metrics scored · uses derived ratios ({' '}
-                <a
-                  href="https://en.wikipedia.org/wiki/Homeostatic_model_assessment"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: theme.textMuted, textDecoration: 'underline', textDecorationStyle: 'dotted' }}
-                >
-                  HOMA-IR
-                </a>
-                , TG/HDL, WtHR)
+        return (
+          <div ref={nhlsRef}>
+            {/* Score */}
+            <div className="home-orb">
+              <div className="home-orb-grid">
+                <div className="home-gauge">
+                  <svg viewBox="0 0 206 206" fill="none" aria-hidden="true">
+                    <circle cx="103" cy="103" r="88" stroke="rgba(255,255,255,.1)" strokeWidth="16" />
+                    <circle cx="103" cy="103" r="88" stroke="#B8E62E" strokeWidth="16" strokeLinecap="round"
+                            strokeDasharray={CIRC} strokeDashoffset={CIRC * (1 - frac)} />
+                  </svg>
+                  <div className="home-gauge-c">
+                    <div className="home-gauge-n">{r.totalScore.toFixed(1)}</div>
+                    <div className="home-gauge-d">of {r.maxPossible.toFixed(1)}</div>
+                  </div>
+                </div>
+                <div className="home-orb-r">
+                  <span className={`home-pill ${tone}`}>&#9679; {r.label}</span>
+                  <h3 className="home-orb-h">
+                    {attentionCount === 0
+                      ? <>Every scored marker is optimal.</>
+                      : <>{optimalCount} {optimalCount === 1 ? 'marker' : 'markers'} optimal.<br />{attentionCount} left to move.</>}
+                  </h3>
+                  <p className="home-orb-p">
+                    NHLS &middot; {scored.length} of {r.maxPossible} metrics scored &middot; uses derived ratios ({' '}
+                    <a
+                      href="https://en.wikipedia.org/wiki/Homeostatic_model_assessment"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      HOMA-IR
+                    </a>
+                    , TG/HDL, WtHR)
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Per-metric breakdown */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: bhasV2Result.missingInputs.length > 0 ? 12 : 0 }}>
-            {bhasV2Result.metricScores.map(m => {
-              const chipStyle = {
-                fontSize: 11,
-                fontWeight: 600,
-                padding: '3px 8px',
-                borderRadius: 20,
-                background: m.score === 1   ? 'rgba(16,185,129,0.12)'
-                           : m.score === 0.5 ? 'rgba(245,158,11,0.12)'
-                           :                   'rgba(239,68,68,0.12)',
-                color: m.score === 1   ? '#10B981'
-                     : m.score === 0.5 ? '#D97706'
-                     :                  '#EF4444',
-                cursor: 'default' as const,
-              }
-              const label = `${m.metric} · ${m.score === 1 ? '✓' : m.score === 0.5 ? '~' : '✗'}`
-              return (
-                <span key={m.metric} title={m.derived} style={chipStyle}>
-                  {label}
-                </span>
-              )
-            })}
-          </div>
-
-          {/* Missing inputs hint */}
-          {bhasV2Result.missingInputs.length > 0 && (
-            <div style={{ fontSize: 12, color: theme.textMuted, borderTop: `1px solid ${theme.borderColor}`, paddingTop: 10 }}>
-              <strong>To complete your v2.3 score, add:</strong>{' '}
-              {bhasV2Result.missingInputs.map((input, i) => (
-                <span key={input}>{i > 0 && ' · '}{input}</span>
-              ))}
-              {' '}—{' '}
-              <button
-                onClick={() => onNavigate?.('profile')}
-                style={{ background: 'none', border: 'none', color: theme.blue, cursor: 'pointer', fontSize: 12, padding: 0, textDecoration: 'underline' }}
-              >
-                update Profile
-              </button>
-              {' '}or{' '}
-              <button
-                onClick={() => onNavigate?.('labs')}
-                style={{ background: 'none', border: 'none', color: theme.blue, cursor: 'pointer', fontSize: 12, padding: 0, textDecoration: 'underline' }}
-              >
-                log Labs
-              </button>
+            {/* Per-metric breakdown */}
+            <div className="home-tiles">
+              {r.metricScores.map(m => {
+                const st = statusOf(m)
+                return (
+                  <div key={m.metric} className="home-tile" title={m.derived}>
+                    <div className="home-tile-top">
+                      <span className="home-tile-n">{m.metric}</span>
+                      <span className={`home-bead ${st.k}`} aria-hidden="true" />
+                    </div>
+                    <span className={`home-st ${st.k}`}>{st.text}</span>
+                    <div className="home-tile-v">{m.derived}</div>
+                  </div>
+                )
+              })}
             </div>
-          )}
 
-          {/* National Benchmarks — collapsible */}
-          {(() => {
-            const benchmarkRows = results
-              .reduce<{ markerName: string; value: number; unit: string }[]>((acc, r) => {
-                if (!acc.find(x => x.markerName === r.markerName)) {
-                  acc.push({ markerName: r.markerName, value: r.value, unit: r.unit })
-                }
-                return acc
-              }, [])
-              .map(r => ({ ...r, benchmark: getBenchmark(r.markerName) }))
-              .filter(r => r.benchmark !== null)
+            {/* Missing inputs hint */}
+            {r.missingInputs.length > 0 && (
+              <div className="home-hint">
+                <strong>To complete your v2.3 score, add:</strong>{' '}
+                {r.missingInputs.map((input, i) => (
+                  <span key={input}>{i > 0 && ' · '}{input}</span>
+                ))}
+                {' '}—{' '}
+                <button className="home-link" onClick={() => onNavigate?.('profile')}>update Profile</button>
+                {' '}or{' '}
+                <button className="home-link" onClick={() => onNavigate?.('labs')}>log Labs</button>
+              </div>
+            )}
 
-            if (benchmarkRows.length === 0) return null
-
-            return (
-              <div style={{ borderTop: `1px solid ${theme.borderColor}`, marginTop: 12, paddingTop: 10 }}>
+            {/* National Benchmarks — collapsible */}
+            {benchmarkRows.length > 0 && (
+              <div className="home-bm">
                 <button
+                  className="home-bm-btn"
                   onClick={() => setShowBenchmarks(b => !b)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: theme.textMuted,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
+                  aria-expanded={showBenchmarks}
                 >
-                  <span style={{ fontSize: 10 }}>{showBenchmarks ? '▼' : '▶'}</span>
                   National Benchmarks
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </button>
                 {showBenchmarks && (
-                  <div style={{ marginTop: 12, borderRadius: 8, overflow: 'hidden', border: `1px solid ${theme.borderColor}` }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                      <thead>
-                        <tr style={{ background: theme.bgSecondary, borderBottom: `1px solid ${theme.borderColor}` }}>
-                          <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: theme.text }}>Marker</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: theme.text }}>Your Value</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: theme.text }}>US Average</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 600, color: theme.text }}>vs. Avg</th>
-                          <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 600, color: theme.text }}>Optimal Range</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {benchmarkRows.map((row, i) => {
-                          const b = row.benchmark!
-                          const diff = row.value - b.nationalMean
-                          const isBetter = b.lowerIsBetter ? diff <= 0 : diff >= 0
-                          const pct = b.nationalMean !== 0 ? Math.abs(Math.round((diff / b.nationalMean) * 100)) : 0
-                          const isOptimal = b.lowerIsBetter ? row.value <= b.optimalMax : row.value >= b.optimalMin
-                          const diffColor = isBetter ? '#10B981' : '#EF4444'
-                          const arrow = b.lowerIsBetter
-                            ? (diff < 0 ? '↓' : diff > 0 ? '↑' : '—')
-                            : (diff > 0 ? '↑' : diff < 0 ? '↓' : '—')
-                          const optLabel = b.optimalMax >= 999
-                            ? `≥ ${b.optimalMin} ${b.unit}`
-                            : b.optimalMin === 0
-                            ? `< ${b.optimalMax} ${b.unit}`
-                            : `${b.optimalMin}–${b.optimalMax} ${b.unit}`
+                  <div className="home-bm-card">
+                    <div className="home-bm-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Marker</th>
+                            <th>Your Value</th>
+                            <th>US Average</th>
+                            <th className="c">vs. Avg</th>
+                            <th className="c">Optimal Range</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {benchmarkRows.map(row => {
+                            const b = row.benchmark!
+                            const diff = row.value - b.nationalMean
+                            const isBetter = b.lowerIsBetter ? diff <= 0 : diff >= 0
+                            const pct = b.nationalMean !== 0 ? Math.abs(Math.round((diff / b.nationalMean) * 100)) : 0
+                            const isOptimal = b.lowerIsBetter ? row.value <= b.optimalMax : row.value >= b.optimalMin
+                            const arrow = b.lowerIsBetter
+                              ? (diff < 0 ? '↓' : diff > 0 ? '↑' : '—')
+                              : (diff > 0 ? '↑' : diff < 0 ? '↓' : '—')
+                            const optLabel = b.optimalMax >= 999
+                              ? `≥ ${b.optimalMin} ${b.unit}`
+                              : b.optimalMin === 0
+                              ? `< ${b.optimalMax} ${b.unit}`
+                              : `${b.optimalMin}–${b.optimalMax} ${b.unit}`
 
-                          return (
-                            <tr key={row.markerName} style={{ borderTop: i > 0 ? `1px solid ${theme.borderColor}` : 'none' }}>
-                              <td style={{ padding: '8px 12px', fontWeight: 600, color: theme.text }}>{row.markerName}</td>
-                              <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: theme.text }}>{row.value} {row.unit}</td>
-                              <td style={{ padding: '8px 12px', textAlign: 'right', color: theme.textMuted }}>{b.nationalMean} {b.unit}</td>
-                              <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                <span title={b.source} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700, color: diffColor }}>
-                                  {arrow} {pct > 0 ? `${pct}%` : 'At avg'}
-                                </span>
-                              </td>
-                              <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                <span style={{
-                                  fontSize: 11,
-                                  fontWeight: 600,
-                                  padding: '2px 8px',
-                                  borderRadius: 20,
-                                  background: isOptimal ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                                  color: isOptimal ? '#10B981' : '#EF4444',
-                                }}>
-                                  {isOptimal ? 'Optimal' : 'Below optimal'} · {optLabel}
-                                </span>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                    <div style={{ padding: '6px 12px', borderTop: `1px solid ${theme.borderColor}`, fontSize: 11, color: theme.textMuted }}>
-                      Sources: CDC NHANES 2017–2020 · AHA/ACC 2019 · ADA 2024 · NIH/NLM. Hover "vs. Avg" for source detail.
+                            return (
+                              <tr key={row.markerName}>
+                                <td className="n">{row.markerName}</td>
+                                <td className="n">{row.value} {row.unit}</td>
+                                <td className="m">{b.nationalMean} {b.unit}</td>
+                                <td className="c">
+                                  <span title={b.source} className={`home-bm-delta ${isBetter ? 'up' : 'down'}`}>
+                                    {arrow} {pct > 0 ? `${pct}%` : 'At avg'}
+                                  </span>
+                                </td>
+                                <td className="c">
+                                  <span className={`home-st ${isOptimal ? 'ok' : 'bad'}`} style={{ fontSize: 12, padding: '4px 10px' }}>
+                                    {isOptimal ? 'Optimal' : 'Below optimal'} &middot; {optLabel}
+                                  </span>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="home-bm-src">
+                      Sources: CDC NHANES 2017–2020 · AHA/ACC 2019 · ADA 2024 · NIH/NLM. Hover &quot;vs. Avg&quot; for source detail.
                     </div>
                   </div>
                 )}
               </div>
-            )
-          })()}
-        </div>
-      )}
+            )}
+          </div>
+        )
+      })()}
 
       {/* F89 — Quick Metrics Entry Panel */}
       <QuickMetricsPanel />
@@ -476,14 +421,7 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
       <LabSetsComparison theme={theme} />
 
       {/* Stats Section */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-          gap: 10,
-          marginBottom: 24,
-        }}
-      >
+      <div className="home-stats">
         {statCard('Bookmarked Resources', bookmarkedCount, '🔖', () => {
           if (bookmarksRef.current) bookmarksRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
           else onNavigate?.('resources')
@@ -495,54 +433,31 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
 
       {/* Personalized Recommendations - NEW */}
       {results.length > 0 && (
-        <div ref={recommendationsRef} style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>Personalized for You</h3>
-            <div style={{ display: 'flex', gap: 4 }}>
+        <div ref={recommendationsRef} className="home-sec">
+          <div className="home-sec-h">
+            <h3 className="home-h3">Personalized for You</h3>
+            <div className="home-segs">
               {(['all', 'short', 'long'] as const).map(opt => (
                 <button
                   key={opt}
+                  className={durationFilter === opt ? 'on' : ''}
                   onClick={() => setDurationFilter(opt)}
-                  style={{
-                    padding: '4px 12px',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    borderRadius: 20,
-                    border: `1.5px solid ${durationFilter === opt ? theme.blue : theme.borderColor}`,
-                    background: durationFilter === opt ? theme.blue : 'transparent',
-                    color: durationFilter === opt ? '#fff' : theme.textMuted,
-                    cursor: 'pointer',
-                    textTransform: 'capitalize',
-                  }}
                 >
                   {opt === 'all' ? 'All' : opt === 'short' ? 'Short' : 'Long'}
                 </button>
               ))}
             </div>
           </div>
-          <p style={{ color: theme.textMuted, fontSize: 13, marginBottom: 16 }}>
+          <p className="home-sec-p">
             Based on {applicableTags.length} health insight{applicableTags.length !== 1 ? 's' : ''}: {applicableTags.join(', ') || 'Analyzing your results...'}
           </p>
 
           {loading && (
-            <div style={{ textAlign: 'center', color: theme.textMuted, padding: 32 }}>
-              Loading personalized recommendations...
-            </div>
+            <div className="home-empty" style={{ marginBottom: 16 }}>Loading personalized recommendations...</div>
           )}
 
           {error && (
-            <div
-              style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1.5px solid #FCA5A5',
-                borderRadius: 8,
-                padding: 16,
-                color: '#DC2626',
-                marginBottom: 24,
-              }}
-            >
-              Error loading recommendations: {error}
-            </div>
+            <div className="home-err">Error loading recommendations: {error}</div>
           )}
 
           {(() => {
@@ -555,157 +470,59 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
               : catDisplay.filter(r => !r.duration_type || r.duration_type === 'both' || r.duration_type === durationFilter)
             const display = filtered.length > 0 ? filtered : catDisplay
             return display.length > 0 ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                gap: 12,
-              }}
-            >
-              {display.map((resource) => (
-                <div
-                  key={resource.id}
-                  style={{
-                    background: theme.card,
-                    border: `1.5px solid ${theme.borderColor}`,
-                    borderRadius: 8,
-                    // Padding sits on the inner wrapper instead, so a thumbnail can run
-                    // flush to the card edges the way the Library grid renders it.
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={e => {
-                    ;(e.currentTarget as HTMLElement).style.borderColor = theme.blue
-                    ;(e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'
-                  }}
-                  onMouseLeave={e => {
-                    ;(e.currentTarget as HTMLElement).style.borderColor = theme.borderColor
-                    ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
-                  }}
-                >
-                  {/* Damon, 2026-10-06: resource thumbnails uploaded in Admin showed in
-                      the Library but never on Home — this card simply didn't render one.
-                      Same guard and sizing as the Library grid; cards without an image
-                      just start at the text, as they do there. */}
-                  {resource.thumbnail_url && (
-                    <img
-                      src={resource.thumbnail_url}
-                      alt=""
-                      style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }}
-                    />
-                  )}
-                  <div style={{ padding: 16 }}>
-                  <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4, textTransform: 'uppercase', fontWeight: 600 }}>
-                    📌 Recommended
+              <div className="home-cards">
+                {display.map((resource) => (
+                  <div key={resource.id} className="home-rc">
+                    {/* Damon, 2026-10-06: resource thumbnails uploaded in Admin showed in
+                        the Library but never on Home — this card simply didn't render one.
+                        Cards without an image just start at the text, as in the Library. */}
+                    {resource.thumbnail_url && (
+                      <img className="home-rc-img" src={resource.thumbnail_url} alt="" loading="lazy" />
+                    )}
+                    <div className="home-rc-b">
+                      <div className="home-rc-k">Recommended &middot; {resource.type}</div>
+                      <div className="home-rc-t">{resource.title}</div>
+                      <div className="home-rc-tags" title={resource.tags.join(', ')}>
+                        {resource.tags.join(', ')}
+                      </div>
+                      <button
+                        className={`home-btn${resource.link_url ? '' : ' off'}`}
+                        onClick={() => { if (resource.link_url) { window.open(resource.link_url, '_blank', 'noopener,noreferrer'); recordView(resource) } }}
+                      >
+                        View Resource
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 8 }}>{resource.type}</div>
-                  <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{resource.title}</div>
-                  <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>
-                    {resource.tags.join(', ')}
-                  </div>
-                  <button
-                    onClick={() => { if (resource.link_url) { window.open(resource.link_url, '_blank', 'noopener,noreferrer'); recordView(resource) } }}
-                    style={{
-                      background: theme.blue,
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 6,
-                      padding: '8px 12px',
-                      fontSize: 13,
-                      cursor: resource.link_url ? 'pointer' : 'not-allowed',
-                      width: '100%',
-                      opacity: resource.link_url ? 1 : 0.5,
-                    }}
-                  >
-                    View Resource
-                  </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div
-              style={{
-                background: theme.card,
-                border: `1.5px solid ${theme.borderColor}`,
-                borderRadius: 8,
-                padding: 32,
-                textAlign: 'center',
-                color: theme.textMuted,
-              }}
-            >
-              <p style={{ margin: 0 }}>No recommendations yet. Log more lab results to get personalized suggestions!</p>
-            </div>
-          )
+                ))}
+              </div>
+            ) : (
+              <div className="home-empty">
+                No recommendations yet. Log more lab results to get personalized suggestions!
+              </div>
+            )
           })()}
         </div>
       )}
 
       {/* Recent Resources */}
       {!results.length && (
-        <div ref={resourcesRef} style={{ marginBottom: 32 }}>
-          <h3 style={{ marginBottom: 16, fontSize: 20, fontWeight: 600 }}>Recently Viewed</h3>
+        <div ref={resourcesRef} className="home-sec">
+          <div className="home-sec-h"><h3 className="home-h3">Recently Viewed</h3></div>
+          <div style={{ height: 18 }} />
           {recentResources.length > 0 ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                gap: 12,
-              }}
-            >
+            <div className="home-cards">
               {recentResources.map(resource => (
-                <div
-                  key={resource.title}
-                  style={{
-                    background: theme.card,
-                    border: `1.5px solid ${theme.borderColor}`,
-                    borderRadius: 8,
-                    padding: 16,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={e => {
-                    ;(e.currentTarget as HTMLElement).style.borderColor = theme.blue
-                    ;(e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'
-                  }}
-                  onMouseLeave={e => {
-                    ;(e.currentTarget as HTMLElement).style.borderColor = theme.borderColor
-                    ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
-                  }}
-                >
-                  <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 8 }}>{resource.type}</div>
-                  <div style={{ fontWeight: 600, marginBottom: 12 }}>{resource.title}</div>
-                  <button
-                    style={{
-                      background: theme.blue,
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 6,
-                      padding: '8px 12px',
-                      fontSize: 13,
-                      cursor: 'pointer',
-                      width: '100%',
-                    }}
-                  >
-                    Continue Reading
-                  </button>
+                <div key={resource.title} className="home-rc">
+                  <div className="home-rc-b">
+                    <div className="home-rc-k">{resource.type}</div>
+                    <div className="home-rc-t">{resource.title}</div>
+                    <button className="home-btn">Continue Reading</button>
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div
-              style={{
-                background: theme.card,
-                border: `1.5px solid ${theme.borderColor}`,
-                borderRadius: 8,
-                padding: 32,
-                textAlign: 'center',
-                color: theme.textMuted,
-              }}
-            >
-              <p style={{ margin: 0 }}>No resources viewed yet. Start exploring!</p>
-            </div>
+            <div className="home-empty">No resources viewed yet. Start exploring!</div>
           )}
         </div>
       )}
@@ -713,58 +530,21 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
       {/* Bookmarked Resources — shown whenever the user has any, regardless of lab data
           (unlike Recently Viewed above, bookmarking isn't tied to having entered labs yet) */}
       {bookmarkedResources.length > 0 && (
-        <div ref={bookmarksRef} style={{ marginBottom: 32 }}>
-          <h3 style={{ marginBottom: 16, fontSize: 20, fontWeight: 600 }}>Your Bookmarked Resources</h3>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: 12,
-            }}
-          >
+        <div ref={bookmarksRef} className="home-sec">
+          <div className="home-sec-h"><h3 className="home-h3">Your Bookmarked Resources</h3></div>
+          <div style={{ height: 18 }} />
+          <div className="home-cards">
             {bookmarkedResources.map(resource => (
-              <div
-                key={resource.id}
-                style={{
-                  background: theme.card,
-                  border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 8,
-                  padding: 16,
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => {
-                  ;(e.currentTarget as HTMLElement).style.borderColor = theme.blue
-                  ;(e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'
-                }}
-                onMouseLeave={e => {
-                  ;(e.currentTarget as HTMLElement).style.borderColor = theme.borderColor
-                  ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
-                }}
-              >
-                <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 8 }}>{resource.type}</div>
-                <div style={{ fontWeight: 600, marginBottom: 12 }}>{resource.title}</div>
-                {resource.link_url && (
-                  <a
-                    href={resource.link_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'block',
-                      textAlign: 'center',
-                      background: theme.blue,
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 6,
-                      padding: '8px 12px',
-                      fontSize: 13,
-                      textDecoration: 'none',
-                      width: '100%',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    Open →
-                  </a>
-                )}
+              <div key={resource.id} className="home-rc">
+                <div className="home-rc-b">
+                  <div className="home-rc-k">{resource.type}</div>
+                  <div className="home-rc-t">{resource.title}</div>
+                  {resource.link_url && (
+                    <a className="home-btn" href={resource.link_url} target="_blank" rel="noopener noreferrer">
+                      Open →
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -784,85 +564,26 @@ export default function Dashboard({ userEmail = '', userName = '', onNavigate }:
       {user?.id && <ChallengesSection theme={theme} userId={user.id} />}
 
       {/* Quick Actions */}
-      <div style={{ marginBottom: 32 }}>
-        <h3 style={{ marginBottom: 16, fontSize: 20, fontWeight: 600 }}>Quick Actions</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
-          <button
-            style={{
-              background: theme.blue,
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              padding: '12px 16px',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-            onClick={() => onNavigate?.('labs')}
-          >
-            📊 Log Lab Results
+      <div className="home-sec">
+        <div className="home-sec-h"><h3 className="home-h3">Quick Actions</h3></div>
+        <div style={{ height: 18 }} />
+        <div className="home-qa">
+          <button className="home-qa-b primary" onClick={() => onNavigate?.('labs')}>
+            <span className="home-qa-i" aria-hidden="true">📊</span>Log Lab Results
           </button>
-          <button
-            style={{
-              background: theme.card,
-              color: theme.text,
-              border: `1.5px solid ${theme.borderColor}`,
-              borderRadius: 6,
-              padding: '12px 16px',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-            onClick={() => onNavigate?.('library')}
-          >
-            🔍 Browse Library
+          <button className="home-qa-b" onClick={() => onNavigate?.('library')}>
+            <span className="home-qa-i" aria-hidden="true">🔍</span>Browse Library
           </button>
-          <button
-            style={{
-              background: theme.card,
-              color: theme.text,
-              border: `1.5px solid ${theme.borderColor}`,
-              borderRadius: 6,
-              padding: '12px 16px',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-            onClick={() => onNavigate?.('profile')}
-          >
-            ⚙️ Edit Profile
+          <button className="home-qa-b" onClick={() => onNavigate?.('profile')}>
+            <span className="home-qa-i" aria-hidden="true">⚙️</span>Edit Profile
           </button>
           {results.length > 0 && (
-            <button
-              style={{
-                background: theme.card,
-                color: theme.text,
-                border: `1.5px solid ${theme.borderColor}`,
-                borderRadius: 6,
-                padding: '12px 16px',
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-              onClick={() => setShowHealthReport(true)}
-            >
-              📄 Health Report
+            <button className="home-qa-b" onClick={() => setShowHealthReport(true)}>
+              <span className="home-qa-i" aria-hidden="true">📄</span>Health Report
             </button>
           )}
-          <button
-            style={{
-              background: 'transparent',
-              color: theme.text,
-              border: `1.5px solid ${theme.borderColor}`,
-              borderRadius: 6,
-              padding: '12px 16px',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-            onClick={() => setShowHealthAssessment(true)}
-          >
-            🩺 Health Check-In
+          <button className="home-qa-b" onClick={() => setShowHealthAssessment(true)}>
+            <span className="home-qa-i" aria-hidden="true">🩺</span>Health Check-In
           </button>
         </div>
       </div>

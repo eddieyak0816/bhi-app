@@ -203,11 +203,11 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
   }
 
   const inputStyle: React.CSSProperties = {
-    background: theme.bgSecondary,
-    border: `1px solid ${theme.borderColor}`,
-    borderRadius: 6,
-    padding: '7px 10px',
-    fontSize: 13,
+    background: theme.bg,
+    border: `1.5px solid ${theme.borderColor}`,
+    borderRadius: 12,
+    padding: '11px 13px',
+    fontSize: 14,
     color: theme.text,
     width: '100%',
     boxSizing: 'border-box',
@@ -220,10 +220,10 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
           key={u}
           onClick={() => set(u)}
           style={{
-            padding: '4px 10px',
-            fontSize: 12,
-            fontWeight: 600,
-            borderRadius: 6,
+            padding: '9px 15px',
+            fontSize: 13,
+            fontWeight: 700,
+            borderRadius: 999,
             border: `1.5px solid ${val === u ? theme.blue : theme.borderColor}`,
             background: val === u ? theme.blue : 'transparent',
             color: val === u ? '#fff' : theme.textMuted,
@@ -241,8 +241,9 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
       <div
         style={{
           background: theme.card,
-          border: `1.5px solid ${theme.borderColor}`,
-          borderRadius: 10,
+          border: `1px solid ${theme.borderLight}`,
+          borderRadius: 20,
+          boxShadow: '0 1px 2px rgba(16,26,22,0.05)',
           marginBottom: 32,
           overflow: 'hidden',
         }}
@@ -258,21 +259,26 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '14px 20px',
+            padding: '18px 24px',
             color: theme.text,
           }}
         >
-          <span style={{ fontWeight: 700, fontSize: 15 }}>Log Your NHLS Metrics</span>
-          <span style={{ fontSize: 11, color: theme.textMuted }}>{open ? '▼' : '▶'}</span>
+          <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: '-0.02em' }}>Log Your NHLS Metrics</span>
+          <svg
+            width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true"
+            style={{ color: theme.textMuted, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}
+          >
+            <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
 
         {open && (
-          <div style={{ padding: '0 20px 20px' }}>
+          <div style={{ padding: '4px 24px 24px' }}>
             {/* Lab value inputs — 2-column grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px 16px', marginBottom: 16 }}>
               {METRIC_FIELDS.map(f => (
                 <div key={f.markerName}>
-                  <label style={{ fontSize: 12, color: theme.textMuted, display: 'block', marginBottom: 4 }}>
+                  <label style={{ fontSize: 12.5, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 6 }}>
                     {f.label} <span style={{ fontSize: 11 }}>({f.unit})</span>
                   </label>
                   <input
@@ -300,7 +306,7 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px 16px' }}>
                   {visibleExtraScoreFields.map(f => (
                     <div key={f.markerName}>
-                      <label style={{ fontSize: 12, color: theme.textMuted, display: 'block', marginBottom: 4 }}>
+                      <label style={{ fontSize: 12.5, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 6 }}>
                         {f.label} {f.unit && <span style={{ fontSize: 11 }}>({f.unit})</span>}
                       </label>
                       <input
@@ -329,7 +335,7 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px 16px' }}>
                   {visibleHormoneFields.map(f => (
                     <div key={f.markerName}>
-                      <label style={{ fontSize: 12, color: theme.textMuted, display: 'block', marginBottom: 4 }}>
+                      <label style={{ fontSize: 12.5, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 6 }}>
                         {f.label} {f.unit && <span style={{ fontSize: 11 }}>({f.unit})</span>}
                       </label>
                       <input
@@ -348,7 +354,7 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
 
             {/* Waist */}
             <div style={{ marginBottom: 10 }}>
-              <label style={{ fontSize: 12, color: theme.textMuted, display: 'block', marginBottom: 4 }}>
+              <label style={{ fontSize: 12.5, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 6 }}>
                 Waist Circumference
               </label>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -366,7 +372,7 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
 
             {/* Height */}
             <div style={{ marginBottom: 10 }}>
-              <label style={{ fontSize: 12, color: theme.textMuted, display: 'block', marginBottom: 4 }}>
+              <label style={{ fontSize: 12.5, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 6 }}>
                 Height
               </label>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -385,7 +391,7 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
             {/* Lab Set */}
             {labSets.length > 0 && (
               <div style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 12, color: theme.textMuted, display: 'block', marginBottom: 4 }}>
+                <label style={{ fontSize: 12.5, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 6 }}>
                   Lab Set
                 </label>
                 <select
@@ -421,9 +427,10 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
                 style={{
                   background: 'transparent',
                   border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: 6,
-                  padding: '9px 20px',
+                  borderRadius: 999,
+                  padding: '11px 22px',
                   fontSize: 14,
+                  fontWeight: 600,
                   color: theme.textMuted,
                   cursor: 'pointer',
                 }}
@@ -437,10 +444,10 @@ export default function QuickMetricsPanel({ onScoreRecalc }: QuickMetricsPanelPr
                   background: theme.blue,
                   color: '#fff',
                   border: 'none',
-                  borderRadius: 6,
-                  padding: '9px 24px',
+                  borderRadius: 999,
+                  padding: '11px 26px',
                   fontSize: 14,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: saving ? 'not-allowed' : 'pointer',
                   opacity: saving ? 0.7 : 1,
                 }}

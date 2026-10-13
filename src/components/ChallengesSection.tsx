@@ -41,8 +41,9 @@ export default function ChallengesSection({ theme, userId }: Props) {
   const t = theme
 
   return (
-    <div style={{ marginBottom: 24 }}>
-      <h3 style={{ fontSize: 16, fontWeight: 700, color: t.text, margin: '0 0 12px' }}>Active Challenges</h3>
+    <div className="home-sec">
+      <div className="home-sec-h"><h3 className="home-h3">Active Challenges</h3></div>
+      <div style={{ height: 18 }} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {challenges.map(c => {
           const now = new Date()
@@ -54,10 +55,11 @@ export default function ChallengesSection({ theme, userId }: Props) {
 
           return (
             <div key={c.id} style={{
-              background: t.cardBackground,
-              border: `1px solid ${t.borderColor}`,
-              borderRadius: 10,
-              padding: '14px 18px',
+              background: t.card,
+              border: `1px solid ${t.borderLight}`,
+              borderRadius: 20,
+              boxShadow: '0 1px 2px rgba(16,26,22,0.05)',
+              padding: '18px 22px',
             }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
                 <div>
@@ -78,8 +80,8 @@ export default function ChallengesSection({ theme, userId }: Props) {
                   <span>Challenge progress</span>
                   <span>{pct}%</span>
                 </div>
-                <div style={{ height: 6, background: t.borderColor, borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{ width: `${pct}%`, height: '100%', background: t.blue ?? '#3b82f6', borderRadius: 3, transition: 'width 0.4s' }} />
+                <div style={{ height: 8, background: t.borderLight, borderRadius: 999, overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', background: '#15A06B', borderRadius: 999, transition: 'width 0.4s' }} />
                 </div>
               </div>
 

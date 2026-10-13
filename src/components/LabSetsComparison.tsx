@@ -74,8 +74,9 @@ export default function LabSetsComparison({ theme }: Props) {
   return (
     <div style={{
       background: theme.card,
-      border: `1.5px solid ${theme.borderColor}`,
-      borderRadius: 10,
+      border: `1px solid ${theme.borderLight}`,
+      borderRadius: 20,
+      boxShadow: '0 1px 2px rgba(16,26,22,0.05)',
       marginBottom: 32,
       overflow: 'hidden',
     }}>
@@ -84,15 +85,20 @@ export default function LabSetsComparison({ theme }: Props) {
         style={{
           width: '100%', background: 'none', border: 'none', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 20px', color: theme.text,
+          padding: '18px 24px', color: theme.text,
         }}
       >
-        <span style={{ fontWeight: 700, fontSize: 15 }}>Lab Progress Comparison</span>
-        <span style={{ fontSize: 11, color: theme.textMuted }}>{open ? '▼' : '▶'}</span>
+        <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: '-0.02em' }}>Lab Progress Comparison</span>
+        <svg
+          width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true"
+          style={{ color: theme.textMuted, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}
+        >
+          <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
 
       {open && (
-        <div style={{ padding: '0 20px 20px', overflowX: 'auto' }}>
+        <div style={{ padding: '4px 24px 24px', overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: theme.bgSecondary }}>

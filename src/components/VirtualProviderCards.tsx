@@ -36,11 +36,10 @@ export default function VirtualProviderCards() {
   if (loading || providers.length === 0) return null
 
   return (
-    <div style={{ marginTop: 32, marginBottom: 32 }}>
-      <h3 style={{ margin: '0 0 14px 0', fontSize: 16, fontWeight: 700, color: theme.text }}>
-        Virtual Providers
-      </h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
+    <div className="home-sec">
+      <div className="home-sec-h"><h3 className="home-h3">Virtual Providers</h3></div>
+      <div style={{ height: 18 }} />
+      <div className="home-cards">
         {providers.map(p => {
           const isExpanded = expanded === p.id
           return (
@@ -48,9 +47,10 @@ export default function VirtualProviderCards() {
               key={p.id}
               style={{
                 background: theme.card,
-                border: `1px solid ${theme.borderColor}`,
-                borderRadius: 10,
-                padding: '16px 18px',
+                border: `1px solid ${theme.borderLight}`,
+                borderRadius: 22,
+                padding: '20px 22px',
+                boxShadow: '0 1px 2px rgba(16,26,22,0.05)',
                 cursor: p.full_bio || p.link_url ? 'pointer' : 'default',
                 transition: 'box-shadow 0.15s',
               }}
@@ -62,19 +62,19 @@ export default function VirtualProviderCards() {
                   <img
                     src={p.image_url}
                     alt={p.name}
-                    style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                    style={{ width: 52, height: 52, borderRadius: 16, objectFit: 'cover', flexShrink: 0 }}
                   />
                 ) : (
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: theme.bgSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18, color: theme.textMuted }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 16, background: theme.bgSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18, color: theme.textMuted }}>
                     {p.name.charAt(0)}
                   </div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: theme.text }}>{p.name}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15.5, letterSpacing: '-0.015em', color: theme.text }}>{p.name}</div>
                   {p.title && <div style={{ fontSize: 12, color: theme.textMuted }}>{p.title}</div>}
                   {p.specialty && (
                     <div style={{ fontSize: 11, marginTop: 2 }}>
-                      <span style={{ background: theme.bgSecondary, color: theme.textMuted, padding: '1px 6px', borderRadius: 4 }}>{p.specialty}</span>
+                      <span style={{ background: theme.bgSecondary, color: theme.textMuted, padding: '3px 10px', borderRadius: 999, fontWeight: 600 }}>{p.specialty}</span>
                     </div>
                   )}
                 </div>
@@ -104,7 +104,7 @@ export default function VirtualProviderCards() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={e => e.stopPropagation()}
-                      style={{ display: 'inline-block', background: theme.blue ?? '#3B82F6', color: '#fff', padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                      style={{ display: 'inline-block', background: theme.blue ?? '#12332A', color: '#fff', padding: '9px 18px', borderRadius: 999, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}
                     >
                       Book / Connect →
                     </a>
