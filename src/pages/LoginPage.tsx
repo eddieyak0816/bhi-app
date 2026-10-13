@@ -1,10 +1,8 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useTheme } from '../context/ThemeContext'
 
 export default function LoginPage() {
   const { login } = useAuth()
-  const { theme } = useTheme()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -27,152 +25,99 @@ export default function LoginPage() {
     }
   }
 
+  // Presentation only below this line. Styles live in styles.css (.auth-*), shared with
+  // SignupPage, so the two screens stay visually identical and follow light/dark mode.
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: theme.bg,
-        padding: '16px',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '400px',
-          background: theme.card,
-          border: `1.5px solid ${theme.borderColor}`,
-          borderRadius: '12px',
-          padding: '32px',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-        }}
-      >
-        <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: 700, color: theme.text, margin: 0, lineHeight: 1.2 }}>
-            National<br />Health League
-          </h1>
+    <div className="auth">
+      <aside className="auth-brand" aria-hidden="false">
+        <svg className="auth-rings" viewBox="0 0 340 340" fill="none" aria-hidden="true">
+          <circle cx="170" cy="170" r="160" stroke="rgba(255,255,255,0.07)" strokeWidth="1.5" />
+          <circle cx="170" cy="170" r="122" stroke="rgba(255,255,255,0.09)" strokeWidth="1.5" />
+          <circle cx="170" cy="170" r="84" stroke="rgba(184,230,46,0.28)" strokeWidth="10" strokeLinecap="round"
+                  strokeDasharray="528" strokeDashoffset="132" transform="rotate(-90 170 170)" />
+        </svg>
+
+        <div className="auth-logo">
+          <div className="auth-mark"><i /></div>
+          <div className="auth-logo-t">National<br />Health League</div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              required
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1.5px solid ${theme.borderColor}`,
-                borderRadius: '6px',
-                fontSize: '14px',
-                background: theme.bg,
-                color: theme.text,
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
+        <div className="auth-pitch">
+          <h2>Know your numbers.<br /><span>Then move them.</span></h2>
+          <p>Track your labs, see where you stand, and get recommendations matched to the markers that need attention.</p>
+        </div>
 
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Password
-            </label>
-            <div style={{ position: 'relative' }}>
+        <div className="auth-trust">
+          We only analyze data you enter yourself. We have no access to your medical records or health data.
+        </div>
+      </aside>
+
+      <main className="auth-main">
+        <div className="auth-card">
+          <h1 className="auth-title">Welcome back</h1>
+          <p className="auth-sub">Log in to see your score and your recommendations.</p>
+
+          <form onSubmit={handleSubmit}>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="login-email">Email</label>
               <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••"
+                id="login-email"
+                className="auth-input"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
                 required
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  background: theme.bg,
-                  color: theme.text,
-                  boxSizing: 'border-box',
-                }}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: theme.textMuted,
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                }}
-              >
-                {showPassword ? '🙈' : '👁️'}
-              </button>
             </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="login-password">Password</label>
+              <div className="auth-pw">
+                <input
+                  id="login-password"
+                  className="auth-input"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Your password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-eye"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                      <path d="M1 1l22 22" />
+                    </svg>
+                  ) : (
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {error && <div className="auth-err" role="alert">{error}</div>}
+
+            <button type="submit" className="auth-btn" disabled={loading}>
+              {loading ? 'Logging in...' : 'Log in'}
+            </button>
+          </form>
+
+          <div className="auth-alt">
+            Don't have an account?<a href="#/signup">Sign up</a>
           </div>
-
-          {error && (
-            <div
-              style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1.5px solid #FCA5A5',
-                borderRadius: '6px',
-                padding: '12px',
-                marginBottom: '16px',
-                color: '#DC2626',
-                fontSize: '14px',
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              background: loading ? '#999' : '#3B82F6',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'background 0.2s',
-            }}
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-
-        <div style={{ marginTop: '24px', textAlign: 'center', borderTop: `1px solid ${theme.borderColor}`, paddingTop: '24px' }}>
-          <p style={{ color: theme.textMuted, margin: 0, fontSize: '14px' }}>
-            Don't have an account?{' '}
-            <a
-              href="#/signup"
-              style={{
-                color: '#3B82F6',
-                textDecoration: 'none',
-                fontWeight: 600,
-              }}
-            >
-              Sign up
-            </a>
-          </p>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
