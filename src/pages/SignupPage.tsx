@@ -1,10 +1,28 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useTheme } from '../context/ThemeContext'
+import AuthBrand from '../components/AuthBrand'
+
+// Eye / eye-off glyph for the show-password toggles (replaces the emoji).
+function EyeIcon({ open }: { open: boolean }) {
+  return open ? (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+      <path d="M1 1l22 22" />
+    </svg>
+  ) : (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+// Every rule getPasswordErrors() can report, in display order. The list below ticks a rule
+// off when it is NOT among the current errors — so the rules themselves live in one place.
+const PASSWORD_RULES = ['At least 6 characters', 'One uppercase letter', 'One lowercase letter', 'One number']
 
 export default function SignupPage() {
   const { signup, resendConfirmation } = useAuth()
-  const { theme } = useTheme()
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
@@ -81,331 +99,194 @@ export default function SignupPage() {
     }
   }
 
+  // ── Presentation only below this line ──────────────────────────────────────
+
   if (pendingConfirmation) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: theme.bg,
-          padding: '16px',
-        }}
-      >
-        <div
-          style={{
-            width: '100%',
-            maxWidth: '400px',
-            background: theme.card,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: '12px',
-            padding: '32px',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ fontSize: '40px', marginBottom: '12px' }}>📧</div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: theme.text, margin: 0 }}>
-            Check your email
-          </h1>
-          <p style={{ color: theme.textMuted, margin: '12px 0 0 0', fontSize: '14px', lineHeight: 1.5 }}>
-            We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then come back and log in.
-          </p>
-
-          {resendMessage && (
-            <p style={{ fontSize: '13px', margin: '16px 0 0 0', color: theme.textMuted }}>
-              {resendMessage}
+      <div className="auth">
+        <AuthBrand
+          title={<>Almost there.<br /><span>Check your inbox.</span></>}
+          text="One quick step to activate your account, then you can log in and add your first results."
+        />
+        <main className="auth-main">
+          <div className="auth-card auth-center">
+            <div className="auth-sent">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="3" />
+                <path d="M2 7l10 6 10-6" />
+              </svg>
+            </div>
+            <h1 className="auth-title">Check your email</h1>
+            <p className="auth-sub" style={{ marginBottom: 0 }}>
+              We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then come back and log in.
             </p>
-          )}
 
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={resendLoading}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              background: resendLoading ? '#999' : '#3B82F6',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: resendLoading ? 'not-allowed' : 'pointer',
-              marginTop: '20px',
-            }}
-          >
-            {resendLoading ? 'Sending...' : 'Resend confirmation email'}
-          </button>
+            {resendMessage && <p className="auth-sent-msg" role="status">{resendMessage}</p>}
 
-          <p style={{ marginTop: '20px', marginBottom: 0 }}>
-            <a href="#/login" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>
-              Back to login
-            </a>
-          </p>
-        </div>
+            <button
+              type="button"
+              className="auth-btn"
+              style={{ marginTop: 26 }}
+              onClick={handleResend}
+              disabled={resendLoading}
+            >
+              {resendLoading ? 'Sending...' : 'Resend confirmation email'}
+            </button>
+
+            <div className="auth-alt">
+              <a href="#/login" style={{ marginLeft: 0 }}>Back to login</a>
+            </div>
+          </div>
+        </main>
       </div>
     )
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: theme.bg,
-        padding: '16px',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '400px',
-          background: theme.card,
-          border: `1.5px solid ${theme.borderColor}`,
-          borderRadius: '12px',
-          padding: '32px',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-        }}
-      >
-        <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: 700, color: theme.text, margin: 0 }}>
-            Create Account
-          </h1>
-          <p style={{ color: theme.textMuted, margin: '8px 0 0 0', fontSize: '14px' }}>
-            Join National Health League to get started
-          </p>
-        </div>
+    <div className="auth">
+      <AuthBrand
+        title={<>Create your account.<br /><span>See where you stand.</span></>}
+        text="Enter your lab values to get your NHLS score and recommendations matched to the markers that need attention."
+      />
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Full Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="John Doe"
-              required
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1.5px solid ${theme.borderColor}`,
-                borderRadius: '6px',
-                fontSize: '14px',
-                background: theme.bg,
-                color: theme.text,
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
+      <main className="auth-main">
+        <div className="auth-card">
+          <h1 className="auth-title">Create account</h1>
+          <p className="auth-sub">Join National Health League to get started.</p>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              required
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1.5px solid ${theme.borderColor}`,
-                borderRadius: '6px',
-                fontSize: '14px',
-                background: theme.bg,
-                color: theme.text,
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Password
-            </label>
-            <div style={{ position: 'relative', marginBottom: '12px' }}>
+          <form onSubmit={handleSubmit}>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="su-name">Full name</label>
               <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••"
+                id="su-name"
+                className="auth-input"
+                type="text"
+                autoComplete="name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="John Doe"
                 required
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: `1.5px solid ${theme.borderColor}`,
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  background: theme.bg,
-                  color: theme.text,
-                  boxSizing: 'border-box',
-                }}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: theme.textMuted,
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                }}
-              >
-                {showPassword ? '🙈' : '👁️'}
-              </button>
             </div>
 
-            <div style={{ fontSize: '12px', color: theme.textMuted }}>
-              <p style={{ margin: '0 0 6px 0', fontWeight: 500 }}>Requirements:</p>
-              {passwordErrors.map((err, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                  <span style={{ marginRight: '6px' }}>{passwordValid ? '✓' : '○'}</span>
-                  {err}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Confirm Password
-            </label>
-            <div style={{ position: 'relative' }}>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="su-email">Email</label>
               <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                placeholder="••••••"
+                id="su-email"
+                className="auth-input"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
                 required
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: `1.5px solid ${passwordsMatch ? '#10b981' : theme.borderColor}`,
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  background: theme.bg,
-                  color: theme.text,
-                  boxSizing: 'border-box',
-                }}
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: theme.textMuted,
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                }}
-              >
-                {showConfirmPassword ? '🙈' : '👁️'}
-              </button>
             </div>
-            {confirmPassword && (
-              <p style={{ fontSize: '12px', margin: '6px 0 0 0', color: passwordsMatch ? '#10b981' : '#ef4444' }}>
-                {passwordsMatch ? '✓ Passwords match' : '✗ Passwords do not match'}
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="su-password">Password</label>
+              <div className="auth-pw">
+                <input
+                  id="su-password"
+                  className="auth-input"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Create a password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-eye"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  <EyeIcon open={showPassword} />
+                </button>
+              </div>
+
+              <ul className="auth-reqs" aria-label="Password requirements">
+                {PASSWORD_RULES.map(rule => {
+                  const met = !passwordErrors.includes(rule)
+                  return (
+                    <li key={rule} className={`auth-req${met ? ' ok' : ''}`}>
+                      <span className="auth-req-dot" aria-hidden="true">
+                        <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M2 6.5l2.6 2.6L10 3.5" />
+                        </svg>
+                      </span>
+                      {rule}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="su-confirm">Confirm password</label>
+              <div className="auth-pw">
+                <input
+                  id="su-confirm"
+                  className={`auth-input${passwordsMatch ? ' is-ok' : ''}`}
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Repeat your password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-eye"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  <EyeIcon open={showConfirmPassword} />
+                </button>
+              </div>
+              {confirmPassword && (
+                <p className={`auth-match ${passwordsMatch ? 'ok' : 'bad'}`} role="status">
+                  {passwordsMatch ? '✓ Passwords match' : '✗ Passwords do not match'}
+                </p>
+              )}
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="su-invite">
+                Organization invite code<span className="auth-opt">(optional)</span>
+              </label>
+              <input
+                id="su-invite"
+                className="auth-input mono"
+                type="text"
+                autoComplete="off"
+                value={inviteCode}
+                onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                placeholder="e.g. ABC12345"
+                maxLength={12}
+              />
+              <p className="auth-help">
+                If your employer gave you a code, enter it here to join their organization anonymously.
               </p>
-            )}
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Organization Invite Code <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={inviteCode}
-              onChange={e => setInviteCode(e.target.value.toUpperCase())}
-              placeholder="e.g. ABC12345"
-              maxLength={12}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: `1.5px solid ${theme.borderColor}`,
-                borderRadius: '6px',
-                fontSize: '14px',
-                background: theme.bg,
-                color: theme.text,
-                boxSizing: 'border-box',
-                fontFamily: 'monospace',
-                letterSpacing: 2,
-              }}
-            />
-            <p style={{ fontSize: '12px', color: theme.textMuted, margin: '6px 0 0 0' }}>
-              If your employer gave you a code, enter it here to join their organization anonymously.
-            </p>
-          </div>
-
-          {error && (
-            <div
-              style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1.5px solid #FCA5A5',
-                borderRadius: '6px',
-                padding: '12px',
-                marginBottom: '16px',
-                color: '#DC2626',
-                fontSize: '14px',
-              }}
-            >
-              {error}
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading || !passwordValid || !passwordsMatch}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              background: (loading || !passwordValid || !passwordsMatch) ? '#999' : '#3B82F6',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: (loading || !passwordValid || !passwordsMatch) ? 'not-allowed' : 'pointer',
-              transition: 'background 0.2s',
-            }}
-          >
-            {loading ? 'Creating account...' : 'Sign Up'}
-          </button>
-        </form>
+            {error && <div className="auth-err" role="alert">{error}</div>}
 
-        <div style={{ marginTop: '24px', textAlign: 'center', borderTop: `1px solid ${theme.borderColor}`, paddingTop: '24px' }}>
-          <p style={{ color: theme.textMuted, margin: 0, fontSize: '14px' }}>
-            Already have an account?{' '}
-            <a
-              href="#/login"
-              style={{
-                color: '#3B82F6',
-                textDecoration: 'none',
-                fontWeight: 600,
-              }}
+            <button
+              type="submit"
+              className="auth-btn"
+              disabled={loading || !passwordValid || !passwordsMatch}
             >
-              Login
-            </a>
-          </p>
+              {loading ? 'Creating account...' : 'Sign up'}
+            </button>
+          </form>
+
+          <div className="auth-alt">
+            Already have an account?<a href="#/login">Log in</a>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
