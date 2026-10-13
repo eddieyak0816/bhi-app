@@ -1768,3 +1768,26 @@ body.dark-mode .adm-mbtn.danger{color:#F2A29E}
   .adm-mleft{padding-right:0}
   .adm-mfoot{flex-direction:column-reverse}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin → Categories (list + edit popup) — plus a few small shared helpers
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-stack{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.adm-stack > .adm-in{width:100%}
+.adm-root .adm-ta{min-height:96px;resize:vertical;line-height:1.5}
+.adm-root .adm-ta-lg{flex:1;min-height:150px}
+.adm-root .adm-mb16{margin-bottom:16px}
+.adm-root .adm-mb12{margin-bottom:12px}
+.adm-empty{background:var(--card);border:1px dashed var(--border);border-radius:20px;padding:36px 24px;text-align:center;color:var(--text-secondary)}
+.adm-card-t{margin:0 0 8px;font-size:15px;font-weight:800;letter-spacing:-.015em;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adm-card-d{margin:0 0 14px;font-size:13px;line-height:1.45;color:var(--text-secondary);flex:1;min-height:38px;max-height:38px;overflow:hidden;position:relative}
+.adm-card-acts{display:flex;gap:8px;justify-content:center;margin-top:auto}
+.adm-v.mb{margin-bottom:18px}
+.adm-v.pre{white-space:pre-wrap}
+.adm-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.adm-tagpick{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border:1.5px solid var(--border);border-radius:999px;
+  background:var(--bg);color:var(--text-primary);font-size:13px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s}
+.adm-tagpick:hover{border-color:#15A06B}
+.adm-tagpick.on{background:#2D7FC0;border-color:#2D7FC0;color:#fff}
+.adm-tagpick input{accent-color:#fff;margin:0 !important}
+.adm-mfoot > .adm-mbtn:only-child{flex:1}

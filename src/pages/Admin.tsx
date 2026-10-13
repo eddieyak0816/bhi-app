@@ -3288,20 +3288,20 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           {loading ? <div>Loading...</div> : (
             <div>
               {/* Category creation form */}
-              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Category</h3>
-                <div style={{display:'flex',gap:12,alignItems:'flex-start',flexDirection:'column'}}>
+              <div className="adm-panel">
+                <h3 className="adm-panel-h">Add Category</h3>
+                <div className="adm-stack">
                   <input
                     placeholder="Category name (e.g., Diabetes, Heart Health)"
                     value={newTypeName}
                     onChange={e => setNewTypeName(e.target.value)}
-                    style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                    className="adm-in adm-in-full"
                   />
                   <textarea
                     placeholder="Description (optional)"
                     value={categoryDescription}
                     onChange={e => setCategoryDescription(e.target.value)}
-                    style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,minHeight:'80px',fontFamily:'inherit'}}
+                    className="adm-in adm-in-full adm-ta"
                   />
                   <button className="btn-primary" onClick={async () => {
                     if (!newTypeName.trim()) return alert('Category name required')
@@ -3320,13 +3320,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               </div>
 
               {/* Categories Grid */}
-              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Categories</h3>
-                <button onClick={() => toggleViewMode('categories')} title={viewMode.categories === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.categories === 'card' ? '📋' : '🗂️'}</button>
+              <div className="adm-bar">
+                <h3 className="adm-panel-h" style={{margin:0}}>Categories</h3>
+                <button onClick={() => toggleViewMode('categories')} title={viewMode.categories === 'card' ? 'Table view' : 'Card view'} className="adm-view">{viewMode.categories === 'card' ? '📋' : '🗂️'}</button>
               </div>
 
               {categories.length === 0 ? (
-                <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:32,textAlign:'center',color:theme.textMuted}}>
+                <div className="adm-empty">
                   {categoriesError ? (
                     <div>
                       <p style={{margin:0}}>Failed to load categories: {categoriesError}</p>
@@ -3338,26 +3338,26 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 </div>
               ) : viewMode.categories === 'table' ? (
                 <>
-                <div style={{border:`1px solid ${theme.borderColor}`,borderRadius:6,overflow:'auto'}}>
-                  <table style={styles.table}>
+                <div className="adm-tablewrap">
+                  <table className="adm-table">
                     <thead>
-                      <tr style={styles.tableHeader}>
-                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Category Name</th>
-                        <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Description</th>
-                        <th style={{padding:12,textAlign:'right',fontWeight:600,color:'#ffffff'}}>Actions</th>
+                      <tr>
+                        <th>Category Name</th>
+                        <th>Description</th>
+                        <th className="r">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {(categories || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(cat => (
-                        <tr key={cat.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                          <td style={{padding:12,color:theme.text}}>{cat.name}</td>
-                          <td style={{padding:12,color:theme.textMuted}}>{cat.description || '-'}</td>
-                          <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
-                            <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end',height:'100%'}}>
+                        <tr key={cat.id}>
+                          <td>{cat.name}</td>
+                          <td className="adm-dim">{cat.description || '-'}</td>
+                          <td className="r">
+                            <div className="adm-acts">
                               <button onClick={() => {
                                   const tagsForCat = (Object.keys(tagsMeta || {})).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(cat.name))
                                   setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || '', tags: tagsForCat}); setIsEditingCategory(true); setCategoryModalOpen(true)
-                                }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit category ${cat.name}`}>
+                                }} className="adm-ibtn" aria-label={`Edit category ${cat.name}`}>
                                 ✎
                               </button>
                               <button onClick={async () => {
@@ -3369,7 +3369,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                   console.error('Delete category error:', err)
                                   alert('Delete failed — ' + ((err as any)?.message || 'check server logs'))
                                 }
-                              }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)} aria-label={`Delete category ${cat.name}`}>
+                              }} className="adm-ibtn del" aria-label={`Delete category ${cat.name}`}>
                                 ✕
                               </button>
                             </div>
@@ -3382,7 +3382,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 </>
               ) : (
                 <>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
+                <div className="adm-cards">
                   {(categories || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(cat => {
                     const description = cat.description || 'No description'
                     const titleTooLong = cat.name.length > 25
@@ -3390,15 +3390,15 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     const isTruncated = titleTooLong || descriptionTooLong
                     
                     return (
-                      <div key={cat.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,display:'flex',flexDirection:'column',height:'100%',position:'relative'}}>
-                        <h4 style={{margin:'0 0 8px 0',fontSize:14,fontWeight:600,color:theme.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      <div key={cat.id} className="adm-card">
+                        <h4 className="adm-card-t">
                           {titleTooLong ? (
                             <>
                               {cat.name.substring(0, 22)}…{' '}
                               <button onClick={() => {
                                   const tagsForCat = (Object.keys(tagsMeta || {})).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(cat.name))
                                   setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || '', tags: tagsForCat}); setIsEditingCategory(true); setCategoryModalOpen(true)
-                                }} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
+                                }} style={{background:'transparent',border:'none',color:'var(--primary-blue)',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
                                 more
                               </button>
                             </>
@@ -3406,7 +3406,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             cat.name
                           )}
                         </h4>
-                        <p style={{margin:'0 0 12px 0',fontSize:13,color:theme.textMuted,flex:1,lineHeight:'1.4',minHeight:'36.4px',maxHeight:'36.4px',overflow:'hidden',position:'relative'}}>
+                        <p className="adm-card-d">
                           <span style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
                             {description}
                           </span>
@@ -3414,16 +3414,16 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             <span onClick={() => {
                                 const tagsForCat = (Object.keys(tagsMeta || {})).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(cat.name))
                                 setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || '', tags: tagsForCat}); setIsEditingCategory(true); setCategoryModalOpen(true)
-                              }} style={{position:'absolute',bottom:0,right:0,background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
+                              }} style={{position:'absolute',bottom:0,right:0,background:'var(--card)',paddingLeft:20,color:'var(--primary-blue)',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
                               more
                             </span>
                           )}
                         </p>
-                        <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
+                        <div className="adm-card-acts">
                           <button onClick={() => {
                               const tagsForCat = (Object.keys(tagsMeta || {})).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(cat.name))
                               setCategoryModalData(cat); setCategoryEditForm({name: cat.name, description: cat.description || '', tags: tagsForCat}); setIsEditingCategory(true); setCategoryModalOpen(true)
-                            }} style={cardButtonStyles.edit as any} {...getButtonHoverHandlers(false)}>
+                            }} className="adm-cbtn">
                             ✎ Edit
                           </button>
                           <button onClick={async () => {
@@ -3435,7 +3435,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               console.error('Delete category error:', err)
                               alert('Delete failed — ' + ((err as any)?.message || 'check server logs'))
                             }
-                          }} style={cardButtonStyles.delete as any} {...getButtonHoverHandlers(true)}>
+                          }} className="adm-cbtn del">
                             ✕ Delete
                           </button>
                         </div>
@@ -3452,22 +3452,22 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
 
       {/* Category Edit Modal - Outside categories view */}
       {categoryModalOpen && categoryModalData && (
-        <div onKeyDown={(e) => { if (e.key === 'Escape') { setCategoryModalOpen(false); setIsEditingCategory(false) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}>
-          <div onKeyDown={handleModalKeyDown} style={{background:theme.bg,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`,display:'flex',flexDirection:'column'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:4}}>
-              <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Category</h3>
-              <button onClick={() => {setCategoryModalOpen(false); setIsEditingCategory(false)}} style={{background:'transparent',border:'none',fontSize:24,cursor:'pointer',color:theme.text,padding:0}}>✕</button>
+        <div onKeyDown={(e) => { if (e.key === 'Escape') { setCategoryModalOpen(false); setIsEditingCategory(false) } }} className="adm-mbg">
+          <div onKeyDown={handleModalKeyDown} className="adm-modal">
+            <div className="adm-mhead">
+              <h3 className="adm-mtitle">Edit Category</h3>
+              <button onClick={() => {setCategoryModalOpen(false); setIsEditingCategory(false)}} className="adm-mx" aria-label="Close">✕</button>
             </div>
             {!isEditingCategory ? (
               <>
-                <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Name:</p>
-                <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.text}}>{categoryModalData.name}</p>
-                <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Description:</p>
-                <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.text,whiteSpace:'pre-wrap'}}>{categoryModalData.description || 'No description'}</p>
-                <p style={{margin:'0 0 8px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Tags:</p>
-                <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.text}}>{(Object.keys(tagsMeta || {}).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(categoryModalData.name)).join(', ')) || 'No tags'}</p>
-                <div style={{display:'flex',gap:8}}>
-                  <button onClick={() => setIsEditingCategory(true)} style={{flex:1,background:'#3b82f6',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>
+                <p className="adm-k">Name:</p>
+                <p className="adm-v mb">{categoryModalData.name}</p>
+                <p className="adm-k">Description:</p>
+                <p className="adm-v mb pre">{categoryModalData.description || 'No description'}</p>
+                <p className="adm-k">Tags:</p>
+                <p className="adm-v mb">{(Object.keys(tagsMeta || {}).filter(t => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(categoryModalData.name)).join(', ')) || 'No tags'}</p>
+                <div className="adm-mfoot">
+                  <button onClick={() => setIsEditingCategory(true)} className="adm-mbtn primary">
                     Edit
                   </button>
                   <button onClick={async () => {
@@ -3480,23 +3480,23 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       console.error('Delete category error:', err)
                       alert('Delete failed — ' + ((err as any)?.message || 'check server logs'))
                     }
-                  }} style={{flex:1,background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444',fontWeight:600}}>
+                  }} className="adm-mbtn danger">
                     Delete
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Name:</label>
-                <input autoFocus type="text" value={categoryEditForm.name || ''} onChange={e => setCategoryEditForm({...categoryEditForm, name: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,marginBottom:16}} />
-                <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Description:</label>
-                <textarea value={categoryEditForm.description || ''} onChange={e => setCategoryEditForm({...categoryEditForm, description: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,minHeight:'150px',fontFamily:'inherit',marginBottom:12,flex:1}} />
-                <label style={{display:'block',marginBottom:8,fontSize:12,fontWeight:600,color:theme.text}}>Tags:</label>
-                <div style={{display:'flex',flexWrap:'wrap',gap:8,marginBottom:12}}>
+                <label className="adm-lbl">Name:</label>
+                <input autoFocus type="text" value={categoryEditForm.name || ''} onChange={e => setCategoryEditForm({...categoryEditForm, name: e.target.value})} className="adm-in adm-in-full adm-mb16" />
+                <label className="adm-lbl">Description:</label>
+                <textarea value={categoryEditForm.description || ''} onChange={e => setCategoryEditForm({...categoryEditForm, description: e.target.value})} className="adm-in adm-in-full adm-ta adm-ta-lg adm-mb12" />
+                <label className="adm-lbl">Tags:</label>
+                <div className="adm-wrap">
                   {(allowedTags || []).map((t: string) => {
                     const checked = Array.isArray(categoryEditForm.tags) && (categoryEditForm.tags || []).includes(t)
                     return (
-                      <label key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background: checked ? '#2563eb' : theme.bg, color: checked ? '#fff' : theme.text, cursor:'pointer'}}>
+                      <label key={t} className={`adm-tagpick${checked ? ' on' : ''}`}>
                         <input type="checkbox" checked={checked} onChange={(e) => {
                           if (e.target.checked) setCategoryEditForm({...categoryEditForm, tags: Array.from(new Set([...(categoryEditForm.tags || []), t]))})
                           else setCategoryEditForm({...categoryEditForm, tags: (categoryEditForm.tags || []).filter((x: string) => x !== t)})
@@ -3506,7 +3506,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     )
                   })}
                 </div>
-                <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+                <div className="adm-mfoot edit">
                   <button onClick={async () => {
                     if (!categoryEditForm.name?.trim()) return alert('Category name required')
                     try {
@@ -3540,10 +3540,10 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       console.error('Update error:', err)
                       alert('Update failed — ' + ((err as any)?.message || 'check server logs'))
                     }
-                  }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>
+                  }} className="adm-mbtn primary">
                     Save
                   </button>
-                  <button onClick={() => { setIsEditingCategory(false); setCategoryModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>
+                  <button onClick={() => { setIsEditingCategory(false); setCategoryModalOpen(false) }} className="adm-mbtn ghost">
                     Cancel
                   </button>
                 </div>
