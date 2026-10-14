@@ -1809,3 +1809,24 @@ body.dark-mode .adm-mbtn.danger{color:#F2A29E}
 
 /* Admin → Goals helper */
 .adm-v.adm-grow{flex:1}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin → Criteria (add form, filter, rules table with inline editing)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-formgrid{display:grid;gap:14px;align-items:end}
+.adm-formgrid.g5{grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr)) auto}
+.adm-formgrid.g6{grid-template-columns:minmax(0,1.5fr) repeat(4,minmax(0,1fr)) auto}
+.adm-formgrid > div{min-width:0}
+.adm-root .adm-in-compact{padding:8px 10px;font-size:13.5px;border-radius:10px;width:100%}
+.adm-root .adm-in-num{padding:8px 10px;font-size:13.5px;border-radius:10px;width:96px}
+.adm-table.crit{min-width:680px}
+@media(max-width:1100px){
+  .adm-formgrid.g5,.adm-formgrid.g6{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:700px){
+  .adm-formgrid.g5,.adm-formgrid.g6{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .adm-formgrid > .btn-primary,.adm-formgrid > .btn-ghost{grid-column:1 / -1;width:100%}
+}
+@media(max-width:420px){
+  .adm-formgrid.g5,.adm-formgrid.g6{grid-template-columns:minmax(0,1fr)}
+}

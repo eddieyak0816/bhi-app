@@ -2445,16 +2445,16 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
             <div>
               
               {/* Add new criteria form */}
-              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Criteria</h3>
-                <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
+              <div className="adm-panel">
+                <h3 className="adm-panel-h">Add Criteria</h3>
+                <div className="adm-formgrid g5">
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Marker</label>
+                    <label className="adm-lbl">Marker</label>
                     <input
                       type="text"
                       placeholder="Add marker..."
                       list="add-criteria-markers-list"
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                       value={ruleForm.markerName || ''}
                       onChange={e => setRuleForm(f => ({ ...f, markerName: e.target.value }))}
                     />
@@ -2463,20 +2463,20 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     </datalist>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Min</label>
-                    <input type="number" placeholder="Min" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}} />
+                    <label className="adm-lbl">Min</label>
+                    <input type="number" placeholder="Min" value={ruleForm.min_value || ''} onChange={e => setRuleForm(f => ({ ...f, min_value: e.target.value }))} className="adm-in adm-in-full" />
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Max</label>
-                    <input type="number" placeholder="Max" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}} />
+                    <label className="adm-lbl">Max</label>
+                    <input type="number" placeholder="Max" value={ruleForm.max_value || ''} onChange={e => setRuleForm(f => ({ ...f, max_value: e.target.value }))} className="adm-in adm-in-full" />
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Tag</label>
+                    <label className="adm-lbl">Tag</label>
                     <input
                       type="text"
                       placeholder="Add tag..."
                       list="add-criteria-tags-list"
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                       value={ruleForm.tag_to_apply || ''}
                       onChange={e => setRuleForm(f => ({ ...f, tag_to_apply: e.target.value }))}
                     />
@@ -2488,18 +2488,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 </div>
               </div>
               
-              <div style={styles.filterBox}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Criteria</h3>
-                <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
+              <div className="adm-panel">
+                <h3 className="adm-panel-h">Filter Criteria</h3>
+                <div className="adm-formgrid g6">
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#666'}}>Marker</label>
+                    <label className="adm-lbl">Marker</label>
                     <input
                       type="text"
                       placeholder="(All Markers)"
                       value={filterCriteriaMarker}
                       onChange={e => setFilterCriteriaMarker(e.target.value)}
                       list="criteria-markers-list"
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                     />
                     <datalist id="criteria-markers-list">
                       {Array.from(new Set(logicRules
@@ -2515,11 +2515,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     </datalist>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Type</label>
+                    <label className="adm-lbl">Type</label>
                     <select
                       value={filterCriteriaValueType}
                       onChange={e => setFilterCriteriaValueType(e.target.value as 'min' | 'max' | '')}
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                     >
                       <option value="">Min or Max</option>
                       <option value="min">Min</option>
@@ -2527,11 +2527,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     </select>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Operator</label>
+                    <label className="adm-lbl">Operator</label>
                     <select
                       value={filterCriteriaOperator}
                       onChange={e => setFilterCriteriaOperator(e.target.value as '<' | '>' | '=' | '<=' | '>=' | '')}
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                     >
                       <option value="">Any</option>
                       <option value="<">&lt;</option>
@@ -2542,24 +2542,24 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     </select>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Value</label>
+                    <label className="adm-lbl">Value</label>
                     <input
                       type="number"
                       placeholder="Value..."
                       value={filterCriteriaValue}
                       onChange={e => setFilterCriteriaValue(e.target.value)}
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                     />
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:'#ffffff'}}>Tag</label>
+                    <label className="adm-lbl">Tag</label>
                     <input
                       type="text"
                       placeholder="(All Tags)"
                       value={filterCriteriaTag}
                       onChange={e => setFilterCriteriaTag(e.target.value)}
                       list="criteria-tags-list"
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                     />
                     <datalist id="criteria-tags-list">
                       {Array.from(new Set(logicRules
@@ -2593,7 +2593,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                   </button>
                 </div>
                 {(filterCriteriaMarker || filterCriteriaValueType || filterCriteriaOperator || filterCriteriaValue || filterCriteriaTag) && (
-                  <div style={{fontSize:12,marginTop:8,color:theme.text}}>
+                  <div className="adm-count" style={{margin:'14px 0 0'}}>
                     Showing {logicRules
                       .filter(l => {
                         const markerId = filterCriteriaMarker ? labMarkers.find(m => m.name === filterCriteriaMarker)?.id : null
@@ -2617,16 +2617,16 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               </div>
 
               <div style={{marginBottom:18}}>
-                <div style={{marginTop:8,border:'1px solid #eee',borderRadius:6,overflow:'auto'}}>
-                  <table data-testid="criteria-table" style={{width:'100%',borderCollapse:'collapse'}}>
-                    <thead style={{background:'#3D7DCA',borderBottom:`1px solid ${theme.borderColor}`}}>
+                <div className="adm-tablewrap">
+                  <table data-testid="criteria-table" className="adm-table crit">
+                    <thead>
                       <tr>
-                        <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('marker_id')}>Marker{getSortIndicator('marker_id')}</th>
-                        <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('min_value')}>Min{getSortIndicator('min_value')}</th>
-                        <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('max_value')}>Max{getSortIndicator('max_value')}</th>
-                        <th style={{textAlign:'left',padding:8,color:'#ffffff',fontWeight:500}}>Operator</th>
-                        <th style={{textAlign:'left',padding:8,cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('tag_to_apply')}>Tag{getSortIndicator('tag_to_apply')}</th>
-                        <th style={{textAlign:'right',padding:8,color:'#ffffff',fontWeight:500}}>Actions</th>
+                        <th className="sortable" onClick={() => handleSort('marker_id')}>Marker{getSortIndicator('marker_id')}</th>
+                        <th className="sortable" onClick={() => handleSort('min_value')}>Min{getSortIndicator('min_value')}</th>
+                        <th className="sortable" onClick={() => handleSort('max_value')}>Max{getSortIndicator('max_value')}</th>
+                        <th>Operator</th>
+                        <th className="sortable" onClick={() => handleSort('tag_to_apply')}>Tag{getSortIndicator('tag_to_apply')}</th>
+                        <th className="r">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2670,26 +2670,26 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             return (a.tag_to_apply || '').localeCompare(b.tag_to_apply || '', undefined, { sensitivity: 'base' })
                           })
                       ).map(l => (
-                        <tr key={l.id} data-id={l.id} style={{borderTop:`1px solid ${theme.borderColor}`}}>
+                        <tr key={l.id} data-id={l.id}>
                           {editingId === l.id ? (
                             <>
-                              <td style={{padding:8}}>
+                              <td>
                                 <input
                                   type="text"
                                   placeholder="Marker"
                                   value={editData.markerName || ''}
                                   onChange={e => setEditData({...editData, markerName: e.target.value})}
                                   list="edit-criteria-markers-list"
-                                  style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}}
+                                  className="adm-in adm-in-compact"
                                 />
                                 <datalist id="edit-criteria-markers-list">
                                   {(labMarkers || []).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(m => <option key={m.id} value={m.name} />)}
                                 </datalist>
                               </td>
-                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.min_value || ''} onChange={e => setEditData({...editData, min_value: e.target.value})} style={{width:'80px',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
-                              <td style={{padding:8,textAlign:'left'}}><input type="number" value={editData.max_value || ''} onChange={e => setEditData({...editData, max_value: e.target.value})} style={{width:'80px',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
-                              <td style={{padding:8}}>
-                                <select value={editData.operator || 'between'} onChange={e => setEditData({...editData, operator: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}}>
+                              <td><input type="number" value={editData.min_value || ''} onChange={e => setEditData({...editData, min_value: e.target.value})} className="adm-in adm-in-num" /></td>
+                              <td><input type="number" value={editData.max_value || ''} onChange={e => setEditData({...editData, max_value: e.target.value})} className="adm-in adm-in-num" /></td>
+                              <td>
+                                <select value={editData.operator || 'between'} onChange={e => setEditData({...editData, operator: e.target.value})} className="adm-in adm-in-compact">
                                   <option value="between">between</option>
                                   <option value="<">&lt;</option>
                                   <option value=">">&gt;</option>
@@ -2698,14 +2698,14 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                   <option value=">=">&gt;=</option>
                                 </select>
                               </td>
-                              <td style={{padding:8}}>
-                                <select value={editData.tag_to_apply || ''} onChange={e => setEditData({...editData, tag_to_apply: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}}>
+                              <td>
+                                <select value={editData.tag_to_apply || ''} onChange={e => setEditData({...editData, tag_to_apply: e.target.value})} className="adm-in adm-in-compact">
                                   <option value="">(none)</option>
                                   {(allowedTags || []).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                               </td>
-                              <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
-                                <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
+                              <td className="r">
+                                <div className="adm-acts">
                                 <button className="btn-ghost" onClick={async () => {
                                   try {
                                     const markerId = labMarkers.find(m => m.name === editData.markerName)?.id || editData.marker_id
@@ -2716,20 +2716,20 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                   } catch (err) {
                                     alert('Save criteria failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
-                                }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#16a34a'}}>✓</button>
-                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#dc2626'}}>⊘</button>
+                                }} style={{width:36,height:36,padding:0,fontSize:16,color:'#16a34a',display:'grid',placeItems:'center'}}>✓</button>
+                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{width:36,height:36,padding:0,fontSize:16,color:'#dc2626',display:'grid',placeItems:'center'}}>⊘</button>
                               </div>
                             </td>
                             </>
                           ) : (
                             <>
-                              <td style={{padding:8}}>{(labMarkers.find(m => m.id === l.marker_id) || {}).name || l.marker_id}</td>
-                              <td style={{padding:8,textAlign:'left'}}>{l.min_value}</td>
-                              <td style={{padding:8,textAlign:'left'}}>{l.max_value}</td>
-                              <td style={{padding:8}}>{l.operator || 'between'}</td>
-                              <td style={{padding:8}}>{l.tag_to_apply}</td>
-                              <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
-                                <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
+                              <td>{(labMarkers.find(m => m.id === l.marker_id) || {}).name || l.marker_id}</td>
+                              <td>{l.min_value}</td>
+                              <td>{l.max_value}</td>
+                              <td>{l.operator || 'between'}</td>
+                              <td>{l.tag_to_apply}</td>
+                              <td className="r">
+                                <div className="adm-acts">
                                   <button onClick={() => {
                                     setEditingId(l.id)
                                     setEditData({
@@ -2740,8 +2740,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                       operator: 'between',
                                       tag_to_apply: l.tag_to_apply
                                     })
-                                  }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
-                                  <button onClick={() => deleteRule(l.id)} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕</button>
+                                  }} className="adm-ibtn" title="Edit">✎</button>
+                                  <button onClick={() => deleteRule(l.id)} className="adm-ibtn del" title="Delete">✕</button>
                                 </div>
                               </td>
                             </>
