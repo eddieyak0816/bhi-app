@@ -122,89 +122,42 @@ export default function AdminTriggerMessagesTab() {
     return acc
   }, {})
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '6px 8px',
-    background: theme.bgSecondary,
-    border: `1px solid ${theme.borderColor}`,
-    borderRadius: 6,
-    color: theme.text,
-    fontSize: 13,
-    boxSizing: 'border-box',
-  }
-
   return (
-    <div style={{ padding: '24px 0' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+    <div>
+      <div className="adm-bar">
         <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Warning & Alert Thresholds</h2>
-          <p style={{ margin: '4px 0 0', color: theme.textMuted, fontSize: 13 }}>
+          <h2 className="adm-panel-h" style={{ margin: 0 }}>Warning & Alert Thresholds</h2>
+          <p className="adm-hint" style={{ margin: '6px 0 0' }}>
             Edit the values that trigger popup warnings after lab entry. Changes take effect immediately.
           </p>
         </div>
         {saveMsg && (
-          <div style={{
-            padding: '6px 14px',
-            borderRadius: 6,
-            background: saveMsg.startsWith('Error') ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
-            color: saveMsg.startsWith('Error') ? '#EF4444' : '#10B981',
-            fontSize: 13,
-            fontWeight: 600,
-          }}>
+          <div className={`adm-status${saveMsg.startsWith('Error') ? ' bad' : ' ok'}`}>
             {saveMsg}
           </div>
         )}
       </div>
 
-      {loading && <div style={{ color: theme.textMuted }}>Loading...</div>}
-      {error && <div style={{ color: '#EF4444' }}>Error: {error}</div>}
+      {loading && <div className="adm-hint">Loading...</div>}
+      {error && <div className="adm-errtxt">Error: {error}</div>}
 
       {Object.entries(grouped).map(([markerName, rows]) => (
-        <div
-          key={markerName}
-          style={{
-            background: theme.card,
-            border: `1.5px solid ${theme.borderColor}`,
-            borderRadius: 10,
-            marginBottom: 16,
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{
-            padding: '12px 18px',
-            borderBottom: `1px solid ${theme.borderColor}`,
-            fontWeight: 700,
-            fontSize: 15,
-            color: theme.text,
-          }}>
+        <div key={markerName} className="adm-org" style={{ marginBottom: 16 }}>
+          <div className="adm-trig-h">
             {markerName}
           </div>
 
           {rows.map(t => (
-            <div
-              key={t.id}
-              style={{
-                padding: '14px 18px',
-                borderBottom: `1px solid ${theme.borderColor}`,
-              }}
-            >
+            <div key={t.id} className="adm-trig-row">
               {/* Row header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: editingId === t.id ? 14 : 0 }}>
-                <span style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: '2px 8px',
-                  borderRadius: 20,
-                  background: levelBg(t.level),
-                  color: levelColor(t.level),
-                  textTransform: 'uppercase',
-                }}>
+              <div className="adm-trig-top" style={{ marginBottom: editingId === t.id ? 14 : 0 }}>
+                <span className={`adm-lvl ${t.level}`}>
                   {t.level}
                 </span>
                 {t.sex !== 'both' && (
-                  <span style={{ fontSize: 11, color: theme.textMuted, fontWeight: 600 }}>({t.sex})</span>
+                  <span className="adm-hint">({t.sex})</span>
                 )}
-                <span style={{ fontSize: 12, color: theme.textMuted, fontFamily: 'monospace' }}>
+                <span className="adm-mono">
                   {t.condition}{' '}
                   {t.min_value != null && t.max_value != null
                     ? `${t.min_value} – ${t.max_value}`
@@ -214,20 +167,11 @@ export default function AdminTriggerMessagesTab() {
                     ? t.max_value
                     : '—'}
                 </span>
-                <span style={{ flex: 1, fontSize: 13, color: theme.text }}>{t.headline}</span>
+                <span className="adm-team-n">{t.headline}</span>
                 {editingId !== t.id && (
                   <button
                     onClick={() => startEdit(t)}
-                    style={{
-                      background: 'none',
-                      border: `1px solid ${theme.borderColor}`,
-                      borderRadius: 6,
-                      padding: '4px 12px',
-                      fontSize: 12,
-                      color: theme.textMuted,
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
+                    className="adm-sbtn"
                   >
                     Edit
                   </button>
@@ -236,15 +180,15 @@ export default function AdminTriggerMessagesTab() {
 
               {/* Edit form */}
               {editingId === t.id && editState && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div className="adm-teamlist" style={{ marginBottom: 0 }}>
                   {/* Threshold values row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '160px 120px 120px', gap: 10, alignItems: 'end' }}>
+                  <div className="adm-trig-grid">
                     <div>
-                      <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>Condition</div>
+                      <div className="adm-lbl">Condition</div>
                       <select
                         value={editState.condition}
                         onChange={e => setEditState(s => s ? { ...s, condition: e.target.value } : s)}
-                        style={inputStyle}
+                        className="adm-in adm-in-full"
                       >
                         {['between', '>=', '>', '<=', '<', '='].map(c => (
                           <option key={c} value={c}>{c}</option>
@@ -252,25 +196,25 @@ export default function AdminTriggerMessagesTab() {
                       </select>
                     </div>
                     <div>
-                      <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>
+                      <div className="adm-lbl">
                         {editState.condition === 'between' ? 'Min value' : 'Value'}
                       </div>
                       <input
                         type="number"
                         value={editState.min_value}
                         onChange={e => setEditState(s => s ? { ...s, min_value: e.target.value } : s)}
-                        style={inputStyle}
+                        className="adm-in adm-in-full"
                         placeholder="—"
                       />
                     </div>
                     {editState.condition === 'between' && (
                       <div>
-                        <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>Max value</div>
+                        <div className="adm-lbl">Max value</div>
                         <input
                           type="number"
                           value={editState.max_value}
                           onChange={e => setEditState(s => s ? { ...s, max_value: e.target.value } : s)}
-                          style={inputStyle}
+                          className="adm-in adm-in-full"
                           placeholder="—"
                         />
                       </div>
@@ -278,79 +222,61 @@ export default function AdminTriggerMessagesTab() {
                   </div>
 
                   <div>
-                    <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>Headline</div>
+                    <div className="adm-lbl">Headline</div>
                     <input
                       type="text"
                       value={editState.headline}
                       onChange={e => setEditState(s => s ? { ...s, headline: e.target.value } : s)}
-                      style={inputStyle}
+                      className="adm-in adm-in-full"
                     />
                   </div>
 
                   <div>
-                    <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>Body text</div>
+                    <div className="adm-lbl">Body text</div>
                     <textarea
                       value={editState.body}
                       onChange={e => setEditState(s => s ? { ...s, body: e.target.value } : s)}
                       rows={2}
-                      style={{ ...inputStyle, resize: 'vertical' }}
+                      className="adm-in adm-in-full adm-ta adm-ta-sm"
                     />
                   </div>
 
                   <div>
-                    <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>
-                      Action items <span style={{ fontWeight: 400 }}>(one per line)</span>
+                    <div className="adm-lbl">
+                      Action items <span className="adm-hint" style={{ textTransform: 'none', letterSpacing: 0 }}>(one per line)</span>
                     </div>
                     <textarea
                       value={editState.actions}
                       onChange={e => setEditState(s => s ? { ...s, actions: e.target.value } : s)}
                       rows={4}
-                      style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }}
+                      className="adm-in adm-in-full adm-ta"
                     />
                   </div>
 
                   <div>
-                    <div style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>
-                      Escalation note <span style={{ fontWeight: 400 }}>(leave blank to hide)</span>
+                    <div className="adm-lbl">
+                      Escalation note <span className="adm-hint" style={{ textTransform: 'none', letterSpacing: 0 }}>(leave blank to hide)</span>
                     </div>
                     <input
                       type="text"
                       value={editState.escalate}
                       onChange={e => setEditState(s => s ? { ...s, escalate: e.target.value } : s)}
-                      style={inputStyle}
+                      className="adm-in adm-in-full"
                       placeholder="e.g. We recommend reviewing this with a healthcare provider."
                     />
                   </div>
 
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div className="adm-urlrow">
                     <button
                       onClick={() => saveEdit(t.id)}
                       disabled={saving}
-                      style={{
-                        background: theme.blue,
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 6,
-                        padding: '8px 20px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: saving ? 'not-allowed' : 'pointer',
-                        opacity: saving ? 0.7 : 1,
-                      }}
+                      className="btn-primary" style={{ opacity: saving ? 0.7 : 1 }}
                     >
                       {saving ? 'Saving…' : 'Save'}
                     </button>
                     <button
                       onClick={cancelEdit}
-                      style={{
-                        background: 'none',
-                        border: `1px solid ${theme.borderColor}`,
-                        borderRadius: 6,
-                        padding: '8px 20px',
-                        fontSize: 13,
-                        color: theme.textMuted,
-                        cursor: 'pointer',
-                      }}
+                      className="btn-ghost"
                     >
                       Cancel
                     </button>

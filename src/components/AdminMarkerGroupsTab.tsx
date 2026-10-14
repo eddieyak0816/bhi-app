@@ -97,21 +97,13 @@ export default function AdminMarkerGroupsTab({ theme, availableMarkers = [] }: P
     setAdding(a => ({ ...a, [groupKey]: '' }))
   }
 
-  const btn = (active: boolean): React.CSSProperties => ({
-    background: 'transparent',
-    border: `1px solid ${theme.borderColor}`,
-    borderRadius: 4, padding: '2px 8px', fontSize: 12,
-    color: active ? theme.text : theme.borderColor,
-    cursor: active ? 'pointer' : 'default', lineHeight: 1.4,
-  })
-
-  if (loading) return <div style={{ padding: 32, color: theme.textMuted }}>Loading...</div>
+  if (loading) return <div className="adm-hint" style={{ padding: 32 }}>Loading...</div>
 
   return (
-    <div style={{ padding: '24px 0' }}>
-      <div style={{ marginBottom: 20 }}>
-        <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: theme.text }}>Marker Groups</h3>
-        <p style={{ margin: '4px 0 0 0', fontSize: 13, color: theme.textMuted, maxWidth: 780 }}>
+    <div>
+      <div className="adm-field">
+        <h3 className="adm-panel-h" style={{ margin: 0 }}>Marker Groups</h3>
+        <p className="adm-hint" style={{ margin: '6px 0 0', maxWidth: 780 }}>
           Markers in a group share <strong>one</strong> point in the NHLS score, because they
           measure the same thing. Whichever test the patient has is the one that counts &mdash; so
           nobody loses a point for a test their doctor didn&rsquo;t order.
@@ -123,72 +115,66 @@ export default function AdminMarkerGroupsTab({ theme, availableMarkers = [] }: P
       </div>
 
       {error && (
-        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px', color: '#b91c1c', marginBottom: 16, fontSize: 13 }}>
+        <div className="adm-err">
           {error}
-          <button onClick={() => setError(null)} style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c' }}>&#10005;</button>
+          <button onClick={() => setError(null)} className="adm-err-x">&#10005;</button>
         </div>
       )}
 
       {groups.length === 0 ? (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 32, textAlign: 'center', color: theme.textMuted }}>
+        <div className="adm-empty">
           No marker groups found &mdash; the migration may not have been run yet.
           Scoring is still working, using its built-in metrics.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="adm-orglist">
           {groups.map(g => {
             const list = drafts[g.group_key] || []
             const original = g.members.map(m => m.marker_name)
             const dirty = JSON.stringify(list) !== JSON.stringify(original)
             return (
-              <div key={g.group_key} style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '14px 18px' }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: theme.text }}>{g.label}</div>
+              <div key={g.group_key} className="adm-broker">
+                <div className="adm-item-n">{g.label}</div>
                 {g.description && (
-                  <div style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>{g.description}</div>
+                  <div className="adm-hint" style={{ marginTop: 4 }}>{g.description}</div>
                 )}
 
-                <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div className="adm-teamlist" style={{ marginTop: 14, marginBottom: 0 }}>
                   {list.length === 0 && (
-                    <div style={{ fontSize: 12, color: theme.textMuted, fontStyle: 'italic' }}>
+                    <div className="adm-hint" style={{ fontStyle: 'italic' }}>
                       No markers yet &mdash; this group is ignored until you add one.
                     </div>
                   )}
                   {list.map((name, i) => (
-                    <div key={name + i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', border: `1px solid ${theme.borderColor}`, borderRadius: 6 }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: theme.textMuted, minWidth: 54 }}>
+                    <div key={name + i} className="adm-mrow">
+                      <span className="adm-ord">
                         {i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : `${i + 1}th`}
                       </span>
-                      <span style={{ flex: 1, fontSize: 13, color: theme.text }}>{name}</span>
-                      <button onClick={() => move(g.group_key, i, -1)} disabled={i === 0} style={btn(i > 0)} title="Move up">&#9650;</button>
-                      <button onClick={() => move(g.group_key, i, 1)} disabled={i === list.length - 1} style={btn(i < list.length - 1)} title="Move down">&#9660;</button>
-                      <button onClick={() => remove(g.group_key, i)} style={{ ...btn(true), color: '#dc2626', borderColor: '#fca5a5' }} title="Remove from group">&#10005;</button>
+                      <span className="adm-team-n">{name}</span>
+                      <button onClick={() => move(g.group_key, i, -1)} disabled={i === 0} className="adm-mv" title="Move up">&#9650;</button>
+                      <button onClick={() => move(g.group_key, i, 1)} disabled={i === list.length - 1} className="adm-mv" title="Move down">&#9660;</button>
+                      <button onClick={() => remove(g.group_key, i)} className="adm-mv del" title="Remove from group">&#10005;</button>
                     </div>
                   ))}
                 </div>
 
-                <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="adm-urlrow" style={{ marginTop: 14, alignItems: 'center', flexWrap: 'wrap' }}>
                   <input
                     list={`markers-${g.group_key}`}
                     placeholder="Add a marker by name..."
                     value={adding[g.group_key] || ''}
                     onChange={e => setAdding(a => ({ ...a, [g.group_key]: e.target.value }))}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(g.group_key) } }}
-                    style={{ flex: '1 1 220px', minWidth: 0, background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '7px 10px', color: theme.text, fontSize: 13 }}
+                    className="adm-in adm-in-grow" style={{ flex: '1 1 220px' }}
                   />
                   <datalist id={`markers-${g.group_key}`}>
                     {availableMarkers.map(m => <option key={m} value={m} />)}
                   </datalist>
-                  <button onClick={() => add(g.group_key)} style={{ ...btn(true), padding: '7px 14px', fontWeight: 600 }}>Add</button>
+                  <button onClick={() => add(g.group_key)} className="adm-sbtn">Add</button>
                   <button
                     onClick={() => save(g.group_key)}
                     disabled={!dirty || savingKey === g.group_key}
-                    style={{
-                      background: dirty ? (theme.blue || '#3B82F6') : 'transparent',
-                      color: dirty ? '#fff' : theme.textMuted,
-                      border: dirty ? 'none' : `1px solid ${theme.borderColor}`,
-                      borderRadius: 6, padding: '8px 18px', fontWeight: 600, fontSize: 13,
-                      cursor: dirty ? 'pointer' : 'default', whiteSpace: 'nowrap', marginLeft: 'auto',
-                    }}
+                    className={`adm-sbtn${dirty ? ' pri' : ''}`} style={{ marginLeft: 'auto' }}
                   >
                     {savingKey === g.group_key ? 'Saving...' : savedKey === g.group_key ? 'Saved' : 'Save'}
                   </button>

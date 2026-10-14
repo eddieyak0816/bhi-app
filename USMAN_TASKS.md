@@ -4,7 +4,7 @@ Client: **Damon DiLorenzo** (Balanced Health Institute / National Health League)
 
 Detailed technical notes for everything below (root causes, exact code changes) are kept in `DEVELOPER_REQUIREMENTS.md`, `CHANGELOG.md`, and `IMPLEMENTATION_TRACKER.html` — this doc is the simple day-to-day tracker.
 
-Last updated: 2026-09-30
+Last updated: 2026-10-14
 
 ---
 
@@ -37,6 +37,31 @@ Last updated: 2026-09-30
 25. Built multi-org providers — one provider can now be linked to several organizations at once (checklist in Admin), not just one-or-global like before. Confirmed tested: checked 2+ orgs, saved, reopened, both stayed checked.
 26. Marking a marker "NHLS Score" in Admin now actually shows it in "Log Your NHLS Metrics" on Home — previously that dropdown had no effect there (the 8 fields were hardcoded). Extra markers appear under "Additional NHLS Markers" and save to lab history. The v2.3 score formula itself is unchanged, so a note makes clear those extras are tracked, not scored. Confirmed tested with Ferritin.
 27. Confirmed NOT a bug: provider photo not showing. The URL had been saved as `https://=https://img1.wsimg.com/...` — `https://` typed manually on top of a pasted URL that already had it, plus a stray `=`. Code behaved correctly; Damon just needs to paste the link on its own.
+
+## ✅ DONE — 2026-10-14 — "Vital" redesign of the whole app (design only)
+
+Damon picked the **Vital** theme (forest green `#12332A` + lime `#B8E62E`). Every screen below was restyled, in light + dark mode and on mobile + desktop. **Design only — no logic, data call, save, RLS or saved setting was changed.** Each file was diffed against the previous commit to prove only styling/markup changed.
+
+29. **Foundation** — new colour tokens (ThemeContext + CSS variables), dark mode, header + mobile menu
+30. **Sign-in** — Login, Sign Up (incl. "check your email" screen), Onboarding
+31. **Member pages** — Home (Dashboard, all sections), Lab Results (+ VO2 Max popup), Categories, Library, Leagues, League detail, Profile, Consent, Public Profile
+32. **Organization pages** — Employer view (Members + Analytics), Leaderboard
+33. **Popups** — Health Check-In, Health Report, Lab insights ("Your Lab Results")
+34. **Admin (every tab)** — shell + new tab bar (wrapped tiles on desktop, collapsible grid on phones), Resources (create/filter/list/edit popup), Categories, Types, Goals, Criteria, Tags (+ tag/category picker popups, edit popup), Markers (filters, list, edit popup, New Marker Wizard), Orgs (identity mapping, create, filters, org cards, members, teams, team scores), Products, Brokers, Providers, Nav Links, Leagues, Users, Challenges, Lab Data, Lab Sets, Marker Groups, Trigger Messages
+35. **Accessibility fix** — Admin buttons (`Delete selected`, `Clear`, disabled `Create`) were unreadable in dark mode; one readable button set now covers light + dark
+
+**Small things deliberately left (tell Damon / do later if wanted):**
+- "Link expired" screen and the plain app-level "Loading…" / "Access Denied" screens still use the old look
+- Insurance Report popup (Employer → Analytics) — old styling
+- Printable Health Report / Insurance report pages — separate white print documents, left as plain on purpose
+- Lab Results: inner fields of the PDF-review table + the small "PDF" pill
+- Admin hidden "Audit Log" tab (only reachable by URL) — old table header
+- Unused files not shown anywhere in the app: `LabInput.tsx`, `Results.tsx`, `ResourceModal.tsx`
+
+**Needs a decision from Damon (found while redesigning, NOT changed):**
+- Consent + Public Profile pages show customers an **"ACTION REQUIRED / DECISION NEEDED (Developer)"** box — who can view a public profile (anyone with link / logged-in only)? Remove the boxes once decided.
+- Leaderboard score column says **"/ 9"** but NHLS is out of 7 — intentional or stale text?
+- Profile → **Delete Account** button has no action (was already like that) — hide it, or build a HIPAA-safe delete flow?
 
 ## ✅ DONE — 2026-09-30
 

@@ -226,96 +226,83 @@ export default function AdminChallengesTab({ theme }: Props) {
   }
 
   const t = theme
-  const inputStyle: React.CSSProperties = {
-    padding: '7px 10px', borderRadius: 6, border: `1px solid ${t.borderColor}`,
-    background: t.inputBackground ?? t.cardBackground, color: t.text, fontSize: 13, width: '100%', boxSizing: 'border-box',
-  }
-  const btnStyle = (primary?: boolean): React.CSSProperties => ({
-    padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-    background: primary ? (t.blue ?? '#3b82f6') : t.borderColor, color: primary ? '#fff' : t.text,
-  })
-
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <h2 style={{ margin: 0, fontSize: 20, color: t.text }}>Challenges</h2>
-        <button style={btnStyle(true)} onClick={() => { setShowForm(s => !s); setFormError(null) }}>
+      <div className="adm-bar">
+        <h2 className="adm-panel-h" style={{ margin: 0 }}>Challenges</h2>
+        <button className="btn-primary" onClick={() => { setShowForm(s => !s); setFormError(null) }}>
           {showForm ? 'Cancel' : '+ New Challenge'}
         </button>
       </div>
 
       {/* Create form */}
       {showForm && (
-        <form onSubmit={handleCreate} style={{ background: t.cardBackground, border: `1px solid ${t.borderColor}`, borderRadius: 10, padding: 20, marginBottom: 24 }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 15, color: t.text }}>New Challenge</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <form onSubmit={handleCreate} className="adm-panel">
+          <h3 className="adm-panel-h">New Challenge</h3>
+          <div className="adm-two">
             <div>
-              <label style={{ fontSize: 12, color: t.textMuted }}>Name</label>
-              <input style={inputStyle} value={form.name} onChange={e => handleNameChange(e.target.value, 'form')} required />
+              <label className="adm-lbl">Name</label>
+              <input className="adm-in adm-in-full" value={form.name} onChange={e => handleNameChange(e.target.value, 'form')} required />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: t.textMuted }}>Slug (auto-filled)</label>
-              <input style={inputStyle} value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} required />
+              <label className="adm-lbl">Slug (auto-filled)</label>
+              <input className="adm-in adm-in-full" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} required />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: t.textMuted }}>Start Date</label>
-              <input type="date" style={inputStyle} value={form.starts_at} onChange={e => handleStartChange(e.target.value, 'form')} required />
+              <label className="adm-lbl">Start Date</label>
+              <input type="date" className="adm-in adm-in-full" value={form.starts_at} onChange={e => handleStartChange(e.target.value, 'form')} required />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: t.textMuted }}>End Date</label>
-              <input type="date" style={inputStyle} value={form.ends_at} onChange={e => handleEndChange(e.target.value, 'form')} required />
+              <label className="adm-lbl">End Date</label>
+              <input type="date" className="adm-in adm-in-full" value={form.ends_at} onChange={e => handleEndChange(e.target.value, 'form')} required />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: t.textMuted }}>Baseline Date <span style={{ color: t.textMuted, fontWeight: 400 }}>(auto = start date)</span></label>
-              <input type="date" style={inputStyle} value={form.baseline_at} onChange={e => setForm(f => ({ ...f, baseline_at: e.target.value }))} required />
+              <label className="adm-lbl">Baseline Date <span className="adm-hint" style={{ textTransform: 'none', letterSpacing: 0 }}>(auto = start date)</span></label>
+              <input type="date" className="adm-in adm-in-full" value={form.baseline_at} onChange={e => setForm(f => ({ ...f, baseline_at: e.target.value }))} required />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: t.textMuted }}>Midpoint Date <span style={{ color: t.textMuted, fontWeight: 400 }}>(auto = halfway)</span></label>
-              <input type="date" style={inputStyle} value={form.midpoint_at} onChange={e => setForm(f => ({ ...f, midpoint_at: e.target.value }))} required />
+              <label className="adm-lbl">Midpoint Date <span className="adm-hint" style={{ textTransform: 'none', letterSpacing: 0 }}>(auto = halfway)</span></label>
+              <input type="date" className="adm-in adm-in-full" value={form.midpoint_at} onChange={e => setForm(f => ({ ...f, midpoint_at: e.target.value }))} required />
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+          <div className="adm-urlrow" style={{ alignItems: 'center', marginTop: 12 }}>
             <input type="checkbox" id="form-active" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
-            <label htmlFor="form-active" style={{ fontSize: 13, color: t.text }}>Active</label>
+            <label htmlFor="form-active" className="adm-strong">Active</label>
           </div>
-          {formError && <p style={{ color: '#ef4444', fontSize: 13, marginTop: 8 }}>{formError}</p>}
-          <button type="submit" style={{ ...btnStyle(true), marginTop: 14 }} disabled={saving}>
+          {formError && <p className="adm-errtxt">{formError}</p>}
+          <button type="submit" className="btn-primary" style={{ marginTop: 14 }} disabled={saving}>
             {saving ? 'Saving…' : 'Create Challenge'}
           </button>
         </form>
       )}
 
       {/* List */}
-      {loading && <p style={{ color: t.textMuted }}>Loading…</p>}
-      {error && <p style={{ color: '#ef4444' }}>{error}</p>}
+      {loading && <p className="adm-hint">Loading…</p>}
+      {error && <p className="adm-errtxt">{error}</p>}
 
       {challenges.map(c => {
         const orgNames = (c.org_ids || []).map(oid => orgs.find(o => o.id === oid)?.name || oid)
         const unassigned = orgs.filter(o => !(c.org_ids || []).includes(o.id))
         return (
-          <div key={c.id} style={{ background: t.cardBackground, border: `1px solid ${t.borderColor}`, borderRadius: 10, padding: 18, marginBottom: 16 }}>
-            <div className="admin-item-card-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <div key={c.id} className="adm-broker" style={{ marginBottom: 16 }}>
+            <div className="admin-item-card-row adm-org-h" style={{ padding: 0, alignItems: 'flex-start' }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: t.text }}>{c.name}</span>
-                  <span style={{ fontSize: 11, color: t.textMuted }}>/{c.slug}</span>
-                  <span style={{
-                    fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 12,
-                    background: c.is_active ? '#22c55e22' : '#64748b22',
-                    color: c.is_active ? '#22c55e' : t.textMuted,
-                  }}>{c.is_active ? 'Active' : 'Inactive'}</span>
+                <div className="adm-item-top">
+                  <span className="adm-item-n">{c.name}</span>
+                  <span className="adm-hint">/{c.slug}</span>
+                  <span className={`adm-pill${c.is_active ? ' on' : ''}`}>{c.is_active ? 'Active' : 'Inactive'}</span>
                 </div>
-                <div style={{ fontSize: 12, color: t.textMuted, marginTop: 4 }}>
+                <div className="adm-hint" style={{ marginTop: 4 }}>
                   {c.starts_at} → {c.ends_at} &nbsp;|&nbsp; Baseline: {c.baseline_at} &nbsp;|&nbsp; Midpoint: {c.midpoint_at}
                 </div>
               </div>
-              <div className="admin-item-card-buttons" style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                <button style={btnStyle()} onClick={() => handleToggle(c)} disabled={toggling === c.id}>
+              <div className="admin-item-card-buttons adm-item-btns row">
+                <button className="adm-cbtn" onClick={() => handleToggle(c)} disabled={toggling === c.id}>
                   {toggling === c.id ? '…' : c.is_active ? 'Deactivate' : 'Activate'}
                 </button>
-                <button style={btnStyle(true)} onClick={() => openEdit(c)}>Edit</button>
+                <button className="adm-cbtn" onClick={() => openEdit(c)}>Edit</button>
                 <button
-                  style={{ ...btnStyle(), background: '#ef444422', color: '#ef4444' }}
+                  className="adm-cbtn del"
                   onClick={() => handleDelete(c.id)}
                   disabled={deletingId === c.id}
                 >
@@ -325,35 +312,35 @@ export default function AdminChallengesTab({ theme }: Props) {
             </div>
 
             {/* Orgs enrolled */}
-            <div style={{ marginTop: 14, borderTop: `1px solid ${t.borderColor}`, paddingTop: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: t.textMuted, marginBottom: 8 }}>Participating Orgs</div>
-              {orgNames.length === 0 && <span style={{ fontSize: 12, color: t.textMuted }}>None assigned</span>}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+            <div className="adm-section" style={{ marginTop: 14, marginBottom: 0 }}>
+              <div className="adm-k" style={{ marginBottom: 10 }}>Participating Orgs</div>
+              {orgNames.length === 0 && <span className="adm-hint">None assigned</span>}
+              <div className="adm-wrap" style={{ marginBottom: 10 }}>
                 {orgNames.map((name, i) => (
-                  <span key={c.org_ids[i]} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '3px 10px', borderRadius: 12, background: `${t.blue ?? '#3b82f6'}18`, color: t.blue ?? '#3b82f6' }}>
+                  <span key={c.org_ids[i]} className="adm-chip tag">
                     {name}
                     <button
                       onClick={() => handleRemoveOrg(c.id, c.org_ids[i])}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontWeight: 700, fontSize: 13, lineHeight: 1, padding: 0 }}
+                      className="adm-chip-x"
                       title="Remove org"
                     >×</button>
                   </span>
                 ))}
               </div>
               {unassigned.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <div className="adm-urlrow" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
                   <select
-                    style={{ ...inputStyle, width: 'auto', minWidth: 160 }}
+                    className="adm-in adm-in-compact" style={{ width: 'auto', minWidth: 180 }}
                     value={assignOrgId}
                     onChange={e => setAssignOrgId(e.target.value)}
                   >
                     <option value="">Add org…</option>
                     {unassigned.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                   </select>
-                  <button style={btnStyle(true)} onClick={() => handleAssignOrg(c.id)} disabled={assigningId === c.id || !assignOrgId}>
+                  <button className="adm-sbtn pri" onClick={() => handleAssignOrg(c.id)} disabled={assigningId === c.id || !assignOrgId}>
                     {assigningId === c.id ? '…' : 'Add'}
                   </button>
-                  {assignMsg[c.id] && <span style={{ fontSize: 12, color: '#22c55e' }}>{assignMsg[c.id]}</span>}
+                  {assignMsg[c.id] && <span className="adm-status ok">{assignMsg[c.id]}</span>}
                 </div>
               )}
             </div>
@@ -362,48 +349,48 @@ export default function AdminChallengesTab({ theme }: Props) {
       })}
 
       {!loading && challenges.length === 0 && (
-        <p style={{ color: t.textMuted }}>No challenges yet. Create the first one above.</p>
+        <p className="adm-hint">No challenges yet. Create the first one above.</p>
       )}
 
       {/* Edit modal */}
       {editId && (
-        <div style={{ position: 'fixed', inset: 0, background: '#00000066', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <form onSubmit={handleEdit} style={{ background: t.cardBackground, border: `1px solid ${t.borderColor}`, borderRadius: 12, padding: 28, width: 520, maxWidth: '95vw' }}>
-            <h3 style={{ margin: '0 0 18px', fontSize: 16, color: t.text }}>Edit Challenge</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="adm-mbg">
+          <form onSubmit={handleEdit} className="adm-modal compact">
+            <h3 className="adm-mtitle adm-mb16">Edit Challenge</h3>
+            <div className="adm-two">
               <div>
-                <label style={{ fontSize: 12, color: t.textMuted }}>Name</label>
-                <input style={inputStyle} value={editForm.name} onChange={e => handleNameChange(e.target.value, 'edit')} required />
+                <label className="adm-lbl">Name</label>
+                <input className="adm-in adm-in-full" value={editForm.name} onChange={e => handleNameChange(e.target.value, 'edit')} required />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: t.textMuted }}>Slug</label>
-                <input style={inputStyle} value={editForm.slug} onChange={e => setEditForm(f => ({ ...f, slug: e.target.value }))} required />
+                <label className="adm-lbl">Slug</label>
+                <input className="adm-in adm-in-full" value={editForm.slug} onChange={e => setEditForm(f => ({ ...f, slug: e.target.value }))} required />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: t.textMuted }}>Start Date</label>
-                <input type="date" style={inputStyle} value={editForm.starts_at} onChange={e => handleStartChange(e.target.value, 'edit')} required />
+                <label className="adm-lbl">Start Date</label>
+                <input type="date" className="adm-in adm-in-full" value={editForm.starts_at} onChange={e => handleStartChange(e.target.value, 'edit')} required />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: t.textMuted }}>End Date</label>
-                <input type="date" style={inputStyle} value={editForm.ends_at} onChange={e => handleEndChange(e.target.value, 'edit')} required />
+                <label className="adm-lbl">End Date</label>
+                <input type="date" className="adm-in adm-in-full" value={editForm.ends_at} onChange={e => handleEndChange(e.target.value, 'edit')} required />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: t.textMuted }}>Baseline Date <span style={{ color: t.textMuted, fontWeight: 400 }}>(auto = start date)</span></label>
-                <input type="date" style={inputStyle} value={editForm.baseline_at} onChange={e => setEditForm(f => ({ ...f, baseline_at: e.target.value }))} required />
+                <label className="adm-lbl">Baseline Date <span className="adm-hint" style={{ textTransform: 'none', letterSpacing: 0 }}>(auto = start date)</span></label>
+                <input type="date" className="adm-in adm-in-full" value={editForm.baseline_at} onChange={e => setEditForm(f => ({ ...f, baseline_at: e.target.value }))} required />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: t.textMuted }}>Midpoint Date <span style={{ color: t.textMuted, fontWeight: 400 }}>(auto = halfway)</span></label>
-                <input type="date" style={inputStyle} value={editForm.midpoint_at} onChange={e => setEditForm(f => ({ ...f, midpoint_at: e.target.value }))} required />
+                <label className="adm-lbl">Midpoint Date <span className="adm-hint" style={{ textTransform: 'none', letterSpacing: 0 }}>(auto = halfway)</span></label>
+                <input type="date" className="adm-in adm-in-full" value={editForm.midpoint_at} onChange={e => setEditForm(f => ({ ...f, midpoint_at: e.target.value }))} required />
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+            <div className="adm-urlrow" style={{ alignItems: 'center', marginTop: 12 }}>
               <input type="checkbox" id="edit-active" checked={editForm.is_active} onChange={e => setEditForm(f => ({ ...f, is_active: e.target.checked }))} />
-              <label htmlFor="edit-active" style={{ fontSize: 13, color: t.text }}>Active</label>
+              <label htmlFor="edit-active" className="adm-strong">Active</label>
             </div>
-            {editError && <p style={{ color: '#ef4444', fontSize: 13, marginTop: 8 }}>{editError}</p>}
-            <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
-              <button type="submit" style={btnStyle(true)} disabled={editSaving}>{editSaving ? 'Saving…' : 'Save Changes'}</button>
-              <button type="button" style={btnStyle()} onClick={() => setEditId(null)}>Cancel</button>
+            {editError && <p className="adm-errtxt">{editError}</p>}
+            <div className="adm-mfoot edit">
+              <button type="submit" className="adm-mbtn primary" disabled={editSaving}>{editSaving ? 'Saving…' : 'Save Changes'}</button>
+              <button type="button" className="adm-mbtn ghost" onClick={() => setEditId(null)}>Cancel</button>
             </div>
           </form>
         </div>

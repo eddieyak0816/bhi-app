@@ -91,13 +91,6 @@ export default function AdminLabResultsTab({ theme }: Props) {
   }
   const tableRows = Array.from(latestByUserMarker.values())
 
-  const s = {
-    input: { padding: '6px 10px', border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, background: theme.bgSecondary, color: theme.text, width: '100%' } as React.CSSProperties,
-    label: { display: 'block', marginBottom: 4, fontSize: 11, fontWeight: 600, color: theme.textMuted, textTransform: 'uppercase' as const, letterSpacing: '0.04em' },
-    th: { padding: '8px 10px', textAlign: 'left' as const, fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' as const, letterSpacing: '0.05em', borderBottom: `2px solid ${theme.borderColor}`, whiteSpace: 'nowrap' as const },
-    td: { padding: '9px 10px', fontSize: 13, color: theme.text, borderBottom: `1px solid ${theme.borderColor}` },
-  }
-
   function valueColor(r: LabRow) {
     if (r.min_normal == null || r.max_normal == null) return theme.text
     if (r.value >= r.min_normal && r.value <= r.max_normal) return '#16a34a'
@@ -107,73 +100,73 @@ export default function AdminLabResultsTab({ theme }: Props) {
 
   return (
     <div>
-      <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: theme.text }}>Lab Results Viewer</h3>
+      <h3 className="adm-panel-h">Lab Results Viewer</h3>
 
       {/* Filters */}
-      <form onSubmit={handleSearch} style={{ background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 16, marginBottom: 20 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
+      <form onSubmit={handleSearch} className="adm-panel">
+        <div className="adm-autogrid">
           <div>
-            <label style={s.label}>Organization</label>
-            <select value={filterOrg} onChange={e => setFilterOrg(e.target.value)} style={s.input}>
+            <label className="adm-lbl">Organization</label>
+            <select value={filterOrg} onChange={e => setFilterOrg(e.target.value)} className="adm-in adm-in-full">
               <option value="">All orgs</option>
               {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
             </select>
           </div>
           <div>
-            <label style={s.label}>Marker</label>
-            <select value={filterMarker} onChange={e => setFilterMarker(e.target.value)} style={s.input}>
+            <label className="adm-lbl">Marker</label>
+            <select value={filterMarker} onChange={e => setFilterMarker(e.target.value)} className="adm-in adm-in-full">
               <option value="">All markers</option>
               {markers.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
           <div>
-            <label style={s.label}>Date From</label>
-            <input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} style={s.input} />
+            <label className="adm-lbl">Date From</label>
+            <input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} className="adm-in adm-in-full" />
           </div>
           <div>
-            <label style={s.label}>Date To</label>
-            <input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} style={s.input} />
+            <label className="adm-lbl">Date To</label>
+            <input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} className="adm-in adm-in-full" />
           </div>
           <div>
-            <label style={s.label}>User ID</label>
-            <input type="text" placeholder="UUID..." value={filterUser} onChange={e => setFilterUser(e.target.value)} style={s.input} />
+            <label className="adm-lbl">User ID</label>
+            <input type="text" placeholder="UUID..." value={filterUser} onChange={e => setFilterUser(e.target.value)} className="adm-in adm-in-full" />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button type="submit" disabled={loading} style={{ padding: '7px 18px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        <div className="adm-urlrow" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+          <button type="submit" disabled={loading} className="btn-primary">
             {loading ? 'Loading…' : 'Search'}
           </button>
           <button type="button" onClick={() => { setFilterOrg(''); setFilterMarker(''); setFilterDateFrom(''); setFilterDateTo(''); setFilterUser('') }}
-            style={{ padding: '7px 14px', background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, fontSize: 13, color: theme.textMuted, cursor: 'pointer' }}>
+            className="btn-ghost">
             Clear
           </button>
-          <span style={{ fontSize: 12, color: theme.textMuted, marginLeft: 'auto' }}>
+          <span className="adm-hint" style={{ marginLeft: 'auto' }}>
             {tableRows.length} unique user/marker pairs · {results.length} total entries
           </span>
         </div>
       </form>
 
-      {error && <p style={{ color: '#dc2626', marginBottom: 12 }}>{error}</p>}
+      {error && <p className="adm-errtxt adm-mb12">{error}</p>}
 
       {/* Results table */}
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <div className="adm-tablewrap">
+        <table className="adm-table dense labdata">
           <thead>
             <tr>
-              <th style={s.th}></th>
-              <th style={s.th}>User</th>
-              <th style={s.th}>Public ID</th>
-              <th style={s.th}>Marker</th>
-              <th style={s.th}>Latest Value</th>
-              <th style={s.th}>Normal Range</th>
-              <th style={s.th}>Date</th>
-              <th style={s.th}>Source</th>
-              <th style={s.th}>History</th>
+              <th></th>
+              <th>User</th>
+              <th>Public ID</th>
+              <th>Marker</th>
+              <th>Latest Value</th>
+              <th>Normal Range</th>
+              <th>Date</th>
+              <th>Source</th>
+              <th>History</th>
             </tr>
           </thead>
           <tbody>
             {tableRows.length === 0 && !loading && (
-              <tr><td colSpan={9} style={{ ...s.td, textAlign: 'center', color: theme.textMuted, padding: '32px 0' }}>No results. Run a search above.</td></tr>
+              <tr><td colSpan={9} className="adm-dim" style={{ textAlign: 'center', padding: '32px 0' }}>No results. Run a search above.</td></tr>
             )}
             {tableRows.map(r => {
               const expandKey = `${r.user_id}|${r.marker_name}`
@@ -183,39 +176,35 @@ export default function AdminLabResultsTab({ theme }: Props) {
 
               return (
                 <React.Fragment key={r.id}>
-                  <tr style={{ background: isOpen ? `${theme.blue ?? '#3b82f6'}08` : undefined }}>
-                    <td style={{ ...s.td, width: 28, paddingRight: 0 }}>
+                  <tr className={isOpen ? 'adm-open' : undefined}>
+                    <td style={{ width: 28, paddingRight: 0 }}>
                       {histCount > 1 && (
                         <button onClick={() => toggleExpand(r.user_id, r.marker_name)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.textMuted, fontSize: 14, padding: 0 }}>
+                          className="adm-mv">
                           {isOpen ? '▼' : '▶'}
                         </button>
                       )}
                     </td>
-                    <td style={s.td}>
+                    <td>
                       {r.username
                         ? <span style={{ fontWeight: 600 }}>{r.username}</span>
-                        : <span style={{ color: theme.textMuted, fontStyle: 'italic' }}>no username</span>}
+                        : <span className="adm-dim" style={{ fontStyle: 'italic' }}>no username</span>}
                     </td>
-                    <td style={{ ...s.td, fontFamily: 'monospace', fontSize: 11, color: theme.textMuted }}>{r.public_id || '—'}</td>
-                    <td style={{ ...s.td, fontWeight: 500 }}>{r.marker_name}</td>
-                    <td style={{ ...s.td, fontWeight: 700, color: valueColor(r) }}>
+                    <td className="adm-mono">{r.public_id || '—'}</td>
+                    <td className="adm-strong">{r.marker_name}</td>
+                    <td style={{ fontWeight: 700, color: valueColor(r) }}>
                       {r.value} {r.unit}
                     </td>
-                    <td style={{ ...s.td, color: theme.textMuted }}>
+                    <td className="adm-dim">
                       {r.min_normal != null && r.max_normal != null ? `${r.min_normal}–${r.max_normal} ${r.unit}` : '—'}
                     </td>
-                    <td style={{ ...s.td, color: theme.textMuted }}>{r.date}</td>
-                    <td style={s.td}>
-                      <span style={{
-                        display: 'inline-block', padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
-                        background: r.verification_type === 'provider' ? '#dbeafe' : '#f0fdf4',
-                        color: r.verification_type === 'provider' ? '#1d4ed8' : '#15803d',
-                      }}>
+                    <td className="adm-dim">{r.date}</td>
+                    <td>
+                      <span className={`adm-urole ${r.verification_type === 'provider' ? 'broker' : 'member'}`}>
                         {r.verification_type || 'self'}
                       </span>
                     </td>
-                    <td style={{ ...s.td, color: theme.textMuted, fontSize: 12 }}>
+                    <td className="adm-dim">
                       {histCount > 1 ? `${histCount} entries` : '—'}
                     </td>
                   </tr>
@@ -223,28 +212,28 @@ export default function AdminLabResultsTab({ theme }: Props) {
                   {/* Expanded history rows */}
                   {isOpen && (
                     <tr>
-                      <td colSpan={9} style={{ padding: '0 0 0 38px', background: `${theme.blue ?? '#3b82f6'}05`, borderBottom: `1px solid ${theme.borderColor}` }}>
+                      <td colSpan={9} className="adm-sub-row">
                         <div style={{ padding: '10px 0 14px' }}>
-                          <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 600, color: theme.textMuted }}>
+                          <p className="adm-k" style={{ margin: '0 0 8px' }}>
                             Full history — {r.username || r.public_id} · {r.marker_name}
                           </p>
-                          <table style={{ borderCollapse: 'collapse', fontSize: 12 }}>
+                          <table className="adm-table dense">
                             <thead>
                               <tr>
                                 {(['Date', 'Value', 'Normal Range', 'Source'] as string[]).map(h => (
-                                  <th key={h} style={{ ...s.th, fontSize: 10, paddingTop: 4, paddingBottom: 4 }}>{h}</th>
+                                  <th key={h}>{h}</th>
                                 ))}
                               </tr>
                             </thead>
                             <tbody>
                               {history.map(h => (
                                 <tr key={h.id}>
-                                  <td style={{ ...s.td, fontSize: 12, paddingTop: 5, paddingBottom: 5 }}>{h.date}</td>
-                                  <td style={{ ...s.td, fontSize: 12, fontWeight: 700, color: valueColor(h), paddingTop: 5, paddingBottom: 5 }}>{h.value} {h.unit}</td>
-                                  <td style={{ ...s.td, fontSize: 12, color: theme.textMuted, paddingTop: 5, paddingBottom: 5 }}>
+                                  <td>{h.date}</td>
+                                  <td style={{ fontWeight: 700, color: valueColor(h) }}>{h.value} {h.unit}</td>
+                                  <td className="adm-dim">
                                     {h.min_normal != null && h.max_normal != null ? `${h.min_normal}–${h.max_normal}` : '—'}
                                   </td>
-                                  <td style={{ ...s.td, fontSize: 12, paddingTop: 5, paddingBottom: 5 }}>{h.verification_type || 'self'}</td>
+                                  <td>{h.verification_type || 'self'}</td>
                                 </tr>
                               ))}
                             </tbody>

@@ -1,5 +1,38 @@
 # CHANGELOG
 
+## 2026-10-14 — design: "Vital" redesign across the whole app (no functional changes)
+
+### Why
+- Damon chose the **Vital** theme (forest green + lime) from the preview page and asked for every screen to follow it, with "functionality not broken, real data untouched".
+
+### Method (how "no functional change" was kept)
+- Logic above each render was left byte-identical (verified by diffing against the previous commit); only JSX markup and styling changed.
+- Inline `style` objects were replaced by scoped CSS classes appended to `src/styles.css` (`.auth-*`, `.hd-*`, `.home-*`, `.lab-*`, `.cat-*`, `.lib-*`, `.lg-*`, `.pf-*`, `.cs-*`, `.pp-*`, `.em-*`, `.lb-*`, `.md-*`, `.adm-*`). Every handler, state variable, API/RPC call, save and validation was verified present and unchanged after each step.
+- Two colour systems kept in sync: `ThemeContext.tsx` tokens (inline `theme.*`) and CSS variables (`--primary-blue`, `--bg`, `--card`, `--hd-fill`…). Dark mode via `body.dark-mode`.
+
+### Screens redesigned
+- **Foundation / auth:** colour tokens, header + mobile menu, Login, Sign Up, Onboarding.
+- **Member:** Home (all panels), Lab Results (+ VO2 modal), Categories, Library, Leagues, League detail, Profile, Consent, Public Profile.
+- **Organization:** Employer view (Members + Analytics), Leaderboard.
+- **Popups:** Health Check-In, Health Report, Lab insights.
+- **Admin (all tabs):** shell and tab bar, Resources, Categories, Types, Goals, Criteria, Tags, Markers (+ wizard), Orgs, Products, Brokers, Providers, Nav Links, Leagues, Users, Challenges, Lab Data, Lab Sets, Marker Groups, Trigger Messages.
+
+### Bugs / traps found and fixed along the way
+- **Global `input:not([type="checkbox"])` rule** overrides single-class input styles (broke the Library search icon) → two-class selectors under a page root.
+- **CSS grid `1fr` overflow** on phones → `minmax(0,1fr)`.
+- **Fixed header uses `backdrop-filter`**, which traps fixed children → mobile sheet moved outside `<header>`.
+- **Admin `btn-danger` had no style anywhere** (rendered as a grey browser button, unreadable in dark mode) and several Admin labels were white-on-white → one accessible button/label set for light + dark.
+- Hover handlers that set inline colours (picker rows, dropdown options, Edit/Delete buttons) replaced with CSS `:hover` — same behaviour, no JS.
+
+### Not changed (deliberate)
+- Printable report documents (Health Report, Insurance Report) stay plain black-on-white print pages; chart bar colours keep their meaning (green/amber/red).
+- No database, RLS, API or scoring change of any kind.
+
+### Open questions for Damon (found, not changed)
+- "ACTION REQUIRED / DECISION NEEDED (Developer)" boxes on Consent + Public Profile are visible to customers.
+- Leaderboard shows scores "/ 9" while NHLS is out of 7.
+- Profile → Delete Account has no handler (pre-existing).
+
 ## 2026-09-30 — feat: interchangeable marker groups (NHLS v2.3)
 
 ### Why
