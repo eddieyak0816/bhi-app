@@ -85,44 +85,39 @@ export default function AdminBrokersTab({ theme }: Props) {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    background: theme.card, border: `1px solid ${theme.borderColor}`,
-    borderRadius: 6, padding: '6px 10px', color: theme.text, fontSize: 13,
-  }
-
-  if (loading) return <div style={{ padding: 32, color: theme.textMuted }}>Loading…</div>
+  if (loading) return <div className="adm-hint" style={{ padding: 32 }}>Loading…</div>
 
   return (
-    <div style={{ padding: '24px 0' }}>
-      <h3 style={{ margin: '0 0 6px 0', fontSize: 17, fontWeight: 700, color: theme.text }}>Broker Management</h3>
-      <p style={{ margin: '0 0 20px 0', fontSize: 13, color: theme.textMuted }}>
+    <div>
+      <h3 className="adm-panel-h" style={{ margin: '0 0 6px' }}>Broker Management</h3>
+      <p className="adm-hint" style={{ margin: '0 0 20px' }}>
         Brokers can view aggregate reports for multiple organizations. To make a user a broker, set their role to <code>broker</code> in the Organizations tab first.
       </p>
 
       {error && (
-        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px', color: '#b91c1c', marginBottom: 16, fontSize: 13 }}>
-          {error} <button onClick={() => setError(null)} style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c' }}>✕</button>
+        <div className="adm-err">
+          {error} <button onClick={() => setError(null)} className="adm-err-x">✕</button>
         </div>
       )}
 
       {brokers.length === 0 ? (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 32, textAlign: 'center', color: theme.textMuted }}>
+        <div className="adm-empty">
           No broker accounts yet. Set a user's role to <code>broker</code> in the Organizations tab.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="adm-orglist">
           {brokers.map(broker => {
             const brokerOrgIds = assignments.filter(a => a.broker_id === broker.id).map(a => a.org_id)
             return (
-              <div key={broker.id} style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '16px 20px' }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: theme.text, marginBottom: 4 }}>
+              <div key={broker.id} className="adm-broker">
+                <div className="adm-item-n" style={{ marginBottom: 4 }}>
                   {broker.username || broker.email}
                 </div>
-                <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 12 }}>{broker.email}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: theme.textMuted, marginBottom: 8, textTransform: 'uppercase' }}>
+                <div className="adm-hint" style={{ marginBottom: 14 }}>{broker.email}</div>
+                <div className="adm-k" style={{ marginBottom: 10 }}>
                   Assigned Organizations
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <div className="adm-wrap" style={{ marginBottom: 0 }}>
                   {orgs.map(org => {
                     const assigned = brokerOrgIds.includes(org.id)
                     return (
@@ -130,21 +125,13 @@ export default function AdminBrokersTab({ theme }: Props) {
                         key={org.id}
                         disabled={saving}
                         onClick={() => toggleAssignment(broker.id, org.id, assigned)}
-                        style={{
-                          ...inputStyle,
-                          cursor: 'pointer',
-                          background: assigned ? theme.blue ?? '#3B82F6' : theme.card,
-                          color: assigned ? '#fff' : theme.text,
-                          border: `1px solid ${assigned ? theme.blue ?? '#3B82F6' : theme.borderColor}`,
-                          fontWeight: assigned ? 600 : 400,
-                          opacity: saving ? 0.6 : 1,
-                        }}
+                        className={`adm-orgbtn${assigned ? ' on' : ''}`} style={{ opacity: saving ? 0.6 : 1 }}
                       >
                         {org.name} {assigned ? '✓' : '+'}
                       </button>
                     )
                   })}
-                  {orgs.length === 0 && <span style={{ color: theme.textMuted, fontSize: 13 }}>No organizations yet.</span>}
+                  {orgs.length === 0 && <span className="adm-hint">No organizations yet.</span>}
                 </div>
               </div>
             )

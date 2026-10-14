@@ -2058,3 +2058,49 @@ body.dark-mode .adm-org-fb.bad{color:#F2A29E}
 @media(max-width:420px){
   .adm-formgrid.g4{grid-template-columns:minmax(0,1fr)}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin → Products + Brokers (AffiliateProductsTab.tsx, AdminBrokersTab.tsx)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-err{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:rgba(217,84,79,.09);border:1px solid rgba(217,84,79,.38);
+  border-radius:16px;padding:12px 16px;margin-bottom:18px;color:#C13B36;font-size:13.5px}
+body.dark-mode .adm-err{color:#F2A29E}
+.adm-err-x{border:0;background:transparent;color:inherit;cursor:pointer;font-size:15px;padding:0 4px;line-height:1}
+.adm-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.adm-two > div{min-width:0}
+.adm-pimg{width:120px;height:120px;object-fit:cover;border-radius:16px;border:1px solid var(--hd-fill-2);display:block}
+.adm-img-x{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:0;background:#DC2626;color:#fff;cursor:pointer;
+  font-size:15px;line-height:1;padding:0;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.adm-uprow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.adm-uprow .adm-in-grow{min-width:180px}
+.adm-dd{position:absolute;top:100%;left:0;right:0;margin-top:6px;background:var(--card);border:1.5px solid var(--border);border-radius:16px;z-index:10;
+  max-height:220px;overflow-y:auto;box-shadow:0 18px 36px -16px rgba(0,0,0,.35);padding:6px}
+.adm-dd-i{padding:9px 12px;border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--text-primary)}
+.adm-dd-i:hover{background:rgba(21,160,107,.1)}
+.adm-item{display:flex;align-items:flex-start;gap:16px;background:var(--card);border:1px solid var(--hd-fill-2);border-radius:20px;padding:18px 20px;
+  box-shadow:0 1px 2px rgba(16,26,22,.05)}
+.adm-item-img{width:64px;height:64px;object-fit:cover;border-radius:14px;flex-shrink:0}
+.adm-item-main{flex:1;min-width:0}
+.adm-item-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.adm-item-n{font-weight:800;font-size:15.5px;letter-spacing:-.015em;color:var(--text-primary);overflow-wrap:anywhere}
+.adm-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:800;background:var(--hd-fill);color:var(--text-secondary)}
+.adm-pill.on{background:rgba(21,160,107,.14);color:#0F8A5C}
+body.dark-mode .adm-pill.on{color:#5DD6A0}
+.adm-item-btns{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.adm-item-btns .adm-cbtn{white-space:nowrap}
+.adm-hint code{background:var(--hd-fill);padding:1px 6px;border-radius:6px;font-size:12px}
+.adm-broker{background:var(--card);border:1px solid var(--hd-fill-2);border-radius:20px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,26,22,.05)}
+.adm-orgbtn{padding:8px 16px;border-radius:999px;border:1.5px solid var(--border);background:transparent;color:var(--text-primary);
+  font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s}
+.adm-orgbtn:hover:not(:disabled){border-color:#15A06B}
+.adm-orgbtn.on{background:#12332A;border-color:#12332A;color:#B8E62E}
+body.dark-mode .adm-orgbtn.on{background:#B8E62E;border-color:#B8E62E;color:#0C1512}
+.adm-orgbtn:disabled{cursor:wait}
+@media(max-width:700px){
+  .adm-two{grid-template-columns:minmax(0,1fr)}
+  .adm-item{padding:16px}
+  .adm-item-img{width:56px;height:56px}
+  .adm-item-btns{flex-direction:row;flex-wrap:wrap;width:100%}
+  .adm-item-btns .adm-cbtn{flex:1 1 auto}
+  .adm-uprow .adm-in-grow{flex:1 1 100%}
+}

@@ -191,77 +191,68 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
     await load()
   }
 
-  const input: React.CSSProperties = {
-    width: '100%', padding: '8px 10px', borderRadius: 6,
-    border: `1px solid ${theme.borderColor}`, background: theme.bgInput ?? theme.bg,
-    color: theme.text, fontSize: 13,
-  }
-  const btn = (bg: string, color = '#fff'): React.CSSProperties => ({
-    background: bg, color, border: 'none', borderRadius: 6,
-    padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-  })
-
+  // Presentation lives in CSS classes (styles.css → Admin Products); logic above is unchanged.
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div className="adm-bar">
         <div>
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: theme.text }}>Affiliate Products</h3>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: theme.textMuted }}>
+          <h3 className="adm-panel-h" style={{ margin: 0 }}>Affiliate Products</h3>
+          <p className="adm-hint" style={{ margin: '4px 0 0' }}>
             Products are matched to users based on their health tags. Shown on the user's Dashboard.
           </p>
         </div>
-        <button style={btn('#3B82F6')} onClick={openCreate}>+ Add Product</button>
+        <button className="btn-primary" onClick={openCreate}>+ Add Product</button>
       </div>
 
       {error && (
-        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #FCA5A5', borderRadius: 6, padding: '10px 14px', color: '#dc2626', fontSize: 13, marginBottom: 16 }}>
+        <div className="adm-err">
           {error}
         </div>
       )}
 
       {/* ── Form ── */}
       {showForm && (
-        <div style={{ background: theme.card, border: `1.5px solid ${theme.borderColor}`, borderRadius: 10, padding: 24, marginBottom: 24 }}>
-          <h4 style={{ margin: '0 0 16px 0', fontSize: 15, fontWeight: 700, color: theme.text }}>
+        <div className="adm-panel">
+          <h4 className="adm-panel-h">
             {editingId ? 'Edit Product' : 'New Product'}
           </h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+          <div className="adm-two">
             <div>
-              <label style={{ display: 'block', fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>Name *</label>
-              <input style={input} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Omega-3 Fish Oil" />
+              <label className="adm-lbl">Name *</label>
+              <input className="adm-in adm-in-full" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Omega-3 Fish Oil" />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>Affiliate URL *</label>
-              <input style={input} value={form.affiliate_url} onChange={e => setForm(f => ({ ...f, affiliate_url: e.target.value }))} placeholder="https://..." />
+              <label className="adm-lbl">Affiliate URL *</label>
+              <input className="adm-in adm-in-full" value={form.affiliate_url} onChange={e => setForm(f => ({ ...f, affiliate_url: e.target.value }))} placeholder="https://..." />
             </div>
           </div>
 
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>Description</label>
+          <div className="adm-field">
+            <label className="adm-lbl">Description</label>
             <textarea
-              style={{ ...input, minHeight: 72, resize: 'vertical' }}
+              className="adm-in adm-in-full adm-ta"
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               placeholder="Brief product description shown to users"
             />
           </div>
 
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>Product Image (optional)</label>
+          <div className="adm-field">
+            <label className="adm-lbl">Product Image (optional)</label>
 
             {/* Preview */}
             {form.image_url && (
-              <div style={{ marginBottom: 8, position: 'relative', display: 'inline-block' }}>
-                <img src={form.image_url} alt="Preview" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, border: `1px solid ${theme.borderColor}`, display: 'block' }} />
+              <div className="adm-thumbbox" style={{ display: 'inline-block' }}>
+                <img src={form.image_url} alt="Preview" className="adm-pimg" />
                 <button
                   onClick={() => { setForm(f => ({ ...f, image_url: '' })); setImageError(null) }}
-                  style={{ position: 'absolute', top: -6, right: -6, background: '#dc2626', color: '#fff', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', fontSize: 13, lineHeight: '20px', textAlign: 'center', padding: 0 }}
+                  className="adm-img-x"
                 >×</button>
               </div>
             )}
 
             {/* Upload button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div className="adm-uprow">
               <label style={{ cursor: imageUploading ? 'wait' : 'pointer' }}>
                 <input
                   type="file"
@@ -295,50 +286,48 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
                     }
                   }}
                 />
-                <span style={{ background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '7px 14px', fontSize: 13, fontWeight: 600, color: theme.text, pointerEvents: 'none', display: 'inline-block' }}>
+                <span className="adm-upload">
                   {imageUploading ? 'Uploading…' : form.image_url ? 'Replace Image' : 'Upload Image'}
                 </span>
               </label>
-              <span style={{ fontSize: 12, color: theme.textMuted }}>or paste a URL:</span>
+              <span className="adm-hint">or paste a URL:</span>
               <input
-                style={{ ...input, flex: 1, minWidth: 180 }}
+                className="adm-in adm-in-grow"
                 value={form.image_url ?? ''}
                 onChange={e => { setForm(f => ({ ...f, image_url: e.target.value })); setImageError(null) }}
                 placeholder="https://..."
               />
             </div>
-            {imageError && <div style={{ color: '#dc2626', fontSize: 12, marginTop: 4 }}>{imageError}</div>}
+            {imageError && <div className="adm-errtxt">{imageError}</div>}
           </div>
 
           {/* Tag picker */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>Health Tags (match user result tags)</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+          <div className="adm-field">
+            <label className="adm-lbl">Health Tags (match user result tags)</label>
+            <div className="adm-wrap" style={{ marginBottom: 8 }}>
               {form.tags.map(tag => (
-                <span key={tag} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(59,130,246,0.12)', color: theme.blue ?? '#3B82F6', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 600 }}>
+                <span key={tag} className="adm-chip tag">
                   {tag}
-                  <button onClick={() => removeTag(tag)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: 14, padding: 0, lineHeight: 1 }}>×</button>
+                  <button onClick={() => removeTag(tag)} className="adm-chip-x">×</button>
                 </span>
               ))}
-              {form.tags.length === 0 && <span style={{ fontSize: 12, color: theme.textMuted }}>No tags selected — product shows to all users</span>}
+              {form.tags.length === 0 && <span className="adm-hint">No tags selected — product shows to all users</span>}
             </div>
             <div ref={tagContainerRef} style={{ position: 'relative', maxWidth: 320 }}>
               <input
-                style={input}
+                className="adm-in adm-in-full"
                 value={tagInput}
                 onChange={e => { setTagInput(e.target.value); setTagDropdownOpen(true) }}
                 onFocus={() => setTagDropdownOpen(true)}
                 placeholder="Search tags..."
               />
               {tagDropdownOpen && filteredTagOptions.length > 0 && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, zIndex: 10, maxHeight: 180, overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}>
+                <div className="adm-dd">
                   {filteredTagOptions.map(t => (
                     <div
                       key={t}
                       onClick={() => addTag(t)}
-                      style={{ padding: '7px 12px', cursor: 'pointer', fontSize: 13, color: theme.text }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = theme.bgSecondary}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                      className="adm-dd-i"
                     >
                       {t}
                     </div>
@@ -348,64 +337,60 @@ export default function AffiliateProductsTab({ theme, allowedTags }: Props) {
             </div>
           </div>
 
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: theme.text }}>
+          <div className="adm-field">
+            <label className="adm-toggle-l">
               <input type="checkbox" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
               Active (visible to users)
             </label>
           </div>
 
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button style={btn('#3B82F6')} onClick={save} disabled={saving}>
+          <div className="adm-urlrow">
+            <button className="btn-primary" onClick={save} disabled={saving}>
               {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Create Product'}
             </button>
-            <button style={btn(theme.bgSecondary, theme.text)} onClick={() => setShowForm(false)}>Cancel</button>
+            <button className="btn-ghost" onClick={() => setShowForm(false)}>Cancel</button>
           </div>
         </div>
       )}
 
       {/* ── Product list ── */}
       {loading ? (
-        <div style={{ textAlign: 'center', color: theme.textMuted, padding: 40 }}>Loading products…</div>
+        <div className="adm-hint" style={{ textAlign: 'center', padding: 40 }}>Loading products…</div>
       ) : products.length === 0 ? (
-        <div style={{ background: theme.card, border: `1.5px solid ${theme.borderColor}`, borderRadius: 10, padding: 40, textAlign: 'center', color: theme.textMuted }}>
+        <div className="adm-empty">
           No products yet. Click "+ Add Product" to create the first one.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="adm-orglist">
           {products.map(p => (
-            <div key={p.id} className="admin-item-card-row" style={{ background: theme.card, border: `1.5px solid ${theme.borderColor}`, borderRadius: 10, padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+            <div key={p.id} className="admin-item-card-row adm-item">
               {p.image_url && (
-                <img src={p.image_url} alt={p.name} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                <img src={p.image_url} alt={p.name} className="adm-item-img" />
               )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 700, fontSize: 15, color: theme.text }}>{p.name}</span>
-                  <span style={{
-                    fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
-                    background: p.is_active ? 'rgba(16,185,129,0.12)' : 'rgba(156,163,175,0.2)',
-                    color: p.is_active ? '#10B981' : theme.textMuted,
-                  }}>
+              <div className="adm-item-main">
+                <div className="adm-item-top">
+                  <span className="adm-item-n">{p.name}</span>
+                  <span className={`adm-pill${p.is_active ? ' on' : ''}`}>
                     {p.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
-                {p.description && <p style={{ margin: '0 0 8px 0', fontSize: 13, color: theme.textMuted }}>{p.description}</p>}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 6 }}>
+                {p.description && <p className="adm-hint" style={{ margin: '0 0 10px' }}>{p.description}</p>}
+                <div className="adm-wrap" style={{ marginBottom: 8 }}>
                   {p.tags.length > 0
                     ? p.tags.map(tag => (
-                        <span key={tag} style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'rgba(59,130,246,0.1)', color: theme.blue ?? '#3B82F6' }}>{tag}</span>
+                        <span key={tag} className="adm-chip tag" style={{ padding: '4px 12px' }}>{tag}</span>
                       ))
-                    : <span style={{ fontSize: 11, color: theme.textMuted }}>No tags — shows to all users</span>
+                    : <span className="adm-hint">No tags — shows to all users</span>
                   }
                 </div>
-                <a href={p.affiliate_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: theme.blue ?? '#3B82F6', display: 'block', wordBreak: 'break-all', overflowWrap: 'anywhere', maxWidth: '100%' }}>{p.affiliate_url}</a>
+                <a href={p.affiliate_url} target="_blank" rel="noopener noreferrer" className="adm-link" style={{ fontSize: 12, display: 'block', wordBreak: 'break-all', overflowWrap: 'anywhere', maxWidth: '100%' }}>{p.affiliate_url}</a>
               </div>
-              <div className="admin-item-card-buttons" style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-                <button style={btn('#3B82F6')} onClick={() => openEdit(p)}>Edit</button>
-                <button style={btn(p.is_active ? '#6b7280' : '#10B981')} onClick={() => toggleActive(p)}>
+              <div className="admin-item-card-buttons adm-item-btns">
+                <button className="adm-cbtn" onClick={() => openEdit(p)}>Edit</button>
+                <button className="adm-cbtn" onClick={() => toggleActive(p)}>
                   {p.is_active ? 'Deactivate' : 'Activate'}
                 </button>
-                <button style={btn('#dc2626')} onClick={() => deleteProduct(p.id)}>Delete</button>
+                <button className="adm-cbtn del" onClick={() => deleteProduct(p.id)}>Delete</button>
               </div>
             </div>
           ))}
