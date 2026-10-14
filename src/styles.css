@@ -1806,3 +1806,6 @@ body.dark-mode .adm-mbtn.danger{color:#F2A29E}
   .adm-filterrow{grid-template-columns:minmax(0,1fr)}
   .adm-filterrow .btn-ghost{width:100%}
 }
+
+/* Admin → Goals helper */
+.adm-v.adm-grow{flex:1}

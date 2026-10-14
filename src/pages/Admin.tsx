@@ -2261,14 +2261,14 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Goal creation form */}
-              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Health Goal</h3>
-                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+              <div className="adm-panel">
+                <h3 className="adm-panel-h">Add Health Goal</h3>
+                <div className="adm-row">
                   <input
                     placeholder="Goal name (e.g., Weight Management)"
                     value={newTypeName}
                     onChange={e => setNewTypeName(e.target.value)}
-                    style={{flex:1,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                    className="adm-in adm-in-grow"
                   />
                   <button className="btn-primary" onClick={async () => {
                     if (!newTypeName.trim()) return alert('Goal name required')
@@ -2285,40 +2285,40 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               </div>
 
               {/* Health Goals Grid */}
-              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Health Goals</h3>
-                <button onClick={() => toggleViewMode('goals')} title={viewMode.goals === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.goals === 'card' ? '📋' : '🗂️'}</button>
+              <div className="adm-bar">
+                <h3 className="adm-panel-h" style={{margin:0}}>Health Goals</h3>
+                <button onClick={() => toggleViewMode('goals')} title={viewMode.goals === 'card' ? 'Table view' : 'Card view'} className="adm-view">{viewMode.goals === 'card' ? '📋' : '🗂️'}</button>
               </div>
 
               {healthGoals.length === 0 ? (
-                <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:32,textAlign:'center',color:theme.textMuted}}>
+                <div className="adm-empty">
                   No health goals found. Add one above or run the migration to add defaults.
                 </div>
               ) : viewMode.goals === 'table' ? (
-                <div style={{border:`1px solid ${theme.borderColor}`,borderRadius:6,overflow:'auto'}}>
-                  <table style={styles.table}>
+                <div className="adm-tablewrap">
+                  <table className="adm-table">
                     <thead>
-                      <tr style={styles.tableHeader}>
-                          <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Goal Name</th>
-                            <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Description</th>
-                            <th style={{padding:12,textAlign:'right',fontWeight:600,color:'#ffffff'}}>Actions</th>
+                      <tr>
+                          <th>Goal Name</th>
+                            <th>Description</th>
+                            <th className="r">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {(healthGoals || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(goal => (
-                        <tr key={goal.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                          <td style={{padding:12,color:theme.text}}>{goal.name}</td>
-                          <td style={{padding:12,color:theme.textMuted}}>{goal.description || '-'}</td>
-                          <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
-                            <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end',height:'100%'}}>
-                              <button onClick={() => { setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true) }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit goal ${goal.name}`}>
+                        <tr key={goal.id}>
+                          <td>{goal.name}</td>
+                          <td className="adm-dim">{goal.description || '-'}</td>
+                          <td className="r">
+                            <div className="adm-acts">
+                              <button onClick={() => { setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true) }} className="adm-ibtn" aria-label={`Edit goal ${goal.name}`}>
                                 ✎
                               </button>
                               <button onClick={async () => {
                                 if (!confirm('Delete this health goal?')) return
                                 await supabase.from('health_goals').delete().eq('id', goal.id)
                                 await loadHealthGoals()
-                              }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)} aria-label={`Delete goal ${goal.name}`}>
+                              }} className="adm-ibtn del" aria-label={`Delete goal ${goal.name}`}>
                                 ✕
                               </button>
                             </div>
@@ -2329,19 +2329,19 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                   </table>
                 </div>
               ) : (
-                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
+                <div className="adm-cards">
                   {(healthGoals || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map(goal => {
                     const description = goal.description || 'No description'
                     const titleTooLong = goal.name.length > 25
                     const descriptionTooLong = description.length > 85
                     
                     return (
-                      <div key={goal.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,display:'flex',flexDirection:'column',height:'100%',position:'relative'}}>
-                        <h4 style={{margin:'0 0 8px 0',fontSize:14,fontWeight:600,color:theme.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      <div key={goal.id} className="adm-card">
+                        <h4 className="adm-card-t">
                           {titleTooLong ? (
                             <>
                               {goal.name.substring(0, 22)}…{' '}
-                              <button onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={{background:'transparent',border:'none',color:'#3b82f6',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
+                              <button onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={{background:'transparent',border:'none',color:'var(--primary-blue)',cursor:'pointer',padding:0,textAlign:'left',fontSize:14,fontWeight:600,display:'inline'}}>
                                 more
                               </button>
                             </>
@@ -2349,30 +2349,30 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             goal.name
                           )}
                         </h4>
-                        <p style={{margin:'0 0 12px 0',fontSize:13,color:theme.textMuted,flex:1,lineHeight:'1.4',minHeight:'36.4px',maxHeight:'36.4px',overflow:'hidden',position:'relative'}}>
+                        <p className="adm-card-d">
                           <span style={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>
                             {description}
                           </span>
                           {descriptionTooLong && (
-                            <span onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={{position:'absolute',bottom:0,right:0,background:theme.bg,paddingLeft:20,color:'#3b82f6',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
+                            <span onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={{position:'absolute',bottom:0,right:0,background:'var(--card)',paddingLeft:20,color:'var(--primary-blue)',cursor:'pointer',textDecoration:'underline',fontWeight:500}}>
                               more
                             </span>
                           )}
                         </p>
-                        <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
+                        <div className="adm-wrap">
                           {(Object.keys(tagsMeta || {}).filter((t: string) => Array.isArray((tagsMeta as any)[t]?.categories) && ((tagsMeta as any)[t].categories || []).includes(goal.name))).map((t: string) => (
-                            <span key={t} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'4px 8px',background:'#3b82f6',color:'#fff',borderRadius:12,fontSize:12,fontWeight:500}}>{t}</span>
+                            <span key={t} className="adm-chip tag" style={{padding:'4px 12px'}}>{t}</span>
                           ))}
                         </div>
-                        <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
-                          <button onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>
+                        <div className="adm-card-acts">
+                          <button onClick={() => {setHealthGoalModalData(goal); setHealthGoalEditForm({name: goal.name, description: goal.description || ''}); setIsEditingHealthGoal(true); setHealthGoalModalOpen(true)}} className="adm-cbtn">
                             ✎ Edit
                           </button>
                           <button onClick={async () => {
                             if (!confirm('Delete this health goal?')) return
                             await supabase.from('health_goals').delete().eq('id', goal.id)
                             await loadHealthGoals()
-                          }} style={cardButtonStyles.delete} {...getButtonHoverHandlers(true)}>
+                          }} className="adm-cbtn del">
                             Delete
                           </button>
                         </div>
@@ -2384,17 +2384,17 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
 
               {/* Health Goal Modal */}
               {healthGoalModalOpen && healthGoalModalData && (
-                <div onKeyDown={(e) => { if (e.key === 'Escape') { setHealthGoalModalOpen(false); setIsEditingHealthGoal(false) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
-                  <div onKeyDown={handleModalKeyDown} style={{background:theme.bg,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:4}}>
-                    <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Health Goal</h3>
-                    <button onClick={() => { setHealthGoalModalOpen(false); setIsEditingHealthGoal(false) }} tabIndex={-1} style={{position:'absolute',top:-5,right:-5,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
+                <div onKeyDown={(e) => { if (e.key === 'Escape') { setHealthGoalModalOpen(false); setIsEditingHealthGoal(false) } }} className="adm-mbg">
+                  <div onKeyDown={handleModalKeyDown} className="adm-modal">
+                  <div className="adm-mhead">
+                    <h3 className="adm-mtitle">Edit Health Goal</h3>
+                    <button onClick={() => { setHealthGoalModalOpen(false); setIsEditingHealthGoal(false) }} tabIndex={-1} className="adm-mx" aria-label="Close">✕</button>
                   </div>
                     {!isEditingHealthGoal ? (
                       <>
-                        <p style={{margin:'0 0 16px 0',fontSize:14,color:theme.textMuted,whiteSpace:'pre-wrap',flex:1}}>{healthGoalModalData.description || 'No description'}</p>
-        <div style={{display:'flex',gap:8,marginTop:'auto'}}>
-                          <button onClick={() => { setIsEditingHealthGoal(true); setHealthGoalEditForm({name: healthGoalModalData.name, description: healthGoalModalData.description || ''}) }} style={{flex:1,background:'#3b82f6',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>
+                        <p className="adm-v mb pre adm-grow">{healthGoalModalData.description || 'No description'}</p>
+        <div className="adm-mfoot">
+                          <button onClick={() => { setIsEditingHealthGoal(true); setHealthGoalEditForm({name: healthGoalModalData.name, description: healthGoalModalData.description || ''}) }} className="adm-mbtn primary">
                             Edit
                           </button>
                           <button onClick={async () => {
@@ -2402,16 +2402,16 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             await supabase.from('health_goals').delete().eq('id', healthGoalModalData.id)
                             await loadHealthGoals()
                             setHealthGoalModalOpen(false)
-                          }} style={{flex:1,background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444',fontWeight:600}}>Delete</button>
+                          }} className="adm-mbtn danger">Delete</button>
                         </div>
                       </>
                     ) : (
                       <>
-                        <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Name</label>
-                        <input autoFocus type="text" value={healthGoalEditForm.name || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, name: e.target.value})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,marginBottom:12}} />
-                        <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Description</label>
-                        <textarea value={healthGoalEditForm.description || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, description: e.target.value})} style={{width:'100%',minHeight:120,padding:8,border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,flex:1,fontFamily:'inherit'}} />
-                        <div style={{display:'flex',gap:8}}>
+                        <label className="adm-lbl">Name</label>
+                        <input autoFocus type="text" value={healthGoalEditForm.name || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, name: e.target.value})} className="adm-in adm-in-full adm-mb12" />
+                        <label className="adm-lbl">Description</label>
+                        <textarea value={healthGoalEditForm.description || ''} onChange={e => setHealthGoalEditForm({...healthGoalEditForm, description: e.target.value})} className="adm-in adm-in-full adm-ta adm-ta-lg adm-mb12" />
+                        <div className="adm-mfoot edit">
                           <button type="button" onClick={async () => {
                             console.log('HealthGoal Save clicked', { id: healthGoalModalData?.id, form: healthGoalEditForm })
                             try {
@@ -2425,8 +2425,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               console.error('Save health goal error', err)
                               alert('Save failed — ' + ((err as any)?.message || 'check server logs'))
                             }
-                          }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
-                          <button onClick={() => { setIsEditingHealthGoal(false); setHealthGoalModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
+                          }} className="adm-mbtn primary">Save</button>
+                          <button onClick={() => { setIsEditingHealthGoal(false); setHealthGoalModalOpen(false) }} className="adm-mbtn ghost">Cancel</button>
                         </div>
                       </>
                     )}
