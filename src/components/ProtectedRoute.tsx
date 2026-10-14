@@ -12,7 +12,8 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <div className="app-center">
+        <div className="app-spin" aria-hidden="true" />
         <p>Loading...</p>
       </div>
     )
@@ -26,10 +27,11 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     const requiredRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
     if (!user || !requiredRoles.includes(user.role)) {
       return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-          <div style={{ textAlign: 'center' }}>
+        <div className="app-center">
+          <div className="app-card">
+            <div className="app-ic" aria-hidden="true">🔒</div>
             <h1>Access Denied</h1>
-            <p>You don't have permission to access this page.</p>
+            <p style={{ marginBottom: 0 }}>You don't have permission to access this page.</p>
           </div>
         </div>
       )

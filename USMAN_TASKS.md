@@ -48,11 +48,10 @@ Damon picked the **Vital** theme (forest green `#12332A` + lime `#B8E62E`). Ever
 32. **Organization pages** — Employer view (Members + Analytics), Leaderboard
 33. **Popups** — Health Check-In, Health Report, Lab insights ("Your Lab Results")
 34. **Admin (every tab)** — shell + new tab bar (wrapped tiles on desktop, collapsible grid on phones), Resources (create/filter/list/edit popup), Categories, Types, Goals, Criteria, Tags (+ tag/category picker popups, edit popup), Markers (filters, list, edit popup, New Marker Wizard), Orgs (identity mapping, create, filters, org cards, members, teams, team scores), Products, Brokers, Providers, Nav Links, Leagues, Users, Challenges, Lab Data, Lab Sets, Marker Groups, Trigger Messages
+35a. **Also restyled afterwards** — "Link expired" screen, app-level "Loading…" and "Access Denied" screens, and the Insurance Negotiation Report popup (Employer → Analytics). The printed report page it opens is untouched.
 35. **Accessibility fix** — Admin buttons (`Delete selected`, `Clear`, disabled `Create`) were unreadable in dark mode; one readable button set now covers light + dark
 
 **Small things deliberately left (tell Damon / do later if wanted):**
-- "Link expired" screen and the plain app-level "Loading…" / "Access Denied" screens still use the old look
-- Insurance Report popup (Employer → Analytics) — old styling
 - Printable Health Report / Insurance report pages — separate white print documents, left as plain on purpose
 - Lab Results: inner fields of the PDF-review table + the small "PDF" pill
 - Admin hidden "Audit Log" tab (only reachable by URL) — old table header

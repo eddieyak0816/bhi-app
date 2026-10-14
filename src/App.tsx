@@ -189,13 +189,14 @@ function AppContent() {
   // loading/auth gates below since it doesn't depend on either.
   if (authHashError) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: 24 }}>
-        <div style={{ maxWidth: 420, textAlign: 'center' }}>
-          <h2 style={{ marginBottom: 12 }}>Link expired</h2>
-          <p style={{ marginBottom: 24, color: '#666' }}>{authHashError}</p>
+      <div className="app-center">
+        <div className="app-card">
+          <div className="app-ic" aria-hidden="true">⏳</div>
+          <h2>Link expired</h2>
+          <p>{authHashError}</p>
           <button
             onClick={() => { setAuthHashError(null); window.location.hash = '#/login' }}
-            style={{ padding: '10px 20px', borderRadius: 6, border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}
+            className="app-btn"
           >
             Back to Login
           </button>
@@ -206,7 +207,8 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <div className="app-center">
+        <div className="app-spin" aria-hidden="true" />
         <p>Loading...</p>
       </div>
     )
@@ -227,7 +229,7 @@ function AppContent() {
   }
 
   console.debug('[App] About to check data, data exists:', !!data, 'dataSource:', dataSource)
-  if (!data) return <div className="center">Loading…</div>
+  if (!data) return <div className="app-center"><div className="app-spin" aria-hidden="true" /><p>Loading…</p></div>
 
   if (showOnboard) {
     return <Onboarding onClose={() => { localStorage.setItem('nhl-onboarded', 'true'); setShowOnboard(false) }} />

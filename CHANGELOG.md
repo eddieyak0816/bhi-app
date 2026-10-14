@@ -15,6 +15,7 @@
 - **Member:** Home (all panels), Lab Results (+ VO2 modal), Categories, Library, Leagues, League detail, Profile, Consent, Public Profile.
 - **Organization:** Employer view (Members + Analytics), Leaderboard.
 - **Popups:** Health Check-In, Health Report, Lab insights.
+- **App-level states:** "Link expired", "Loading…" and "Access Denied" screens (`App.tsx`, `ProtectedRoute.tsx`) and the **Insurance Negotiation Report** popup (`InsuranceReportModal.tsx`, all four tabs). The print document it opens (`handlePrint` template) was verified byte-identical.
 - **Admin (all tabs):** shell and tab bar, Resources, Categories, Types, Goals, Criteria, Tags, Markers (+ wizard), Orgs, Products, Brokers, Providers, Nav Links, Leagues, Users, Challenges, Lab Data, Lab Sets, Marker Groups, Trigger Messages.
 
 ### Bugs / traps found and fixed along the way
