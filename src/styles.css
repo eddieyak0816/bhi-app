@@ -1864,3 +1864,25 @@ body.dark-mode .adm-mbtn.danger{color:#F2A29E}
   color:var(--text-primary);transition:background .12s}
 .adm-checkrow:hover{background:rgba(21,160,107,.09)}
 .adm-checkrow span{flex:1;min-width:0;overflow-wrap:anywhere}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin buttons — one readable, accessible set for light + dark mode
+   (btn-primary / btn-ghost / btn-danger inside .adm-root only; no layout change)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-root .btn-primary{background:#12332A;color:#B8E62E;border:1.5px solid transparent;border-radius:999px;font-weight:700}
+.adm-root .btn-primary:hover:not(:disabled){background:#1B4A3C;color:#B8E62E}
+.adm-root .btn-primary:disabled{background:var(--hd-fill);color:var(--text-secondary);border-color:var(--border);cursor:not-allowed;opacity:1}
+body.dark-mode .adm-root .btn-primary{background:#B8E62E;color:#0C1512}
+body.dark-mode .adm-root .btn-primary:hover:not(:disabled){background:#CBF25A;color:#0C1512}
+body.dark-mode .adm-root .btn-primary:disabled{background:rgba(255,255,255,.07);color:#9AAAA2;border-color:rgba(255,255,255,.18)}
+
+.adm-root .btn-ghost{color:var(--text-primary);border:1.5px solid var(--border);border-radius:999px;font-weight:700}
+.adm-root .btn-ghost:hover:not(:disabled){color:var(--text-primary);border-color:#15A06B;background:rgba(21,160,107,.08)}
+.adm-root .btn-ghost:disabled{opacity:.6;cursor:not-allowed}
+
+.adm-root .btn-danger{background:rgba(239,68,68,.12);color:#C13B36;border:1.5px solid rgba(239,68,68,.55);border-radius:999px;
+  padding:9px 18px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s}
+.adm-root .btn-danger:hover:not(:disabled){background:rgba(239,68,68,.22);border-color:#EF4444}
+.adm-root .btn-danger:disabled{background:var(--hd-fill);color:var(--text-secondary);border-color:var(--border);cursor:not-allowed}
+body.dark-mode .adm-root .btn-danger{color:#FFB4AE;border-color:rgba(255,120,110,.6)}
+body.dark-mode .adm-root .btn-danger:disabled{background:rgba(255,255,255,.07);color:#9AAAA2;border-color:rgba(255,255,255,.18)}
