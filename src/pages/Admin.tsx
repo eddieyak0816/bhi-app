@@ -4284,19 +4284,19 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       {/* ── Organizations Tab (Feature 14) ─────────────────────────── */}
       {activeTab === 'organizations' && (
         <div>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-            <h3 style={{margin:0,fontSize:16,fontWeight:600,color:theme.text}}>Organizations</h3>
+          <div className="adm-bar">
+            <h3 className="adm-panel-h" style={{margin:0}}>Organizations</h3>
           </div>
 
           {/* PHI notice */}
-          <div style={{background:'#fef9c3',border:'1px solid #fde047',borderRadius:6,padding:10,marginBottom:16,fontSize:12,color:'#713f12'}}>
+          <div className="adm-phi"><span aria-hidden="true">🔒</span><div>
             <strong>PHI rule:</strong> Employer-facing views must never expose real names, emails, or raw lab values — only de-identified usernames, public IDs, and aggregate scores.
-          </div>
+          </div></div>
 
           {/* User Identity Mapping (Feature 15) — admin-only, PHI-bearing, hidden by default */}
           <div style={{marginBottom:20}}>
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom: showIdentityPanel ? 10 : 0}}>
-              <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:12,color:theme.textMuted,userSelect:'none'}}>
+              <label className="adm-toggle-l">
                 <input
                   type="checkbox"
                   checked={showIdentityPanel}
@@ -4313,20 +4313,20 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
             </div>
 
             {showIdentityPanel && (
-            <div style={{background:theme.bgSecondary,border:`1px solid #f59e0b`,borderRadius:8,padding:16}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <div className="adm-panel adm-warn">
+            <div className="adm-bar">
               <div>
-                <h4 style={{margin:0,fontSize:14,fontWeight:600,color:theme.text}}>User Identity Mapping</h4>
-                <p style={{margin:'4px 0 0 0',fontSize:12,color:theme.textMuted}}>Admin-only: real name + email ↔ username + public ID. Never share with employers.</p>
+                <h4 className="adm-sec-t" style={{margin:0}}>User Identity Mapping</h4>
+                <p className="adm-hint" style={{margin:'4px 0 0'}}>Admin-only: real name + email ↔ username + public ID. Never share with employers.</p>
               </div>
               <button
                 onClick={() => { if (!usersLoaded) loadAllUsers(); else setUsersLoaded(false) }}
-                style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:theme.text}}
+                className="adm-sbtn"
               >{usersLoaded ? 'Hide' : 'Show Users'}</button>
             </div>
             {usersLoaded && (
-              usersLoading ? <div style={{color:theme.textMuted,fontSize:13}}>Loading…</div> :
-              allUsers.length === 0 ? <p style={{color:theme.textMuted,fontSize:13}}>No users found.</p> : (() => {
+              usersLoading ? <div className="adm-hint">Loading…</div> :
+              allUsers.length === 0 ? <p className="adm-hint">No users found.</p> : (() => {
                 const iCol = identitySort.col
                 const iDir = identitySort.dir
                 const sortedUsers = [...allUsers].sort((a, b) => {
@@ -4342,45 +4342,45 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 const iToggle = (col: string) => setIdentitySort(prev => prev.col === col ? {...prev, dir: prev.dir === 'asc' ? 'desc' : 'asc'} : {col, dir: 'asc'})
                 const iArrow = (col: string) => iCol === col ? (iDir === 'asc' ? ' ↑' : ' ↓') : ''
                 return (
-                <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                <table className="adm-table dense">
                   <thead>
-                    <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                    <tr>
                       {(['name','email','username','public_id','role'] as const).map(col => (
-                        <th key={col} onClick={() => iToggle(col)} style={{textAlign:'left',padding:'5px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase',cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>
+                        <th key={col} onClick={() => iToggle(col)} className="sortable">
                           {col.replace('_',' ')}{iArrow(col)}
                         </th>
                       ))}
-                      <th style={{padding:'5px 8px'}} />
+                      <th />
                     </tr>
                   </thead>
                   <tbody>
                     {sortedUsers.map(u => (
-                      <tr key={u.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                        <td style={{padding:'6px 8px',color:theme.text}}>{u.name}</td>
-                        <td style={{padding:'6px 8px',color:theme.textMuted}}>{u.email}</td>
-                        <td style={{padding:'6px 8px'}}>
+                      <tr key={u.id}>
+                        <td>{u.name}</td>
+                        <td className="adm-dim">{u.email}</td>
+                        <td>
                           {editingUsernameId === u.id ? (
-                            <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                            <div className="adm-urlrow" style={{alignItems:'center'}}>
                               <input
                                 value={editingUsernameVal}
                                 onChange={e => setEditingUsernameVal(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                                style={{padding:'3px 6px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bg,color:theme.text,fontSize:12,width:130}}
+                                className="adm-in adm-in-compact" style={{width:140}}
                               />
-                              <button onClick={() => saveUsernameOverride(u.id)} disabled={usernameOverrideSaving} style={{background:'#2563eb',color:'#fff',border:'none',borderRadius:4,padding:'3px 8px',fontSize:11,cursor:'pointer'}}>Save</button>
-                              <button onClick={() => { setEditingUsernameId(null); setUsernameOverrideError(null) }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'3px 8px',fontSize:11,cursor:'pointer',color:theme.text}}>Cancel</button>
+                              <button onClick={() => saveUsernameOverride(u.id)} disabled={usernameOverrideSaving} className="adm-sbtn pri">Save</button>
+                              <button onClick={() => { setEditingUsernameId(null); setUsernameOverrideError(null) }} className="adm-sbtn">Cancel</button>
                             </div>
                           ) : (
-                            <span style={{fontFamily:'monospace',color:theme.text}}>{u.username || <em style={{color:theme.textMuted}}>not set</em>}</span>
+                            <span className="adm-mono-p">{u.username || <em className="adm-dim">not set</em>}</span>
                           )}
                         </td>
-                        <td style={{padding:'6px 8px',fontFamily:'monospace',fontSize:11,color:theme.textMuted}}>{u.public_id || '—'}</td>
-                        <td style={{padding:'6px 8px'}}>
-                          <span style={{background:u.role==='admin'||u.role==='super_admin'?'#dbeafe':'#f3f4f6',color:u.role==='admin'||u.role==='super_admin'?'#1d4ed8':'#374151',borderRadius:4,padding:'1px 6px',fontSize:11,fontWeight:600}}>{u.role}</span>
+                        <td className="adm-mono">{u.public_id || '—'}</td>
+                        <td>
+                          <span className={`adm-role${u.role==='admin'||u.role==='super_admin' ? ' admin' : ''}`}>{u.role}</span>
                         </td>
-                        <td style={{padding:'6px 8px'}}>
+                        <td>
                           <button
                             onClick={() => { setEditingUsernameId(u.id); setEditingUsernameVal(u.username || ''); setUsernameOverrideError(null) }}
-                            style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'3px 9px',fontSize:11,cursor:'pointer',color:theme.text}}
+                            className="adm-sbtn"
                           >Edit Username</button>
                         </td>
                       </tr>
@@ -4390,71 +4390,71 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 )
               })()
             )}
-            {usernameOverrideError && <p style={{color:'#dc2626',fontSize:12,margin:'8px 0 0 0'}}>{usernameOverrideError}</p>}
+            {usernameOverrideError && <p className="adm-errtxt">{usernameOverrideError}</p>}
             </div>
             )}
           </div>
 
           {/* Create org form — super admin only */}
-          {isSuperAdmin && <div style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,marginBottom:20}}>
-            <h4 style={{margin:'0 0 12px 0',fontSize:14,fontWeight:600,color:theme.text}}>Create Organization</h4>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'end'}}>
+          {isSuperAdmin && <div className="adm-panel">
+            <h4 className="adm-panel-h">Create Organization</h4>
+            <div className="adm-formgrid g3">
               <div>
-                <label style={{display:'block',fontSize:12,color:theme.textMuted,marginBottom:4}}>Name</label>
+                <label className="adm-lbl">Name</label>
                 <input
                   value={orgCreateName}
                   onChange={e => { const v = e.target.value; setOrgCreateName(v); setOrgCreateSlug(v.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')) }}
                   placeholder="Acme Corp"
-                  style={{width:'100%',padding:'8px 10px',borderRadius:6,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:14,boxSizing:'border-box'}}
+                  className="adm-in adm-in-full"
                 />
               </div>
               <div>
-                <label style={{display:'block',fontSize:12,color:theme.textMuted,marginBottom:4}}>Slug (URL-safe)</label>
+                <label className="adm-lbl">Slug (URL-safe)</label>
                 <input
                   value={orgCreateSlug}
                   onChange={e => setOrgCreateSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
                   placeholder="acme-corp"
-                  style={{width:'100%',padding:'8px 10px',borderRadius:6,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:14,boxSizing:'border-box'}}
+                  className="adm-in adm-in-full"
                 />
               </div>
               <button
                 onClick={createOrg}
                 disabled={orgCreateSaving}
-                style={{background:'#2563eb',color:'#fff',border:'none',borderRadius:6,padding:'8px 18px',fontWeight:600,fontSize:14,cursor:'pointer',opacity:orgCreateSaving?0.6:1,whiteSpace:'nowrap'}}
+                className="btn-primary" style={{opacity:orgCreateSaving?0.6:1,whiteSpace:'nowrap'}}
               >{orgCreateSaving ? 'Creating…' : '+ Create'}</button>
             </div>
-            {orgCreateError && <p style={{color:'#dc2626',fontSize:13,margin:'8px 0 0 0'}}>{orgCreateError}</p>}
+            {orgCreateError && <p className="adm-errtxt">{orgCreateError}</p>}
           </div>}
 
           {/* Org list filters — F18a */}
           {!loading && orgs.length > 0 && (
-            <div style={{display:'flex',gap:10,alignItems:'flex-end',flexWrap:'wrap',marginBottom:14,background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:'10px 14px'}}>
+            <div className="adm-filters">
               <div>
-                <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Search</label>
+                <label className="adm-lbl">Search</label>
                 <input
                   value={orgSearch}
                   onChange={e => setOrgSearch(e.target.value)}
                   placeholder="Name or slug…"
-                  style={{padding:'5px 9px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13,width:160}}
+                  className="adm-in adm-in-compact" style={{width:190}}
                 />
               </div>
               <div>
-                <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Min Members</label>
+                <label className="adm-lbl">Min Members</label>
                 <input
                   type="number"
                   min={0}
                   value={orgMinMembers}
                   onChange={e => setOrgMinMembers(e.target.value)}
                   placeholder="0"
-                  style={{padding:'5px 9px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13,width:80}}
+                  className="adm-in adm-in-compact" style={{width:110}}
                 />
               </div>
               <div>
-                <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Sort By</label>
+                <label className="adm-lbl">Sort By</label>
                 <select
                   value={orgSortBy}
                   onChange={e => setOrgSortBy(e.target.value as 'name' | 'members')}
-                  style={{padding:'5px 9px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
+                  className="adm-in adm-in-compact" style={{width:'auto'}}
                 >
                   <option value="name">Name A→Z</option>
                   <option value="members">Most Members</option>
@@ -4463,15 +4463,15 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               {(orgSearch || orgMinMembers || orgSortBy !== 'name') && (
                 <button
                   onClick={() => { setOrgSearch(''); setOrgMinMembers(''); setOrgSortBy('name') }}
-                  style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:5,padding:'5px 10px',fontSize:12,cursor:'pointer',color:theme.textMuted,alignSelf:'flex-end'}}
+                  className="adm-sbtn" style={{alignSelf:'flex-end'}}
                 >Clear</button>
               )}
             </div>
           )}
 
           {/* Org list */}
-          {loading ? <div style={{color:theme.textMuted}}>Loading…</div> : orgs.length === 0 ? (
-            <p style={{color:theme.textMuted,fontSize:14}}>No organizations yet.</p>
+          {loading ? <div className="adm-hint">Loading…</div> : orgs.length === 0 ? (
+            <p className="adm-hint">No organizations yet.</p>
           ) : (() => {
             const minM = orgMinMembers !== '' ? parseInt(orgMinMembers, 10) : 0
             const filtered = orgs
@@ -4482,19 +4482,19 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 return true
               })
               .sort((a, b) => orgSortBy === 'members' ? b.member_count - a.member_count : a.name.localeCompare(b.name))
-            if (filtered.length === 0) return <p style={{color:theme.textMuted,fontSize:14}}>No organizations match the current filters.</p>
+            if (filtered.length === 0) return <p className="adm-hint">No organizations match the current filters.</p>
             return (
-            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div className="adm-orglist">
               {filtered.map(org => (
-                <div key={org.id} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:8,overflow:'hidden'}}>
+                <div key={org.id} className="adm-org">
                   {/* Org header row */}
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 16px'}}>
+                  <div className="adm-org-h">
                     <div>
-                      <span style={{fontWeight:600,fontSize:15,color:theme.text}}>{org.name}</span>
-                      <span style={{marginLeft:10,fontSize:12,color:theme.textMuted}}>/{org.slug}</span>
-                      <span style={{marginLeft:12,fontSize:12,color:theme.textMuted}}>{org.member_count} member{org.member_count !== 1 ? 's' : ''}</span>
+                      <span className="adm-org-n">{org.name}</span>
+                      <span className="adm-org-s">/{org.slug}</span>
+                      <span className="adm-org-m">{org.member_count} member{org.member_count !== 1 ? 's' : ''}</span>
                     </div>
-                    <div style={{display:'flex',gap:8}}>
+                    <div className="adm-org-acts">
                       <button
                         onClick={() => {
                           if (expandedOrgId === org.id) {
@@ -4507,59 +4507,59 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             loadOrgTeamScores(org.slug)
                           }
                         }}
-                        style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:theme.text}}
+                        className="adm-sbtn"
                       >{expandedOrgId === org.id ? 'Hide Members' : 'View Members'}</button>
                       <a
                         href={`#/employer/${org.slug}`}
-                        style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:theme.text,textDecoration:'none',display:'inline-block'}}
+                        className="adm-sbtn"
                       >Employer View</a>
                       <button
                         onClick={() => assignTeams(org.id)}
                         disabled={!!assigningTeams[org.id]}
                         title="Assign unassigned members to teams (balanced)"
-                        style={{background:'transparent',border:`1px solid #7c3aed`,borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:'#7c3aed',opacity:assigningTeams[org.id]?0.6:1,whiteSpace:'nowrap'}}
+                        className="adm-sbtn pur" style={{opacity:assigningTeams[org.id]?0.6:1}}
                       >{assigningTeams[org.id] ? 'Assigning…' : 'Auto-assign Teams'}</button>
                       {isSuperAdmin && <button
                         onClick={() => deleteOrg(org.id)}
-                        style={{background:'transparent',border:'1px solid #dc2626',borderRadius:6,padding:'5px 12px',fontSize:13,cursor:'pointer',color:'#dc2626'}}
+                        className="adm-sbtn del"
                       >Delete</button>}
                     </div>
                   </div>
 
                   {/* Auto-assign feedback */}
                   {assignTeamsMsg[org.id] && (
-                    <div style={{padding:'6px 16px',fontSize:12,borderTop:`1px solid ${theme.borderColor}`,color:assignTeamsMsg[org.id]?.includes('error')||assignTeamsMsg[org.id]?.includes('failed')?'#dc2626':'#15803d',background:assignTeamsMsg[org.id]?.includes('error')||assignTeamsMsg[org.id]?.includes('failed')?'#fef2f2':'#f0fdf4'}}>
+                    <div className={`adm-org-fb${assignTeamsMsg[org.id]?.includes('error')||assignTeamsMsg[org.id]?.includes('failed') ? ' bad' : ' ok'}`}>
                       {assignTeamsMsg[org.id]}
                     </div>
                   )}
 
                   {/* F70: Invite code row */}
-                  <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 16px',borderTop:`1px solid ${theme.borderColor}`,background:theme.bg,fontSize:13}}>
-                    <span style={{color:theme.textMuted,fontWeight:500}}>Invite Code:</span>
-                    <span style={{fontFamily:'monospace',fontWeight:700,letterSpacing:2,color:theme.text,background:theme.bgSecondary,padding:'3px 10px',borderRadius:4,border:`1px solid ${theme.borderColor}`}}>
+                  <div className="adm-invite">
+                    <span className="adm-dim">Invite Code:</span>
+                    <span className="adm-code-v">
                       {orgInviteCodes[org.id] || '—'}
                     </span>
                     <button
                       onClick={() => regenerateInviteCode(org.id)}
                       disabled={!!orgInviteCodeLoading[org.id]}
-                      style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:5,padding:'3px 10px',fontSize:12,cursor:'pointer',color:theme.textMuted,opacity:orgInviteCodeLoading[org.id]?0.5:1}}
+                      className="adm-sbtn" style={{opacity:orgInviteCodeLoading[org.id]?0.5:1}}
                     >{orgInviteCodeLoading[org.id] ? 'Regenerating…' : 'Regenerate'}</button>
-                    <span style={{fontSize:11,color:theme.textMuted}}>Share this code with employees to join anonymously.</span>
+                    <span className="adm-hint">Share this code with employees to join anonymously.</span>
                   </div>
 
                   {/* Expanded members panel */}
                   {expandedOrgId === org.id && (
-                    <div style={{borderTop:`1px solid ${theme.borderColor}`,padding:'16px'}}>
+                    <div className="adm-org-body">
                       {/* Add member form */}
-                      <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:12,marginBottom:14}}>
-                        <h5 style={{margin:'0 0 10px 0',fontSize:13,fontWeight:600,color:theme.text}}>Add Member</h5>
-                        <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr auto',gap:8,alignItems:'end'}}>
+                      <div className="adm-sub">
+                        <h5 className="adm-sec-t" style={{marginBottom:12}}>Add Member</h5>
+                        <div className="adm-formgrid g4">
                           <div>
-                            <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Public ID</label>
+                            <label className="adm-lbl">Public ID</label>
                             <select
                               value={orgAddUserId}
                               onChange={e => setOrgAddUserId(e.target.value)}
-                              style={{width:'100%',padding:'6px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13,fontFamily:'monospace'}}
+                              className="adm-in adm-in-compact" style={{fontFamily:'monospace'}}
                             >
                               <option value="">— select —</option>
                               {allPublicIds.map(pid => (
@@ -4568,22 +4568,22 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             </select>
                           </div>
                           <div>
-                            <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Role</label>
+                            <label className="adm-lbl">Role</label>
                             <select
                               value={orgAddRole}
                               onChange={e => setOrgAddRole(e.target.value as 'member'|'admin')}
-                              style={{width:'100%',padding:'6px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
+                              className="adm-in adm-in-compact"
                             >
                               <option value="member">Member</option>
                               <option value="admin">Admin</option>
                             </select>
                           </div>
                           <div>
-                            <label style={{display:'block',fontSize:11,color:theme.textMuted,marginBottom:3}}>Team</label>
+                            <label className="adm-lbl">Team</label>
                             <select
                               value={orgAddTeam}
                               onChange={e => setOrgAddTeam(e.target.value as ''|'fire'|'water'|'wind'|'earth')}
-                              style={{width:'100%',padding:'6px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
+                              className="adm-in adm-in-compact"
                             >
                               <option value="">— none —</option>
                               {(orgTeams[org.id] || []).map(t => (
@@ -4594,39 +4594,39 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           <button
                             onClick={() => addOrgMember(org.id)}
                             disabled={orgAddSaving}
-                            style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',fontWeight:600,fontSize:13,cursor:'pointer',opacity:orgAddSaving?0.6:1,whiteSpace:'nowrap'}}
+                            className="btn-primary" style={{opacity:orgAddSaving?0.6:1,whiteSpace:'nowrap'}}
                           >Add</button>
                         </div>
-                        {orgAddError && <p style={{color:'#dc2626',fontSize:12,margin:'6px 0 0 0'}}>{orgAddError}</p>}
+                        {orgAddError && <p className="adm-errtxt">{orgAddError}</p>}
                       </div>
 
                       {/* Teams management */}
-                      <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:12,marginBottom:14}}>
-                        <h5 style={{margin:'0 0 10px 0',fontSize:13,fontWeight:600,color:theme.text}}>Teams</h5>
+                      <div className="adm-sub">
+                        <h5 className="adm-sec-t" style={{marginBottom:12}}>Teams</h5>
                         {/* Existing teams */}
                         {(orgTeams[org.id] || []).length === 0 ? (
-                          <p style={{color:theme.textMuted,fontSize:12,margin:'0 0 8px 0'}}>No teams yet. Add one below.</p>
+                          <p className="adm-hint adm-mb8">No teams yet. Add one below.</p>
                         ) : (
-                          <div style={{display:'flex',flexDirection:'column',gap:4,marginBottom:10}}>
+                          <div className="adm-teamlist">
                             {(orgTeams[org.id] || []).map(t => (
-                              <div key={t.id} style={{display:'flex',alignItems:'center',gap:8}}>
+                              <div key={t.id} className="adm-team-row">
                                 {orgTeamEditId === t.id ? (
                                   <>
                                     <input
                                       value={orgTeamEditVal}
                                       onChange={e => setOrgTeamEditVal(e.target.value)}
-                                      style={{flex:1,padding:'4px 8px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
+                                      className="adm-in adm-in-compact" style={{flex:1}}
                                       onKeyDown={e => { if (e.key === 'Enter') saveOrgTeamEdit(org.id, t.id); if (e.key === 'Escape') setOrgTeamEditId(null) }}
                                       autoFocus
                                     />
-                                    <button onClick={() => saveOrgTeamEdit(org.id, t.id)} style={{background:'#2563eb',color:'#fff',border:'none',borderRadius:4,padding:'3px 10px',fontSize:12,cursor:'pointer'}}>Save</button>
-                                    <button onClick={() => setOrgTeamEditId(null)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'3px 10px',fontSize:12,cursor:'pointer',color:theme.text}}>Cancel</button>
+                                    <button onClick={() => saveOrgTeamEdit(org.id, t.id)} className="adm-sbtn pri">Save</button>
+                                    <button onClick={() => setOrgTeamEditId(null)} className="adm-sbtn">Cancel</button>
                                   </>
                                 ) : (
                                   <>
-                                    <span style={{flex:1,fontSize:13,color:theme.text}}>{t.name}</span>
-                                    <button onClick={() => { setOrgTeamEditId(t.id); setOrgTeamEditVal(t.name) }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'2px 9px',fontSize:12,cursor:'pointer',color:theme.text}}>Rename</button>
-                                    <button onClick={() => deleteOrgTeam(org.id, t.id)} style={{background:'transparent',border:'1px solid #dc2626',borderRadius:4,padding:'2px 9px',fontSize:12,cursor:'pointer',color:'#dc2626'}}>Delete</button>
+                                    <span className="adm-team-n">{t.name}</span>
+                                    <button onClick={() => { setOrgTeamEditId(t.id); setOrgTeamEditVal(t.name) }} className="adm-sbtn">Rename</button>
+                                    <button onClick={() => deleteOrgTeam(org.id, t.id)} className="adm-sbtn del">Delete</button>
                                   </>
                                 )}
                               </div>
@@ -4634,17 +4634,17 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           </div>
                         )}
                         {/* Add team */}
-                        <div style={{display:'flex',gap:8}}>
+                        <div className="adm-urlrow">
                           <input
                             value={orgTeamInput[org.id] || ''}
                             onChange={e => setOrgTeamInput(prev => ({ ...prev, [org.id]: e.target.value }))}
                             placeholder="New team name"
                             onKeyDown={e => { if (e.key === 'Enter') addOrgTeam(org.id) }}
-                            style={{flex:1,padding:'5px 8px',borderRadius:5,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:13}}
+                            className="adm-in adm-in-compact" style={{flex:1}}
                           />
-                          <button onClick={() => addOrgTeam(org.id)} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:5,padding:'5px 14px',fontSize:13,fontWeight:600,cursor:'pointer'}}>Add Team</button>
+                          <button onClick={() => addOrgTeam(org.id)} className="adm-sbtn pri">Add Team</button>
                         </div>
-                        {orgTeamError[org.id] && <p style={{color:'#dc2626',fontSize:12,margin:'6px 0 0 0'}}>{orgTeamError[org.id]}</p>}
+                        {orgTeamError[org.id] && <p className="adm-errtxt">{orgTeamError[org.id]}</p>}
                       </div>
 
                       {/* Feature 18: Team score summary — F18a: with filters + sortable headers */}
@@ -4671,22 +4671,22 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         })
                         const tArrow = (col: string) => tsSort.col === col ? (tsSort.dir === 'asc' ? ' ↑' : ' ↓') : ''
                         return (
-                        <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:12,marginBottom:14}}>
-                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,flexWrap:'wrap',gap:8}}>
-                            <h5 style={{margin:0,fontSize:13,fontWeight:600,color:theme.text}}>Team Score Summary</h5>
-                            <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
-                              <div style={{display:'flex',alignItems:'center',gap:5}}>
-                                <label style={{fontSize:11,color:theme.textMuted}}>Min Avg NHLS %</label>
+                        <div className="adm-sub">
+                          <div className="adm-bar">
+                            <h5 className="adm-sec-t" style={{margin:0}}>Team Score Summary</h5>
+                            <div className="adm-org-acts" style={{alignItems:'center'}}>
+                              <div className="adm-urlrow" style={{alignItems:'center'}}>
+                                <label className="adm-hint">Min Avg NHLS %</label>
                                 <input
                                   type="number"
                                   min={0} max={100}
                                   value={teamScoreMinAvg[org.slug] ?? ''}
                                   onChange={e => setTeamScoreMinAvg(prev => ({...prev,[org.slug]:e.target.value}))}
                                   placeholder="0"
-                                  style={{width:60,padding:'3px 6px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:12}}
+                                  className="adm-in adm-in-compact" style={{width:84}}
                                 />
                               </div>
-                              <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:theme.textMuted,cursor:'pointer',userSelect:'none'}}>
+                              <label className="adm-toggle-l">
                                 <input
                                   type="checkbox"
                                   checked={teamScoreHasMembersOnly[org.slug] ?? true}
@@ -4698,13 +4698,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             </div>
                           </div>
                           {filteredTeams.length === 0 ? (
-                            <p style={{color:theme.textMuted,fontSize:12,margin:0}}>No teams match the current filters.</p>
+                            <p className="adm-hint">No teams match the current filters.</p>
                           ) : (
-                          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                          <table className="adm-table dense">
                             <thead>
-                              <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                              <tr>
                                 {([['team','Team'],['members','Members'],['avg_bhas','Avg NHLS'],['optimal','% at Optimal']] as [string,string][]).map(([col,label]) => (
-                                  <th key={col} onClick={() => tToggle(col)} style={{textAlign:'left',padding:'4px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase',cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>
+                                  <th key={col} onClick={() => tToggle(col)} className="sortable">
                                     {label}{tArrow(col)}
                                   </th>
                                 ))}
@@ -4712,19 +4712,15 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             </thead>
                             <tbody>
                               {filteredTeams.map((t) => (
-                                <tr key={t.team} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                                  <td style={{padding:'5px 8px',color:theme.text,fontWeight:500}}>{t.team}</td>
-                                  <td style={{padding:'5px 8px',color:theme.textMuted}}>{t.member_count}</td>
-                                  <td style={{padding:'5px 8px'}}>
+                                <tr key={t.team}>
+                                  <td className="adm-strong">{t.team}</td>
+                                  <td className="adm-dim">{t.member_count}</td>
+                                  <td>
                                     {t.avg_bhas_pct !== null ? (
-                                      <span style={{
-                                        background: t.avg_bhas_pct >= 80 ? '#dcfce7' : t.avg_bhas_pct >= 50 ? '#fef3c7' : '#fee2e2',
-                                        color: t.avg_bhas_pct >= 80 ? '#15803d' : t.avg_bhas_pct >= 50 ? '#b45309' : '#b91c1c',
-                                        borderRadius:4, padding:'1px 7px', fontWeight:700, fontSize:12
-                                      }}>{t.avg_bhas_pct}%</span>
-                                    ) : <span style={{color:theme.textMuted}}>—</span>}
+                                      <span className={`em-score ${t.avg_bhas_pct >= 80 ? 'hi' : t.avg_bhas_pct >= 50 ? 'mid' : 'lo'}`}>{t.avg_bhas_pct}%</span>
+                                    ) : <span className="adm-dim">—</span>}
                                   </td>
-                                  <td style={{padding:'5px 8px',color:theme.textMuted}}>{t.optimal_pct !== null ? `${t.optimal_pct}%` : '—'}</td>
+                                  <td className="adm-dim">{t.optimal_pct !== null ? `${t.optimal_pct}%` : '—'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -4736,9 +4732,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
 
                       {/* Member table — F18a: with filters + sortable headers */}
                       {!orgMembers[org.id] ? (
-                        <p style={{color:theme.textMuted,fontSize:13}}>Loading members…</p>
+                        <p className="adm-hint">Loading members…</p>
                       ) : orgMembers[org.id].length === 0 ? (
-                        <p style={{color:theme.textMuted,fontSize:13}}>No members yet.</p>
+                        <p className="adm-hint">No members yet.</p>
                       ) : (() => {
                         const pubQ = (memberPubIdSearch[org.id] || '').toLowerCase()
                         const teamF = memberTeamFilter[org.id] || ''
@@ -4770,40 +4766,40 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         return (
                           <>
                             {/* Member filter bar */}
-                            <div style={{display:'flex',gap:8,alignItems:'flex-end',flexWrap:'wrap',marginBottom:10,background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'8px 12px'}}>
+                            <div className="adm-filters">
                               <div>
-                                <label style={{display:'block',fontSize:10,color:theme.textMuted,marginBottom:2}}>Public ID</label>
+                                <label className="adm-lbl">Public ID</label>
                                 <input
                                   value={memberPubIdSearch[org.id] || ''}
                                   onChange={e => setMemberPubIdSearch(prev => ({...prev,[org.id]:e.target.value}))}
                                   placeholder="NHL-…"
-                                  style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:12,width:130,fontFamily:'monospace'}}
+                                  className="adm-in adm-in-compact" style={{width:170,fontFamily:'monospace'}}
                                 />
                               </div>
                               <div>
-                                <label style={{display:'block',fontSize:10,color:theme.textMuted,marginBottom:2}}>Team</label>
+                                <label className="adm-lbl">Team</label>
                                 <select
                                   value={memberTeamFilter[org.id] || ''}
                                   onChange={e => setMemberTeamFilter(prev => ({...prev,[org.id]:e.target.value}))}
-                                  style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:12}}
+                                  className="adm-in adm-in-compact" style={{width:'auto'}}
                                 >
                                   <option value="">All teams</option>
                                   {availableTeams.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                               </div>
                               <div>
-                                <label style={{display:'block',fontSize:10,color:theme.textMuted,marginBottom:2}}>Role</label>
+                                <label className="adm-lbl">Role</label>
                                 <select
                                   value={memberRoleFilter[org.id] || ''}
                                   onChange={e => setMemberRoleFilter(prev => ({...prev,[org.id]:e.target.value}))}
-                                  style={{padding:'4px 8px',borderRadius:4,border:`1px solid ${theme.borderColor}`,background:theme.bgInput||theme.bg,color:theme.text,fontSize:12}}
+                                  className="adm-in adm-in-compact" style={{width:'auto'}}
                                 >
                                   <option value="">All roles</option>
                                   <option value="member">Member</option>
                                   <option value="admin">Admin</option>
                                 </select>
                               </div>
-                              <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:theme.textMuted,cursor:'pointer',userSelect:'none',alignSelf:'flex-end',paddingBottom:2}}>
+                              <label className="adm-toggle-l" style={{alignSelf:'flex-end',paddingBottom:8}}>
                                 <input
                                   type="checkbox"
                                   checked={memberUnassignedOnly[org.id] || false}
@@ -4820,40 +4816,40 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                     setMemberRoleFilter(prev => ({...prev,[org.id]:''}))
                                     setMemberUnassignedOnly(prev => ({...prev,[org.id]:false}))
                                   }}
-                                  style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'4px 9px',fontSize:11,cursor:'pointer',color:theme.textMuted,alignSelf:'flex-end',marginBottom:2}}
+                                  className="adm-sbtn" style={{alignSelf:'flex-end'}}
                                 >Clear</button>
                               )}
-                              <span style={{fontSize:11,color:theme.textMuted,alignSelf:'flex-end',paddingBottom:3,marginLeft:'auto'}}>
+                              <span className="adm-hint" style={{alignSelf:'flex-end',paddingBottom:8,marginLeft:'auto'}}>
                                 {filtered.length} / {orgMembers[org.id].length}
                               </span>
                             </div>
                             {filtered.length === 0 ? (
-                              <p style={{color:theme.textMuted,fontSize:13}}>No members match the current filters.</p>
+                              <p className="adm-hint">No members match the current filters.</p>
                             ) : (
-                            <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+                            <table className="adm-table dense">
                               <thead>
-                                <tr style={{borderBottom:`1px solid ${theme.borderColor}`}}>
+                                <tr>
                                   {([['public_id','Public ID'],['role','Role'],['team','Team'],['joined','Joined']] as [string,string][]).map(([col,label]) => (
-                                    <th key={col} onClick={() => mToggle(col)} style={{textAlign:'left',padding:'6px 8px',color:theme.textMuted,fontWeight:600,fontSize:11,textTransform:'uppercase',cursor:'pointer',userSelect:'none',whiteSpace:'nowrap'}}>
+                                    <th key={col} onClick={() => mToggle(col)} className="sortable">
                                       {label}{mArrow(col)}
                                     </th>
                                   ))}
-                                  <th style={{padding:'6px 8px'}} />
+                                  <th />
                                 </tr>
                               </thead>
                               <tbody>
                                 {filtered.map(m => (
-                                  <tr key={m.id} style={{borderBottom:`1px solid ${theme.borderColor}`}}>
-                                    <td style={{padding:'7px 8px',color:theme.text,fontFamily:'monospace',fontSize:12}}>{m.public_id || '—'}</td>
-                                    <td style={{padding:'7px 8px'}}>
-                                      <span style={{background:m.role==='admin'?'#dbeafe':'#f0fdf4',color:m.role==='admin'?'#1d4ed8':'#15803d',borderRadius:4,padding:'2px 7px',fontSize:11,fontWeight:600}}>{m.role}</span>
+                                  <tr key={m.id}>
+                                    <td className="adm-mono-p">{m.public_id || '—'}</td>
+                                    <td>
+                                      <span className={`adm-role${m.role==='admin' ? ' admin' : ''}`}>{m.role}</span>
                                     </td>
-                                    <td style={{padding:'7px 8px',color:theme.text,textTransform:'capitalize'}}>{m.team || '—'}</td>
-                                    <td style={{padding:'7px 8px',color:theme.textMuted}}>{m.joined_at ? new Date(m.joined_at).toLocaleDateString() : '—'}</td>
-                                    <td style={{padding:'7px 8px'}}>
+                                    <td style={{textTransform:'capitalize'}}>{m.team || '—'}</td>
+                                    <td className="adm-dim">{m.joined_at ? new Date(m.joined_at).toLocaleDateString() : '—'}</td>
+                                    <td>
                                       <button
                                         onClick={() => removeOrgMember(org.id, m.user_id)}
-                                        style={{background:'transparent',border:'1px solid #dc2626',borderRadius:4,padding:'3px 9px',fontSize:12,cursor:'pointer',color:'#dc2626'}}
+                                        className="adm-sbtn del"
                                       >Remove</button>
                                     </td>
                                   </tr>

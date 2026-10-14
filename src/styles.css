@@ -1969,3 +1969,92 @@ body.dark-mode .adm-wbtn.primary{background:#B8E62E;color:#0C1512}
   .adm-wiz-foot{flex-direction:column-reverse}
   .adm-wiz-foot .adm-wbtn{width:100%}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin → Orgs (chunk 1): PHI notice, User Identity Mapping, Create Organization
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-formgrid.g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.adm-phi{display:flex;gap:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.5);border-radius:16px;padding:12px 16px;
+  margin-bottom:18px;font-size:13px;line-height:1.55;color:var(--text-primary)}
+.adm-phi strong{color:#A8680F}
+body.dark-mode .adm-phi strong{color:#F0B35E}
+.adm-toggle-l{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-secondary);user-select:none}
+.adm-root .adm-panel.adm-warn{border:1.5px solid rgba(245,158,11,.6)}
+.adm-sbtn{padding:7px 14px;border-radius:999px;border:1.5px solid var(--border);background:transparent;color:var(--text-primary);
+  font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s}
+.adm-sbtn:hover:not(:disabled){border-color:#15A06B;background:rgba(21,160,107,.08)}
+.adm-sbtn:disabled{opacity:.55;cursor:not-allowed}
+.adm-sbtn.pri{background:#12332A;border-color:#12332A;color:#B8E62E}
+.adm-sbtn.pri:hover:not(:disabled){background:#1B4A3C}
+body.dark-mode .adm-sbtn.pri{background:#B8E62E;border-color:#B8E62E;color:#0C1512}
+.adm-sbtn.del{color:#C13B36;border-color:rgba(239,68,68,.5)}
+.adm-sbtn.del:hover:not(:disabled){background:rgba(239,68,68,.1);border-color:#EF4444}
+body.dark-mode .adm-sbtn.del{color:#F2A29E}
+.adm-mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--text-secondary)}
+.adm-mono-p{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--text-primary)}
+.adm-role{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:800;background:var(--hd-fill);color:var(--text-secondary)}
+.adm-role.admin{background:rgba(45,127,192,.15);color:#1F6BA6}
+body.dark-mode .adm-role.admin{color:#7CC8E6}
+.adm-root .adm-table.dense{font-size:13px}
+.adm-root .adm-table.dense th{padding:10px 12px;font-size:11.5px;text-transform:uppercase}
+.adm-root .adm-table.dense td{padding:10px 12px}
+.adm-tablescroll{overflow-x:auto}
+@media(max-width:700px){
+  .adm-formgrid.g3{grid-template-columns:minmax(0,1fr)}
+  .adm-formgrid.g3 > button{width:100%}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin → Orgs (chunk 2): filters, organization cards, invite code
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-filters{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;background:var(--card);border:1px solid var(--hd-fill-2);
+  border-radius:20px;padding:14px 18px;margin-bottom:18px}
+.adm-orglist{display:flex;flex-direction:column;gap:16px}
+.adm-org{background:var(--card);border:1px solid var(--hd-fill-2);border-radius:22px;overflow:hidden;box-shadow:0 1px 2px rgba(16,26,22,.05)}
+.adm-org-h{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:18px 20px}
+.adm-org-n{font-weight:800;font-size:17px;letter-spacing:-.02em;color:var(--text-primary);overflow-wrap:anywhere}
+.adm-org-s{margin-left:10px;font-size:12.5px;color:var(--text-secondary);overflow-wrap:anywhere}
+.adm-org-m{margin-left:12px;display:inline-block;padding:3px 10px;border-radius:999px;background:var(--hd-fill);font-size:12px;font-weight:700;color:var(--text-secondary)}
+.adm-org-acts{display:flex;gap:8px;flex-wrap:wrap}
+a.adm-sbtn{display:inline-flex;align-items:center;text-decoration:none}
+.adm-sbtn.pur{color:#6D4AD0;border-color:rgba(124,58,237,.5)}
+.adm-sbtn.pur:hover:not(:disabled){background:rgba(124,58,237,.1);border-color:#7C3AED}
+body.dark-mode .adm-sbtn.pur{color:#C9B6FF}
+.adm-org-fb{padding:10px 20px;font-size:13px;font-weight:600;border-top:1px solid var(--hd-fill-2)}
+.adm-org-fb.ok{background:rgba(16,185,129,.1);color:#0F8A5C}
+.adm-org-fb.bad{background:rgba(239,68,68,.1);color:#C13B36}
+body.dark-mode .adm-org-fb.ok{color:#5DD6A0}
+body.dark-mode .adm-org-fb.bad{color:#F2A29E}
+.adm-invite{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 20px;border-top:1px solid var(--hd-fill-2);background:var(--bg);font-size:13px}
+.adm-code-v{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:800;letter-spacing:2px;color:var(--text-primary);background:var(--card);
+  padding:5px 12px;border-radius:10px;border:1.5px solid var(--border);overflow-wrap:anywhere}
+@media(max-width:700px){
+  .adm-filters > div{flex:1 1 140px}
+  .adm-filters .adm-in{width:100% !important}
+  .adm-org-h{padding:16px}
+  .adm-org-acts{width:100%}
+  .adm-org-acts > *{flex:1 1 auto;justify-content:center}
+  .adm-invite{padding:12px 16px}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin → Orgs (chunk 3): expanded org panel — Add Member, Teams, Team Scores, Members
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-org-body{padding:18px 20px;border-top:1px solid var(--hd-fill-2);background:var(--bg)}
+.adm-sub{background:var(--card);border:1px solid var(--hd-fill-2);border-radius:18px;padding:16px 18px;margin-bottom:16px}
+.adm-formgrid.g4{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) auto}
+.adm-teamlist{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.adm-team-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.adm-team-n{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--text-primary);overflow-wrap:anywhere}
+@media(max-width:900px){
+  .adm-formgrid.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .adm-formgrid.g4 > button{grid-column:1 / -1;width:100%}
+}
+@media(max-width:700px){
+  .adm-org-body{padding:14px 12px}
+  .adm-sub{padding:14px}
+  .adm-team-row .adm-in{flex:1 1 100%}
+}
+@media(max-width:420px){
+  .adm-formgrid.g4{grid-template-columns:minmax(0,1fr)}
+}
