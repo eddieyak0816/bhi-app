@@ -3559,9 +3559,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Tag creation form */}
-              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Tag</h3>
-                <div className="admin-create-row" style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
+              <div className="adm-panel">
+                <h3 className="adm-panel-h">Add Tag</h3>
+                <div className="admin-create-row adm-row wrap">
                   <input
                     placeholder="Tag name"
                     value={tagInput}
@@ -3575,9 +3575,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         }
                       }
                     }}
-                    style={{flex:3,minWidth:160,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}}
+                    className="adm-in adm-in-grow title"
                   />
-                  <select value={tagCreateCategory} onChange={e => setTagCreateCategory(e.target.value)} style={{width:180,flexShrink:0,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                  <select value={tagCreateCategory} onChange={e => setTagCreateCategory(e.target.value)} className="adm-in adm-in-md">
                     <option value="">(no category)</option>
                     {(categories || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                   </select>
@@ -3590,18 +3590,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               </div>
 
               {/* Tags Search Filter */}
-              <div style={styles.filterBox}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Tags</h3>
-                <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:10,alignItems:'end'}}>
+              <div className="adm-panel">
+                <h3 className="adm-panel-h">Filter Tags</h3>
+                <div className="adm-filterrow">
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Search Tags</label>
+                    <label className="adm-lbl">Search Tags</label>
                     <input
                       type="text"
                       placeholder="Tag name..."
                       value={filterTagName}
                       onChange={e => setFilterTagName(e.target.value)}
                       list="search-tags-list"
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                     />
                     <datalist id="search-tags-list">
                       {Array.from(new Set(allowedTags.filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase())))).sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).map(t => <option key={t} value={t} />)}
@@ -3618,19 +3618,19 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               </div>
 
               {/* Tags Grid */}
-              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Tags</h3>
-                <button onClick={() => toggleViewMode('tags')} title={viewMode.tags === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.tags === 'table' ? '🗂️' : '📋'}</button>
+              <div className="adm-bar">
+                <h3 className="adm-panel-h" style={{margin:0}}>Tags</h3>
+                <button onClick={() => toggleViewMode('tags')} title={viewMode.tags === 'card' ? 'Table view' : 'Card view'} className="adm-view">{viewMode.tags === 'table' ? '🗂️' : '📋'}</button>
               </div>
 
               {viewMode.tags === 'table' ? (
-              <div style={{border:`1px solid ${theme.borderColor}`,borderRadius:6,overflow:'auto'}}>
-                <table style={styles.table}>
+              <div className="adm-tablewrap">
+                <table className="adm-table">
                   <thead>
-                    <tr style={styles.tableHeader}>
-                      <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Tag Name</th>
-                      <th style={{padding:12,textAlign:'left',fontWeight:600,color:'#ffffff'}}>Usage</th>
-                      <th style={{padding:12,textAlign:'right',fontWeight:600,color:'#ffffff'}}>Actions</th>
+                    <tr>
+                      <th>Tag Name</th>
+                      <th>Usage</th>
+                      <th className="r">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3642,12 +3642,12 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     ).map(t => {
                       const usageCount = getTagUsageCount(t)
                       return (
-                        <tr key={t} style={styles.tableRow}>
-                          <td style={{padding:12,fontWeight:500}}>{t}</td>
-                          <td style={{padding:12,fontSize:12,color:theme.textMuted}}>Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
-                          <td style={{padding:12,textAlign:'right',verticalAlign:'middle'}}>
-                            <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                              <button onClick={() => { setTagModalOriginalName(t); setTagEditForm({ name: t, categories: tagsMeta[t]?.categories || [] }); setTagModalOpen(true) }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)} aria-label={`Edit tag ${t}`}>✎</button>
+                        <tr key={t}>
+                          <td className="adm-strong">{t}</td>
+                          <td className="s adm-dim">Used in {usageCount} place{usageCount !== 1 ? 's' : ''}</td>
+                          <td className="r">
+                            <div className="adm-acts">
+                              <button onClick={() => { setTagModalOriginalName(t); setTagEditForm({ name: t, categories: tagsMeta[t]?.categories || [] }); setTagModalOpen(true) }} className="adm-ibtn" aria-label={`Edit tag ${t}`}>✎</button>
                               <button onClick={async () => {
                                 if (!confirm(`Delete tag "${t}"?`)) return
                                 try {
@@ -3657,7 +3657,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                 } catch (err) {
                                   alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
                                 }
-                              }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)} aria-label={`Delete tag ${t}`}>✕</button>
+                              }} className="adm-ibtn del" aria-label={`Delete tag ${t}`}>✕</button>
                             </div>
                           </td>
                         </tr>
@@ -3667,7 +3667,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 </table>
               </div>
               ) : (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4, 1fr)',gap:12}}>
+              <div className="adm-cards">
                 {(
                   sortColumn ? sortData(allowedTags
                     .filter(t => !filterTagName || t.toLowerCase().includes(filterTagName.toLowerCase()))
@@ -3677,17 +3677,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                   const usageCount = getTagUsageCount(t)
                   const titleTooLong = t.length > 30
                   return (
-                    <div key={t} style={{
-                      background:theme.bg,
-                      border:`1px solid ${theme.borderColor}`,
-                      borderRadius:8,
-                      padding:16,
-                      boxShadow:'0 1px 2px rgba(0,0,0,0.05)',
-                      transition:'all 0.2s',
-                      display:'flex',
-                      flexDirection:'column',
-                      minHeight:160
-                    }}>
+                    <div key={t} className="adm-card" style={{minHeight:160}}>
                       {editingId === `tag-${t}` ? (
                         <>
                           <input 
@@ -3695,13 +3685,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             value={editData.name || ''} 
                             onChange={e => setEditData({...editData, name: e.target.value})}
                             autoFocus
-                            style={{width:'100%',padding:'8px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,fontWeight:500}}
+                            className="adm-in adm-in-full adm-mb12"
                           />
-                          <select value={(editData.categories && editData.categories[0]) || ''} onChange={e => setEditData({...editData, categories: e.target.value ? [e.target.value] : []})} style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,fontSize:14}}>
+                          <select value={(editData.categories && editData.categories[0]) || ''} onChange={e => setEditData({...editData, categories: e.target.value ? [e.target.value] : []})} className="adm-in adm-in-full adm-mb12">
                             <option value="">(no category)</option>
                             {(categories || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map((c:any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                           </select>
-                          <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:'auto'}}>
+                          <div className="adm-card-acts">
                             <button className="btn-ghost" onClick={async () => {
                               try {
                                 const res = await fetch(apiUrl(`/api/admin/tags/${encodeURIComponent(t)}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ new_name: editData.name.trim(), categories: editData.categories || undefined }) })
@@ -3718,19 +3708,19 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         </>
                       ) : (
                         <>
-                          <strong style={{fontSize:16,display:'block',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',lineHeight:1.4,marginBottom:12}}>{t}</strong>
-                          <div style={{fontSize:12,color:'#666',marginBottom:12}}>
-                            Used in <span style={{fontWeight:600,color:'#1F2937'}}>{usageCount || 0}</span> {usageCount === 1 ? 'place' : 'places'}
+                          <strong className="adm-card-t" style={{display:'block',fontSize:16,marginBottom:12}}>{t}</strong>
+                          <div className="adm-card-meta">
+                            Used in <span className="adm-strong-i">{usageCount || 0}</span> {usageCount === 1 ? 'place' : 'places'}
                           </div>
                           {tagsMeta[t] && Array.isArray(tagsMeta[t].categories) && tagsMeta[t].categories.length > 0 && (
-                            <div style={{fontSize:12,color:theme.textMuted,marginBottom:12}}>Category: <span style={{fontWeight:600,color:theme.text}}>{tagsMeta[t].categories.join(', ')}</span></div>
+                            <div className="adm-card-meta">Category: <span className="adm-strong-i">{tagsMeta[t].categories.join(', ')}</span></div>
                           )}
-                          <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
+                          <div className="adm-card-acts">
                             <button onClick={() => {
                               setTagModalOriginalName(t)
                               setTagEditForm({ name: t, categories: tagsMeta[t]?.categories || [] })
                               setTagModalOpen(true)
-                            }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                            }} className="adm-cbtn">✎ Edit</button>
                             <button onClick={async () => {
                               if (!confirm(`Delete tag "${t}"? This will remove it from resources and delete any criteria referencing it.`)) return
                               try {
@@ -3741,7 +3731,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               } catch (err) {
                                 alert('Delete tag failed — ' + ((err as any)?.message || 'check server logs'))
                               }
-                            }} style={cardButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕ Delete</button>
+                            }} className="adm-cbtn del">✕ Delete</button>
                           </div>
                         </>
                       )}
@@ -3757,9 +3747,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
 
       {/* Tag Search Modal */}
       {tagSearchModalOpen && (
-        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
-          <div style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,maxWidth:800,width:'90%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
-            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>
+        <div className="adm-mbg top">
+          <div className="adm-modal pick">
+            <h3 className="adm-mtitle adm-mb16">
               {tagSearchContext === 'filter-type' ? 'Select Resource Types' : 'Select Tags'}
             </h3>
             <input
@@ -3768,9 +3758,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               value={tagSearchInput}
               onChange={e => setTagSearchInput(e.target.value)}
               autoFocus
-              style={{padding:12,border:`2px solid #2563eb`,borderRadius:6,marginBottom:16,background:theme.bgSecondary,color:theme.text,fontSize:14,fontWeight:500,boxShadow:'0 2px 4px rgba(37, 99, 235, 0.1)'}}
+              className="adm-in adm-in-full adm-mb16"
             />
-            <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
+            <div className="adm-picklist">
               {(tagSearchContext === 'filter-type' ? resourceTypes : allowedTags || [])
                 .filter((t: string) => {
                   const isFilterContext = tagSearchContext === 'filter-type' || tagSearchContext === 'filter-tag'
@@ -3790,31 +3780,17 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     <div
                       key={t}
                       onClick={() => handleTagSelect(t)}
-                      style={{
-                        padding:10,
-                        background:theme.bg,
-                        border:`1px solid ${theme.borderColor}`,
-                        borderRadius:6,
-                        marginBottom:8,
-                        cursor:'pointer',
-                        color:theme.text,
-                        transition:'all 0.2s',
-                        display:'flex',
-                        justifyContent:'space-between',
-                        alignItems:'center'
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = theme.bgSecondary)}
-                      onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
+                      className="adm-pickrow"
                     >
                       <span>{t}</span>
-                      {isFilterContext && <span style={{fontSize:12,fontWeight:600,background:badgeColor,color:'#fff',padding:'2px 8px',borderRadius:12}}>{count}</span>}
+                      {isFilterContext && <span className="adm-badge" style={{background:badgeColor}}>{count}</span>}
                     </div>
                   )
                 })}
             </div>
             <button
               onClick={() => setTagSearchModalOpen(false)}
-              style={{padding:10,background:theme.text,color:theme.card,border:'none',borderRadius:6,cursor:'pointer',fontWeight:600}}
+              className="adm-mbtn primary"
             >
               Close
             </button>
@@ -3824,18 +3800,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
 
       {/* Category Search Modal */}
       {categorySearchModalOpen && (
-        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
-          <div style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,maxWidth:800,width:'90%',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
-            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>Select Categories</h3>
+        <div className="adm-mbg top">
+          <div className="adm-modal pick">
+            <h3 className="adm-mtitle adm-mb16">Select Categories</h3>
             <input
               type="text"
               placeholder="Search categories..."
               value={categorySearchInput}
               onChange={e => setCategorySearchInput(e.target.value)}
               autoFocus
-              style={{padding:12,border:`2px solid #10b981`,borderRadius:6,marginBottom:16,background:theme.bgSecondary,color:theme.text,fontSize:14,fontWeight:500,boxShadow:'0 2px 4px rgba(16, 185, 129, 0.1)'}}
+              className="adm-in adm-in-full adm-mb16"
             />
-            <div style={{flex:1,overflowY:'auto',marginBottom:12}}>
+            <div className="adm-picklist">
               {categories
                 .filter((c: any) => {
                   const count = getCategoryCount(c.name)
@@ -3854,31 +3830,17 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     <div
                       key={c.id}
                       onClick={() => handleCategorySelect(c.name)}
-                      style={{
-                        padding:10,
-                        background:theme.bg,
-                        border:`1px solid ${theme.borderColor}`,
-                        borderRadius:6,
-                        marginBottom:8,
-                        display:'flex',
-                        justifyContent:'space-between',
-                        alignItems:'center',
-                        cursor:'pointer',
-                        color:theme.text,
-                        transition:'all 0.2s'
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = theme.bgSecondary)}
-                      onMouseLeave={e => (e.currentTarget.style.background = theme.bg)}
+                      className="adm-pickrow"
                     >
                       <span>{c.name}</span>
-                      {isFilterContext && <span style={{fontSize:12,fontWeight:600,background:'#10b981',color:'#fff',padding:'2px 8px',borderRadius:12}}>{count}</span>}
+                      {isFilterContext && <span className="adm-badge" style={{background:'#15A06B'}}>{count}</span>}
                     </div>
                   )
                 })}
             </div>
             <button
               onClick={() => setCategorySearchModalOpen(false)}
-              style={{padding:10,background:theme.text,color:theme.card,border:'none',borderRadius:6,cursor:'pointer',fontWeight:600}}
+              className="adm-mbtn primary"
             >
               Close
             </button>
@@ -3887,16 +3849,16 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       )}
       {/* Tag Edit Modal */}
       {tagModalOpen && (
-        <div onKeyDown={(e) => { if (e.key === 'Escape') { setTagModalOpen(false); setTagModalOriginalName(null); setTagEditForm({}) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
-          <div onKeyDown={handleModalKeyDown} style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',display:'flex',flexDirection:'column'}}>
-            <h3 style={{marginTop:0,marginBottom:4,color:theme.text}}>Edit Tag</h3>
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Name</label>
-            <input autoFocus value={tagEditForm.name || ''} onChange={e => setTagEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text}} />
+        <div onKeyDown={(e) => { if (e.key === 'Escape') { setTagModalOpen(false); setTagModalOriginalName(null); setTagEditForm({}) } }} className="adm-mbg top">
+          <div onKeyDown={handleModalKeyDown} className="adm-modal compact">
+            <h3 className="adm-mtitle adm-mb16">Edit Tag</h3>
+            <label className="adm-lbl">Name</label>
+            <input autoFocus value={tagEditForm.name || ''} onChange={e => setTagEditForm(prev => ({...prev, name: e.target.value}))} className="adm-in adm-in-full adm-mb16" />
 
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:8}}>Categories</label>
-            <div style={{marginBottom:12,maxHeight:220,overflowY:'auto',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'2px 8px 6px 8px',background:theme.bg,flex:1}}>
+            <label className="adm-lbl">Categories</label>
+            <div className="adm-checklist">
               {(categories || []).slice().sort((a:any,b:any) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })).map((c:any) => (
-                <label key={c.id} style={{display:'flex',alignItems:'center',gap:8,padding:'0 6px',marginBottom:3,cursor:'pointer',color:theme.text,lineHeight:1.1}}>
+                <label key={c.id} className="adm-checkrow">
                   <input type="checkbox" checked={(tagEditForm.categories || []).includes(c.name)} onChange={e => {
                     const checked = e.target.checked
                     setTagEditForm(prev => {
@@ -3910,13 +3872,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       return {...prev, categories: current}
                     })
                   }} />
-                  <span style={{flex:1}}>{c.name}</span>
+                  <span>{c.name}</span>
                 </label>
               ))}
-              {categories.length === 0 && <div style={{color:theme.textMuted}}>No categories available</div>}
+              {categories.length === 0 && <div className="adm-dim">No categories available</div>}
             </div>
 
-            <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+            <div className="adm-mfoot edit">
               <button onClick={async () => {
                 try {
                   const payload: any = { new_name: (tagEditForm.name || '').trim(), categories: tagEditForm.categories || [] }
@@ -3937,8 +3899,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                   alert(formatErrorMessage(err, 'tag'))
                   console.error('tag PATCH error:', err)
                 }
-              }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
-              <button onClick={() => { setTagModalOpen(false); setTagModalOriginalName(null); setTagEditForm({}) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
+              }} className="adm-mbtn primary">Save</button>
+              <button onClick={() => { setTagModalOpen(false); setTagModalOriginalName(null); setTagEditForm({}) }} className="adm-mbtn ghost">Cancel</button>
             </div>
           </div>
         </div>

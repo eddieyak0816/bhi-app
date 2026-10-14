@@ -1830,3 +1830,37 @@ body.dark-mode .adm-mbtn.danger{color:#F2A29E}
 @media(max-width:420px){
   .adm-formgrid.g5,.adm-formgrid.g6{grid-template-columns:minmax(0,1fr)}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin → Tags (chunk 1): add / filter / list + the Tag & Category picker popups
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-row.wrap{flex-wrap:wrap}
+.adm-root .adm-in-md{width:190px;flex-shrink:0;cursor:pointer}
+.adm-strong{font-weight:700}
+.adm-strong-i{font-weight:800;color:var(--text-primary)}
+.adm-card-meta{font-size:12.5px;line-height:1.5;color:var(--text-secondary);margin-bottom:12px}
+
+/* Picker popups (Select Tags / Select Types / Select Categories) */
+.adm-mbg.top{z-index:10001}
+.adm-modal.pick{width:min(640px,100%);height:auto;max-height:80vh;padding:24px 26px}
+.adm-picklist{flex:1;overflow-y:auto;margin:0 -4px 14px;padding:0 4px;display:flex;flex-direction:column;gap:8px;min-height:120px}
+.adm-pickrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--hd-fill-2);
+  border-radius:14px;background:var(--bg);color:var(--text-primary);font-size:14px;font-weight:600;cursor:pointer;
+  transition:border-color .15s,background .15s}
+.adm-pickrow:hover{border-color:#15A06B;background:rgba(21,160,107,.08)}
+.adm-pickrow span:first-child{min-width:0;overflow-wrap:anywhere}
+.adm-badge{flex-shrink:0;font-size:12px;font-weight:800;color:#fff;padding:3px 10px;border-radius:999px}
+.adm-modal.pick .adm-mbtn{flex:none;width:100%}
+@media(max-width:700px){
+  .adm-root .adm-in-md{width:100%}
+  .adm-modal.pick{max-height:92vh}
+}
+
+/* Admin → Tags (chunk 2): Edit Tag popup */
+.adm-modal.compact{width:min(640px,100%);height:auto;max-height:86vh}
+.adm-checklist{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow-y:auto;padding:8px;margin-bottom:16px;
+  border:1.5px solid var(--hd-fill-2);border-radius:16px;background:var(--bg)}
+.adm-checkrow{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;
+  color:var(--text-primary);transition:background .12s}
+.adm-checkrow:hover{background:rgba(21,160,107,.09)}
+.adm-checkrow span{flex:1;min-width:0;overflow-wrap:anywhere}
