@@ -126,24 +126,18 @@ export default function AdminProvidersTab({ theme }: Props) {
     setProviders(ps => ps.map(x => x.id === p.id ? { ...x, is_active: !x.is_active } : x))
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', background: theme.card, border: `1px solid ${theme.borderColor}`,
-    borderRadius: 6, padding: '7px 10px', color: theme.text, fontSize: 13, boxSizing: 'border-box',
-  }
-  const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 4 }
-
-  if (loading) return <div style={{ padding: 32, color: theme.textMuted }}>Loading…</div>
+  if (loading) return <div className="adm-hint" style={{ padding: 32 }}>Loading…</div>
 
   return (
-    <div style={{ padding: '24px 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div>
+      <div className="adm-bar">
         <div>
-          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: theme.text }}>Virtual Providers</h3>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: theme.textMuted }}>Telehealth and health navigation provider cards shown to members.</p>
+          <h3 className="adm-panel-h" style={{ margin: 0 }}>Virtual Providers</h3>
+          <p className="adm-hint" style={{ margin: '4px 0 0' }}>Telehealth and health navigation provider cards shown to members.</p>
         </div>
         <button
           onClick={openCreate}
-          style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          className="btn-primary"
         >
           + Add Provider
         </button>
@@ -151,12 +145,12 @@ export default function AdminProvidersTab({ theme }: Props) {
 
       {/* Org filter */}
       {orgs.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <span style={{ fontSize: 13, color: theme.textMuted, fontWeight: 600 }}>Filter by org:</span>
+        <div className="adm-launch">
+          <span className="adm-hint" style={{ fontWeight: 700 }}>Filter by org:</span>
           <select
             value={filterOrgId}
             onChange={e => setFilterOrgId(e.target.value)}
-            style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '5px 10px', fontSize: 13, color: theme.text, cursor: 'pointer' }}
+            className="adm-in adm-in-compact" style={{ width: 'auto' }}
           >
             <option value="all">All providers</option>
             <option value="global">Global only</option>
@@ -166,68 +160,68 @@ export default function AdminProvidersTab({ theme }: Props) {
       )}
 
       {error && (
-        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px', color: '#b91c1c', marginBottom: 16, fontSize: 13 }}>
-          {error} <button onClick={() => setError(null)} style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c' }}>✕</button>
+        <div className="adm-err">
+          {error} <button onClick={() => setError(null)} className="adm-err-x">✕</button>
         </div>
       )}
 
       {/* Create / Edit Form */}
       {showForm && (
-        <div style={{ background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '20px 24px', marginBottom: 24 }}>
-          <h4 style={{ margin: '0 0 16px 0', fontSize: 15, fontWeight: 700, color: theme.text }}>{editing ? 'Edit Provider' : 'New Provider'}</h4>
-          <div className="admin-two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+        <div className="adm-panel">
+          <h4 className="adm-panel-h">{editing ? 'Edit Provider' : 'New Provider'}</h4>
+          <div className="admin-two-col-grid adm-two">
             <div>
-              <label style={labelStyle}>Name *</label>
-              <input style={inputStyle} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Dr. Jane Smith" />
+              <label className="adm-lbl">Name *</label>
+              <input className="adm-in adm-in-full" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Dr. Jane Smith" />
             </div>
             <div>
-              <label style={labelStyle}>Title / Credentials</label>
-              <input style={inputStyle} value={form.title ?? ''} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="MD, NP, Health Coach…" />
+              <label className="adm-lbl">Title / Credentials</label>
+              <input className="adm-in adm-in-full" value={form.title ?? ''} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="MD, NP, Health Coach…" />
             </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>Specialty</label>
-              <input style={inputStyle} value={form.specialty ?? ''} onChange={e => setForm(f => ({ ...f, specialty: e.target.value }))} placeholder="Metabolic Health, Nutrition…" />
+            <div className="adm-span">
+              <label className="adm-lbl">Specialty</label>
+              <input className="adm-in adm-in-full" value={form.specialty ?? ''} onChange={e => setForm(f => ({ ...f, specialty: e.target.value }))} placeholder="Metabolic Health, Nutrition…" />
             </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>Organizations (check none = global, visible to everyone)</label>
+            <div className="adm-span">
+              <label className="adm-lbl">Organizations (check none = global, visible to everyone)</label>
               {orgs.length === 0 ? (
-                <div style={{ fontSize: 12, color: theme.textMuted }}>No organizations exist yet.</div>
+                <div className="adm-hint">No organizations exist yet.</div>
               ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: 10 }}>
+                <div className="adm-checkgrid">
                   {orgs.map(o => (
-                    <label key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: theme.text, cursor: 'pointer' }}>
+                    <label key={o.id} className="adm-checkrow">
                       <input type="checkbox" checked={form.org_ids.includes(o.id)} onChange={() => toggleFormOrg(o.id)} />
                       {o.name}
                     </label>
                   ))}
                 </div>
               )}
-              <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>
+              <div className="adm-hint" style={{ marginTop: 6 }}>
                 {form.org_ids.length === 0 ? 'Global — visible to all members.' : `Visible to ${form.org_ids.length} selected organization${form.org_ids.length === 1 ? '' : 's'} only.`}
               </div>
             </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>Brief Bio * (shown on card — 1-2 sentences)</label>
-              <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: 64 }} value={form.brief_bio} onChange={e => setForm(f => ({ ...f, brief_bio: e.target.value }))} />
+            <div className="adm-span">
+              <label className="adm-lbl">Brief Bio * (shown on card — 1-2 sentences)</label>
+              <textarea className="adm-in adm-in-full adm-ta" style={{ minHeight: 72 }} value={form.brief_bio} onChange={e => setForm(f => ({ ...f, brief_bio: e.target.value }))} />
             </div>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>Full Bio (shown when expanded)</label>
-              <textarea style={{ ...inputStyle, resize: 'vertical', minHeight: 96 }} value={form.full_bio ?? ''} onChange={e => setForm(f => ({ ...f, full_bio: e.target.value }))} />
-            </div>
-            <div>
-              <label style={labelStyle}>Booking / Telehealth URL</label>
-              <input style={inputStyle} value={form.link_url ?? ''} onChange={e => setForm(f => ({ ...f, link_url: e.target.value }))} placeholder="https://…" />
+            <div className="adm-span">
+              <label className="adm-lbl">Full Bio (shown when expanded)</label>
+              <textarea className="adm-in adm-in-full adm-ta" style={{ minHeight: 120 }} value={form.full_bio ?? ''} onChange={e => setForm(f => ({ ...f, full_bio: e.target.value }))} />
             </div>
             <div>
-              <label style={labelStyle}>Headshot URL (optional)</label>
-              <input style={inputStyle} value={form.image_url ?? ''} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://…" />
+              <label className="adm-lbl">Booking / Telehealth URL</label>
+              <input className="adm-in adm-in-full" value={form.link_url ?? ''} onChange={e => setForm(f => ({ ...f, link_url: e.target.value }))} placeholder="https://…" />
+            </div>
+            <div>
+              <label className="adm-lbl">Headshot URL (optional)</label>
+              <input className="adm-in adm-in-full" value={form.image_url ?? ''} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://…" />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-            <button onClick={handleSave} disabled={saving} style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 600, fontSize: 13, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
+          <div className="adm-urlrow" style={{ marginTop: 16 }}>
+            <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Saving…' : editing ? 'Save Changes' : 'Create Provider'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '8px 14px', fontSize: 13, cursor: 'pointer', color: theme.text }}>
+            <button onClick={() => setShowForm(false)} className="btn-ghost">
               Cancel
             </button>
           </div>
@@ -242,33 +236,33 @@ export default function AdminProvidersTab({ theme }: Props) {
           return p.org_ids.includes(filterOrgId)
         })
         return filtered.length === 0 ? (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 32, textAlign: 'center', color: theme.textMuted }}>
+        <div className="adm-empty">
           {providers.length === 0 ? 'No providers yet. Click + Add Provider to create one.' : 'No providers match the selected filter.'}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="adm-orglist">
           {filtered.map(p => (
-            <div key={p.id} className="admin-item-card-row" style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '14px 18px', display: 'flex', gap: 14, alignItems: 'flex-start', opacity: p.is_active ? 1 : 0.55 }}>
+            <div key={p.id} className="admin-item-card-row adm-item" style={{ opacity: p.is_active ? 1 : 0.55 }}>
               {p.image_url ? (
-                <img src={p.image_url} alt={p.name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                <img src={p.image_url} alt={p.name} className="adm-avatar" />
               ) : (
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: theme.bgSecondary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: theme.textMuted }}>{p.name.charAt(0)}</div>
+                <div className="adm-avatar">{p.name.charAt(0)}</div>
               )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: theme.text }}>{p.name}{p.title ? `, ${p.title}` : ''}</div>
-                {p.specialty && <div style={{ fontSize: 12, color: theme.textMuted }}>{p.specialty}</div>}
-                <div style={{ fontSize: 13, color: theme.textMuted, marginTop: 4 }}>{p.brief_bio}</div>
-                <div style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>
+              <div className="adm-item-main">
+                <div className="adm-item-n">{p.name}{p.title ? `, ${p.title}` : ''}</div>
+                {p.specialty && <div className="adm-hint">{p.specialty}</div>}
+                <div className="adm-hint" style={{ marginTop: 4 }}>{p.brief_bio}</div>
+                <div className="adm-hint" style={{ marginTop: 6 }}>
                   {p.org_ids.length > 0
                     ? `Org-specific · ${p.org_ids.map(id => orgs.find(o => o.id === id)?.name ?? id).join(', ')}`
                     : 'Global (all members)'}
-                  {!p.is_active && <span style={{ marginLeft: 8, color: '#b91c1c', fontWeight: 600 }}>Inactive</span>}
+                  {!p.is_active && <span className="adm-pill" style={{ marginLeft: 8 }}>Inactive</span>}
                 </div>
               </div>
-              <div className="admin-item-card-buttons" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                <button onClick={() => openEdit(p)} style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '5px 10px', fontSize: 12, cursor: 'pointer', color: theme.text }}>Edit</button>
-                <button onClick={() => toggleActive(p)} style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '5px 10px', fontSize: 12, cursor: 'pointer', color: theme.textMuted }}>{p.is_active ? 'Deactivate' : 'Activate'}</button>
-                <button onClick={() => handleDelete(p.id)} style={{ background: 'transparent', border: '1px solid #fca5a5', borderRadius: 6, padding: '5px 10px', fontSize: 12, cursor: 'pointer', color: '#b91c1c' }}>Delete</button>
+              <div className="admin-item-card-buttons adm-item-btns row">
+                <button onClick={() => openEdit(p)} className="adm-cbtn">Edit</button>
+                <button onClick={() => toggleActive(p)} className="adm-cbtn">{p.is_active ? 'Deactivate' : 'Activate'}</button>
+                <button onClick={() => handleDelete(p.id)} className="adm-cbtn del">Delete</button>
               </div>
             </div>
           ))}

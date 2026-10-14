@@ -2104,3 +2104,23 @@ body.dark-mode .adm-orgbtn.on{background:#B8E62E;border-color:#B8E62E;color:#0C1
   .adm-item-btns .adm-cbtn{flex:1 1 auto}
   .adm-uprow .adm-in-grow{flex:1 1 100%}
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin → Providers + Nav Links (AdminProvidersTab.tsx, AdminNavLinksTab.tsx)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-span{grid-column:1 / -1;min-width:0}
+.adm-checkgrid{display:flex;flex-wrap:wrap;gap:6px 14px;border:1.5px solid var(--hd-fill-2);border-radius:16px;padding:10px 12px;background:var(--bg)}
+.adm-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--hd-fill);display:grid;place-items:center;
+  font-weight:800;color:var(--text-secondary)}
+.adm-item-btns.row{flex-direction:row;flex-wrap:wrap}
+.adm-pill.bad{background:rgba(239,68,68,.12);color:#C13B36}
+body.dark-mode .adm-pill.bad{color:#F2A29E}
+.adm-grp-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;font-size:15px}
+.adm-move{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.adm-mv{width:30px;height:24px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-primary);
+  font-size:11px;line-height:1;padding:0;display:grid;place-items:center;transition:border-color .15s,background .15s}
+.adm-mv:not(:disabled):hover{border-color:#15A06B;background:rgba(21,160,107,.1)}
+@media(max-width:700px){
+  .adm-item-btns.row{width:100%}
+  .adm-item-btns.row .adm-cbtn{flex:1 1 auto}
+}
