@@ -2901,25 +2901,25 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           {loading ? <div>Loading…</div> : (
             <div>
               {/* New Marker Wizard launch button */}
-              <div style={{marginBottom:12,display:'flex',gap:10,alignItems:'center'}}>
-                <button className="btn-primary" onClick={openWizard} style={{background:'#3D7DCA',color:'#fff',border:'none',borderRadius:6,padding:'8px 18px',fontWeight:600,fontSize:14,cursor:'pointer'}}>+ New Marker Wizard</button>
-                <span style={{color:theme.textMuted,fontSize:13}}>Guided setup: creates a marker, scoring rules, and tags in one step.</span>
+              <div className="adm-launch">
+                <button className="btn-primary adm-wiz" onClick={openWizard}>+ New Marker Wizard</button>
+                <span className="adm-hint">Guided setup: creates a marker, scoring rules, and tags in one step.</span>
               </div>
 
 
               {/* Lab Markers Filters */}
-              <div style={styles.filterBox}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Lab Markers</h3>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
+              <div className="adm-panel">
+                <h3 className="adm-panel-h">Filter Lab Markers</h3>
+                <div className="adm-formgrid g5">
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Marker Name</label>
+                    <label className="adm-lbl">Marker Name</label>
                     <input
                       type="text"
                       placeholder="(All Names)"
                       value={filterLabMarkerName}
                       onChange={e => setFilterLabMarkerName(e.target.value)}
                       list="lab-marker-names-list"
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                     />
                     <datalist id="lab-marker-names-list">
                       {Array.from(new Set(labMarkers
@@ -2935,11 +2935,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     </datalist>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Unit</label>
+                    <label className="adm-lbl">Unit</label>
                     <select
                       value={filterLabMarkerUnit}
                       onChange={e => setFilterLabMarkerUnit(e.target.value)}
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                     >
                       <option value="">(All Units)</option>
                       {Array.from(new Set(labMarkers
@@ -2953,11 +2953,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     </select>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Status</label>
+                    <label className="adm-lbl">Status</label>
                     <select
                       value={filterLabMarkerActive}
                       onChange={e => setFilterLabMarkerActive(e.target.value)}
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                     >
                       <option value="">(All)</option>
                       <option value="active">Active only</option>
@@ -2965,11 +2965,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     </select>
                   </div>
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Sex</label>
+                    <label className="adm-lbl">Sex</label>
                     <select
                       value={filterLabMarkerSex}
                       onChange={e => setFilterLabMarkerSex(e.target.value)}
-                      style={{width:'100%',padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14}}
+                      className="adm-in adm-in-full"
                     >
                       <option value="">(All)</option>
                       <option value="both">Universal</option>
@@ -2991,7 +2991,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                   </button>
                 </div>
                 {(filterLabMarkerName || filterLabMarkerUnit || filterLabMarkerActive || filterLabMarkerSex) && (
-                  <div style={{fontSize:12,marginTop:8,color:theme.text}}>
+                  <div className="adm-count" style={{margin:'14px 0 0'}}>
                     Showing {labMarkers
                       .filter(m =>
                         (!filterLabMarkerName || m.name.toLowerCase().includes(filterLabMarkerName.toLowerCase()))
@@ -3006,24 +3006,24 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               </div>
 
               {/* Markers table */}
-              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Lab Markers</h3>
-                <button onClick={() => toggleViewMode('markers')} title={viewMode.markers === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.markers === 'table' ? '🗂️' : '📋'}</button>
+              <div className="adm-bar">
+                <h3 className="adm-panel-h" style={{margin:0}}>Lab Markers</h3>
+                <button onClick={() => toggleViewMode('markers')} title={viewMode.markers === 'card' ? 'Table view' : 'Card view'} className="adm-view">{viewMode.markers === 'table' ? '🗂️' : '📋'}</button>
               </div>
 
               {viewMode.markers === 'table' ? (
-              <div style={{border:`1px solid ${theme.borderColor}`,borderRadius:6,overflow:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead style={{background:'#3D7DCA',borderBottom:`1px solid ${theme.borderColor}`}}>
+              <div className="adm-tablewrap">
+                <table className="adm-table mk">
+                  <thead>
                     <tr>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('name')}>Name{getSortIndicator('name')}</th>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('unit')}>Unit{getSortIndicator('unit')}</th>
-                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Min Value</th>
-                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Max Value</th>
-                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>CPT Code</th>
-                      <th style={{padding:8,textAlign:'left',color:'#ffffff',fontWeight:500}}>Sex</th>
-                      <th style={{padding:8,textAlign:'center',color:'#ffffff',fontWeight:500}}>Active</th>
-                      <th style={{padding:8,textAlign:'right',color:'#ffffff',fontWeight:500}}>Actions</th>
+                      <th className="sortable" onClick={() => handleSort('name')}>Name{getSortIndicator('name')}</th>
+                      <th className="sortable" onClick={() => handleSort('unit')}>Unit{getSortIndicator('unit')}</th>
+                      <th>Min Value</th>
+                      <th>Max Value</th>
+                      <th>CPT Code</th>
+                      <th>Sex</th>
+                      <th className="c">Active</th>
+                      <th className="r">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3042,15 +3042,15 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           && (!filterLabMarkerSex || (m.applicable_sex || 'both') === filterLabMarkerSex)
                         ).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
                     ).map(m => (
-                      <tr key={m.id} style={{borderTop:`1px solid ${theme.borderColor}`,opacity: m.is_active === false ? 0.45 : 1}}>
+                      <tr key={m.id} style={{opacity: m.is_active === false ? 0.45 : 1}}>
                         {editingId === m.id ? (
                           <>
-                            <td style={{padding:8}}><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
-                            <td style={{padding:8}}><input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
-                            <td style={{padding:8}}><input type="number" value={editData.min_normal ?? ''} onChange={e => setEditData({...editData, min_normal: e.target.value ? Number(e.target.value) : null})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
-                            <td style={{padding:8}}><input type="number" value={editData.max_normal ?? ''} onChange={e => setEditData({...editData, max_normal: e.target.value ? Number(e.target.value) : null})} style={{width:'100%',padding:'4px 6px',border:`1px solid ${theme.borderColor}`,borderRadius:6}} /></td>
-                            <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
-                              <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
+                            <td><input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} className="adm-in adm-in-compact" /></td>
+                            <td><input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} className="adm-in adm-in-compact" /></td>
+                            <td><input type="number" value={editData.min_normal ?? ''} onChange={e => setEditData({...editData, min_normal: e.target.value ? Number(e.target.value) : null})} className="adm-in adm-in-compact" /></td>
+                            <td><input type="number" value={editData.max_normal ?? ''} onChange={e => setEditData({...editData, max_normal: e.target.value ? Number(e.target.value) : null})} className="adm-in adm-in-compact" /></td>
+                            <td className="r">
+                              <div className="adm-acts">
                                 <button className="btn-ghost" onClick={async () => {
                                   try {
                                     const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit, min_normal: editData.min_normal, max_normal: editData.max_normal }) })
@@ -3060,26 +3060,26 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                   } catch (err) {
                                     alert('Save marker failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
-                                }} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#16a34a'}}>✓</button>
-                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'6px',cursor:'pointer',fontSize:16,color:'#dc2626'}}>⊘</button>
+                                }} style={{width:36,height:36,padding:0,fontSize:16,color:'#16a34a',display:'grid',placeItems:'center'}}>✓</button>
+                                <button className="btn-ghost" onClick={() => setEditingId(null)} style={{width:36,height:36,padding:0,fontSize:16,color:'#dc2626',display:'grid',placeItems:'center'}}>⊘</button>
                               </div>
                             </td>
                           </>
                         ) : (
                           <>
-                            <td style={{padding:8}}><strong>{m.name}</strong></td>
-                            <td style={{padding:8}} className="small muted">{m.unit || '—'}</td>
-                            <td style={{padding:8}} className="small muted">{m.min_normal ?? '—'}</td>
-                            <td style={{padding:8}} className="small muted">{m.max_normal ?? '—'}</td>
-                            <td style={{padding:8}} className="small muted">{m.cpt_code || '—'}</td>
-                            <td style={{padding:8}}>
+                            <td><strong>{m.name}</strong></td>
+                            <td className="small adm-dim">{m.unit || '—'}</td>
+                            <td className="small adm-dim">{m.min_normal ?? '—'}</td>
+                            <td className="small adm-dim">{m.max_normal ?? '—'}</td>
+                            <td className="small adm-dim">{m.cpt_code || '—'}</td>
+                            <td>
                               {m.applicable_sex && m.applicable_sex !== 'both' ? (
-                                <span style={{background: m.applicable_sex === 'male' ? '#dbeafe' : '#fce7f3', color: m.applicable_sex === 'male' ? '#1d4ed8' : '#9d174d', borderRadius:4, padding:'2px 7px', fontSize:11, fontWeight:600}}>
+                                <span className={`adm-sex ${m.applicable_sex === 'male' ? 'm' : 'f'}`}>
                                   {m.applicable_sex === 'male' ? 'M' : 'F'}
                                 </span>
-                              ) : <span style={{color:'#9ca3af',fontSize:12}}>—</span>}
+                              ) : <span className="adm-dim">—</span>}
                             </td>
-                            <td style={{padding:8,textAlign:'center',verticalAlign:'middle'}}>
+                            <td className="c">
                               <div
                                 title={m.is_active === false ? 'Inactive — click to activate' : 'Active — click to deactivate'}
                                 onClick={async () => {
@@ -3093,13 +3093,13 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                     alert('Toggle failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
                                 }}
-                                style={{display:'inline-flex',alignItems:'center',cursor:'pointer',width:40,height:22,borderRadius:11,background: m.is_active === false ? '#d1d5db' : '#16a34a',position:'relative',transition:'background 0.2s',flexShrink:0}}
+                                className={`adm-sw${m.is_active === false ? '' : ' on'}`} role="switch" aria-checked={m.is_active !== false}
                               >
-                                <div style={{position:'absolute',width:16,height:16,borderRadius:'50%',background:'#fff',boxShadow:'0 1px 3px rgba(0,0,0,0.3)',top:3,left: m.is_active === false ? 3 : 21,transition:'left 0.2s'}} />
+                                <div className="adm-sw-k" />
                               </div>
                             </td>
-                            <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
-                              <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
+                            <td className="r">
+                              <div className="adm-acts">
                                 <button onClick={() => {
                                   setMarkerModalOriginalId(m.id)
                                   setMarkerEditForm({ name: m.name, unit: m.unit, cpt_code: m.cpt_code, applicable_sex: m.applicable_sex || 'both', marker_category: m.marker_category || 'additional' })
@@ -3125,7 +3125,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                     .then(r => r.ok ? r.json() : { aliases: [] })
                                     .then(({ aliases }) => setMarkerEditAliases(aliases || []))
                                     .catch(() => {})
-                                }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
+                                }} className="adm-ibtn" title="Edit">✎</button>
                                 <button onClick={async () => {
                                   if (!confirm(`Delete marker "${m.name}"?`)) return
                                   try {
@@ -3142,7 +3142,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                   } catch (err) {
                                     alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
                                   }
-                                }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕</button>
+                                }} className="adm-ibtn del" title="Delete">✕</button>
                               </div>
                             </td>
                           </>
@@ -3153,7 +3153,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 </table>
               </div>
               ) : (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
+              <div className="adm-cards">
                 {(labMarkers || [])
                   .filter(m =>
                     (!filterLabMarkerName || m.name.toLowerCase().includes(filterLabMarkerName.toLowerCase()))
@@ -3162,14 +3162,14 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           && (!filterLabMarkerSex || (m.applicable_sex || 'both') === filterLabMarkerSex)
                   ).slice().sort((a,b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
                   .map(m => (
-                  <div key={m.id} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)',display:'flex',flexDirection:'column',height:'100%',opacity: m.is_active === false ? 0.45 : 1}}>
+                  <div key={m.id} className="adm-card" style={{opacity: m.is_active === false ? 0.45 : 1}}>
                     {editingId === m.id ? (
                       <>
-                        <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus style={styles.input} />
-                        <input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} placeholder="Unit" style={styles.input} />
-                        <input type="number" value={editData.min_normal ?? ''} onChange={e => setEditData({...editData, min_normal: e.target.value ? Number(e.target.value) : null})} placeholder="Min value" style={styles.input} />
-                        <input type="number" value={editData.max_normal ?? ''} onChange={e => setEditData({...editData, max_normal: e.target.value ? Number(e.target.value) : null})} placeholder="Max value" style={styles.input} />
-                        <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
+                        <input type="text" value={editData.name || ''} onChange={e => setEditData({...editData, name: e.target.value})} autoFocus className="adm-in adm-in-full adm-mb12" />
+                        <input type="text" value={editData.unit || ''} onChange={e => setEditData({...editData, unit: e.target.value})} placeholder="Unit" className="adm-in adm-in-full adm-mb12" />
+                        <input type="number" value={editData.min_normal ?? ''} onChange={e => setEditData({...editData, min_normal: e.target.value ? Number(e.target.value) : null})} placeholder="Min value" className="adm-in adm-in-full adm-mb12" />
+                        <input type="number" value={editData.max_normal ?? ''} onChange={e => setEditData({...editData, max_normal: e.target.value ? Number(e.target.value) : null})} placeholder="Max value" className="adm-in adm-in-full adm-mb12" />
+                        <div className="adm-card-acts">
                           <button className="btn-ghost" onClick={async () => {
                             try {
                               const res = await fetch(apiUrl(`/api/admin/lab-markers/${m.id}`), { method: 'PATCH', headers: { 'content-type': 'application/json', ...(authHeaders()) }, body: JSON.stringify({ name: editData.name, unit: editData.unit, min_normal: editData.min_normal, max_normal: editData.max_normal }) })
@@ -3185,8 +3185,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       </>
                     ) : (
                       <>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
-                          <h5 style={{margin:0,fontSize:16,fontWeight:600}}>{m.name}</h5>
+                        <div className="adm-card-top">
+                          <h5 className="adm-card-t" style={{margin:0,minWidth:0}}>{m.name}</h5>
                           <div
                             title={m.is_active === false ? 'Inactive — click to activate' : 'Active — click to deactivate'}
                             onClick={async () => {
@@ -3200,12 +3200,12 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                                 alert('Toggle failed — ' + ((err as any)?.message || 'check server logs'))
                               }
                             }}
-                            style={{display:'inline-flex',alignItems:'center',cursor:'pointer',width:40,height:22,borderRadius:11,background: m.is_active === false ? '#d1d5db' : '#16a34a',position:'relative',transition:'background 0.2s',flexShrink:0}}
+                            className={`adm-sw${m.is_active === false ? '' : ' on'}`} role="switch" aria-checked={m.is_active !== false}
                           >
-                            <div style={{position:'absolute',width:16,height:16,borderRadius:'50%',background:'#fff',boxShadow:'0 1px 3px rgba(0,0,0,0.3)',top:3,left: m.is_active === false ? 3 : 21,transition:'left 0.2s'}} />
+                            <div className="adm-sw-k" />
                           </div>
                         </div>
-                        {m.unit && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Unit: {m.unit}</p>}
+                        {m.unit && <p className="adm-line">Unit: {m.unit}</p>}
                         {(() => {
                           const mRules = logicRules.filter((r: any) => r.marker_id === m.id)
                           if (mRules.length === 0) return null
@@ -3214,18 +3214,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                           const overallMin = mins.length > 0 ? Math.min(...mins) : null
                           const overallMax = maxs.length > 0 ? Math.max(...maxs) : null
                           return (<>
-                            {overallMin !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Min: {overallMin}</p>}
-                            {overallMax !== null && <p style={{margin:'0 0 2px 0',fontSize:12,color:theme.text}}>Max: {overallMax}</p>}
+                            {overallMin !== null && <p className="adm-line">Min: {overallMin}</p>}
+                            {overallMax !== null && <p className="adm-line">Max: {overallMax}</p>}
                           </>)
                         })()}
-                        {m.cpt_code && <p style={{margin:'0 0 4px 0',fontSize:11,color:theme.textMuted}}>CPT: {m.cpt_code}</p>}
-                        {!m.cpt_code && <p style={{margin:'0 0 4px 0',fontSize:11,color:theme.textMuted,opacity:0.5}}>No CPT code</p>}
+                        {m.cpt_code && <p className="adm-line dim">CPT: {m.cpt_code}</p>}
+                        {!m.cpt_code && <p className="adm-line dim faint">No CPT code</p>}
                         {m.applicable_sex && m.applicable_sex !== 'both' && (
-                          <span style={{display:'inline-block',background: m.applicable_sex === 'male' ? '#dbeafe' : '#fce7f3', color: m.applicable_sex === 'male' ? '#1d4ed8' : '#9d174d', borderRadius:4, padding:'2px 7px', fontSize:11, fontWeight:600, marginBottom:8}}>
+                          <span className={`adm-sex ${m.applicable_sex === 'male' ? 'm' : 'f'}`} style={{marginBottom:8}}>
                             {m.applicable_sex === 'male' ? 'Male only' : 'Female only'}
                           </span>
                         )}
-                        <div style={{display:'flex',gap:8,justifyContent:'center',marginTop:'auto'}}>
+                        <div className="adm-card-acts">
                           <button onClick={() => {
                             setEditingId(null)
                             setMarkerModalOriginalId(m.id)
@@ -3252,7 +3252,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               .then(r => r.ok ? r.json() : { aliases: [] })
                               .then(({ aliases }) => setMarkerEditAliases(aliases || []))
                               .catch(() => {})
-                          }} style={cardButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                          }} className="adm-cbtn">✎ Edit</button>
                           <button onClick={async () => {
                             if (!confirm(`Delete marker "${m.name}"?`)) return
                             try {
@@ -3269,7 +3269,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             } catch (err) {
                               alert('Delete marker failed — ' + ((err as any)?.message || 'check server logs'))
                             }
-                          }} style={cardButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕ Delete</button>
+                          }} className="adm-cbtn del">✕ Delete</button>
                         </div>
                       </>
                     )}
@@ -3913,43 +3913,43 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           { label: 'Out of Range', color: '#dc2626' },
         ]
         return (
-        <div onKeyDown={(e) => { if (e.key === 'Escape') { setMarkerModalOpen(false); setMarkerModalOriginalId(null) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10001}}>
-          <div onKeyDown={handleModalKeyDown} style={{background:theme.card,border:`2px solid ${theme.borderColor}`,borderRadius:8,padding:24,width:'560px',maxWidth:'95vw',maxHeight:'90vh',overflowY:'auto',overflowX:'hidden',display:'flex',flexDirection:'column',gap:0}}>
-            <h3 style={{marginTop:0,marginBottom:16,color:theme.text}}>Edit Lab Marker</h3>
+        <div onKeyDown={(e) => { if (e.key === 'Escape') { setMarkerModalOpen(false); setMarkerModalOriginalId(null) } }} className="adm-mbg top">
+          <div onKeyDown={handleModalKeyDown} className="adm-modal compact">
+            <h3 className="adm-mtitle adm-mb16">Edit Lab Marker</h3>
 
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Name</label>
-            <input autoFocus value={markerEditForm.name || ''} onChange={e => setMarkerEditForm(prev => ({...prev, name: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,width:'100%',boxSizing:'border-box'}} />
+            <label className="adm-lbl">Name</label>
+            <input autoFocus value={markerEditForm.name || ''} onChange={e => setMarkerEditForm(prev => ({...prev, name: e.target.value}))} className="adm-in adm-in-full adm-mb12" />
 
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Unit</label>
-            <input value={markerEditForm.unit || ''} onChange={e => setMarkerEditForm(prev => ({...prev, unit: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,width:'100%',boxSizing:'border-box'}} />
+            <label className="adm-lbl">Unit</label>
+            <input value={markerEditForm.unit || ''} onChange={e => setMarkerEditForm(prev => ({...prev, unit: e.target.value}))} className="adm-in adm-in-full adm-mb12" />
 
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>CPT Code</label>
-            <input value={markerEditForm.cpt_code || ''} onChange={e => setMarkerEditForm(prev => ({...prev, cpt_code: e.target.value}))} placeholder="e.g. 82652" style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,width:'100%',boxSizing:'border-box'}} />
+            <label className="adm-lbl">CPT Code</label>
+            <input value={markerEditForm.cpt_code || ''} onChange={e => setMarkerEditForm(prev => ({...prev, cpt_code: e.target.value}))} placeholder="e.g. 82652" className="adm-in adm-in-full adm-mb12" />
 
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Applicable Sex</label>
-            <select value={markerEditForm.applicable_sex || 'both'} onChange={e => setMarkerEditForm(prev => ({...prev, applicable_sex: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:12,background:theme.bgSecondary,color:theme.text,width:'100%'}}>
+            <label className="adm-lbl">Applicable Sex</label>
+            <select value={markerEditForm.applicable_sex || 'both'} onChange={e => setMarkerEditForm(prev => ({...prev, applicable_sex: e.target.value}))} className="adm-in adm-in-full adm-mb12">
               <option value="both">Both (universal)</option>
               <option value="male">Male only</option>
               <option value="female">Female only</option>
             </select>
 
-            <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Category</label>
-            <select value={markerEditForm.marker_category || 'additional'} onChange={e => setMarkerEditForm(prev => ({...prev, marker_category: e.target.value}))} style={{padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,marginBottom:16,background:theme.bgSecondary,color:theme.text,width:'100%'}}>
+            <label className="adm-lbl">Category</label>
+            <select value={markerEditForm.marker_category || 'additional'} onChange={e => setMarkerEditForm(prev => ({...prev, marker_category: e.target.value}))} className="adm-in adm-in-full adm-mb16">
               <option value="nhls_score">NHLS Score (scored in v2.3)</option>
               <option value="hormone">Hormone Panel (tracking only)</option>
               <option value="additional">Additional Markers</option>
             </select>
 
-            <div style={{borderTop:`1px solid ${theme.borderColor}`,paddingTop:16,marginBottom:16}}>
-              <div style={{fontSize:13,fontWeight:700,color:theme.text,marginBottom:2}}>Merge Another Marker Into This One</div>
-              <p style={{margin:'0 0 10px 0',fontSize:12,color:theme.textMuted}}>
+            <div className="adm-section">
+              <div className="adm-sec-t">Merge Another Marker Into This One</div>
+              <p className="adm-hint adm-mb12">
                 Select a duplicate marker to absorb — all its lab results and scoring rules will be moved here, then it will be deleted.
               </p>
-              <div style={{display:'flex',gap:6,marginBottom:8}}>
+              <div className="adm-row adm-mb8">
                 <select
                   value={mergeSourceId}
                   onChange={e => { setMergeSourceId(e.target.value); setMergeError(null) }}
-                  style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,background:theme.bgSecondary,color:mergeSourceId ? theme.text : theme.textMuted,fontSize:12}}
+                  className="adm-in adm-in-grow" style={{color: mergeSourceId ? theme.text : theme.textMuted}}
                 >
                   <option value=''>— Select a marker to merge in…</option>
                   {[...labMarkers]
@@ -3983,16 +3983,16 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       alert(`Done — moved ${data.moved_results} result(s) and ${data.moved_rules} rule(s) from "${data.deleted_marker}" into "${data.target_marker}".`)
                     } finally { setMergeSaving(false) }
                   }}
-                  style={{padding:'6px 14px',background:'#EF4444',border:'none',borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',opacity:mergeSaving||!mergeSourceId?0.5:1,whiteSpace:'nowrap'}}
+                  className="adm-dangerbtn" style={{opacity:mergeSaving||!mergeSourceId?0.5:1}}
                 >{mergeSaving ? 'Merging…' : 'Merge'}</button>
               </div>
-              {mergeError && <p style={{margin:'4px 0 0',fontSize:12,color:'#EF4444'}}>{mergeError}</p>}
+              {mergeError && <p className="adm-errtxt">{mergeError}</p>}
               {markerEditAliases.length > 0 && (
                 <div style={{marginTop:12}}>
-                  <div style={{fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:6}}>PDF aliases (auto-created from uploads)</div>
+                  <div className="adm-k" style={{marginBottom:8}}>PDF aliases (auto-created from uploads)</div>
                   <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
                     {markerEditAliases.map(a => (
-                      <span key={a.id} style={{display:'inline-flex',alignItems:'center',gap:4,background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:12,padding:'2px 10px',fontSize:12,color:theme.text}}>
+                      <span key={a.id} className="adm-alias">
                         {a.alias}
                         <button
                           type="button"
@@ -4000,7 +4000,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             const res = await fetch(apiUrl(`/api/admin/lab-markers/aliases/${a.id}`), { method: 'DELETE', headers: authHeaders() })
                             if (res.ok) setMarkerEditAliases(prev => prev.filter(x => x.id !== a.id))
                           }}
-                          style={{background:'transparent',border:'none',cursor:'pointer',color:theme.textMuted,fontSize:14,lineHeight:1,padding:0,marginLeft:2}}
+                          className="adm-alias-x"
                           title="Remove alias"
                         >×</button>
                       </span>
@@ -4010,30 +4010,30 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               )}
             </div>
 
-            <div style={{borderTop:`1px solid ${theme.borderColor}`,paddingTop:16,marginBottom:16}}>
-              <div style={{fontSize:13,fontWeight:700,color:theme.text,marginBottom:4}}>Scoring Rules</div>
-              <p style={{margin:'0 0 12px 0',fontSize:12,color:theme.textMuted}}>Each tier can have multiple ranges. Rows with empty Min, Max, or Tag are skipped.</p>
+            <div className="adm-section">
+              <div className="adm-sec-t">Scoring Rules</div>
+              <p className="adm-hint adm-mb12">Each tier can have multiple ranges. Rows with empty Min, Max, or Tag are skipped.</p>
               {EDIT_TIERS.map(({ label, color }) => {
                 const tierRows = markerEditRules.map((r, i) => ({ r, i })).filter(({ r }) => r.label === label)
                 return (
-                  <div key={label} style={{marginBottom:20}}>
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
-                      <div style={{fontSize:12,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</div>
-                      <button type="button" onClick={() => addMarkerEditRow(label)} style={{background:'transparent',border:`1px solid ${color}`,borderRadius:4,padding:'2px 10px',fontSize:12,color,cursor:'pointer',fontWeight:600}}>+ Add Range</button>
+                  <div key={label} className="adm-tier-blk">
+                    <div className="adm-tier-head">
+                      <div className="adm-tier-t" style={{color}}>{label}</div>
+                      <button type="button" onClick={() => addMarkerEditRow(label)} className="adm-tier-add" style={{borderColor:color,color}}>+ Add Range</button>
                     </div>
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 28px',gap:6,marginBottom:4}}>
-                      <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Min Value</div>
-                      <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Max Value</div>
-                      <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Tag Name</div>
+                    <div className="adm-tier-grid adm-tier-grid-h">
+                      <div className="adm-k">Min Value</div>
+                      <div className="adm-k">Max Value</div>
+                      <div className="adm-k">Tag Name</div>
                       <div />
                     </div>
                     {tierRows.map(({ r, i }) => (
                       <div key={i} style={{marginBottom:10}}>
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 28px',gap:6,marginBottom: label !== 'Optimal' ? 4 : 0,alignItems:'center'}}>
-                          <input type="number" placeholder="Min" value={r.min_value} onChange={e => updateMarkerEditRule(i, 'min_value', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
-                          <input type="number" placeholder="Max" value={r.max_value} onChange={e => updateMarkerEditRule(i, 'max_value', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
-                          <input placeholder="Tag name" value={r.tag_name} onChange={e => updateMarkerEditRule(i, 'tag_name', e.target.value)} style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}} />
-                          <button type="button" onClick={() => removeMarkerEditRow(i)} disabled={tierRows.length <= 1} title="Remove this range" style={{background:'transparent',border:'none',color:tierRows.length <= 1 ? theme.borderColor : '#dc2626',cursor:tierRows.length <= 1 ? 'default' : 'pointer',fontSize:16,padding:0,lineHeight:1}}>×</button>
+                        <div className="adm-tier-grid" style={{marginBottom: label !== 'Optimal' ? 6 : 0}}>
+                          <input type="number" placeholder="Min" value={r.min_value} onChange={e => updateMarkerEditRule(i, 'min_value', e.target.value)} className="adm-in adm-in-compact" />
+                          <input type="number" placeholder="Max" value={r.max_value} onChange={e => updateMarkerEditRule(i, 'max_value', e.target.value)} className="adm-in adm-in-compact" />
+                          <input placeholder="Tag name" value={r.tag_name} onChange={e => updateMarkerEditRule(i, 'tag_name', e.target.value)} className="adm-in adm-in-compact" />
+                          <button type="button" onClick={() => removeMarkerEditRow(i)} disabled={tierRows.length <= 1} title="Remove this range" className="adm-rowx" style={{opacity: tierRows.length <= 1 ? 0.3 : 1, cursor: tierRows.length <= 1 ? 'default' : 'pointer'}}>×</button>
                         </div>
                         {label !== 'Optimal' && (
                           <textarea
@@ -4041,7 +4041,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                             placeholder="Alert message shown to user (leave blank for no popup)"
                             value={markerEditTierMessages[i] || ''}
                             onChange={e => setMarkerEditTierMessages(prev => ({ ...prev, [i]: e.target.value }))}
-                            style={{width:'100%',padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12,background:theme.bgSecondary,color:theme.text,resize:'vertical',boxSizing:'border-box'}}
+                            className="adm-in adm-in-full adm-ta adm-ta-sm"
                           />
                         )}
                       </div>
@@ -4051,8 +4051,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               })}
             </div>
 
-            {markerEditError && <p style={{color:'#dc2626',fontSize:13,margin:'0 0 12px 0'}}>{markerEditError}</p>}
-            <div style={{display:'flex',gap:8,marginTop:'auto'}}>
+            {markerEditError && <p className="adm-errtxt adm-mb12">{markerEditError}</p>}
+            <div className="adm-mfoot edit">
               <button
                 disabled={markerEditSaving}
                 onClick={async () => {
@@ -4077,9 +4077,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     setMarkerEditSaving(false)
                   }
                 }}
-                style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600,opacity:markerEditSaving?0.6:1}}
+                className="adm-mbtn primary" style={{opacity:markerEditSaving?0.6:1}}
               >{markerEditSaving ? 'Saving…' : 'Save'}</button>
-              <button onClick={() => { setMarkerModalOpen(false); setMarkerModalOriginalId(null) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
+              <button onClick={() => { setMarkerModalOpen(false); setMarkerModalOriginalId(null) }} className="adm-mbtn ghost">Cancel</button>
             </div>
           </div>
         </div>
@@ -4087,14 +4087,14 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
       })()}
       {/* ── New Marker Wizard Modal ── */}
       {wizardOpen && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <div style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:10,padding:28,width:560,maxWidth:'95vw',maxHeight:'90vh',overflowY:'auto',position:'relative'}}>
-            <button onClick={() => setWizardOpen(false)} style={{position:'absolute',top:12,right:16,background:'transparent',border:'none',fontSize:20,cursor:'pointer',color:theme.textMuted}}>×</button>
+        <div className="adm-mbg">
+          <div className="adm-modal compact">
+            <button onClick={() => setWizardOpen(false)} className="adm-mx" aria-label="Close">×</button>
 
             {/* Step indicator */}
-            <div style={{display:'flex',gap:0,marginBottom:24}}>
+            <div className="adm-steps">
               {[1,2,3].map(n => (
-                <div key={n} style={{flex:1,textAlign:'center',paddingBottom:8,borderBottom:`3px solid ${wizardStep === n ? '#3D7DCA' : wizardStep > n ? '#16a34a' : theme.borderColor}`,fontSize:13,fontWeight:600,color:wizardStep === n ? '#3D7DCA' : wizardStep > n ? '#16a34a' : theme.textMuted}}>
+                <div key={n} className={`adm-step${wizardStep === n ? ' on' : wizardStep > n ? ' done' : ''}`}>
                   {n === 1 ? 'Step 1 — Create Marker' : n === 2 ? 'Step 2 — Scoring Rules' : 'Step 3 — Review & Save'}
                 </div>
               ))}
@@ -4103,28 +4103,28 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
             {/* Step 1 */}
             {wizardStep === 1 && (
               <div>
-                <p style={{marginTop:0,marginBottom:16,fontSize:14,color:theme.textMuted}}>Enter a name and optional unit for the new lab marker.</p>
-                <div style={{marginBottom:14}}>
-                  <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Marker Name *</label>
+                <p className="adm-hint adm-mb16">Enter a name and optional unit for the new lab marker.</p>
+                <div className="adm-field">
+                  <label className="adm-lbl">Marker Name *</label>
                   <input
                     autoFocus
                     placeholder="e.g. Blood Glucose"
                     value={wizardMarkerName}
                     onChange={e => setWizardMarkerName(e.target.value)}
-                    style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}
+                    className="adm-in adm-in-full"
                   />
                 </div>
-                <div style={{marginBottom:20}}>
-                  <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Unit (optional)</label>
+                <div className="adm-field">
+                  <label className="adm-lbl">Unit (optional)</label>
                   <input
                     placeholder="e.g. mg/dL"
                     value={wizardMarkerUnit}
                     onChange={e => setWizardMarkerUnit(e.target.value)}
-                    style={{width:'100%',padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}
+                    className="adm-in adm-in-full"
                   />
                 </div>
-                {wizardError && <p style={{color:'#dc2626',fontSize:13,marginBottom:12}}>{wizardError}</p>}
-                <div style={{display:'flex',justifyContent:'flex-end'}}>
+                {wizardError && <p className="adm-errtxt adm-mb12">{wizardError}</p>}
+                <div className="adm-wiz-foot end">
                   <button
                     disabled={!wizardMarkerName.trim()}
                     onClick={() => {
@@ -4133,7 +4133,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       autoSuggestTags(wizardMarkerName)
                       setWizardStep(2)
                     }}
-                    style={{background:'#3D7DCA',color:'#fff',border:'none',borderRadius:6,padding:'8px 20px',fontWeight:600,fontSize:14,cursor:'pointer',opacity:!wizardMarkerName.trim()?0.5:1}}
+                    className="adm-wbtn primary" style={{opacity:!wizardMarkerName.trim()?0.5:1}}
                   >Next →</button>
                 </div>
               </div>
@@ -4148,67 +4148,67 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               ]
               return (
               <div>
-                <p style={{marginTop:0,marginBottom:4,fontSize:14,color:theme.textMuted}}>Define scoring rules for <strong style={{color:theme.text}}>{wizardMarkerName}</strong>. At least one Optimal row is required.</p>
-                <p style={{marginTop:0,marginBottom:16,fontSize:12,color:theme.textMuted}}>Each tier can have multiple ranges (e.g. Optimal = 1–5 OR 10–15). Rows with empty Min, Max, or Tag are skipped.</p>
+                <p className="adm-hint" style={{margin:'0 0 6px'}}>Define scoring rules for <strong>{wizardMarkerName}</strong>. At least one Optimal row is required.</p>
+                <p className="adm-hint adm-mb16">Each tier can have multiple ranges (e.g. Optimal = 1–5 OR 10–15). Rows with empty Min, Max, or Tag are skipped.</p>
                 <div style={{marginBottom:16}}>
                   {TIERS.map(({ label, color }) => {
                     const tierRows = wizardRules.map((r, i) => ({ r, i })).filter(({ r }) => r.label === label)
                     return (
-                      <div key={label} style={{marginBottom:16}}>
-                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
-                          <div style={{fontSize:12,fontWeight:700,color,textTransform:'uppercase',letterSpacing:'0.04em'}}>{label}</div>
+                      <div key={label} className="adm-tier-blk">
+                        <div className="adm-tier-head">
+                          <div className="adm-tier-t" style={{color}}>{label}</div>
                           <button
                             type="button"
                             onClick={() => addWizardRow(label)}
-                            style={{background:'transparent',border:`1px solid ${color}`,borderRadius:4,padding:'2px 10px',fontSize:12,color,cursor:'pointer',fontWeight:600}}
+                            className="adm-tier-add" style={{borderColor:color,color}}
                           >+ Add Range</button>
                         </div>
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 28px',gap:6,marginBottom:4}}>
-                          <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Min Value</div>
-                          <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Max Value</div>
-                          <div style={{fontSize:11,fontWeight:600,color:theme.textMuted}}>Tag Name</div>
+                        <div className="adm-tier-grid adm-tier-grid-h">
+                          <div className="adm-k">Min Value</div>
+                          <div className="adm-k">Max Value</div>
+                          <div className="adm-k">Tag Name</div>
                           <div />
                         </div>
                         {tierRows.map(({ r, i }) => (
-                          <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 28px',gap:6,marginBottom:6,alignItems:'center'}}>
+                          <div key={i} className="adm-tier-grid" style={{marginBottom:8}}>
                             <input
                               type="number"
                               placeholder="Min"
                               value={r.min_value}
                               onChange={e => updateWizardRule(i, 'min_value', e.target.value)}
-                              style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
+                              className="adm-in adm-in-compact"
                             />
                             <input
                               type="number"
                               placeholder="Max"
                               value={r.max_value}
                               onChange={e => updateWizardRule(i, 'max_value', e.target.value)}
-                              style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
+                              className="adm-in adm-in-compact"
                             />
                             <input
                               placeholder="Tag name"
                               value={r.tag_name}
                               onChange={e => updateWizardRule(i, 'tag_name', e.target.value)}
-                              style={{padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:13,background:theme.bgSecondary,color:theme.text}}
+                              className="adm-in adm-in-compact"
                             />
                             <button
                               type="button"
                               onClick={() => removeWizardRow(i)}
                               disabled={tierRows.length <= 1}
                               title="Remove this range"
-                              style={{background:'transparent',border:'none',color:tierRows.length <= 1 ? theme.borderColor : '#dc2626',cursor:tierRows.length <= 1 ? 'default' : 'pointer',fontSize:16,padding:0,lineHeight:1}}
+                              className="adm-rowx" style={{opacity: tierRows.length <= 1 ? 0.3 : 1, cursor: tierRows.length <= 1 ? 'default' : 'pointer'}}
                             >×</button>
                           </div>
                         ))}
                         {label !== 'Optimal' && (
                           <div style={{marginTop:6}}>
-                            <div style={{fontSize:11,color:theme.textMuted,marginBottom:3}}>Alert message shown to user <span style={{fontWeight:400}}>(leave blank for no popup)</span></div>
+                            <div className="adm-k" style={{marginBottom:6}}>Alert message shown to user <span style={{fontWeight:400}}>(leave blank for no popup)</span></div>
                             <textarea
                               rows={2}
                               placeholder={label === 'Improvement' ? 'e.g. Your value is approaching the out-of-range threshold.' : 'e.g. Your value is outside the healthy range.'}
                               value={wizardTierMessages[label] || ''}
                               onChange={e => setWizardTierMessages(prev => ({ ...prev, [label]: e.target.value }))}
-                              style={{width:'100%',padding:'7px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:12,background:theme.bgSecondary,color:theme.text,resize:'vertical',boxSizing:'border-box'}}
+                              className="adm-in adm-in-full adm-ta adm-ta-sm"
                             />
                           </div>
                         )}
@@ -4216,9 +4216,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     )
                   })}
                 </div>
-                {wizardError && <p style={{color:'#dc2626',fontSize:13,marginBottom:12}}>{wizardError}</p>}
-                <div style={{display:'flex',justifyContent:'space-between'}}>
-                  <button onClick={() => setWizardStep(1)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'8px 16px',fontSize:14,cursor:'pointer',color:theme.text}}>← Back</button>
+                {wizardError && <p className="adm-errtxt adm-mb12">{wizardError}</p>}
+                <div className="adm-wiz-foot">
+                  <button onClick={() => setWizardStep(1)} className="adm-wbtn ghost">← Back</button>
                   <button
                     onClick={() => {
                       const optimalRows = wizardRules.filter(r => r.label === 'Optimal')
@@ -4227,7 +4227,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       setWizardError(null)
                       setWizardStep(3)
                     }}
-                    style={{background:'#3D7DCA',color:'#fff',border:'none',borderRadius:6,padding:'8px 20px',fontWeight:600,fontSize:14,cursor:'pointer'}}
+                    className="adm-wbtn primary"
                   >Next →</button>
                 </div>
               </div>
@@ -4237,42 +4237,42 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
             {/* Step 3 */}
             {wizardStep === 3 && (
               <div>
-                <p style={{marginTop:0,marginBottom:16,fontSize:14,color:theme.textMuted}}>Review what will be created, then click <strong>Create All</strong>.</p>
-                <div style={{background:theme.bgSecondary,borderRadius:8,padding:16,marginBottom:16,border:`1px solid ${theme.borderColor}`}}>
+                <p className="adm-hint adm-mb16">Review what will be created, then click <strong>Create All</strong>.</p>
+                <div className="adm-sum">
                   <div style={{marginBottom:10}}>
-                    <span style={{fontSize:12,fontWeight:700,color:theme.textMuted,textTransform:'uppercase'}}>Marker</span>
-                    <div style={{marginTop:4,fontSize:14,color:theme.text}}>
-                      <strong>{wizardMarkerName}</strong>{wizardMarkerUnit ? <span style={{color:theme.textMuted}}> ({wizardMarkerUnit})</span> : null}
+                    <span className="adm-k">Marker</span>
+                    <div className="adm-v">
+                      <strong>{wizardMarkerName}</strong>{wizardMarkerUnit ? <span className="adm-dim"> ({wizardMarkerUnit})</span> : null}
                     </div>
                   </div>
                   <div style={{marginBottom:10}}>
-                    <span style={{fontSize:12,fontWeight:700,color:theme.textMuted,textTransform:'uppercase'}}>Scoring Rules</span>
+                    <span className="adm-k">Scoring Rules</span>
                     {wizardRules.filter(r => r.tag_name.trim() && r.min_value !== '' && r.max_value !== '').map((r, i) => {
                       const labelColor = r.label === 'Optimal' ? '#16a34a' : r.label === 'Improvement' ? '#ca8a04' : '#dc2626'
                       return (
-                        <div key={i} style={{marginTop:4,fontSize:13,color:theme.text}}>
+                        <div key={i} className="adm-line" style={{marginTop:6}}>
                           <span style={{fontWeight:600,color:labelColor}}>{r.label}:</span>{' '}
-                          {r.min_value} – {r.max_value} → <code style={{background:theme.bgTertiary,padding:'1px 4px',borderRadius:3,fontSize:12}}>{r.tag_name}</code>
+                          {r.min_value} – {r.max_value} → <code className="adm-code">{r.tag_name}</code>
                         </div>
                       )
                     })}
                   </div>
                   <div>
-                    <span style={{fontSize:12,fontWeight:700,color:theme.textMuted,textTransform:'uppercase'}}>Tags to Create</span>
-                    <div style={{marginTop:4,display:'flex',flexWrap:'wrap',gap:6}}>
+                    <span className="adm-k">Tags to Create</span>
+                    <div className="adm-wrap" style={{marginTop:6,marginBottom:0}}>
                       {[...new Set(wizardRules.filter(r => r.tag_name.trim()).map(r => r.tag_name.trim()))].map(t => (
-                        <span key={t} style={{background:'#dbeafe',color:'#1d4ed8',borderRadius:4,padding:'2px 8px',fontSize:12,fontWeight:500}}>{t}</span>
+                        <span key={t} className="adm-chip tag">{t}</span>
                       ))}
                     </div>
                   </div>
                 </div>
-                {wizardError && <p style={{color:'#dc2626',fontSize:13,marginBottom:12}}>{wizardError}</p>}
-                <div style={{display:'flex',justifyContent:'space-between'}}>
-                  <button onClick={() => setWizardStep(2)} style={{background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'8px 16px',fontSize:14,cursor:'pointer',color:theme.text}}>← Back</button>
+                {wizardError && <p className="adm-errtxt adm-mb12">{wizardError}</p>}
+                <div className="adm-wiz-foot">
+                  <button onClick={() => setWizardStep(2)} className="adm-wbtn ghost">← Back</button>
                   <button
                     disabled={wizardSaving}
                     onClick={wizardSave}
-                    style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:6,padding:'8px 24px',fontWeight:700,fontSize:14,cursor:'pointer',opacity:wizardSaving?0.6:1}}
+                    className="adm-wbtn primary" style={{opacity:wizardSaving?0.6:1}}
                   >{wizardSaving ? 'Creating…' : 'Create All'}</button>
                 </div>
               </div>
