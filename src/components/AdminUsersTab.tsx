@@ -131,64 +131,52 @@ export default function AdminUsersTab({ theme, isSuperAdmin }: Props) {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', background: theme.card, border: `1px solid ${theme.borderColor}`,
-    borderRadius: 6, padding: '7px 10px', color: theme.text, fontSize: 13, boxSizing: 'border-box',
-  }
-  const labelStyle: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 4 }
-  const roleBadge = (role: string): React.CSSProperties => ({
-    display: 'inline-block', padding: '2px 10px', borderRadius: 12, fontSize: 11, fontWeight: 700,
-    background: role === 'admin' ? '#7c3aed22' : role === 'broker' ? '#0369a122' : '#16a34a22',
-    color: role === 'admin' ? '#7c3aed' : role === 'broker' ? '#0369a1' : '#16a34a',
-    border: `1px solid ${role === 'admin' ? '#7c3aed44' : role === 'broker' ? '#0369a144' : '#16a34a44'}`,
-  })
-
   const filtered = users.filter(u => {
     const q = search.toLowerCase()
     return !q || (u.email || '').toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q) || u.role.includes(q)
   })
 
-  if (loading) return <div style={{ padding: 32, color: theme.textMuted }}>Loading…</div>
+  if (loading) return <div className="adm-hint" style={{ padding: 32 }}>Loading…</div>
 
   return (
-    <div style={{ padding: '24px 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div>
+      <div className="adm-bar">
         <div>
-          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: theme.text }}>User Management</h3>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: theme.textMuted }}>Create accounts and assign roles. To make someone a broker, create their account here with role = Broker.</p>
+          <h3 className="adm-panel-h" style={{ margin: 0 }}>User Management</h3>
+          <p className="adm-hint" style={{ margin: '4px 0 0' }}>Create accounts and assign roles. To make someone a broker, create their account here with role = Broker.</p>
         </div>
-        <button onClick={() => setShowForm(s => !s)} style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        <button onClick={() => setShowForm(s => !s)} className="btn-primary">
           + New User
         </button>
       </div>
 
       {error && (
-        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px', color: '#b91c1c', marginBottom: 16, fontSize: 13 }}>
-          {error} <button onClick={() => setError(null)} style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c' }}>✕</button>
+        <div className="adm-err">
+          {error} <button onClick={() => setError(null)} className="adm-err-x">✕</button>
         </div>
       )}
 
       {showForm && (
-        <div style={{ background: theme.bgSecondary, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: '20px 24px', marginBottom: 20 }}>
-          <h4 style={{ margin: '0 0 14px 0', fontSize: 15, fontWeight: 700, color: theme.text }}>Create New User</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
-            <div><label style={labelStyle}>Email</label><input style={inputStyle} type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="user@example.com" /></div>
-            <div><label style={labelStyle}>Password</label><input style={inputStyle} type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="Min 6 characters" /></div>
+        <div className="adm-panel">
+          <h4 className="adm-panel-h">Create New User</h4>
+          <div className="adm-two">
+            <div><label className="adm-lbl">Email</label><input className="adm-in adm-in-full" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="user@example.com" /></div>
+            <div><label className="adm-lbl">Password</label><input className="adm-in adm-in-full" type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="Min 6 characters" /></div>
             <div>
-              <label style={labelStyle}>Role</label>
-              <select style={inputStyle} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
+              <label className="adm-lbl">Role</label>
+              <select className="adm-in adm-in-full" value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
                 <option value="member">Member</option>
                 <option value="broker">Broker</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
-            <div><label style={labelStyle}>Username (optional)</label><input style={inputStyle} value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} placeholder="jsmith" /></div>
+            <div><label className="adm-lbl">Username (optional)</label><input className="adm-in adm-in-full" value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} placeholder="jsmith" /></div>
           </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-            <button onClick={handleCreate} disabled={saving} style={{ background: theme.blue ?? '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+          <div className="adm-urlrow" style={{ marginTop: 16 }}>
+            <button onClick={handleCreate} disabled={saving} className="btn-primary">
               {saving ? 'Creating…' : 'Create User'}
             </button>
-            <button onClick={() => setShowForm(false)} style={{ background: 'transparent', border: `1px solid ${theme.borderColor}`, borderRadius: 6, padding: '8px 14px', fontSize: 13, cursor: 'pointer', color: theme.text }}>Cancel</button>
+            <button onClick={() => setShowForm(false)} className="btn-ghost">Cancel</button>
           </div>
         </div>
       )}
@@ -196,68 +184,68 @@ export default function AdminUsersTab({ theme, isSuperAdmin }: Props) {
       <input
         value={search} onChange={e => setSearch(e.target.value)}
         placeholder="Search by email, username, or role…"
-        style={{ ...inputStyle, width: 280, marginBottom: 16 }}
+        className="adm-in" style={{ width: 320, maxWidth: '100%', marginBottom: 16 }}
       />
 
       {filtered.length === 0 ? (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, padding: 32, textAlign: 'center', color: theme.textMuted }}>
+        <div className="adm-empty">
           {search ? 'No users match your search.' : 'No users yet.'}
         </div>
       ) : (
-        <div style={{ background: theme.card, border: `1px solid ${theme.borderColor}`, borderRadius: 10, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="adm-tablewrap">
+          <table className="adm-table dense users">
             <thead>
-              <tr style={{ borderBottom: `1px solid ${theme.borderColor}`, background: theme.bgSecondary }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>Email</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>Username</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>Role</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>Change Role</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: theme.textMuted, textTransform: 'uppercase' }}>Assign Org</th>
-                {isSuperAdmin && <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase' }}>Delete</th>}
+              <tr>
+                <th>Email</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Change Role</th>
+                <th>Assign Org</th>
+                {isSuperAdmin && <th>Delete</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.map((u, i) => (
-                <tr key={u.id} style={{ borderBottom: i < filtered.length - 1 ? `1px solid ${theme.borderColor}` : 'none' }}>
-                  <td style={{ padding: '12px 16px', fontSize: 13, color: theme.text }}>{u.email || <span style={{ color: theme.textMuted }}>—</span>}</td>
-                  <td style={{ padding: '12px 16px', fontSize: 13, color: theme.textMuted }}>{u.username || '—'}</td>
-                  <td style={{ padding: '12px 16px' }}><span style={roleBadge(normalizeRole(u.role))}>{normalizeRole(u.role)}</span></td>
-                  <td style={{ padding: '12px 16px' }}>
+                <tr key={u.id}>
+                  <td>{u.email || <span className="adm-dim">—</span>}</td>
+                  <td className="adm-dim">{u.username || '—'}</td>
+                  <td><span className={`adm-urole ${normalizeRole(u.role) === 'admin' ? 'admin' : normalizeRole(u.role) === 'broker' ? 'broker' : 'member'}`}>{normalizeRole(u.role)}</span></td>
+                  <td>
                     <select
                       value={normalizeRole(u.role)}
                       disabled={roleChanging === u.id}
                       onChange={e => handleRoleChange(u.id, e.target.value)}
-                      style={{ padding: '5px 8px', borderRadius: 6, border: `1px solid ${theme.borderColor}`, background: theme.bgInput || theme.bg, color: theme.text, fontSize: 12, cursor: 'pointer' }}
+                      className="adm-in adm-in-compact" style={{ width: 'auto' }}
                     >
                       {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
-                    {roleChanging === u.id && <span style={{ marginLeft: 8, fontSize: 11, color: theme.textMuted }}>Saving…</span>}
+                    {roleChanging === u.id && <span className="adm-hint" style={{ marginLeft: 8 }}>Saving…</span>}
                   </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <td>
+                    <div className="adm-urlrow" style={{ alignItems: 'center' }}>
                       <select
                         defaultValue=""
                         disabled={orgAssigning === u.id}
                         onChange={e => { if (e.target.value) handleAssignOrg(u.id, e.target.value); e.target.value = '' }}
-                        style={{ padding: '5px 8px', borderRadius: 6, border: `1px solid ${theme.borderColor}`, background: theme.bgInput || theme.bg, color: theme.text, fontSize: 12, cursor: 'pointer', maxWidth: 160 }}
+                        className="adm-in adm-in-compact" style={{ width: 'auto', maxWidth: 180 }}
                       >
                         <option value="">— select org —</option>
                         {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                       </select>
-                      {orgAssigning === u.id && <span style={{ fontSize: 11, color: theme.textMuted }}>…</span>}
+                      {orgAssigning === u.id && <span className="adm-hint">…</span>}
                       {orgAssignMsg[u.id] && (
-                        <span style={{ fontSize: 11, fontWeight: 600, color: orgAssignMsg[u.id] === 'Assigned' ? '#16a34a' : '#dc2626' }}>
+                        <span className={`adm-status${orgAssignMsg[u.id] === 'Assigned' ? ' ok' : ' bad'}`}>
                           {orgAssignMsg[u.id]}
                         </span>
                       )}
                     </div>
                   </td>
                   {isSuperAdmin && (
-                    <td style={{ padding: '12px 16px' }}>
+                    <td>
                       <button
                         onClick={() => handleDelete(u.id, u.email)}
                         disabled={deleting === u.id}
-                        style={{ background: 'transparent', border: '1px solid #dc2626', borderRadius: 6, padding: '4px 10px', fontSize: 12, color: '#dc2626', cursor: 'pointer', opacity: deleting === u.id ? 0.5 : 1 }}
+                        className="adm-sbtn del" style={{ opacity: deleting === u.id ? 0.5 : 1 }}
                       >
                         {deleting === u.id ? '…' : 'Delete'}
                       </button>
