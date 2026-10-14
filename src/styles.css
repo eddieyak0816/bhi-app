@@ -1791,3 +1791,18 @@ body.dark-mode .adm-mbtn.danger{color:#F2A29E}
 .adm-tagpick.on{background:#2D7FC0;border-color:#2D7FC0;color:#fff}
 .adm-tagpick input{accent-color:#fff;margin:0 !important}
 .adm-mfoot > .adm-mbtn:only-child{flex:1}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Admin → Types (add, search, table/cards, Edit Resource Type popup)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.adm-row{display:flex;align-items:center;gap:12px}
+.adm-row > .adm-in-grow{min-width:0}
+.adm-filterrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
+.adm-rowlink{cursor:pointer}
+.adm-clearbtn{white-space:nowrap}
+@media(max-width:700px){
+  .adm-row{flex-direction:column;align-items:stretch}
+  .adm-row .btn-primary,.adm-row .btn-ghost{width:100%}
+  .adm-filterrow{grid-template-columns:minmax(0,1fr)}
+  .adm-filterrow .btn-ghost{width:100%}
+}

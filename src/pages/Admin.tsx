@@ -2185,22 +2185,22 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
 
       {/* Resource Type Modal */}
       {resourceTypeModalOpen && resourceTypeModalData && (
-        <div onKeyDown={(e) => { if (e.key === 'Escape') { setResourceTypeModalOpen(false); setIsEditingResourceType(false) } }} style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:10000, pointerEvents:'auto'}}>
-          <div onKeyDown={handleModalKeyDown} style={{background:theme.bg,borderRadius:8,padding:24,width:'77.5%',maxWidth:2760,height:'76%',overflowY:'auto',overflowX:'hidden',border:`1px solid ${theme.borderColor}`, pointerEvents:'auto',position:'relative',display:'flex',flexDirection:'column'}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:4}}>
-              <h3 style={{margin:0,fontSize:18,fontWeight:600,color:theme.text}}>Edit Resource Type</h3>
-              <button onClick={() => { setResourceTypeModalOpen(false); setIsEditingResourceType(false) }} tabIndex={-1} style={{position:'absolute',top:-5,right:-5,background:'transparent',border:'none',fontSize:18,cursor:'pointer',color:'#ef4444',padding:'8px'}}>✕</button>
+        <div onKeyDown={(e) => { if (e.key === 'Escape') { setResourceTypeModalOpen(false); setIsEditingResourceType(false) } }} className="adm-mbg">
+          <div onKeyDown={handleModalKeyDown} className="adm-modal">
+            <div className="adm-mhead">
+              <h3 className="adm-mtitle">Edit Resource Type</h3>
+              <button onClick={() => { setResourceTypeModalOpen(false); setIsEditingResourceType(false) }} tabIndex={-1} className="adm-mx" aria-label="Close">✕</button>
             </div>
             {!isEditingResourceType ? (
               <>
-                <div style={{flex:1,overflowY:'auto',marginBottom:16}}>
-                  <div style={{marginBottom:12}}>
-                    <p style={{margin:'0 0 4px 0',fontSize:12,fontWeight:600,color:theme.textMuted}}>Resource Type:</p>
-                    <p style={{margin:0,fontSize:14,color:theme.text}}>{resourceTypeModalData.name}</p>
+                <div className="adm-mbody">
+                  <div className="adm-field">
+                    <p className="adm-k">Resource Type:</p>
+                    <p className="adm-v">{resourceTypeModalData.name}</p>
                   </div>
                 </div>
-                <div style={{display:'flex',gap:8,marginTop:'auto'}}>
-                  <button onClick={() => { setIsEditingResourceType(true); setResourceTypeEditForm({name: resourceTypeModalData.name}) }} style={{flex:1,background:'#3b82f6',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>✎ Edit</button>
+                <div className="adm-mfoot">
+                  <button onClick={() => { setIsEditingResourceType(true); setResourceTypeEditForm({name: resourceTypeModalData.name}) }} className="adm-mbtn primary">✎ Edit</button>
                   <button onClick={async () => {
                     if (!confirm('Delete this resource type?')) return
                     try {
@@ -2211,21 +2211,21 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                     } catch (err) {
                       alert('Delete resource type failed — ' + ((err as any)?.message || 'check server logs'))
                     }
-                  }} style={{flex:1,background:'transparent',border:'1px solid #ef4444',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#ef4444',fontWeight:600}}>✕ Delete</button>
+                  }} className="adm-mbtn danger">✕ Delete</button>
                 </div>
               </>
             ) : (
               <>
-                <div style={{flex:1,display:'flex',gap:24,marginBottom:16,minWidth:0,overflowY:'auto'}}>
+                <div className="adm-mcols">
                   {/* Main field */}
-                  <div style={{flex:1,minWidth:0,paddingRight:12}}>
-                    <div style={{marginBottom:12}}>
-                      <label style={{display:'block',fontSize:12,fontWeight:600,color:theme.textMuted,marginBottom:4}}>Resource Type Name</label>
-                      <input type="text" autoFocus value={resourceTypeEditForm.name || ''} onChange={e => setResourceTypeEditForm({...resourceTypeEditForm, name: e.target.value})} placeholder="e.g., article, book, podcast" style={{flex:1,padding:'6px 8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box',width:'100%'}} />
+                  <div className="adm-mleft">
+                    <div className="adm-field">
+                      <label className="adm-lbl">Resource Type Name</label>
+                      <input type="text" autoFocus value={resourceTypeEditForm.name || ''} onChange={e => setResourceTypeEditForm({...resourceTypeEditForm, name: e.target.value})} placeholder="e.g., article, book, podcast" className="adm-in adm-in-full" />
                     </div>
                   </div>
                 </div>
-                <div style={{display:'flex',gap:8,marginTop:'auto',borderTop:`1px solid ${theme.borderColor}`,paddingTop:16}}>
+                <div className="adm-mfoot edit">
                   <button type="button" onClick={async () => {
                     try {
                       if (!resourceTypeEditForm.name || !resourceTypeEditForm.name.toString().trim()) return alert('Name required')
@@ -2246,8 +2246,8 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                       console.error('Save resource type error', err)
                       alert('Save failed — ' + ((err as any)?.message || 'check server logs'))
                     }
-                  }} style={{flex:1,background:'#16a34a',border:'none',borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:'#fff',fontWeight:600}}>Save</button>
-                  <button onClick={() => { setIsEditingResourceType(false); setResourceTypeModalOpen(false) }} style={{flex:1,background:'transparent',border:`1px solid ${theme.borderColor}`,borderRadius:4,padding:'8px 12px',cursor:'pointer',fontSize:13,color:theme.text,fontWeight:600}}>Cancel</button>
+                  }} className="adm-mbtn primary">Save</button>
+                  <button onClick={() => { setIsEditingResourceType(false); setResourceTypeModalOpen(false) }} className="adm-mbtn ghost">Cancel</button>
                 </div>
               </>
             )}
@@ -2764,14 +2764,14 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
           {loading ? <div>Loading…</div> : (
             <div>
               {/* Type creation form */}
-              <div style={{marginBottom:16,padding:16,background:theme.bgSecondary,borderRadius:6,border:`1px solid ${theme.borderColor}`}}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Add Resource Type</h3>
-                <div style={{display:'flex',gap:12,alignItems:'center'}}>
+              <div className="adm-panel">
+                <h3 className="adm-panel-h">Add Resource Type</h3>
+                <div className="adm-row">
                   <input 
                     placeholder="Resource Type (e.g., article, book, podcast)" 
                     value={newTypeName} 
                     onChange={e => setNewTypeName(e.target.value)}
-                    style={{flex:1,padding:'8px',border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text}} 
+                    className="adm-in adm-in-grow" 
                   />
                   <button className="btn-primary" onClick={async () => {
                     if (!newTypeName.trim()) return alert('Type name required')
@@ -2788,11 +2788,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               </div>
 
               {/* Resource Types Search Filter */}
-              <div style={styles.filterBox}>
-                <h3 style={{marginTop:0,marginBottom:16,fontSize:16,fontWeight:600,color:theme.text}}>Filter Resource Types</h3>
-                <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:10,alignItems:'end'}}>
+              <div className="adm-panel">
+                <h3 className="adm-panel-h">Filter Resource Types</h3>
+                <div className="adm-filterrow">
                   <div>
-                    <label style={{display:'block',fontSize:12,fontWeight:500,marginBottom:4,color:theme.text}}>Search Resource Types</label>
+                    <label className="adm-lbl">Search Resource Types</label>
                     <div style={{position:'relative',display:'flex',alignItems:'center'}}>
                       <input
                         type="text"
@@ -2800,9 +2800,9 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         value={filterResourceTypeName}
                         onChange={e => setFilterResourceTypeName(e.target.value)}
                         list="search-resource-types-list"
-                        style={{width:'100%',padding:'6px 8px',paddingRight:28,border:`1px solid ${theme.borderColor}`,borderRadius:6,fontSize:14,background:theme.bgSecondary,color:theme.text,boxSizing:'border-box'}}
+                        className="adm-in adm-in-search"
                       />
-                      <div style={{position:'absolute',right:8,pointerEvents:'none',color:theme.text,fontSize:12}}>▼</div>
+                      <div className="adm-in-arrow">▼</div>
                       <datalist id="search-resource-types-list">
                         {Array.from(new Set(resourceTypes.filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())))).sort((a,b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base' })).map(t => <option key={t} value={t} />)}
                       </datalist>
@@ -2819,18 +2819,18 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
               </div>
 
               {/* Types table/cards */}
-              <div style={{marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <h3 style={{marginTop:0,marginBottom:0,fontSize:16,fontWeight:600,color:theme.text}}>Resource Types</h3>
-                <button onClick={() => toggleViewMode('types')} title={viewMode.types === 'card' ? 'Table view' : 'Card view'} style={{background:theme.bgSecondary,border:`1px solid ${theme.borderColor}`,borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:16,color:theme.text}}>{viewMode.types === 'card' ? '📋' : '🗂️'}</button>
+              <div className="adm-bar">
+                <h3 className="adm-panel-h" style={{margin:0}}>Resource Types</h3>
+                <button onClick={() => toggleViewMode('types')} title={viewMode.types === 'card' ? 'Table view' : 'Card view'} className="adm-view">{viewMode.types === 'card' ? '📋' : '🗂️'}</button>
               </div>
 
               {viewMode.types === 'table' ? (
-              <div style={{border:`1px solid ${theme.borderColor}`,borderRadius:6,overflow:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead style={{background:'#3D7DCA',borderBottom:`1px solid ${theme.borderColor}`}}>
+              <div className="adm-tablewrap">
+                <table className="adm-table">
+                  <thead>
                     <tr>
-                      <th style={{padding:8,textAlign:'left',cursor:'pointer',userSelect:'none',color:'#ffffff',fontWeight:500}} onClick={() => handleSort('name')}>Resource Type{getSortIndicator('name')}</th>
-                      <th style={{padding:8,textAlign:'right',color:'#ffffff',fontWeight:500}}>Actions</th>
+                      <th className="sortable" onClick={() => handleSort('name')}>Resource Type{getSortIndicator('name')}</th>
+                      <th className="r">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2840,11 +2840,11 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         .map(name => ({name})), 'name').map(obj => obj.name)
                       : (resourceTypes || []).filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })) )
                       .map(rt => (
-                      <tr key={rt} style={{borderTop:`1px solid ${theme.borderColor}`,cursor:'pointer'}} onClick={() => { setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }}>
-                        <td style={{padding:8}}><strong>{rt}</strong></td>
-                        <td style={{padding:8,textAlign:'right',verticalAlign:'middle'}}>
-                          <div style={{display:'flex',alignItems:'center',gap:4,justifyContent:'flex-end',height:'100%'}}>
-                            <button onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} style={tableButtonStyles.edit} {...getButtonHoverHandlers(false)}>✎</button>
+                      <tr key={rt} className="adm-rowlink" onClick={() => { setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }}>
+                        <td><strong>{rt}</strong></td>
+                        <td className="r">
+                          <div className="adm-acts">
+                            <button onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} className="adm-ibtn" title="Edit">✎</button>
                             <button onClick={async (e) => {
                               e.stopPropagation()
                               if (!confirm(`Delete type "${rt}"?`)) return
@@ -2855,7 +2855,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                               } catch (err) {
                                 alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
                               }
-                            }} style={tableButtonStyles.delete} {...getButtonHoverHandlers(true)}>✕</button>
+                            }} className="adm-ibtn del" title="Delete">✕</button>
                           </div>
                         </td>
                       </tr>
@@ -2864,16 +2864,16 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                 </table>
               </div>
               ) : (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))',gap:12}}>
+              <div className="adm-cards">
                 {(
                   sortColumn ? sortData(resourceTypes
                     .filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase()))
                     .map(name => ({name})), 'name').map(obj => obj.name)
                   : (resourceTypes || []).filter(t => !filterResourceTypeName || t.toLowerCase().includes(filterResourceTypeName.toLowerCase())).slice().sort((a,b) => a.localeCompare(b, undefined, { sensitivity: 'base' })) ).map(rt => (
-                  <div key={rt} style={{background:theme.bg,border:`1px solid ${theme.borderColor}`,borderRadius:8,padding:16,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
-                    <h5 style={{margin:'0 0 12px 0',fontSize:16,fontWeight:600}}>{rt}</h5>
-                    <div style={{display:'flex',gap:8,justifyContent:'center'}}>
-                      <button onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} style={cardButtonStyles.edit as any} {...getButtonHoverHandlers(false)}>✎ Edit</button>
+                  <div key={rt} className="adm-card">
+                    <h5 className="adm-card-t" style={{marginBottom:14}}>{rt}</h5>
+                    <div className="adm-card-acts">
+                      <button onClick={(e) => { e.stopPropagation(); setResourceTypeModalData({name: rt}); setOriginalResourceTypeName(rt); setResourceTypeEditForm({name: rt}); setIsEditingResourceType(true); setResourceTypeModalOpen(true) }} className="adm-cbtn">✎ Edit</button>
                       <button onClick={async (e) => {
                         e.stopPropagation()
                         if (!confirm(`Delete type "${rt}"?`)) return
@@ -2884,7 +2884,7 @@ export default function Admin({ onResourcesChanged, initialTab }: { onResourcesC
                         } catch (err) {
                           alert('Delete type failed — ' + ((err as any)?.message || 'check server logs'))
                         }
-                      }} style={cardButtonStyles.delete as any} {...getButtonHoverHandlers(true)}>✕ Delete</button>
+                      }} className="adm-cbtn del">✕ Delete</button>
                     </div>
                   </div>
                 ))}
