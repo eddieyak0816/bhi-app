@@ -3982,4 +3982,7 @@ app.delete('/api/admin/lab-sets/:id', async (req, res) => {
   }
 });
 
+// ARL Labs inbound results (off unless ARL_WEBHOOK_TOKEN is set) — see server/arlResults.js
+require('./arlResults')(app);
+
 app.listen(PORT, () => console.log(`Backend listening on http://localhost:${PORT}`));

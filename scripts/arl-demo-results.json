@@ -1,0 +1,5 @@
+{"sample_tracker_id":"ABC123XYZ","lab_order":"ABC123XYZ","client_account":"ARL000","collection_date_time":"2025-01-09 21:00:00","reported_date_time":"2025-01-10 10:00:00","patient_mrn":"A1B2C3D4E5F6G7H8I9J0","patient_first_name":"Jane","patient_last_name":"Doe","date_of_birth":"1990-01-01","gender":"Female","emr_incoming_order_id":"ABC123XYZ","sample_status":"Completed","celesta_base64_pdf":"JVBERi0x","results_array":[
+{"arl_lab_order":"ABC123XYZ","component_lis_code":"550024","result_value":"4.6","test_name":"Albumin","result_flag":"","units":"g/dL","reference_range":"3.5 - 5.2"},
+{"arl_lab_order":"ABC123XYZ","component_lis_code":"550012","result_value":"60.4","test_name":"Testosterone, Serum Total","result_flag":"","units":"ng/dL","reference_range":""},
+{"arl_lab_order":"ABC123XYZ","component_lis_code":"550013","result_value":"12.3","test_name":"Free Testosterone, Calculated","result_flag":"High","units":"pg/mL","reference_range":"0.7 - 7.9"},
+{"arl_lab_order":"ABC123XYZ","component_lis_code":"550014","result_value":"25.2","test_name":"SHBG","result_flag":"","units":"nmol/L","reference_range":"11.7 - 137.2"}]}
